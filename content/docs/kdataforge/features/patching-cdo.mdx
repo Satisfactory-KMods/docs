@@ -1,0 +1,122 @@
+---
+title: 'Patching (type: cdo)'
+description: The property-patch document type — how patches, target selectors, and modifiers fit together, plus where the deep-dive pages live.
+sidebar: { order: 6 }
+---
+
+This document type runs at the `CDOChanges` stage, after `GameTags`, `Assets`, and `Localization`,
+and before any content-generation stage. Its entries live under the `patches` key as a sequence.
+YAML changes are loaded on the next session start.
+
+This is the workhorse document type. It edits any reflected property on any class default object
+or object instance in the game: items, recipes, buildings, schematics, research trees, KAPI/RRDA
+data assets, your own generated content, anything. Everything else this framework does (content
+creation, data assets, sink points) either patches through this same mechanism internally or exists
+alongside it.
+
+## Shape of a patch entry
+
+A `type: cdo` document is just a `patches:` list. Each entry needs at least one target selector
+(`target:`, `allAssetsOfClass:`, or `matchTag:`/`ofClass:`), optional modifiers, and a
+`properties:` list describing the actual edits. The example below halves `mManufactoringDuration`
+on the iron ingot recipe:
+
+```yaml
+type: cdo
+patches:
+  - # ---- one or more selectors are accepted; prefer one clear selector ----
+    target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    # target: also accepts a sequence of paths, patching every entry with the same properties:
+    # OR: allAssetsOfClass: ...
+    # OR: matchTag: ... + ofClass: ...
+
+    # ---- modifiers (all optional) ----
+    applyToSubclasses: false
+    applyToSpawnedActors: false
+
+    # ---- the ops ----
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.5
+```
+
+Each entry needs at least one selector and a non-empty `properties:` list. The current implementation
+accumulates matches when selectors are combined, but one selector per entry is easier to audit. One
+document can hold any number of patch entries.
+
+## Inline instances in property arrays
+
+An ordinary `properties:` entry can replace an array of instanced `UObject` references. Write each
+array entry as a map with `class:` and optional nested `properties:`. KDataForge creates the
+instance as a subobject of the patched target, then applies the nested property operations. This
+works for any compatible instanced object array, including schematic dependencies and unlocks.
+
+Because `set` is the default operation, the following patch replaces the complete
+`mSchematicDependencies` array on every target. It does not append to existing dependencies:
+
+```yaml
+type: cdo
+patches:
+  - target:
+      - /RSS/Schematics/Flat/Sink_RSS_Flat_Belt.Sink_RSS_Flat_Belt_C
+      - /RSS/Schematics/Flat/Sink_RSS_Flat_Ceiling.Sink_RSS_Flat_Ceiling_C
+    properties:
+      - path: mSchematicDependencies
+        value:
+          - class: /Game/FactoryGame/AvailabilityDependencies/BP_SchematicPurchasedDependency.BP_SchematicPurchasedDependency_C
+            properties:
+              - path: mSchematics
+                value:
+                  - /SatisfactoryPlus/Content/SchematicManager/Schematics/Milestones/T1/Schematic_SF+_T1_0.Schematic_SF+_T1_0_C
+              - path: mRequireAllSchematicsToBePurchased
+                value: true
+      - path: mDependenciesBlocksSchematicAccess
+        value: true
+```
+
+`class:` must resolve to a concrete subclass compatible with the array element type. For example,
+`mUnlocks` accepts `FGUnlock` subclasses and `mSchematicDependencies` accepts
+`FGAvailabilityDependency` subclasses. The nested `properties:` use the same paths and operations
+as a top-level CDO patch.
+
+## The four things you need to know, and where they're documented
+
+Writing a patch entry means answering four separate questions. Each one is covered by its own page
+rather than duplicated here: what to target, what operation to apply, how to write the value for
+the property's type, and how to address nested/array/map properties in the path itself.
+
+| Concern                                                                                                                                                                        | Page                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| **Selecting what to patch**: class path, object path, `allAssetsOfClass:`, `matchTag:`/`ofClass:`, `applyToSubclasses:`, `applyToSpawnedActors:`, the bare class-name shortcut | [Targeting](/kdataforge/features/targeting)                                      |
+| **What you can do to a value**: all 22 operations and which property kinds accept them                                                                                         | [Operations](/kdataforge/features/operations)                                    |
+| **How to write a value**: every property kind's YAML form (bool, numerics, enums, strings, FText, object/class/soft refs, structs, arrays/sets/maps, gameplay tags)            | [Property Types](/kdataforge/features/property-types)                            |
+| **The path grammar**: array indices, map keys, struct/object dereference, authored-name matching                                                                               | [YAML Schema → Property Paths](/kdataforge/reference/yaml-schema#property-paths) |
+
+Two curated example galleries put all of the above together for real FactoryGame classes:
+[Balancing](/kdataforge/examples/balancing) (recipes, items, resources, schematics, research, categories) and
+[Power & Machines](/kdataforge/examples/power-and-machines) (buildables, power, extractors, pipelines, runtime actor patches).
+
+## Diagnostics, never failures
+
+An unsupported op×type combination, an unresolvable path, or a target that matches nothing all
+produce diagnostics. The specific patch entry is skipped, but the
+rest of the document, and every other document, still applies. Run `/kdf report` after any change
+to confirm exactly what was patched and see every warning/error in one place.
+
+## Vanilla snapshots
+
+Before the **first** write to a property path on an object, KDataForge records its original text
+value. The in-game editor uses it for diffing, undo, and changes-only export. The YAML pipeline
+runs once during initialization and exposes no general reload or document-revert operation.
+
+Runtime actor patches are a separate boundary. They apply operations directly to every matching
+instance and do not preserve player-modified or save-restored values through snapshot comparison.
+
+## Troubleshooting
+
+- **A patch "did nothing" and there's no error**: check `matchTag`/`allAssetsOfClass` selectors
+  first. A selector that matches zero objects only warns (`/kdf report`). It doesn't fail the
+  document, and it's an easy typo to miss because nothing looks broken until you actually check.
+- **Not sure which of the three target selectors to reach for?** [Targeting → Choosing a
+  selector](/kdataforge/features/targeting#choosing-a-selector) has a quick lookup table.

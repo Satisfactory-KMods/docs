@@ -1,0 +1,35 @@
+---
+title: Examples
+description: Complete worked galleries that combine multiple property types, operations, and document types into one realistic pack.
+sidebar: { order: 1 }
+---
+
+This section is home to **worked examples**: real, copy-pasteable YAML that combines several concepts at once, the way an actual pack looks in practice. It's deliberately different from the other two teaching sections in this documentation.
+
+[Features](/kdataforge/features) explains one capability or document type at a time.
+[Task Guides](/kdataforge/tutorials) walk a single goal from start to finish and
+explain each step as they go.
+
+The pages here skip that step-by-step framing. Instead they read like a gallery you can search or a reference chain you can walk. Use them once you already know roughly what you're doing and want to see it done for real, with several types wired together.
+
+If this is your first time here, [Getting Started](/kdataforge/getting-started) and the [Property Types](/kdataforge/features/property-types) / [Operations](/kdataforge/features/operations) / [Targeting](/kdataforge/features/targeting) / [Conditions & Packs](/kdataforge/features/conditions-and-packs) pages in Features are the better starting point. Come back here once those are familiar and you want end-to-end examples instead of isolated snippets.
+
+Every individual document type (`item`, `recipe`, `schematic`, `cdo`, and the rest) also has its own dedicated page under Features. The full YAML grammar lives in [Reference](/kdataforge/reference).
+
+## The five examples
+
+Two pages below are **patch-only** collections with many small `type: cdo` examples. Two are
+**build-a-whole-thing** packs that chain several document types into finished content. The fifth is
+a focused complete pack for a Repeat-Purchase Schematic (KLIB) with generated curves.
+
+- [Balancing](/kdataforge/examples/balancing) covers rebalancing base-game content that already exists: recipes, items, resources, equipment, consumables, radioactivity, belt speed, schematics, milestones, research trees, vehicles, trains, creatures, categories, and bulk tag-matched edits across many targets at once. All of it works through `type: cdo` patches against existing classes, and nothing is generated.
+- [Power & Machines](/kdataforge/examples/power-and-machines) covers the buildable-tuning half of patching: power consumption, manufacturing speed, generator output, extractor cycle time, pipeline flow limits, power storage capacity, drone station logistics, and runtime actor patches that also affect already-placed buildings.
+- [A Complete Building](/kdataforge/examples/building-chain) walks the full reference chain for a **dynamically generated** building, in dependency order: buildable class → building descriptor → build recipe → production recipes → schematic → sink points. These are six files, and each one references the class path the previous file produced.
+- [End-to-End Pack](/kdataforge/examples/end-to-end-pack) builds one realistic pack from an item, a recipe, a schematic with an inline unlock, sink points, a German localization file, a dynamic KAPI data asset, and a `cdo` edit to another mod's data-asset instances. It also shows how to rename a generated id safely with `redirects:` once the pack has shipped.
+- [Repeat-Purchase Schematic (KLIB)](/kdataforge/examples/repeat-purchase-schematic) is a complete `UKLUnlockMaxRepeatPurchases` pack with generated cost and reward curves, level-specific overrides, a result table, and the runtime semantics behind each purchase.
+
+For a normative catalog of every base-game `FGUnlock` subclass, including its settable properties
+and caveats, use [Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes).
+
+All five assume a pack living at `<your-mod>/DataForge/`, the canonical author root used throughout
+these docs.

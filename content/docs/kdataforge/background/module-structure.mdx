@@ -1,0 +1,200 @@
+---
+title: Module Structure
+description: C++ module organization, folder layout, and dependency rules across KDataForge's four runtime modules.
+sidebar:
+  order: 3
+---
+
+If you only ever write YAML packs, none of this applies to you. Packs load through
+`KDataForge.uasset` and never see a module boundary. This page is for two other audiences: people
+contributing to KDataForge's own C++ (the runtime and the handlers it ships with), and third-party
+mod authors who want to register a **native handler** for a document root type KDataForge doesn't
+cover built-in. Both audiences need to know which module their code belongs in and which
+dependencies they're allowed to take on. The split isn't arbitrary. It marks the difference between
+a stable public contract and internals that can change release to release.
+
+KDataForge ships as one Unreal plugin split into four separate C++ modules rather than one.
+Fewer DLL boundaries generally mean fewer allocator and export headaches, so this split is
+deliberate, not incidental. Each boundary exists to isolate something specific: a public API
+surface, an exception-throwing dependency, or a build target that dedicated servers shouldn't have
+to link.
+
+## Why the split exists
+
+Three concerns drive where a module boundary sits:
+
+- **Contract isolation.** Third-party mods that want to add a handler must link against something
+  stable. Bundling that contract into the same module as the fast-moving loader/reflection internals
+  would mean every internal refactor risks an ABI break for downstream mods. `KDataForgeApi` exists
+  so that contract can stay frozen while everything else evolves underneath it. See
+  [API Design](/kdataforge/reference/api-design) for what that contract actually
+  contains.
+- **Exception containment.** The vendored YAML parser (rapidyaml) reports errors by throwing, but
+  the rest of the codebase doesn't build with C++ exceptions enabled. Rather than flip on exceptions
+  plugin-wide, only the module that wraps the parser does.
+- **Dedicated-server leanness.** The in-game editor pulls in Slate/UMG/AppFramework, none of which a
+  headless dedicated server has any use for. Keeping it a separate module means a dedicated-server
+  build simply doesn't link that code.
+
+## The four modules
+
+All four modules are declared `"Type": "Runtime"` in the `.uplugin` manifest, including
+`KDataForgeEditorUI`. `KDataForgeApi` contains the public handler contract. Third-party handlers
+derive against it, while registration also links the main `KDataForge` module. `KDataForgeYaml` is
+the YAML backend, wrapping rapidyaml behind a façade,
+and it's the only module with exceptions enabled. `KDataForge` is the main runtime, holding the
+loader, the reflection engine, the subsystems, the built-in handlers, the chat command, and
+networking. `KDataForgeEditorUI` is the in-game editor UI, built with Slate, and is kept out of the
+dedicated-server link graph.
+
+That's a deliberate naming trap worth calling out. "EditorUI" refers to an **in-game** editor
+window rendered with hand-built Slate while the game is running, not to Unreal Editor-only code.
+Nothing in that module is gated behind `WITH_EDITOR`, and none of its dependencies are editor-only
+modules. It has to build and link cleanly into Shipping and dedicated-server targets, just like the
+other three.
+
+### `KDataForgeApi` the public contract
+
+Third-party mods use this module for handler types and keep it intentionally tiny:
+
+```
+Source/KDataForgeApi/Public/
+├── KDFDataEditorHandler.h
+├── KDFHandlerBase.h
+├── KDFNode.h
+└── KDFTypes.h
+```
+
+Its dependency list is just `Core`, `CoreUObject`, and `Engine`, nothing else. That's not an
+accident of an early prototype. It's rule #2 below: adding a dependency here is treated as an
+API-breaking decision, because every third-party handler mod inherits whatever this module pulls
+in. The types you'll actually work with here (`FKDFNode`, `UKDFHandlerBase`,
+`IKDFDataEditorHandler`) are covered in [API Design](/kdataforge/reference/api-design).
+A worked handler implementation against this exact module lives on the
+[Handler Template](/kdataforge/reference/handler-template) page.
+
+### `KDataForgeYaml` the YAML backend
+
+This module exists for one reason: to keep exceptions from leaking anywhere else in the plugin.
+`KDFYamlParser.h` parses a document that throws `ryml::Callbacks::error` and turns it into a clean
+`FKDFNode` tree or an error string, entirely inside this module:
+
+```
+Source/KDataForgeYaml/
+├── Public/   KDFYamlParser.h              (façade — the only entry point)
+├── Private/  KDFYamlParser.cpp            (ryml + a deterministic hand-written emitter)
+└── ThirdParty/ryml/rapidyaml.hpp          (v0.15.2 amalgamation — vendored, never edited)
+```
+
+`bEnableExceptions = true` is set only in this module's `.Build.cs`. The reasoning is spelled out
+right next to it: rapidyaml reports parse errors through a callback that throws, and that has to
+stay contained to this wrapper. The public surface only ever returns `FKDFNode` trees and error
+strings, never a ryml type or an exception across a module boundary. Its own dependencies are
+`Core`, `CoreUObject`, and `KDataForgeApi` (for `FKDFNode`). Nothing pulls FactoryGame or SML in
+here.
+
+### `KDataForge` the main runtime
+
+This is where nearly everything lives: the loader, the reflection engine, the built-in handlers,
+the subsystems, and the pieces that don't get their own module because they're not a public
+contract, an exception boundary, or an editor-only concern. Layering inside it happens at the
+folder level, not via further module splits:
+
+```
+Source/KDataForge/{Public,Private}/
+├── Reflection/       KDFPropertyPath · KDFValueCodec · KDFOpEngine · KDFVanillaCache · KDFPatchUtil
+├── Loader/           KDFPackScanner · KDFConditionEvaluator · KDFLoaderTypes
+├── Content/           KDFDynamicContent (class/asset generation, manifest, tombstones)
+├── Subsystems/        KDFSubsystem · KDFActorPatchSubsystem · KDFStateSubsystem
+├── Handlers/          KDFCdoHandler · KDFAssetHandler · KDFCurveHandler · KDFGameTagHandler ·
+│                       KDFContentClassHandler family (Class/Item/Resource/Building/Recipe/
+│                       Schematic/Research/Unlock) · KDFDataAssetHandler ·
+│                       KDFSinkPointsHandler · KDFLocalizationHandler
+├── Commands/           KDFChatCommand
+├── Module/             KDFGameInstanceModule · KDFWorldModule (SML root modules)
+├── Net/                 KDFRemoteCallObject (host-gated RPC scaffold)
+└── EditorIntegration/   KDFEditorApply (WITH_EDITOR-gated, private-only: `KDF.ApplyToAssets`
+                         console command bakes cdo documents directly onto UE-editor assets)
+```
+
+`EditorIntegration/` is the one genuinely editor-only corner of the whole plugin, and it earns that
+by being gated behind `WITH_EDITOR` at the file level rather than by living in its own module. It
+never ships to Shipping or dedicated-server builds, and it has no public header at all, since
+nothing outside this one `.cpp` needs to call into it.
+
+`Net/` contains a host-gated `Server_ApplySetOp` RPC scaffold. The current editor does not call it,
+and there is no checksum handshake or operation stream. See the current multiplayer boundaries in
+[Architecture](/kdataforge/background/architecture#multiplayer-boundaries).
+
+Its dependency list is the longest of the four: `Core`, `CoreUObject`, `Engine`, `Projects`,
+`Json`, `GameplayTags`, `NetCore`, `AssetRegistry`, `ImageWrapper`, `RenderCore`, `RHI`, the
+`DummyHeaders` stub module, `FactoryGame`, and `SML`, plus `KDataForgeApi` and `KDataForgeYaml`.
+The `ImageWrapper`, `RenderCore`, and `RHI` trio backs `type: asset` documents, turning arbitrary 2D
+image files into runtime `UTexture2D` assets through `KDFAssetHandler`.
+
+### `KDataForgeEditorUI` the in-game editor
+
+Kept as its own module purely so a dedicated server never has to link Slate, UMG, or AppFramework:
+
+```
+Source/KDataForgeEditorUI/
+├── Public/   KDFEditorSubsystem.h · KDFEditorModel.h
+└── Private/  SKDFEditorWindow.* · KDFEditorStyle.h    (pure code-built Slate, no UMG assets)
+```
+
+The editor window needs to read the loader's pack manifests, walk `FKDFNode` trees, and apply ops
+through the same reflection engine the runtime uses to build its Diff and Apply tabs. Because of
+that, it depends on all three other modules: `KDataForgeApi`, `KDataForgeYaml`, and `KDataForge`,
+alongside `InputCore`, `UMG`, `Slate`, `SlateCore`, `AppFramework` (for `SColorPicker`),
+`AssetRegistry`, `FactoryGame`, and `SML`. The wiring between this window and the runtime it edits
+is covered on [Editor Integration](/kdataforge/reference/editor-integration).
+
+## Dependency graph
+
+Arrows below point from a module to what it depends on. `KDataForgeApi` sits at the bottom with the
+smallest footprint by design. Everything else builds on top of it, and only `KDataForgeEditorUI`
+depends on all three of the others at once:
+
+```
+KDataForgeEditorUI   → KDataForge, KDataForgeYaml, KDataForgeApi
+                        (+ InputCore, UMG, Slate, SlateCore, AppFramework, AssetRegistry,
+                           FactoryGame, SML)
+        ▲
+KDataForge           → KDataForgeYaml, KDataForgeApi
+                        (+ Engine, Projects, Json, GameplayTags, NetCore, AssetRegistry,
+                           ImageWrapper, RenderCore, RHI, DummyHeaders, FactoryGame, SML)
+        ▲
+KDataForgeYaml       → KDataForgeApi                              [bEnableExceptions]
+                        (+ Core, CoreUObject)
+        ▲
+KDataForgeApi                                                     (Core, CoreUObject, Engine only)
+```
+
+> Link-dependency lesson (Shipping builds): the dev-editor target resolves symbols that the modular
+> Shipping DLLs do not. `EKeys` needs **InputCore**, `UModContentRegistry` needs **SML**, and
+> `FKDFYamlParser` needs **KDataForgeYaml**. A Shipping package run is the real link check, not a
+> dev-editor compile.
+
+## Rules for contributors
+
+These aren't style preferences. Each one closes off a class of bug that's already bitten this
+plugin once:
+
+1. **ryml types never cross the `KDataForgeYaml` boundary.** The façade returns `FKDFNode` trees and
+   error strings only. Exceptions exist only inside that module, per `bEnableExceptions` above.
+2. **`KDataForgeApi` stays tiny and dependency-free** (`Core`, `CoreUObject`, `Engine`). Adding a
+   dependency there is an API-breaking decision for every third-party handler mod. Treat it as such.
+3. **No editor-only module dependencies anywhere.** The plugin must build for Shipping and
+   dedicated servers. Editor-only code, if ever needed, goes behind `Target.bBuildEditor` in
+   `.Build.cs` plus `WITH_EDITOR` guards (see `EditorIntegration/` above for the one place this
+   already applies).
+4. **Handlers live in the main module** or in third-party mods. Third-party handler types derive
+   against `KDataForgeApi`; calling `UKDFSubsystem::RegisterHandler` also requires `KDataForge`.
+   Handlers never include loader or scanner internals. Everything they need arrives via the context structs that the
+   [Handler Template](/kdataforge/reference/handler-template) walks through.
+5. **All four modules share the same build settings:** `CppStandard = Cpp20`,
+   `PCHUsage = UseExplicitOrSharedPCHs`, `bLegacyPublicIncludePaths = false`, and the project's clang-format
+   is enforced across all of them.
+
+For how these modules cooperate at runtime, the fixed stage pipeline, the reflection engine, and
+savegame persistence, see [Architecture](/kdataforge/background/architecture).

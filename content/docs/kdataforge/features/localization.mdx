@@ -1,0 +1,87 @@
+---
+title: 'Type: localization'
+description: Runtime text entries per namespace and culture, overriding existing texts by source string, and culture matching.
+sidebar: { order: 8 }
+---
+
+The `Localization` stage runs after `GameTags`/`Assets` and before `CDOChanges`. Its entries key is
+`entries`, a map from key to either a scalar or a `{ source, text }` object.
+
+## Simple key entries: new text
+
+The scalar form registers a brand new localized text under `namespace:` and key. This works for
+your own content's `FText` keys, or anyone else's, as long as the namespace and key match:
+
+```yaml
+# file: de.localization.yml
+type: localization
+namespace: MyPack
+culture: de # prefix-matched: also applies for de-DE, de-AT, …
+entries:
+  MySuperIngot_Name: 'Superbarren'
+  MySuperIngot_Desc: 'Ein weit überlegener Barren.'
+```
+
+## `{ source, text }`: overriding an EXISTING text
+
+The map form overrides a text that **already exists** (vanilla or modded) by its original source
+string:
+
+```yaml
+type: localization
+namespace: MyPack
+culture: de
+entries:
+  IronIngot_Renamed: { source: 'Iron Ingot', text: 'Eisenbarren (überarbeitet)' }
+  SchematicOverride: { source: 'Super Ingot Smelting', text: 'Superbarren-Verhüttung' }
+```
+
+> ⚠️ **Source-hash matching.** UE identifies a localized text by its namespace/key plus a hash of
+> the original source string. The `source:` you give must be **byte-identical** to the current
+> original text: spacing, punctuation, and capitalisation all matter. If a game update changes
+> the source string, the override silently stops matching. Copy the exact string from the game,
+> don't retype it. Omitting `source:` uses `text:` as the source too, which only works for
+> **new** keys. The scalar form above is the same thing written shorter.
+
+## How it's applied
+
+Localization entries are applied through the same mechanism the engine's own localization system
+uses to load `.locres` files, so there is nothing KDataForge-specific for the game to special-case.
+
+## Bidirectional prefix matching for `culture:`
+
+```yaml
+culture: de        # matches current language de, de-DE, de-AT, …
+culture: pt-BR      # matches only pt-BR (a more specific prefix than pt)
+# omit culture:     # entries apply for EVERY language
+```
+
+The match is **bidirectional prefix matching**: either the current language starts with `culture:`,
+or `culture:` starts with the current language. `culture: de` applies when the running game is set
+to `de-DE`, **and** `culture: de-DE` would also apply if the game were set to plain `de`. Whichever
+side is the shorter prefix wins the comparison. In practice, prefer the shortest culture code that
+covers your translation, `de` rather than `de-DE`, unless you specifically need a regional variant.
+
+Documents whose `culture:` doesn't match the current language are skipped with an `Info`
+diagnostic. This is not a warning: it's expected, not an error.
+
+## Loading changes
+
+Localization changes are loaded on the next session start.
+
+A complete worked translation (item + schematic + German locale file, applied together) is part of
+the end-to-end pack in [End-to-End Pack](/kdataforge/examples/end-to-end-pack).
+
+## Troubleshooting
+
+- **My override isn't taking effect.** This is almost always the source-hash mismatch described
+  above. Copy the original string straight out of the game, or the base-game source if you have
+  it, rather than retyping it from memory. A single missing period or extra space is enough to
+  break the match silently.
+- **Translation shows in one culture but not another.** Check for a stray `culture:` on the file.
+  Omitting it entirely is usually what you want, unless you're intentionally splitting
+  translations per locale across files.
+- **New key works, but overriding an existing key doesn't.** New keys, using the scalar form,
+  don't need `source:` to match anything since there's nothing to match yet. Overrides, using the
+  map form, do need it. If you're not sure which one you need, ask yourself: does this text
+  already exist in the game?

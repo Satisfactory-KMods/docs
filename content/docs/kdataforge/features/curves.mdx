@@ -1,0 +1,117 @@
+---
+title: 'Float and Vector Curves'
+description: Create and edit UCurveFloat and UCurveVector assets with keys, interpolation, tangents, defaults, and extrapolation.
+sidebar: { order: 19 }
+---
+
+`type: curve` creates or edits Unreal curve assets during the `Assets` stage. Set
+`curveType: float` for `UCurveFloat` or `curveType: vector` for `UCurveVector`. Every entry uses
+exactly one selector.
+
+- `id:` creates a runtime asset at
+  `/KDataForge/GenAssets/<PackRef>.Gen_<PackRef>_<Id>` and announces it to the asset registry.
+- `target:` loads and edits an existing cooked curve by object path. A generated curve from the
+  current pack can also be addressed by its bare id.
+
+The `keys:` list replaces all existing keys on that curve.
+
+## Float curves
+
+```yaml
+type: curve
+curveType: float
+curves:
+  - id: DamageFalloff
+    defaultValue: 0
+    preInfinityExtrap: constant
+    postInfinityExtrap: linear
+    isEventCurve: false
+    keys:
+      - time: 0
+        value: 1
+        interpMode: constant
+      - time: 10
+        value: 0.5
+        interpMode: cubic
+        tangentMode: user
+        arriveTangent: -0.05
+        leaveTangent: -0.05
+```
+
+Reference generated curve from any object property:
+
+```yaml
+value: /KDataForge/GenAssets/MyPack.Gen_MyPack_DamageFalloff
+```
+
+## Repeat-purchase schematic (KLIB)
+
+KLib's `UKLUnlockMaxRepeatPurchases` can consume generated float curves for level-dependent costs
+and rewards. See the
+[full combined example](/kdataforge/examples/repeat-purchase-schematic#full-example-repeat-purchase-schematic)
+for pack gating, both curve assets, complete schematic YAML, and calculated purchase results.
+
+## Vector curves
+
+Vector values and tangent fields accept an `X`/`Y`/`Z` map or a three-number sequence. One key
+defines all three component curves at same time and with same interpolation metadata.
+
+```yaml
+type: curve
+curveType: vector
+curves:
+  - id: CameraOffset
+    defaultValue: { X: 0, Y: 0, Z: 0 }
+    keys:
+      - time: 0
+        value: { X: 0, Y: 0, Z: 0 }
+      - time: 1
+        value: [100, 0, 50]
+        interpMode: cubic
+        tangentMode: auto
+```
+
+## Editing an existing curve
+
+```yaml
+type: curve
+curveType: float
+conditions: { hasMod: SomeMod }
+curves:
+  - target: /SomeMod/Curves/Curve_ProductionRate.Curve_ProductionRate
+    keys:
+      - { time: 0, value: 1 }
+      - { time: 60, value: 2 }
+```
+
+`target:` must resolve to class selected by `curveType`. A float document cannot edit a
+`UCurveVector`, and a vector document cannot edit a `UCurveFloat`.
+
+## Key and curve fields
+
+| Field                                       | Accepted values                                 | Default  |
+| ------------------------------------------- | ----------------------------------------------- | -------- |
+| `time`                                      | finite number, unique within entry              | required |
+| `value`                                     | finite number for float, X/Y/Z value for vector | required |
+| `interpMode`                                | `constant`, `linear`, `cubic`                   | `linear` |
+| `tangentMode`                               | `auto`, `smartAuto`, `user`, `break`            | `auto`   |
+| `tangentWeightMode`                         | `none`, `arrive`, `leave`, `both`               | `none`   |
+| `arriveTangent`, `leaveTangent`             | float or X/Y/Z value                            | `0`      |
+| `arriveTangentWeight`, `leaveTangentWeight` | float or X/Y/Z value                            | `0`      |
+
+Entry-level `preInfinityExtrap` and `postInfinityExtrap` accept `none`, `constant`, `linear`,
+`cycle`, `cycleWithOffset`, or `oscillate`. `defaultValue` uses same shape as key values.
+`isEventCurve` is valid only for float curves.
+
+## Troubleshooting
+
+- **Curve type mismatch:** Confirm object path points to `UCurveFloat` or `UCurveVector` matching
+  document `curveType`.
+- **Duplicate time:** Each entry can contain only one key per time. File order does not matter.
+  KDataForge sorts keys before applying them.
+- **Reference does not resolve:** Generated curve assets have no `_C` suffix. Use exact
+  `/KDataForge/GenAssets/<PackRef>.Gen_<PackRef>_<Id>` object path.
+- **Existing keys disappeared:** Replacement is intentional. Include every key that must remain.
+
+See [YAML Schema](/kdataforge/reference/yaml-schema#float-and-vector-curve-assets-type-curve)
+for normative field grammar.

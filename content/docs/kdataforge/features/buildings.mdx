@@ -1,0 +1,82 @@
+---
+title: 'Type: building'
+description: Generating new building/buildable descriptor classes from YAML — what you actually get, and the hard limits on what a generated building can be.
+sidebar: { order: 11 }
+---
+
+This is the `Items` stage, at priority `20`, the last of the five generation types
+(`class` → `unlock` → `item` → `resource` → `building`). It loads changes only during session initialization, so changes need a
+restart. The entries key is `buildings`, and the default `parent` is
+`/Script/FactoryGame.FGBuildingDescriptor`, which is also the required base class (or a subclass of
+it). Register-only mode (`class:`) is not supported here, use `id:` instead.
+
+Don't confuse this with editing an _existing_ buildable's stats. That's a plain `cdo` patch, and
+it's the far more common thing to want (see [Power & Machines](/kdataforge/examples/power-and-machines) and
+[Type: cdo](/kdataforge/features/patching-cdo)). `type: building` is specifically for creating a **new**
+`FGBuildingDescriptor`-derived class: a genuinely new entry in the build menu, not a tweak to one
+that already exists.
+
+## Read this before you start: the hard constraint
+
+A generated class copies its parent's **layout** exactly: same components, same mesh slots, same
+everything except CDO default values. `type: building` is worth reaching for when you want, say, a
+recoloured or re-tuned variant of an existing buildable that needs its own separate build-menu
+entry. That way players can have both the original and the variant at once.
+
+It is **not** a way to add a new mesh, a new component, or genuinely new behaviour: a generated
+class has no new reflected properties and no new components beyond what the parent already
+defines. KDataForge is also 2D-only by design, so there's no way to bring in new meshes either. For
+a new mesh, new component, or new gameplay behaviour, you need actual C++/Blueprint content:
+`type: building` can't get you there.
+
+## Worked example: a recoloured storage variant
+
+A `building` document's `buildings:` entries follow the same `id`/`parent`/`properties` shape as
+every other generation type. `id` names the new descriptor, `parent` is the existing descriptor
+class it clones the layout from, and `properties` applies CDO overrides to the clone. Here a plain
+Storage Container Mk1 gets a recoloured, bigger-capacity variant of its own:
+
+```yaml
+# file: crimson-storage.building.yml
+type: building
+buildings:
+  - id: MyCrimsonStorage
+    parent: /Game/FactoryGame/Buildable/Factory/StorageContainerMk1/Build_StorageContainerMk1.Build_StorageContainerMk1_C
+    properties:
+      - path: mDisplayName
+        value: Crimson Storage Container
+      - path: mInventorySizeX
+        value: 12
+```
+
+This generates `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_MyCrimsonStorage`, a real, separate
+buildable class with its own build-menu entry, save data, and everything else a normal buildable
+has. It inherits the parent's mesh and behaviour wholesale.
+
+## Practical note: descriptor vs. buildable
+
+FactoryGame splits "the thing in your build menu" (`UFGBuildingDescriptor`, what this document
+generates) from "the thing placed in the world" (`AFGBuildable*`, the actor). Parenting a
+`building` entry off an existing descriptor (like `Build_StorageContainerMk1` above, which is
+itself the descriptor tied to the buildable) is what makes the new descriptor spawn the same
+buildable actor with your CDO overrides. You're not generating a new `AFGBuildable` subclass, and
+for a simple variant you never need to.
+
+When you _do_ want a separate buildable class, with its own CDO defaults on the actor and its own
+save identity, generate one from an existing `Build_*_C` parent with `type: class` and point the
+descriptor's `mBuildableClass` at it. The full chain (buildable → descriptor → build recipe →
+production recipes → schematic → sinkpoints) is walked step by step in
+[A Complete Building](/kdataforge/examples/building-chain).
+
+## Troubleshooting
+
+- **The new building doesn't show up in the build menu at all**: check `/kdf report` first. If the
+  class generated successfully but you don't see it, this is very likely a build menu category or
+  recipe registration question, not the `building` document itself. A building descriptor needs a
+  `recipe` (see [Type: recipe](/kdataforge/features/recipes)) that produces it, and a schematic that unlocks
+  that recipe before it becomes buildable in a fresh game.
+- **Stats didn't change**: same rule as everywhere else. An unsupported op or a bad `path:` is a
+  diagnostic, never a silent failure, and `/kdf report` tells you exactly which patch failed.
+- Want to bulk-tune a whole family of _existing_ buildings instead (all miners, all belts, all
+  generators)? That's `applyToSubclasses:` on a plain `cdo` patch. See
+  [Targeting](/kdataforge/features/targeting#applytosubclasses--widen-a-class-target-to-every-derived-class).

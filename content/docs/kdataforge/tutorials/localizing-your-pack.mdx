@@ -1,0 +1,195 @@
+---
+title: 'Localizing Your Pack'
+description: Shipping new text in multiple languages, overriding existing vanilla or modded strings without retyping them, and iterating with translators live with session restarts — without breaking on the next game update.
+sidebar:
+  order: 5
+---
+
+Two different jobs hide under `type: localization`. One is adding brand-new text for content
+you're creating. The other is overriding text that already exists: vanilla FactoryGame strings,
+another mod's, or your own from an earlier pack version. These two jobs use different YAML
+shapes, and confusing them is the single most common localization bug. This tutorial walks
+through both, the one-file-per-culture pattern for shipping several languages at once, and the
+restart-based workflow that makes translator iteration painless.
+
+## The two entry forms
+
+Every entry under `entries:` is either a **scalar** or a `{ source, text }` **map**, and
+`UKDFLocalizationHandler` treats them very differently.
+
+The scalar form, `Key: "some text"`, registers a brand-new `(namespace, key)` pair. It sets both
+the source and the displayed text to the same string, and you use it for new text nobody has
+already registered. The map form, `Key: { source: "...", text: "..." }`, overrides an **existing**
+`(namespace, key)` pair instead. Here `text:` is what displays, while `source:` must match the
+target's current source string, and you use it for retexting something that already exists.
+
+Omitting `source:` in the map form makes the handler reuse `text:` as the source. That's just the
+scalar form written longer, and it only works for new keys.
+
+> ⚠️ The `(namespace, key)` an entry targets is exactly `namespace:` (document-level) plus the
+> entry's own key under `entries:`. Nothing is inferred. That pair, plus a **hash** of `source:`,
+> is what the engine checks before it will display your `text:`. Get either wrong and nothing
+> errors: you just get an unused row in the localization table that nothing ever reads.
+
+## Step 1: give your item a keyed display name
+
+Overriding _anything_ later requires the text to have a real `(namespace, key)` pair in the first
+place. A plain string `mDisplayName` is **culture-invariant** (see
+[Property Types → FText: plain (culture-invariant)](/kdataforge/features/property-types#ftext-plain-culture-invariant)).
+Invariant text never goes through the localization system at all, so nothing you write under
+`type: localization` can ever touch it. Use the keyed map form instead, exactly like the sample
+pack's own Super Ingot:
+
+```yaml
+# file: super-ingot.item.yml (excerpt)
+type: item
+items:
+  - id: SuperIngot
+    properties:
+      - path: mDisplayName
+        value:
+          key: SuperIngot_Name
+          ns: KDFSample
+          source: Super Ingot
+```
+
+`ns: KDFSample` + `key: SuperIngot_Name` is now the address every translation for this item's name
+has to target.
+
+## Step 2: one file per culture
+
+Nothing forces you into a single translation file. The natural, idiomatic pattern is **one file
+per language**, all targeting the same `namespace:`/keys. For example, a German file:
+
+```yaml
+# file: super-ingot.localization.yml
+type: localization
+namespace: KDFSample
+culture: de
+entries:
+  SuperIngot_Name:
+    source: Super Ingot
+    text: Superbarren
+```
+
+Adding French is just another file with a different `culture:`. Nothing about the item, the
+namespace, or the key changes:
+
+```yaml
+# file: super-ingot-fr.localization.yml
+type: localization
+namespace: KDFSample
+culture: fr
+entries:
+  SuperIngot_Name:
+    source: Super Ingot
+    text: Super Lingot
+```
+
+Both files apply independently. `culture:` gates each one against the _currently running_
+language, so shipping a dozen languages is a dozen small files, not one giant one. Nothing stops
+you from grouping several keys from several items into one per-culture file either, once your
+pack grows past a single item. The namespace/culture gate is per-document, not per-file.
+
+## Step 3: overriding an EXISTING text
+
+**Overriding your own earlier text** is trivial: you already know the exact `namespace:`/key,
+because you're the one who chose them in Step 1. Want to retcon the German name later without
+touching the item file? Add another entry with the map form, same namespace/key, same source:
+
+```yaml
+type: localization
+namespace: KDFSample
+culture: de
+entries:
+  SuperIngot_Name: { source: 'Super Ingot', text: 'Ur-Superbarren' }
+```
+
+**Overriding vanilla or another mod's text is the same mechanism. You just don't get to pick the
+namespace/key.** They belong to whatever FText the target already carries, and you have to go
+find them:
+
+- **Use `/kdf editor`** (works in a normal running game, not just the UE editor). Browse to the
+  target object (a vanilla schematic, another mod's item, anything KDataForge can resolve) and
+  use **Export**. If `mDisplayName` exports as `{ key: ..., ns: ..., source: ... }`, that map _is_
+  the real address. Copy it verbatim, keep `key`/`ns`/`source` identical, and only change `text:`.
+- **Or read the source mod's own localization files directly.** Most KMods ship
+  `Content/Localization/<Mod>/*.archive`/`.manifest` alongside the plugin, which is a faster way to
+  confirm a key than booting the game.
+- **If Export shows a plain string instead of a map**, the target is culture-invariant. Stop here:
+  there is no `(namespace, key)` to attach an override to. The only way to change it is a plain
+  `cdo` patch on the property itself (see [Patching (type: cdo)](/kdataforge/features/patching-cdo)), which
+  replaces the text for **every** language at once, not per-culture.
+
+Worked example: a schematic whose author (you, an earlier pack version, or another mod) declared
+`mDisplayName` with the keyed form:
+
+```yaml
+# somewhere upstream — the schematic's own properties:
+- path: mDisplayName
+  value: { key: Schematic_SuperIngot_Name, ns: MyPack, source: 'Super Ingot Production' }
+```
+
+```yaml
+# file: fr.localization.yml — translating (or retexting) it without touching the schematic
+type: localization
+namespace: MyPack
+culture: fr
+entries:
+  Schematic_SuperIngot_Name:
+    { source: 'Super Ingot Production', text: 'Production de Super Lingot' }
+```
+
+`namespace: MyPack` + `Schematic_SuperIngot_Name` has to match the schematic's declaration
+character-for-character, and `source:` has to match the _current_ source string byte-for-byte.
+Get either one wrong and this document applies cleanly, with no error, while the schematic keeps
+showing its untranslated name.
+
+> **Recipes are a special case.** `FGRecipe::mDisplayName` is only shown if the recipe's own
+> `mDisplayNameOverride` flag is `true`. Otherwise the UI shows the **first product's item name**
+> instead, and a recipe-name translation you write will never be visible no matter how correct it
+> is. If you want a recipe-specific name (and its translations) to actually appear, set
+> `mDisplayNameOverride: true` alongside `mDisplayName` in the recipe's own `properties:`.
+> Otherwise, translate the produced item's name instead.
+
+## Translation iteration workflow
+
+1. Edit the `.yml` translation file.
+2. Select the matching game language in the Options menu.
+3. Restart the session and inspect `/kdf report`.
+
+`culture:` is evaluated against the language active during session initialization. A `culture: fr`
+document is intentionally skipped while the game runs in English.
+
+## Troubleshooting
+
+- **A translation applied but nothing changed in-game.** This is almost always a source-hash
+  mismatch: `source:` must be byte-identical to the text's _current_ stored source (spacing,
+  punctuation, capitalisation), since it's a hash comparison, not a fuzzy match. If a game update
+  changed the base string, every override keyed off the old one silently stops matching. Copy the
+  string straight out of an `/kdf editor` Export, never retype it from memory.
+- **My override document loads with no errors but the text is still untranslated.** Check the
+  `namespace:`/key pair against exactly what the target FText was declared with, not a name you
+  invented. This is the difference between "new text" and "override": new keys can use any
+  namespace/key you like, while overrides have to match the target's real ones exactly.
+- **A whole culture file seems to be ignored.** Look for a stray or misspelled `culture:` (e.g.
+  `de_DE` instead of `de-DE`, or a typo like `germna`). The log line reads `skipped: culture <X>
+does not match current language <Y>` when this happens. Omitting `culture:` entirely applies to
+  every language, which is usually what you want unless you're intentionally splitting per locale.
+- **Overriding a recipe's display name does nothing.** Check `mDisplayNameOverride` on that
+  recipe: if it's `false`, the UI ignores `mDisplayName` entirely and shows the first product's
+  item name.
+- **Export shows a plain string, not `{ key, ns, source }`.** The target text is culture-invariant,
+  so no localization override will ever reach it. Change it with a `cdo` patch on the property
+  instead (this affects every language, not one).
+- **Trying to `cdo`-patch a schematic/recipe/item you generated yourself, to convert its
+  `mDisplayName` to the keyed form.** `CDOChanges` runs _before_ `Items`/`Recipes`/`Schematics` in
+  the fixed stage order, so a `cdo` patch can't even resolve a KDataForge-generated class's path yet.
+  Edit the generating document's own `properties:` block directly instead (`item.yml`/`recipe.yml`/
+  `schematic.yml`). There's no need for a separate patch for content you're already generating.
+
+[Localization](/kdataforge/features/localization) is the full reference for entry
+forms, culture matching, and source hashes. [Property Types](/kdataforge/features/property-types)
+compares plain and keyed `FText` forms. Use [Patching (`type: cdo`)](/kdataforge/features/patching-cdo)
+for invariant text or properties that `type: localization` cannot reach. The Super Ingot used here
+comes from [Item + Icon + Recipe + Tier-1 Unlock](/kdataforge/tutorials/item-icon-recipe-schematic).

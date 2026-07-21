@@ -1,0 +1,173 @@
+---
+title: 'Type: resource and Resource Nodes'
+description: Generate resource descriptors, understand world Resource Nodes, unlock scanner visibility, and work within the limits of KDataForge actor patches.
+sidebar: { order: 10 }
+---
+
+The `resource` type runs in the `Items` stage at priority `25`, after `item` (`30`) and before
+`building` (`20`). Its entries key is `resources`. The default and required base class is
+`/Script/FactoryGame.FGResourceDescriptor`. Register-only mode (`class:`) is not supported, so
+entries use `id:`. YAML files are scanned once during GameInstance initialization. Restart the
+session after changing them.
+
+The similar names hide four separate systems:
+
+| Concept                    | FactoryGame type                     | What KDataForge does                                                   |
+| -------------------------- | ------------------------------------ | ---------------------------------------------------------------------- |
+| Resource definition        | `UFGResourceDescriptor`              | `type: resource` generates a new descriptor class                      |
+| Resource Node in the world | `AFGResourceNodeBase` and subclasses | A `cdo` actor patch can modify a node class and all matching instances |
+| Scanner visibility         | `UFGUnlockScannableResource`         | A schematic `unlocks:` entry registers descriptor and node-type pairs  |
+| AWESOME Sink value         | `AFGResourceSinkSubsystem` data      | `type: sinkpoints` sets item scores and has no node-placement behavior |
+
+`type: resource` does not spawn, place, move, or remove Resource Node actors. A generated
+descriptor becomes mineable only when a map or another mod assigns it to a compatible node.
+
+## Generate a resource descriptor
+
+`resource` uses the same class-generation mechanism as
+[Items](/kdataforge/features/items), but defaults to `FGResourceDescriptor` and
+rejects parents outside that hierarchy.
+
+```yaml
+# file: super-coolant.resource.yml
+type: resource
+resources:
+  - id: MySuperCoolant
+    parent: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
+    properties:
+      - path: mDisplayName
+        value: Super Coolant
+      - path: mForm
+        value: RF_LIQUID
+      - path: mFluidColor
+        value: { R: 40, G: 200, B: 255, A: 255 }
+```
+
+Parenting from `Desc_Water` inherits its fluid-oriented defaults. The generated class has the
+canonical path `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>` with no `_C` suffix. You can also
+reference it by the short id `MySuperCoolant` when resolution is unambiguous.
+
+`FGResourceDescriptor` adds these reflected defaults on top of `FGItemDescriptor`:
+
+| Property                                                                | Purpose                              |
+| ----------------------------------------------------------------------- | ------------------------------------ |
+| `mDepositMesh`, `mDepositMaterial`                                      | Loose resource-deposit visuals       |
+| `mDecalMaterial`, `mDecalSize`                                          | Ground decal and collision footprint |
+| `mPingColor`, `mCompassTexture`                                         | Scanner and map presentation         |
+| `mCollectSpeedMultiplier`                                               | Manual collection speed multiplier   |
+| `mManualMiningParticle`, `mFactoryMiningParticle`, `mDestroyedParticle` | Mining effects                       |
+| `mManualMiningAudioName`                                                | Manual-mining audio event name       |
+| `mFrackingHighlightParticleSystemTemplate`                              | Resource-well highlight effect       |
+
+Inherited item fields such as `mForm`, display texts, icons, category, stack size, and gameplay
+tags remain available through the same `properties:` grammar.
+
+### Make `mForm` match the use case
+
+`mForm` controls whether belts, pipes, extractors, and recipes accept the resource. Generating a
+liquid descriptor does not create a pipe-compatible producer or a world node. KDataForge validates
+the enum and property types, but it cannot validate the rest of your gameplay chain.
+
+## What Resource Node editing can and cannot do
+
+The built-in `cdo` handler selects classes, standalone asset objects, asset families, or gameplay
+tags. Runtime actor patches then match actors by class. There is no selector for actor transform,
+current resource, purity, node type, or level-instance name.
+
+| Goal                                                     | Current support                                                |
+| -------------------------------------------------------- | -------------------------------------------------------------- |
+| Patch the CDO of one custom Resource Node actor class    | Yes, with `type: cdo`                                          |
+| Apply properties to every instance of that class         | Yes, with `applyToSpawnedActors: true`                         |
+| Include every derived node class                         | Yes, with `applyToSubclasses: true`; this is very broad        |
+| Patch one pre-placed node by map location or object path | No; world actors do not exist during initial target resolution |
+| Select nodes by descriptor, purity, amount, or node type | No; actor patches only filter by class                         |
+| Place, move, clone, or remove world nodes                | No                                                             |
+| Create or wire fracking cores and satellites             | No                                                             |
+
+For a custom mod where every desired node has its own actor class, a class-scoped patch is useful:
+
+```yaml
+type: cdo
+conditions: { hasMod: YourNodeMod }
+patches:
+  - target: /YourNodeMod/World/BP_MyOreNode.BP_MyOreNode_C
+    applyToSpawnedActors: true
+    applyToSubclasses: false
+    properties:
+      - path: mExtractMultiplier
+        value: 2
+      - path: mCanPlaceResourceExtractor
+        value: true
+```
+
+The patch first writes the class default. At world begin play, it also writes the same properties
+to every matching pre-existing actor. Every later matching spawn receives them as well. These
+instance writes do not preserve player-modified or save-restored values.
+
+Targeting `/Script/FactoryGame.FGResourceNode` with `applyToSubclasses: true` would affect nearly
+every ordinary node, including nodes added by other mods. Use that only when the global scope is
+intentional.
+
+### Reflectable fields and runtime caveats
+
+FactoryGame exposes relevant `UPROPERTY` fields including `mResourceClass`,
+`mResourceClassOverride`, `mResourceNodeType`, `mPurity`, `mPurityOverride`, `mAmount`,
+`mResourcesLeft`, `mCanPlaceResourceExtractor`, and `mExtractMultiplier`. Fracking satellites also
+carry an instance-only `mCore` link.
+
+:::caution
+Reflection access does not make every write behaviorally safe. KDataForge writes property storage
+directly. It does not call `SetResourceClassOverride`, `InitResource`, replication notifies, mesh
+refresh functions, or Resource Node Manager rebuilds. Several fields are saved, replicated,
+cached, or initialized during `BeginPlay`. Prefer stable configuration fields on a dedicated
+custom node class, then test descriptor, purity, and amount changes on a server and across save/load.
+:::
+
+## Scanner visibility does not create nodes
+
+Use an instanced `FGUnlockScannableResource` on a schematic to add a descriptor and node-type pair
+to the scanner:
+
+```yaml
+type: schematic
+schematics:
+  - id: Schematic_MyCustomOre
+    unlocks:
+      - class: /Game/FactoryGame/Unlocks/BP_UnlockScannableResource.BP_UnlockScannableResource_C
+        properties:
+          - path: mResourcePairsToAddToScanner
+            value:
+              - ResourceDescriptor: MyCustomOre
+                ResourceNodeType: Node
+```
+
+`ResourceNodeType` accepts `Node`, `FrackingSatellite`, `FrackingCore`, `Geyser`, or `Deposit`.
+This only makes matching existing nodes scannable. It does not place them. See
+[Schematics](/kdataforge/features/schematics#unlocking-resource-scanner-visibility)
+and the [Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes#scanning--world-interaction).
+
+## Advanced Resource Node visual metadata
+
+FactoryGame stores randomized-node mesh overrides in `UFGResourceNodeData`. This
+`UPrimaryDataAsset` contains `mResourceDescriptor` and an `mNodeMeshOverrides` map keyed by
+`ENodeMeshType`: `MT_Node`, `MT_Core`, `MT_Crack`, `MT_Satellite`, and the desert variants.
+
+Existing assets can be edited through `cdo`, and KDataForge can create a `dataasset` instance of
+that class. Override values reference cooked meshes and materials. `type: asset` only creates 2D
+textures. This metadata changes visuals, not world placement, and its startup timing must be tested
+against the Resource Node Manager in the target game build.
+
+## Troubleshooting
+
+- **The descriptor exists but there is nothing to mine:** A descriptor is not a world actor. Place
+  or spawn a compatible node in a map or dedicated mod.
+- **The Object Scanner cannot find it:** Add `FGUnlockScannableResource` with the correct
+  `ResourceNodeType`, and make sure matching nodes exist.
+- **An actor patch changed too many nodes:** Narrow `target:` to a dedicated custom node class and
+  keep `applyToSubclasses: false`.
+- **Descriptor or purity changed but visuals or extraction did not:** The game may already have
+  initialized or cached related state. Direct reflection does not invoke setters or notifications.
+- **Sink points did not help:** [Sink Points](/kdataforge/features/sinkpoints) only
+  control AWESOME Sink scoring. They have no Resource Node or scanner behavior.
+- **Need the resource in a recipe?** `Items` completes before `Recipes`, so reference the short id
+  or `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>` directly. No `include:` is needed across stages.

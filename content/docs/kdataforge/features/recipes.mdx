@@ -1,0 +1,105 @@
+---
+title: 'Type: recipe'
+description: Generating new recipes from YAML, registering existing recipe classes, and how registration into SML's content registry actually happens.
+sidebar: { order: 13 }
+---
+
+The `recipe` type runs in the `Recipes` stage, which comes after the whole `Items` stage. That
+means a recipe can freely reference anything `item`/`resource`/`building`/`unlock` you just
+generated. It loads changes only during session initialization, so a change here needs a restart. Its entries key is
+`recipes`, its default `parent` is `/Script/FactoryGame.FGRecipe`, and its required base class is
+`/Script/FactoryGame.FGRecipe` (or a subclass of it). It is also the first type to support
+register-only mode via `class:`.
+
+`recipe` is the first content-creation type you'll meet that supports **two modes**: generate a
+brand-new recipe class (`id:`), or register an **existing** class you didn't generate (`class:`).
+Both modes end with the recipe queued into SML's `UModContentRegistry` (unless you turn that off).
+
+## Mode 1: generate a new recipe
+
+A generated recipe is just a subclass of `FGRecipe` whose CDO you set up entirely through
+`properties:`. `mIngredients` and `mProduct` describe the item/amount pairs consumed and produced,
+`mManufactoringDuration` is the craft time in seconds, and `mProducedIn` lists which buildable(s)
+can craft it. `super-ingot.recipe.yml` puts all of that together for a recipe that turns 2 iron
+ingots into 1 of a generated item, craftable in a Smelter Mk.1:
+
+```yaml
+# file: super-ingot.recipe.yml
+type: recipe
+recipes:
+  - id: Recipe_MySuperIngot
+    properties:
+      - path: mDisplayName
+        value: Super Ingot
+      - path: mIngredients
+        value:
+          - {
+              ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C,
+              Amount: 2,
+            }
+      - path: mProduct
+        value:
+          - { ItemClass: /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot, Amount: 1 }
+      - path: mManufactoringDuration
+        value: 4.0
+      - path: mProducedIn
+        value:
+          - /Game/FactoryGame/Buildable/Factory/SmelterMk1/Build_SmelterMk1.Build_SmelterMk1_C
+```
+
+No `parent:` is needed here, since it defaults to `FGRecipe`. No `include:` is needed for the
+`Gen_MyPack_MySuperIngot` product reference either, because `Items` has already fully run by the
+time `Recipes` starts.
+
+## Mode 2: register an existing class, no generation
+
+Sometimes you, or another mod, already has a compiled or Blueprint recipe class sitting unused.
+Maybe it's a hidden recipe another mod ships but never registers, or one you built yourself in the
+editor as a Blueprint. Swap `id:` for `class:` and KDataForge registers it without generating
+anything:
+
+```yaml
+type: recipe
+recipes:
+  - class: /Game/SomeMod/Recipes/Recipe_Hidden.Recipe_Hidden_C # register, don't generate
+```
+
+`properties:` still works in this mode if you want to tweak the existing class's CDO at the same
+time you register it.
+
+## `register:` and auto-propagation
+
+Every recipe entry, generated or register-only, accepts a `register:` flag. It decides whether the
+class actually gets queued for `UModContentRegistry` registration at all, as opposed to merely
+existing so other YAML can point at it:
+
+```yaml
+type: recipe
+recipes:
+  - id: Recipe_MySuperIngot
+    register: true # default — omit unless you specifically want to skip registration
+    properties: [...]
+```
+
+`register: true` is the default, so the recipe is queued unless you set it to `false` explicitly.
+SML's own auto-propagation then takes over: registering a schematic that unlocks this recipe also
+registers the recipe, and the recipe's ingredient and product items, automatically. You don't have
+to register every layer by hand, just the top of the chain you actually care about, which is
+usually the schematic.
+
+Set `register: false` if you want the class to exist, so other YAML can reference it, but not be
+independently discoverable. This is useful for an internal helper recipe that only ever appears
+nested inside something else.
+
+## Troubleshooting
+
+- **"My new item has no recipe in a fresh save"**: check that _something_ registers the recipe.
+  Either `register: true` here (the default), or a schematic that unlocks it, whose own
+  registration auto-propagates down to this recipe, will do it. A recipe that's generated but never
+  registered anywhere simply never reaches `UModContentRegistry`, and the game won't know it
+  exists.
+- **"class: gave me an error about register-only mode"**: `class:` (register-only) is only valid
+  for `recipe`, `schematic`, and `research` documents. `item`/`resource`/`building`/`unlock` can
+  only generate (`id:`). See [Type: item](/kdataforge/features/items) for why.
+- A full pack tying a generated item + this recipe + a schematic + translations together lives in
+  [End-to-End Pack](/kdataforge/examples/end-to-end-pack).

@@ -1,0 +1,294 @@
+---
+title: Operations
+description: What each of the 22 property operations does, which property kinds support it, and one working example apiece.
+sidebar: { order: 3 }
+---
+
+Every entry in a `type: cdo` patch's `properties:` list names a target `path` and an operation
+(`op:`) that decides how the entry's `value` (or its other arguments) combines with whatever is
+currently stored at that path. If you leave `op:` out, it defaults to `set`, a plain overwrite.
+That is why most of the simple examples elsewhere in these docs never mention an op at all.
+
+This page walks through all 22 operations the engine recognizes. They are grouped by the kind of
+property they act on: numeric math and clamping, container mutation for arrays, sets, maps, and
+tag containers, string concatenation, array reordering and deduplication, and cross-property copy
+or move.
+
+See [Patching (type: cdo)](/kdataforge/features/patching-cdo) for the full patch
+structure these entries live inside. See [Property Types](/kdataforge/features/property-types)
+for what each underlying property looks like in YAML.
+
+## set (default) — everything
+
+`set` overwrites the property outright. It works on any property type, which is why it can be
+left implicit. On `mDisplayName` (an `FString`), setting a value simply replaces the string:
+
+```yaml
+- path: mDisplayName
+  value: 'Reinforced Iron Ingot' # op: set is implied
+```
+
+## add / subtract — numeric
+
+`add` and `subtract` do in-place arithmetic on a plain numeric property. They add or subtract
+`value` from whatever is currently stored. Both reject enum-backed integers (see the callout
+below), since there is no meaningful "current + 1" for an enum ordinal:
+
+```yaml
+- path: mTechTier
+  op: add
+  value: 1
+- path: mTimeToComplete
+  op: subtract
+  value: 30
+```
+
+## multiply / divide — numeric
+
+`multiply` and `divide` scale a numeric property by `value`. Setting `mManufactoringDuration` to a
+fraction of itself halves the crafting time, while dividing `mEnergyValue` doubles the effective
+fuel efficiency. Dividing by `0` is rejected outright, rather than producing infinity or NaN:
+
+```yaml
+- path: mManufactoringDuration
+  op: multiply
+  value: 0.5
+- path: mEnergyValue
+  op: divide
+  value: 2
+```
+
+## min / max — numeric (result = min/max of current and value)
+
+`min` enforces a ceiling: the property is replaced with whichever is smaller, the current value or
+`value`. `max` enforces a floor, replacing the property with whichever is larger. Neither can push
+the property past `value` in the opposite direction, which makes them useful for "never exceed" or
+"never fall below" balancing passes across many objects at once:
+
+```yaml
+- path: mResourceSinkPoints
+  op: min
+  value: 100 # cap at 100
+- path: mResourceSinkPoints
+  op: max
+  value: 50 # raise to at least 50
+```
+
+:::caution
+**Enum-backed properties don't count as numeric.** `mStackSize` on `FGItemDescriptor` is an
+`EStackSize` **enum** (`SS_ONE`…`SS_HUGE`/`SS_FLUID`), not a plain int `min`/`max`/`clamp`/
+`add`/`subtract`/`multiply`/`divide` are all rejected on it (`op not supported`); only `set` with
+an enum value name works. See
+[Property Types → Enums](/kdataforge/features/property-types#enum-typed-enum-class-and-tenumasbyte).
+:::
+
+## clamp — numeric
+
+`clamp` is the two-sided version of min/max: instead of a single `value`, it takes `min` and `max`
+keys and pins the current value inside that range in one step:
+
+```yaml
+- path: mMenuPriority
+  op: clamp
+  min: 0
+  max: 999
+```
+
+## append — array / set / map / string / tag container
+
+`append` adds to the end of a container, or concatenates onto a string. It behaves differently
+depending on the target property's kind.
+
+For arrays and sets, `value` can be a single item or a sequence to add several items at once. For
+strings, it concatenates text. For tag containers, it adds tags, and for maps it merges the given
+key/value pairs into the existing map:
+
+```yaml
+- path: mIngredients # array: adds element(s) at the end
+  op: append
+  value:
+    ItemClass: /Game/FactoryGame/Resource/RawResources/Coal/Desc_Coal.Desc_Coal_C
+    Amount: 1
+- path: mDisplayName # string: concatenates
+  op: append
+  value: ' (rebalanced)'
+- path: mGameplayTags # tag container: adds tags
+  op: append
+  value: [MyPack.Rebalanced]
+- path: mSomeMap # map: merges entries
+  op: append
+  value: { Iron: 10 }
+```
+
+:::note
+String operations on `FText` properties (like `mDisplayName` when it is a localized text field)
+produce plain culture-invariant text the original localization key/namespace is dropped, so an
+`append`/`prepend`/`clear` on a translated string stops it from tracking further translation
+updates. See [Localization](/kdataforge/features/localization) if you need the
+result to stay localizable instead.
+:::
+
+## prepend — array / string (tag containers: same as append)
+
+`prepend` mirrors `append`, but it adds at the front instead of the end for arrays, and inserts
+before the existing text for strings. Tag containers treat it identically to `append`, since a tag
+container has no ordering. Maps do not support `prepend` at all: only `append` merges into a map.
+
+```yaml
+- path: mDisplayName
+  op: prepend
+  value: '[MP] '
+```
+
+## insert — array
+
+`insert` places one or more elements at a specific `index` inside an array, rather than always at
+the end, and shifts later elements back. An out-of-range index fails with an error, instead of
+clamping to the array's bounds:
+
+```yaml
+- path: mIngredients
+  op: insert
+  index: 1
+  value:
+    {
+      ItemClass: /Game/FactoryGame/Resource/RawResources/OreCopper/Desc_OreCopper.Desc_OreCopper_C,
+      Amount: 1,
+    }
+```
+
+## remove — array (by value) / set (by value) / map (by key) / tag container
+
+`remove` deletes by content rather than by position. On arrays and sets, it deletes every element
+that matches `value` exactly. An array remove that matches nothing fails, rather than silently
+doing nothing. On maps, `value` is the _key_ to delete, and on tag containers, `value` is the tag
+(or list of tags) to remove:
+
+```yaml
+- path: mIngredients # removes every element equal to the value
+  op: remove
+  value:
+    {
+      ItemClass: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C,
+      Amount: 1,
+    }
+- path: mSomeMap # map: value is the key
+  op: remove
+  value: Iron
+- path: mGameplayTags
+  op: remove
+  value: KMods.WikiExclude
+```
+
+## remove_at — array
+
+`remove_at` deletes the element at a specific position instead of matching by value. It is the
+right tool when you know the slot but not, or don't want to spell out, the exact contents:
+
+```yaml
+- path: mProduct
+  op: remove_at
+  index: 1
+```
+
+## clear — array / set / map / string / tag container
+
+`clear` empties a container-shaped property entirely: arrays, sets, maps, and tag containers all
+lose every element. Strings are reset to empty, rather than to their class-default text:
+
+```yaml
+- path: mSubCategories
+  op: clear
+```
+
+## swap — array
+
+`swap` exchanges the elements at two positions, `index` and `with`, in an array without touching
+anything else in the list. It is useful for reordering a couple of entries without rewriting the
+whole array:
+
+```yaml
+- path: mIngredients
+  op: swap
+  index: 0
+  with: 1
+```
+
+## replace — array
+
+`replace` overwrites the element at `index` with a new `value`, keeping every other element and
+the array's length unchanged:
+
+```yaml
+- path: mProduct
+  op: replace
+  index: 0
+  value:
+    {
+      ItemClass: /Game/FactoryGame/Resource/Parts/SteelIngot/Desc_SteelIngot.Desc_SteelIngot_C,
+      Amount: 2,
+    }
+```
+
+## duplicate — array (copies element to the end)
+
+`duplicate` copies the element at `index` and appends the copy to the end of the same array. It is
+handy for cloning an existing ingredient or product entry as a starting point, before tweaking it
+with a follow-up `replace`:
+
+```yaml
+- path: mProduct
+  op: duplicate
+  index: 0
+```
+
+## sort / reverse — array
+
+`sort` reorders an array in ascending order. Numeric and string inner types sort by their actual
+value. Anything else, such as structs or object references, sorts by its exported text form.
+`reverse` simply flips the current order of every element:
+
+```yaml
+- path: mRelevantEvents # numeric/string inner types sort by value; others by text form
+  op: sort
+- path: mSubCategories
+  op: reverse
+```
+
+## unique — array (removes later duplicates; sets: no-op)
+
+`unique` walks an array and removes any element that is byte-identical to an earlier one, keeping
+the first occurrence of each value. Running it on a set is always a no-op, since a set is already
+guaranteed to contain no duplicates:
+
+```yaml
+- path: mSubCategories
+  op: unique
+```
+
+## copy — any property (from another path on the same object)
+
+`copy` reads the value at another property path (`from`) on the same object and writes it into the
+target property. When source and destination are exactly the same property type, it copies the raw
+value directly. Otherwise, it round-trips through each property's text representation.
+
+This means copying between compatible but different types, for example a plain string into a name,
+can still work, as long as the text parses back cleanly for the destination type:
+
+```yaml
+- path: mAbbreviatedDisplayName
+  op: copy
+  from: mDisplayName
+```
+
+## move — copy, then reset the source to its default
+
+`move` performs the exact same copy as `copy`, then additionally clears the source property back
+to its default value. This makes it the right choice when a value should live at the new path
+_instead of_ the old one, rather than in both places:
+
+```yaml
+- path: mDescription
+  op: move
+  from: mScannerDisplayText
+```

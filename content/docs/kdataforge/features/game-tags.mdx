@@ -1,0 +1,124 @@
+---
+title: 'Type: gametag'
+description: Registering new gameplay tags at runtime — syntax, implementation, and ordering guarantees.
+sidebar: { order: 7 }
+---
+
+A `gametag` document runs in the `GameTags` stage, which always runs **first**, before every
+other document type. The entries key for this document type is `tags`, given as a sequence.
+Changes are loaded on the next session start.
+
+## Minimal example
+
+A `gametag` document is a flat list of tag names to register. You can write each entry either as a
+bare string or as a map with an optional `comment:` for documentation purposes:
+
+```yaml
+# file: tags.gametag.yml
+type: gametag
+tags:
+  - tag: MyOverhaul.Machines.Tier2 # map form — with an optional comment
+    comment: Marker for tier-2 machine rebalancing
+  - MyOverhaul.Simple # scalar shorthand, no comment
+```
+
+Each entry is either a plain tag-name string, or a map with `tag:` (required) and `comment:`
+(optional). The comment is purely documentation, shown in the tag picker/editor. The tag name
+itself must be a valid dot-separated gameplay tag string (`Namespace.Category.Leaf...`). Invalid
+strings are rejected at validation time, with the engine's own suggested fix included.
+
+## How registration actually works
+
+Registering a tag at runtime normally isn't possible: the engine's gameplay tag tree is built once
+at boot and isn't designed to be extended afterward. KDataForge works around this by adding the
+tag directly to the tag settings in memory and forcing a tree rebuild, entirely without touching
+any config file on disk.
+
+In practice, this gives you three consequences to keep in mind:
+
+- Tags exist only for the running session. They are **not** written to disk anywhere. Remove the
+  YAML and the tag stops being registered on the _next_ boot. It is not retroactively unregistered
+  from a session that already rebuilt the tree with it present.
+- Registration is idempotent: a tag already in `GameplayTagList` is skipped.
+- There is no tombstone or removal mechanism, unlike generated classes. Gameplay tags are cheap and
+  additive, and the engine has no supported "unregister a tag" operation.
+
+## Ordering guarantee: use a tag the moment you register it
+
+The **GameTags stage always runs before every other stage**. This means a tag registered in one
+file is immediately available to `matchTag:` (and to `mGameplayTags` ops) in **any** `cdo` document
+in the same pack. No `include:` is needed for the gametag file itself. First, put the tag on some
+content:
+
+```yaml
+# file: tag-recipes.cdo.yml — put the tag ON some content
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      - path: mGameplayTags
+        op: append
+        value: [MyOverhaul.Machines.Tier2]
+```
+
+Then a second `cdo` document can select everything carrying that tag and patch it in bulk:
+
+```yaml
+# file: buff-tagged.cdo.yml — match everything carrying the tag
+type: cdo
+include:
+  - tag-recipes.cdo.yml # both files are in the CDOChanges stage — order them explicitly
+patches:
+  - matchTag: MyOverhaul.Machines.Tier2
+    ofClass: /Script/FactoryGame.FGRecipe
+    tagProperty: mGameplayTags
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.8
+```
+
+`tag-recipes.cdo.yml` and `buff-tagged.cdo.yml` are both `cdo` documents, meaning both are in the
+`CDOChanges` stage. That is why _they_ need `include:` ordering between each other. The `gametag`
+document itself never needs it, since `GameTags` runs before `CDOChanges` unconditionally.
+
+## Tag container ops on `mGameplayTags`
+
+Once a tag exists, whether it is yours or a native `KMods.*` one (see [Data Assets](/kdataforge/features/data-assets) for the
+full native list), every tag-container op works on any `FGameplayTagContainer` property. `append`
+adds tags without disturbing existing ones. `remove` takes a single tag back out. `clear` empties
+the container entirely, and the default `set` op replaces the whole container:
+
+```yaml
+- path: mGameplayTags # append — add tags (sequence or scalar)
+  op: append
+  value: [MyOverhaul.Simple, KMods.WikiExclude]
+- path: mGameplayTags # remove — take one tag out
+  op: remove
+  value: KMods.WikiExclude
+- path: mGameplayTags # clear — empty the container
+  op: clear
+- path: mGameplayTags # set (default) — replace ALL tags
+  value:
+    - MyOverhaul.Machines.Tier2
+```
+
+## Troubleshooting
+
+- **"Invalid tag" at load time**: the error message includes the engine's own suggested fix, since
+  this is usually a malformed dot-separated string with a stray space or an extra dot. Fix the
+  string in your YAML, not the tag itself. There's nothing to "clean up" on the engine side.
+- **A tag works this session but the pack is gone and it's still there**: this is expected, since
+  nothing is unregistered mid-session, and gameplay tags have no supported "remove" path. It will
+  stop appearing on the _next_ full restart once the YAML is gone.
+- **`matchTag:` finds nothing**: double check that `ofClass:` is actually the class (or an ancestor
+  of the class) the tag was applied to. Also check that the gametag document registering the tag is
+  a `.gametag.yml` file, not accidentally named `.cdo.yml`, since KDataForge infers `type:` from the
+  filename when `type:` itself is omitted.
+
+## Reference
+
+Registering your own tags, and using them the same pack over, is also part of the end-to-end
+walkthrough in [End-to-End Pack](/kdataforge/examples/end-to-end-pack). Bulk-editing content by tag is covered
+in [Targeting → matchTag](/kdataforge/features/targeting#matchtag--ofclass--select-by-gameplay-tag) and
+[Balancing](/kdataforge/examples/balancing).

@@ -1,0 +1,20 @@
+---
+title: Internals & Architecture
+description: Runtime pipeline, C++ module organization, persistence, and contributor-facing design contracts.
+sidebar:
+  order: 1
+---
+
+This section is background reading, not a prerequisite. You can write a YAML pack, load it, and
+balance a recipe without knowing any of it. It's here for the curious. It's also here for anyone
+extending KDataForge itself with a new handler, who wants to understand the data flow, the
+subsystems, and the module boundaries before touching code.
+
+- [Architecture](/kdataforge/background/architecture) walks through the full pipeline.
+  It covers the filesystem scan, YAML parsing, the fixed stage order, the reflection engine that
+  turns a property path into a live edit, savegame persistence for generated content, and
+  the current multiplayer boundaries.
+- [Module Structure](/kdataforge/background/module-structure) covers how the plugin's
+  four runtime modules (`KDataForgeApi`, `KDataForgeYaml`, `KDataForge`, `KDataForgeEditorUI`) are
+  laid out on disk. It explains why they're split that way, and the dependency rules that keep the
+  public API tiny and the dedicated-server build lean.

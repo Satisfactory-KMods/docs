@@ -1,0 +1,363 @@
+---
+title: Balancing
+description: Editing examples for base-game balance — recipes, items, resources, equipment, consumables, schematics, research, categories, belts, and bulk tag edits.
+sidebar: { order: 2 }
+---
+
+Everything below works through `type: cdo` documents. Every reflected property of every
+FactoryGame class is addressable this way. Creating _new_ content has its own page per type:
+[Item](/kdataforge/features/items), [Recipe](/kdataforge/features/recipes),
+[Schematic](/kdataforge/features/schematics), and friends. Start at
+[End-to-End Pack](/kdataforge/examples/end-to-end-pack) for the tied-together version.
+Building and machine tuning lives in [Power & Machines](/kdataforge/examples/power-and-machines).
+
+> ℹ️ **Verify property names and asset paths against your game version.** The examples on this page
+> use real FactoryGame properties and content paths, but game updates occasionally rename or move
+> them. If a `target:` path or `path:` doesn't resolve, nothing breaks, the load report tells you
+> exactly which patch failed (`/kdf report`, see
+> [Getting Started → Troubleshooting](/kdataforge/getting-started)). Confirm
+> the effect in-game after every patch.
+
+## Recipes (`UFGRecipe`)
+
+Every craftable recipe in the game, whether base, alternate, or buildable, is backed by a `UFGRecipe`
+class default object. This means rebalancing crafting time, ingredient ratios, or output without
+replacing the recipe outright is just a `cdo` patch against that class. The properties worth
+knowing are `mDisplayName`, `mDisplayNameOverride`, `mIngredients`, `mProduct`,
+`mManufactoringDuration`, `mManualManufacturingMultiplier`, `mProducedIn`, `mRelevantEvents`,
+`mVariablePowerConsumptionConstant`, `mVariablePowerConsumptionFactor`, and `mGameplayTags`.
+
+The patch below halves iron ingot smelting time, doubles the ore cost, adds a bonus iron plate to
+the output, and unlocks the recipe in the Manufacturer as well as the Smelter:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.5
+      - path: mIngredients[0].Amount
+        value: 2
+      - path: mProduct
+        op: append
+        value:
+          {
+            ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C,
+            Amount: 1,
+          }
+      - path: mProducedIn
+        op: append
+        value: /Game/FactoryGame/Buildable/Factory/ManufacturerMk1/Build_ManufacturerMk1.Build_ManufacturerMk1_C
+```
+
+## Items (`UFGItemDescriptor`)
+
+`UFGItemDescriptor` is the base class behind every stackable item in the game. It drives how
+the item stacks, what it burns for, how much radiation it emits, where it sorts in the build
+menu, and its display text. Balancing an item's inventory footprint or fuel value means patching
+one of `mDisplayName`, `mDescription`, `mAbbreviatedDisplayName`, `mStackSize`, `mForm`,
+`mEnergyValue`, `mRadioactiveDecay`, `mCanBeDiscarded`, `mRememberPickUp`, `mResourceSinkPoints`,
+`mSmallIcon`, `mPersistentBigIcon`, `mCategory`, `mSubCategories`, `mMenuPriority`,
+`mFluidColor`, `mGasColor`, `mIsAlienItem`, or `mGameplayTags`.
+
+The example below bumps iron ingots to the largest stack bucket, rewrites its tooltip description,
+and doubles the AWESOME Sink points earned for scrapping it:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      - path: mStackSize
+        value: SS_HUGE # EStackSize enum: SS_ONE/SS_SMALL/SS_MEDIUM/SS_BIG/SS_HUGE/SS_FLUID
+      - path: mDescription
+        value:
+          key: IronIngot_Desc
+          ns: MyPack
+          source: Now stacks higher.
+      - path: mResourceSinkPoints
+        op: multiply
+        value: 2
+```
+
+> ⚠️ **`mStackSize` is an enum, not a count.** `EStackSize` has exactly six buckets
+> (`SS_ONE`…`SS_HUGE`, plus `SS_FLUID`). It isn't "items per stack" as a number, so always set it by
+> name. It's also **cached by the engine**: writing it on the CDO alone would change nothing
+> in-game (KBFL ships a dedicated `UKBFLCDOItemStackSize` helper for exactly this reason).
+> KDataForge handles the cache automatically. Any op that writes `mStackSize` on an
+> `FGItemDescriptor`-derived target also resets the descriptor's cached stack size
+> (`mCachedStackSize`), so the example above works out of the box. Two things to know: inventories
+> that **already contain** the item may need the item re-added (or a game reload) before existing
+> slots reflect the new limit. Also, if you use KBFL's own CDO assets for stack sizes, don't patch
+> the same descriptor from both sides. See
+> [YAML Schema → Special-cased properties](/kdataforge/reference/yaml-schema#special-cased-properties).
+
+## Resources (`UFGResourceDescriptor`) & fluids/gases
+
+Raw resources, fluids, and gases extend the same `UFGItemDescriptor` chain but add a handful of
+fields that only make sense for non-solid items: `mForm` selects solid/liquid/gas, and
+`mFluidColor`/`mGasColor` drive the color used for pipe contents, tank fill levels, and the
+resource icon in the UI. Recoloring a fluid or changing its form uses those fields directly:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
+    properties:
+      - path: mFluidColor
+        value: { R: 20, G: 120, B: 255, A: 255 }
+      - path: mForm
+        value: RF_LIQUID
+```
+
+## Equipment & consumables (`UFGEquipmentDescriptor`, `UFGConsumableDescriptor`)
+
+Descriptor subclasses inherit every `UFGItemDescriptor` property. Equipment adds, for example,
+`mEquipmentClass` (soft class), while consumables add health and consume properties.
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Resource/Equipment/Chainsaw/Desc_Chainsaw.Desc_Chainsaw_C
+    properties:
+      - path: mEnergyValue
+        value: 0
+```
+
+## Removing radioactivity
+
+`mRadioactiveDecay` on the item descriptor drives the radiation emitted by held or stored items.
+`set` it to `0` on the nuclear items:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Resource/RawResources/OreUranium/Desc_OreUranium.Desc_OreUranium_C
+    properties:
+      - path: mRadioactiveDecay
+        value: 0
+  - target: /Game/FactoryGame/Resource/Parts/NuclearWaste/Desc_NuclearWaste.Desc_NuclearWaste_C
+    properties:
+      - path: mRadioactiveDecay
+        value: 0
+```
+
+Repeat the patch entry for every radioactive descriptor you want to neutralise (uranium fuel rods,
+plutonium parts, …).
+
+## Conveyor belt speed: ALL belts at once
+
+Every belt mark derives from the native `AFGBuildableConveyorBelt`, so one subclass-expanded patch
+covers Mk.1 through Mk.6 (and modded belts!):
+
+```yaml
+type: cdo
+patches:
+  - target: /Script/FactoryGame.FGBuildableConveyorBelt
+    applyToSubclasses: true # Mk.1–Mk.6 + every modded belt class
+    properties:
+      - path: mSpeed
+        op: multiply
+        value: 2
+```
+
+> ℹ️ `mSpeed` is **not** items/min. It is stored in the engine's internal unit (cm/s scaled by 2),
+> so a Mk.1 belt's "60 items/min" is not `60` here. Prefer relative ops (`multiply`) over absolute
+> `set` values, and verify the resulting throughput in-game.
+
+## Schematics (`UFGSchematic`)
+
+`UFGSchematic` backs every unlockable in the game: HUB milestones, MAM research nodes, and
+AWESOME Shop entries alike. It's the single class to patch whether you're rebalancing
+progression cost, research time, or which tier something unlocks at. The properties in play are
+`mType`, `mDisplayName`, `mDescription`, `mSchematicCategory`, `mSubCategories`,
+`mMenuPriority`, `mTechTier`, `mCost`, `mTimeToComplete`, `mUnlocks`, `mSchematicIcon`,
+`mSmallSchematicIcon`, `mSchematicDependencies`, `mHiddenUntilDependenciesMet`, and `mRelevantEvents`.
+
+The patch below shrinks a tutorial schematic's completion time to a tenth, clears its cost array
+so it's free, and clamps its tech tier into the valid range from `0` to `9`:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Schematics/Tutorial/Schematic_Tutorial1.Schematic_Tutorial1_C
+    properties:
+      - path: mTimeToComplete
+        op: multiply
+        value: 0.1
+      - path: mCost
+        op: clear # free!
+      - path: mTechTier
+        op: clamp
+        min: 0
+        max: 9
+```
+
+## Making a milestone free
+
+Same mechanism, applied to a HUB milestone: `clear` the cost array and `set` the cooldown to
+(nearly) nothing:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C
+    properties:
+      - path: mCost
+        op: clear # no item cost
+      - path: mTimeToComplete
+        value: 1 # 1-second freighter turnaround
+```
+
+## Research / M.A.M. (`UFGResearchTree`)
+
+M.A.M. research trees are their own class, `UFGResearchTree`, separate from the schematic nodes
+they unlock. This class supplies the tree's own display name and grouping in the M.A.M. menu.
+Renaming a tree, for a total-conversion pack or just to fix a typo, is a one-line patch against
+that display name:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Schematics/Research/Mycelia_RS/ResearchTree_Mycelia.ResearchTree_Mycelia_C
+    properties:
+      - path: mDisplayName
+        value: 'Mycelia (Rebalanced)'
+```
+
+## Categories (`UFGItemCategory`, `UFGSchematicCategory`)
+
+Categories are the group headers shown above rows of items in the inventory and build menus, and
+above schematic groups in the M.A.M. and AWESOME Shop. They hold nothing but display metadata, so
+renaming one is the same `mDisplayName` patch as any other descriptor. Just target the category
+asset instead of an item or schematic:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Resource/ItemCategories/Cat_Ingots.Cat_Ingots_C
+    properties:
+      - path: mDisplayName
+        value: 'Metals'
+```
+
+## Vehicles (`AFGWheeledVehicle`)
+
+`UFGVehicleDescriptor` (the buildable-menu entry) only points at the actual vehicle class, the
+tunable stats live on `AFGWheeledVehicle` itself, same as any other actor CDO:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Buildable/Vehicle/Tractor/BP_Tractor.BP_Tractor_C
+    properties:
+      - path: mManualFuelConsumption
+        op: multiply
+        value: 0.75 # 25% less fuel while driven manually
+      - path: mAutopilotFuelConsumption
+        op: multiply
+        value: 0.75
+      - path: mInventorySize
+        value: 12
+```
+
+`applyToSubclasses: true` on `/Script/FactoryGame.FGWheeledVehicle` tunes every vehicle (Tractor,
+Truck, Explorer, Cyber Wagon, and modded vehicles) in one patch, same as the belt-speed example
+above.
+
+## Trains (`AFGLocomotive`)
+
+The locomotive's power draw is an `FFloatInterval` (idle/full-throttle range), not a flat number:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Buildable/Vehicle/Train/Locomotive/BP_Locomotive.BP_Locomotive_C
+    properties:
+      - path: mPowerConsumption
+        value: { Min: 5, Max: 80 } # MW, vanilla is roughly { Min: 15, Max: 110 }
+```
+
+There's no separate top-level "max speed" stat on the locomotive to patch, speed on a given track
+segment is governed by curvature/signals, not a flat per-locomotive cap.
+
+## Creatures (`AFGCreature`, `AFGCreatureDescriptor`)
+
+Creature identity/UI lives on the lightweight `UFGCreatureDescriptor` (mostly just a pointer at the
+creature class plus arachnophobia-mode icons); combat/movement stats live on `AFGCreature` itself
+and its movement data, reflectable the same way. Move speed is a lookup table
+(`mMoveSpeedData: TArray<FMoveSpeedPair>`, one entry per `EMoveSpeed`, `MS_Walk`/`MS_Run`/
+`MS_Sprint`), so target the entry by index rather than a single flat property:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Character/Creature/Stinger/Char_Stinger.Char_Stinger_C
+    properties:
+      - path: mMoveSpeedData[2].Speed # index 2 = MS_Sprint in the base game's authored order
+        op: multiply
+        value: 0.75 # 25% slower at a sprint
+```
+
+> ℹ️ Array index isn't guaranteed by the enum value, confirm which index holds which
+> `MoveSpeedType` for your target creature (export it from the in-game editor, or check
+> `/kdf report` after a dry patch) rather than assuming index order matches `EMoveSpeed`'s
+> declaration order.
+
+> ⚠️ **Spawner density fields are per-instance, not a class default.** `AFGCreatureSpawner`
+> (`mNumberOfCreatures`, `mCanSpawnDuringDay`/`mCanSpawnDuringNight`, `mRespawnTimeIndays`) controls
+> _how many_ creatures a given spawner produces, but every spawner is a **pre-placed level actor**,
+> its property values are baked into the map/save data at placement time, the same way an
+> already-built building keeps its saved values after a CDO edit (see
+> [Power & Machines → Runtime actor patches](/kdataforge/examples/power-and-machines#runtime-actor-patches-values-that-savesarchetypes-would-override)).
+> A `cdo` patch to `AFGCreatureSpawner` changes the class **default**, which only affects spawners
+> that don't already have their own saved override, in practice, treat this as unverified until
+> you've confirmed it in-game on your target save, and prefer patching the creature class itself
+> (as above) for stats that are meant to apply uniformly.
+
+## Bulk edits with the tag matcher
+
+Patching one target at a time doesn't scale once you want "every alternate recipe" or "every
+Tier 3+ schematic" to shift together. `matchTag` (with a required `ofClass` scope) finds every
+CDO or asset of that class, including subclasses, that carries the given gameplay tag, then applies
+the same ops to all of them in one patch entry. The tag container property is auto-detected, but
+it can be pinned explicitly with `tagProperty` when a class exposes more than one.
+
+The example below speeds up every recipe carrying the `KMods.AlternateRecipe` tag by 20%:
+
+```yaml
+type: cdo
+patches:
+  - matchTag: KMods.AlternateRecipe # every recipe carrying this tag …
+    ofClass: /Script/FactoryGame.FGRecipe
+    tagProperty: mGameplayTags
+    properties:
+      - path: mManufactoringDuration # … gets 20% faster
+        op: multiply
+        value: 0.8
+```
+
+## Buffing all alternate recipes (KAPI tags)
+
+`KMods.AlternateRecipe` is a KAPI-registered native tag, so gate the document behind `hasMod`.
+Without KAPI, the tag does not exist and the document is skipped with an Info diagnostic:
+
+```yaml
+type: cdo
+conditions: { hasMod: KAPI }
+patches:
+  - matchTag: KMods.AlternateRecipe
+    ofClass: /Script/FactoryGame.FGRecipe
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.75 # all alternates 25% faster
+      - path: mVariablePowerConsumptionFactor
+        op: multiply
+        value: 0.9
+```
+
+Registering and matching your **own** tags works the same way. See
+[Game Tags](/kdataforge/features/game-tags).

@@ -1,0 +1,207 @@
+---
+title: "Debugging a Pack That Won't Apply"
+description: An ordered, top-to-bottom checklist for "my YAML file doesn't seem to be doing anything" — six checkpoints from file discovery to session initialization, each verified against the actual loader source.
+sidebar:
+  order: 8
+---
+
+Every other page in [Features](/kdataforge/features) has its own scattered "Troubleshooting"
+section for symptoms specific to that document type. This page is different. It's the one ordered
+sequence you follow **top to bottom** the moment something you wrote just isn't happening and you
+don't yet know why. Each step below rules out exactly one stage of the pipeline before you move to
+the next, so don't skip ahead.
+
+The six steps mirror the real pipeline, in the real order it runs
+(`Source/KDataForge/Private/Subsystems/KDFSubsystem.cpp`): scan → parse/type-detect → conditions →
+validate → apply → restart scope when testing YAML changes.
+
+## Step 1: is the file even being scanned?
+
+KDataForge starts at the Unreal project root, which is `FactoryGame/` in a packaged game, and walks
+up to **6 levels deep**. A directory becomes a pack root when it is named `DataForge`, uses the
+legacy name `data-editor`, or directly contains `pack.yml`. Names are case-insensitive. While
+walking, the scanner prunes `Content`, `Saved`, `Intermediate`, `Binaries`, `DerivedDataCache`,
+`Plugins`, `Source`, and `Config`, so a root nested inside one of those directories is never found.
+
+Everything below a detected root is scanned for `*.yml` and `*.yaml`. The one exception is
+`pack.yml`, which is read separately as the manifest. Roots may nest; each file belongs to its
+deepest enclosing root, never both the child and parent pack.
+
+Run `/kdf report`. The first line is always:
+
+```
+KDataForge: N pack(s), N document(s) applied, N op(s), N actor patch(es), N error(s), N warning(s)
+```
+
+- **If the pack count didn't change after adding your folder**, it wasn't found. Check the exact
+  root marker (`DataForge`, `data-editor`, or a direct `pack.yml`), its depth from the project root,
+  and that no parent directory in the path matches the pruned list above.
+- **A pack directory that resolves but has `enabled: false` in `pack.yml`** is excluded from the
+  pack count entirely. It's never added to the pack list, and it produces only an Info-level "Pack
+  '...' is disabled, skipped" diagnostic. See [Step 3](#step-3-did-conditions-pass) for why that
+  won't show up in the report text either. A disabled pack therefore looks identical, from the
+  report's perspective, to a pack that was never found at all.
+- **Two packs resolving to the same `ref`**: the second directory is skipped entirely with a
+  Warning, "Duplicate pack ref '...', directory skipped." This _is_ visible in `/kdf report`.
+
+If your pack doesn't even move the pack/document counts, nothing past this point matters yet.
+Fix the location first.
+
+## Step 2: did the root type resolve?
+
+First confirm the file parsed. Malformed YAML is an `Error`; that file is skipped, while every
+other file continues through the load. Fix the `YAML parse failed` diagnostic before checking its
+root type.
+
+A document's type comes from either an explicit `type:` key or the `<name>.<type>.yml` filename
+convention (e.g. `super-ingot.item.yml` implies `type: item`). There are two distinct ways this can
+go wrong, and they look different in the report.
+
+**No type could be determined at all** happens when there's no `type:` key and the filename doesn't
+match the convention either. This produces one Warning **per offending file**, from `ScanAndParse`:
+
+```
+[Warning] my-pack/mystery-item.yml: No 'type:' key and no '<name>.<type>.yml' filename convention — document skipped
+```
+
+**A type was determined, but no handler owns it** happens with a typo like `type: reciept`, a
+`<name>.reciept.yml` filename, or a type that belongs to a mod you don't have loaded. This warns
+only **once per distinct type string across the entire load**, not once per file:
+
+```
+[Warning] my-pack/typo.reciept.yml: No handler registered for document type 'reciept' (planned for a later phase?)
+```
+
+That dedup matters. If you copy-pasted the same typo into five files, you'll only see **one**
+warning line, not five, so don't assume only the reported file is affected.
+
+Both lines follow `FKDFDiagnostic::ToString()`'s exact contract: `[Severity] file: message`, or
+`[Severity] file:line: message` when a line number is known. Most scan/type diagnostics don't carry
+one, since they're about the file as a whole, not one YAML node.
+
+## Step 3: did conditions pass?
+
+A `conditions:` block (`gameVersion`, `hasMod`, `modVersion`, `hasClass`, see
+[Conditions & Packs → Conditions](/kdataforge/features/conditions-and-packs#conditions-gating-whether-a-document-applies-at-all))
+is evaluated once per document, before validation or apply. A failing condition produces exactly
+one diagnostic:
+
+```
+Skipped by conditions: Required mod 'SomeMod' is not loaded
+```
+
+**This diagnostic is `Info` severity, and `BuildReportString` (the text behind `/kdf report`)
+explicitly skips every `Info`-severity entry before printing.** That's not a report-formatting quirk
+you can work around with a flag. The same filtered string is also what the in-game editor's
+load report scans for `[Error]`/`[Warning]` to decide whether to flag a problem, so a
+condition typo produces **zero visible signal anywhere a player normally looks**. The document is
+silently skipped, every single time, and neither `/kdf report` nor the in-game editor will ever
+mention it.
+
+There is currently no player-facing switch that surfaces `Info` diagnostics: no debug-log line, no
+`/kdf report -v`, nothing. The condition evaluator itself doesn't log anything either. It only ever
+returns a fail reason string that the framework then buries at Info severity.
+
+The only reliable way to catch this today is to **temporarily delete or comment out the document's
+`conditions:` block and restart the session.** If your document suddenly counts toward "document(s)
+applied" (or your op's debug line from [Step 5](#step-5-did-the-specific-op-apply) appears) with the
+block removed, the condition was the culprit. Put the block back and check it against
+[Conditions & Packs](/kdataforge/features/conditions-and-packs) for exact key names,
+mod ref spelling, and version-range syntax (`gameVersion`/`hasMod`/`modVersion` all use SML semver
+ranges).
+
+## Step 4: did the document validate?
+
+Every handler runs `ValidateDocument` before `ApplyDocument`. The two check fundamentally different
+things.
+
+- **`ValidateDocument` is structural.** Is the document even shaped correctly? Missing required
+  keys, wrong node kind (map vs. sequence), or malformed op entries would all fail here. This runs
+  purely against the parsed YAML, so it never touches the live game and can't fail because a class
+  doesn't exist. Failures here are `Error`-severity and often carry a real line number
+  (`Entry->Line`), because they're about one specific YAML node. Example, from `type: cdo`:
+
+  ```
+  [Error] my-pack/bad.cdo.yml:12: 'matchTag' requires an 'ofClass' scope class
+  ```
+
+  If `ValidateDocument` returns `false`, `ApplyDocument` is **never called** for that document. It's
+  zero ops, and the document doesn't count toward "document(s) applied" in the report at all.
+
+- **`ApplyDocument` is semantic.** Now it resolves your YAML against the actual running game. Does
+  `target:` point at a real, loadable class or object? Does `matchTag` + `ofClass` actually match
+  anything? This is where a structurally-perfect document can still fail because a path is wrong or
+  a class doesn't exist:
+
+  ```
+  [Error] my-pack/bad.cdo.yml: Target '/Game/Typo/Path.Path_C' is neither a loadable class nor object (...)
+  ```
+
+  Critically, these failures are **per patch entry, not per document**. One bad `target:` inside a
+  document with several patch entries only skips that entry. The rest still apply, and the document
+  still counts as applied as long as at least one entry succeeded.
+
+So an Error with a line number pointing at your YAML structure means Step 4a: fix the shape. An
+Error naming an unresolved path/class means Step 4b: fix the reference, or check spelling and the
+`_C` suffix (see
+[Targeting → Choosing a selector](/kdataforge/features/targeting#choosing-a-selector)).
+
+## Step 5: did the specific op apply?
+
+If you've gotten this far (the file is found, the type resolved, conditions passed, and the
+document validated and applied with no errors) but the _specific value you expected to change_
+still looks vanilla, turn on debug logging:
+
+- **Per document**: `debug: true` at the top level of the file.
+- **Per pack**: `debug: true` in `pack.yml`.
+- **Global**: console variable `KDF.Debug 1` (or launch with `-KDFDebug`), or `/kdf debug on` from
+  chat. This also logs ops originating from the in-game editor.
+
+Every **successfully applied** op logs exactly one line at Log verbosity from
+`FKDFPatchUtil::LogAppliedOp`:
+
+```
+[KDF DEBUG] <file>: <target>.<property> <op> : <pre> -> <post>
+```
+
+For example:
+
+```
+[KDF DEBUG] faster-smelting.cdo.yml: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C.mManufactoringDuration multiply : 2.000000 -> 1.000000
+```
+
+There are two outcomes here.
+
+- **Your op's line never appears at all**: it never reached the apply step. That means one of
+  Steps 1 to 4 above is still the real problem. Most often the property path silently resolved to a
+  _different_ object than you expected, or the op failed and produced an `Error` you missed in
+  `/kdf report`. A failed op logs nothing here; it only ever logs on success.
+- **Your op's line appears, but the pre/post values aren't what you assumed**: the pipeline worked
+  exactly as written. Your assumption about which property holds the value (or its starting value)
+  was wrong. Compare `<pre>` against what you expected the vanilla value to be before writing more
+  YAML.
+
+The log lives at `%LOCALAPPDATA%\FactoryGame\Saved\Logs\FactoryGame.log` in a packaged game. Search
+for `[KDF DEBUG]`.
+
+## Step 6: did you restart the session?
+
+KDataForge performs its full scan and apply pass once at GameInstance `INITIALIZATION`. Save the file, restart the game or
+dedicated-server session, then inspect `/kdf report`. No document type is re-read while a session
+is already running.
+
+## Quick reference
+
+| Step                | Question                                                                         | What to check                                                                                                                                                                                                 |
+| --------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1: Scanning         | Did the pack/document count in `/kdf report` change at all?                      | Root marker (`DataForge`, `data-editor`, or direct `pack.yml`), depth ≤ 6 from the project root, not nested inside a pruned directory, file extension `.yml`/`.yaml`                                          |
+| 2: Type resolution  | Is there a `[Warning]` about no type / no handler for the type?                  | `type:` key spelling, `<name>.<type>.yml` filename convention, typo in a known type name (remember: the "no handler" warning is deduped to one per type, not one per file)                                    |
+| 3: Conditions       | Does the document have a `conditions:` block at all?                             | Comment it out and a session restart. If the document suddenly applies, the condition (not the report) was hiding the skip. `/kdf report` never shows condition-skips, they're Info-severity and filtered out |
+| 4: Validation/Apply | Is there an `[Error]` in `/kdf report`, with or without a line number?           | Line number present means structural (`ValidateDocument`), fix the YAML shape. No line number, naming a path/class, means semantic (`ApplyDocument`), fix the reference                                       |
+| 5: Op-level apply   | Turn on `debug: true` / `KDF.Debug 1`. Does your op's `[KDF DEBUG]` line appear? | Missing entirely means it never reached apply, back to Steps 1 to 4. Present but wrong pre/post means a property/assumption issue, not a pipeline bug                                                         |
+| 6: Session restart  | Did you restart after editing YAML?                                              | KDataForge reads every document type once during session initialization                                                                                                                                       |
+
+[Getting Started → Debugging](/kdataforge/getting-started#debugging) covers all three
+debug switches and the log location. Its [report severity table](/kdataforge/getting-started#reading-the-report)
+defines the Info, Warning, and Error levels used here. [Diagnostics, never failures](/kdataforge/features/patching-cdo#diagnostics-never-failures)
+explains why a skipped patch entry never halts the rest of the load.

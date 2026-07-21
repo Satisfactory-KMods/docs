@@ -1,0 +1,126 @@
+---
+title: "Editing Another Mod's Data Assets"
+description: Rebalancing existing KAPI or RefinedR&D PrimaryDataAsset instances without creating a new one and without a hard dependency on the mod that owns them.
+sidebar:
+  order: 10
+---
+
+You don't want to add a new miner resource, cleaner recipe, or boiler. You want to **retune the
+ones that already exist**, whether they belong to KAPI itself or to a RefinedR&D mod (RefinedPower,
+FicsitFarming). You also want your pack to skip cleanly instead of erroring if that mod isn't
+installed. This is a plain `cdo` patch with a `conditions:` gate, and no special document type is
+involved.
+
+## The mental model: it's the same `cdo` patch you already know
+
+`UPrimaryDataAsset` **instances** are objects sitting in memory just like a recipe or schematic CDO.
+This includes KAPI's miner descriptions, cleaner recipes, and air collector configs, as well as
+RefinedR&D boiler, heater, and turbine tuning, and anything else scanned by those mods' subsystems.
+KDataForge edits them with the exact same `type: cdo` document, the same `properties:` op grammar,
+and the same `target:`/`allAssetsOfClass:`/`matchTag:` selectors used everywhere else in this
+framework. There's no "data asset patch" document.
+
+`type: dataasset` is a **different, narrower** tool. It only **creates a brand-new instance**
+(package `/KDataForge/GenAssets/<PackRef>`, announced to the asset registry). Once that instance
+exists, whether `type: dataasset` made it or the target mod shipped it, you tune it exactly like
+this tutorial shows. See [Data Assets → Creating new instances](/kdataforge/features/data-assets#creating-new-instances-type-dataasset)
+if you actually do want to create one from scratch instead.
+
+One more contrast is worth keeping in mind. Schematics need `register: false` when you reach into
+one you don't own (see [Adding a Recipe to an Existing Schematic](/kdataforge/tutorials/existing-schematic-unlock)),
+because register-only mode still touches SML's content registry. Plain `cdo` patches on a
+data-asset instance never register anything. You're mutating an object that's already alive, so
+there's no `register:` flag to think about here at all.
+
+## Three ways to target an instance, and which to reach for
+
+[Data Assets → Editing KAPI data assets](/kdataforge/features/data-assets#editing-kapi-data-assets)
+and [Targeting](/kdataforge/features/targeting) document all three selectors in full; here's the
+practical decision for data-asset instances specifically:
+
+| Selector                        | Use it when…                                                                                                             | Trade-off                                                                                                                                                                        |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `target:` object path (no `_C`) | You know exactly which instance, for example only the Iron miner description                                             | Fastest and most precise, but you need the exact path. Get it from `/kdf editor` (browse the asset) or the asset registry. It can change if the owning mod renames the asset     |
+| `allAssetsOfClass:`             | You want every instance of a type retuned the same way, for example every KAPI cleaner recipe or every RefinedR&D boiler | The usual default for rebalancing a whole machine family. No path-hunting needed                                                                                                 |
+| `matchTag:` + `ofClass:`        | You want a **subset**, for example only the event-tagged miner descriptions                                              | Needs the target assets to actually carry a matching tag. KAPI assets implement `IGameplayTagAssetInterface`, so `mTags` matches directly with no `tagProperty:` override needed |
+
+For a first pass at rebalancing a whole mod's assets, `allAssetsOfClass:` is almost always the right
+starting point. It's what the worked scenario below uses for both mods.
+
+## Worked scenario: bulk-tune two mods, neither as a hard dependency
+
+Say you want two independent tweaks. KAPI's modular miners should produce fluid a bit faster, and
+every RefinedR&D boiler (RefinedPower's, FicsitFarming's, or anyone else's built on RefinedRDApi)
+should cook faster too. Neither mod is a dependency of your pack. `conditions: { hasMod: ... }`
+gates each document so it's a clean skip, not a hard error, if that mod isn't loaded.
+
+```yaml
+# file: kapi-miner-fluid-tuning.cdo.yml
+type: cdo
+conditions: { hasMod: KAPI }
+patches:
+  - allAssetsOfClass: /Script/KAPI.KAPIModularMinerDescription
+    properties:
+      - path: mNormalFluidCountPerSecond
+        op: multiply
+        value: 1.25
+```
+
+```yaml
+# file: refinedrd-boiler-tuning.cdo.yml
+type: cdo
+conditions: { hasMod: RefinedRDApi }
+patches:
+  - allAssetsOfClass: /Script/RefinedRDApi.RRDABoilerDataAsset
+    properties:
+      - path: mDuration
+        op: multiply
+        value: 0.85
+```
+
+These are two separate documents, not one. `conditions:` gates the **whole document**, and these
+two tweaks depend on two different mods being present, so they can't share a file.
+
+## Automatic consumer rescans
+
+KAPI and RefinedRDApi cache asset scans. After KDataForge's initial document load, it rescans an
+installed consumer only when data assets changed:
+
+- KAPI's `StartScanForDataAssets` is resolved and called through reflection when KAPI is loaded.
+- RefinedRDApi's equivalent method is resolved the same way.
+
+KDataForge has no link or plugin dependency on either mod. Keep `hasMod:` on a YAML document so
+class references are skipped cleanly when their owner is absent.
+
+## The key-field crash gotcha
+
+A handful of properties on KAPI assets are load-bearing enough that the game **intentionally
+crashes** if you null them out. Examples include `mResourceClass` on miner descriptions,
+`mInFluid.ItemClass` on cleaner items, and `mWidgetClass` on tooltip injectors. This tutorial won't
+repeat the full list; see [Data Assets → key-field warning](/kdataforge/features/data-assets#fkdfrandomdata-note--key-field-warning)
+before you write a `set` op against any of these.
+
+If your goal is "turn this instance off," use `mIsDisabled: true` instead. Every KAPI asset has it,
+and it's exactly what it's for.
+
+## Troubleshooting
+
+- **The patch silently does nothing**: check the exact spelling of your `hasMod:` value (`KAPI`,
+  `RefinedRDApi`, case matters) and confirm the target mod is actually loaded via `/kdf report`. A
+  failed `conditions:` check shows up there as an **Info** diagnostic, not an error, so it's easy to
+  miss if you're only scanning for red text.
+- **`allAssetsOfClass:` matches zero assets**: double-check the exact class path
+  (`/Script/KAPI.KAPIModularMinerDescription`, `/Script/RefinedRDApi.RRDABoilerDataAsset`, etc.). A
+  typo'd module or class name matches nothing rather than erroring. `/kdf report` lists every asset
+  a selector actually matched, so you can confirm the count before you trust the values it set.
+- **Values look patched in the report but the in-game behaviour didn't change**: check whether the
+  property you touched is one KAPI/RRDA only reads once at scan time, versus one read live every
+  tick. If it's the former, confirm the automatic rescan ran after the initial load. If it still
+  looks stale, the more likely cause is a second document overriding the same property later in
+  load order.
+
+This guide builds on the full KAPI and RRDA property reference in
+[Data Assets](/kdataforge/features/data-assets) and the selector details in
+[Targeting](/kdataforge/features/targeting). For the equivalent "I do not own this,
+I am extending it" pattern with schematics, see
+[Adding a Recipe to an Existing Schematic](/kdataforge/tutorials/existing-schematic-unlock).

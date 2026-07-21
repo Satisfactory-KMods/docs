@@ -1,0 +1,267 @@
+---
+title: End-to-End Pack
+description: One real pack that combines an item, recipe, schematic, sink points, translation, a dynamic data asset, and RRDA editing — plus how to rename an id safely.
+sidebar: { order: 5 }
+---
+
+The individual type pages ([Items](/kdataforge/features/items), [Resources](/kdataforge/features/resources),
+[Buildings](/kdataforge/features/buildings), [Unlocks](/kdataforge/features/unlocks), [Recipes](/kdataforge/features/recipes),
+[Schematics](/kdataforge/features/schematics), [Research Trees](/kdataforge/features/research-trees), [Sink Points](/kdataforge/features/sinkpoints),
+[Game Tags](/kdataforge/features/game-tags), [Localization](/kdataforge/features/localization), [Data Assets](/kdataforge/features/data-assets))
+each explain one document type in isolation. This page shows the thing that actually matters day to
+day: how several of them live together in **one pack** and reference each other without any
+`include:` juggling, because the stage order already handles it for you.
+
+A single pack folder holds every file below side by side, one document type per file, all under one
+pack root:
+
+```
+<your-mod>/DataForge/
+  pack.yml
+  super-ingot.item.yml
+  super-ingot.recipe.yml
+  super-ingot.schematic.yml
+  super-ingot.sinkpoints.yml
+  de.localization.yml
+  cleaner.dataasset.yml
+  faster-boilers.cdo.yml
+```
+
+:::note
+Every file above is shown separately for clarity, but that's a choice, not a requirement — any of
+them can be merged into one file with `---` separators (see
+[Multiple Documents Per File](/kdataforge/reference/yaml-schema#multiple-documents-per-file)).
+For example, `super-ingot.item.yml` and `super-ingot.sinkpoints.yml` could just as well be a single
+`super-ingot.yml` with two `type:`-tagged documents — useful for small, self-contained additions
+where a whole folder of one-liners feels like overkill. This page keeps them split because the
+individual type pages link straight to their matching file.
+:::
+
+## pack.yml
+
+`pack.yml` is optional. A folder without one just forms an implicit pack named after its directory.
+Once you care about save compatibility across versions, though, you want one.
+
+Three fields matter here. `ref` is the stable pack reference embedded in every generated class path
+(`/KDataForge/Gen/<ref>.Gen_<ref>_<Id>`) that this pack produces. `name` is the human readable
+display name. `version` is an informational semver value used in conflict reports.
+
+This pack declares its `ref` up front, so the redirect added later has something stable to anchor to:
+
+```yaml
+ref: MyPack # the save-persistence contract — generated classes embed this ref
+name: My Content Pack
+version: 1.0.0
+```
+
+## The item
+
+An `item` document generates a brand-new `ItemDescriptor` subclass and sets its CDO properties in
+one step. `super-ingot.item.yml` parents a new item off the vanilla iron ingot and configures three
+things on it. It gets a localized display name using the `{ key, ns, source }` form rather than a
+plain string, so the German translation below can target it. It also gets a description, and an
+`SS_HUGE` stack size, which is an `EStackSize` enum value rather than a plain count:
+
+```yaml
+# file: super-ingot.item.yml
+type: item
+items:
+  - id: MySuperIngot
+    parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      - path: mDisplayName
+        value: { key: MySuperIngot_Name, ns: MyPack, source: Super Ingot }
+      - path: mDescription
+        value: A far superior ingot.
+      - path: mStackSize
+        value: SS_HUGE # EStackSize enum, not a plain count
+```
+
+This generates `/KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot`. The path is deterministic and
+id-based, so every other file below can reference it safely regardless of load order.
+
+## The recipe
+
+A `recipe` document describes ingredients, products, craft duration, and which buildable(s) can
+craft it, all as CDO properties on a generated `FGRecipe` subclass. This one consumes 2 iron ingots,
+produces 1 of the item generated above, takes 4 seconds, and runs in a Smelter Mk.1:
+
+```yaml
+# file: super-ingot.recipe.yml
+type: recipe
+recipes:
+  - id: Recipe_MySuperIngot
+    properties:
+      - path: mDisplayName
+        value: Super Ingot
+      - path: mIngredients
+        value:
+          - {
+              ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C,
+              Amount: 2,
+            }
+      - path: mProduct
+        value:
+          - { ItemClass: /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot, Amount: 1 }
+      - path: mManufactoringDuration
+        value: 4.0
+      - path: mProducedIn
+        value:
+          - /Game/FactoryGame/Buildable/Factory/SmelterMk1/Build_SmelterMk1.Build_SmelterMk1_C
+```
+
+No `include:` is needed here. `Items` always finishes before `Recipes` starts, so the product
+reference above just works.
+
+## The schematic (with an `FGUnlockRecipe` unlock)
+
+A `schematic` document generates a milestone and, through an inline `unlocks:` list, wires up what
+it grants. Here that is an `FGUnlockRecipe` unlock pointing back at the recipe generated above.
+Completing this schematic is what actually makes the recipe available to the player:
+
+```yaml
+# file: super-ingot.schematic.yml
+type: schematic
+schematics:
+  - id: Schematic_MySuperIngot
+    properties:
+      - path: mDisplayName
+        value: Super Ingot Smelting
+      - path: mTechTier
+        value: 2
+      - path: mTimeToComplete
+        value: 60
+      - path: mCost
+        value:
+          - {
+              ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C,
+              Amount: 50,
+            }
+    unlocks:
+      - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
+        properties:
+          - path: mRecipes
+            value: [/KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot]
+```
+
+`register: true`, which is the default, registers this schematic. From there, SML's
+auto-propagation takes over: the recipe and its items register right along with it.
+
+## Sink points for the item
+
+A `sinkpoints` document is a small standalone table of AWESOME Sink point values keyed by item
+class. This one gives the freshly generated ingot 8 points on the `Default` track:
+
+```yaml
+# file: super-ingot.sinkpoints.yml
+type: sinkpoints
+track: Default
+entries:
+  - item: /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot
+    points: 8
+```
+
+Remember that this one specifically needs a session restart to take effect. See
+[Sink Points](/kdataforge/features/sinkpoints) for why.
+
+## German translation
+
+A `localization` document maps translation keys (or exact source-text overrides) to translated
+strings for one `namespace` and `culture`. Here the culture is `de`, which prefix-matches so it also
+covers `de-DE`:
+
+```yaml
+# file: de.localization.yml
+type: localization
+namespace: MyPack
+culture: de # prefix-matched: also applies for de-DE
+entries:
+  MySuperIngot_Name: 'Superbarren'
+  KeyWithSource: { source: 'Super Ingot Smelting', text: 'Superbarren-Verhüttung' } # override by source text
+```
+
+The item's `mDisplayName` used the localized `FText` form (`{ key: MySuperIngot_Name, ns: MyPack, ... }`),
+so the simple key entry above translates it directly. This one _is_ loaded at session start: you can
+iterate on translations without restarting.
+
+## Dynamic data asset: KAPI cleaner item
+
+A `dataasset` document creates a brand-new `UPrimaryDataAsset` instance (not a class) of any KAPI
+subclass and announces it to the asset registry. `conditions: { hasMod: KAPI }` gates the whole
+document so it cleanly skips if KAPI isn't installed, rather than erroring:
+
+```yaml
+# file: cleaner.dataasset.yml
+type: dataasset
+conditions: { hasMod: KAPI }
+assets:
+  - id: CleanerItem_MyFluid
+    class: /Script/KAPI.KAPICleanerItemDescription # any UPrimaryDataAsset subclass
+    properties:
+      - path: mProductionTime
+        value: 4.0
+      - path: mInFluid
+        value:
+          {
+            ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C,
+            Amount: 1000,
+          }
+```
+
+This creates a real PrimaryDataAsset instance and announces it to the asset registry. KDataForge
+then triggers KAPI's own rescan, so it picks the new asset up. See
+[Data Assets](/kdataforge/features/data-assets) for the full mechanism and every KAPI
+asset type it applies to.
+
+## Editing RefinedR&D data assets (RRDA)
+
+Existing data-asset **instances** from other mods are edited with a plain `cdo` document too, using
+`allAssetsOfClass:` to hit every instance of a class at once. This patch halves the cook time of
+every RefinedR&D boiler, whether it is RefinedPower's, FicsitFarming's, or anyone else's built on
+RefinedRDApi. It is gated the same way, behind `conditions: { hasMod: ... }`:
+
+```yaml
+# file: faster-boilers.cdo.yml
+type: cdo
+conditions: { hasMod: RefinedRDApi }
+patches:
+  - allAssetsOfClass: /Script/RefinedRDApi.RRDABoilerDataAsset
+    properties:
+      - path: mDuration
+        op: multiply
+        value: 0.5 # every RefinedPower/FicsitFarming boiler produces twice as fast
+```
+
+No RefinedRDApi dependency is needed in your `.uplugin`. The rescan that picks this up runs via
+reflection, gated purely by the `hasMod` condition.
+
+## Renaming an id later: `redirects:`
+
+Renaming the **file** `super-ingot.item.yml` is always safe. Renaming the **id** `MySuperIngot`,
+however, changes the generated class path, which would orphan any save that already has the item.
+Declare the rename in `pack.yml` instead:
+
+```yaml
+# pack.yml (version 2.0.0 of this pack)
+ref: MyPack
+name: My Content Pack
+version: 2.0.0
+redirects:
+  MySuperIngot: SuperIngotMk2 # OldId: NewId
+```
+
+The class is now generated as `Gen_MyPack_SuperIngotMk2`, and `FCoreRedirects` resolves the old
+class path in existing saves to it. Items already in old saves load without warnings.
+
+## Troubleshooting
+
+- **Something in this pack didn't apply?** `/kdf report` in chat prints every warning and error,
+  along with the file and line that caused it. A broken file only skips itself: the rest of the
+  pack still loads.
+- **Renamed an id and now old saves complain?** That's exactly what `redirects:` is for, as covered
+  above. If you forgot to add one before shipping the rename, you can add it retroactively: it's
+  read at load time, not baked into the save.
+- **Ready to go deeper on one piece of this?** Jump to the type page for whichever document you're
+  extending: [Items](/kdataforge/features/items), [Recipes](/kdataforge/features/recipes), [Schematics](/kdataforge/features/schematics),
+  [Sink Points](/kdataforge/features/sinkpoints), [Localization](/kdataforge/features/localization), or
+  [Data Assets](/kdataforge/features/data-assets).

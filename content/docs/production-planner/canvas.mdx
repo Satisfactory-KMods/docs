@@ -1,0 +1,132 @@
+---
+title: Canvas
+description: Move around, connect, and edit blocks on the planner canvas.
+sidebar:
+  order: 2
+---
+
+The canvas is your workspace. Everything you build lives here as draggable
+blocks (**nodes**) connected by resource flows (**edges**).
+
+## Moving around
+
+Drag the empty background to pan, scroll to zoom. You can zoom out to 10% for an
+overview of even very large plans. Drag a block to move it.
+
+## Selecting & deleting
+
+Click a block to select it. Hold and drag to box-select several blocks at once.
+Press **Delete** or **Backspace** to remove the selected blocks. Connected lines
+are cleaned up automatically.
+
+## Connecting blocks
+
+Drag from a block's output dot to another block's input dot to create a flow.
+
+## Tracing a connection
+
+Hover any line (or its amount label) to highlight it along with the other lines
+on the same blocks. The flow then animates back toward its source, so you can
+follow where a resource comes from and where it goes.
+
+## Inspecting an ingredient
+
+Item names on a block's input and output rows are shortened to keep blocks
+compact. Hover any ingredient row to open a small item card showing its **icon**,
+**full name**, and the exact throughput per minute. A solid/fluid marker is
+included too, so you always know what a truncated label is.
+
+## Finding things
+
+Press **Ctrl+F** to search the canvas by name. Made a mistake? **Ctrl+Z** undoes
+(up to 50 steps), **Ctrl+Y** redoes.
+
+## Bottleneck warnings
+
+If a recipe block turns red with a warning badge in its top-left corner, one or
+more of its inputs aren't getting enough supply for its current building
+count/clock. This usually happens because an edge was deleted or rerouted by
+hand after the chain was calculated. Hover the badge to see which item(s) are
+short.
+
+:::caution
+Bottleneck badges only appear after you've manually changed something (deleted
+an edge, rerouted a connection, edited a building count). A freshly-generated
+chain is always balanced.
+:::
+
+## Configured miner building count
+
+The building icon in a configured raw-resource node's header shows how many
+whole miners or extractors must be built. Fractional machine demand is always
+rounded up; Mining Head count changes the throughput inside each miner and is
+not counted as additional buildings.
+
+## Fixed-clock recipes
+
+Recipes that cannot be overclocked or underclocked, such as boiler and heater
+combinations, always use whole buildings at 100% clock. Every building consumes
+and produces its full listed rates. Extra output appears as surplus, while the
+planner increases upstream production to supply every full building.
+
+## Acting on unused output
+
+Right-click an output row that isn't fully routed anywhere (produced but with
+leftover surplus) to open a menu of actions just for that item:
+
+- Suggest a recipe to consume it (Patreon, with a searchable list and an
+  optional "auto-build chain" mode that inserts several recipes deep in one
+  click)
+- Route it to the AWESOME Sink
+- Add it as a new desired output
+- Trim the node's clock/building count down to only what's actually used
+- Highlight every other place that item flows through the diagram
+
+Right-clicking anywhere on a recipe node also offers node-level actions like
+duplicating it.
+
+## Belt/pipe tier badges
+
+Every connection's amount label carries a small `Mk.n` badge showing the
+smallest conveyor belt or pipeline tier that can carry it alone. If the flow
+is too high even for the top tier, the badge turns red and shows how many
+parallel lines (e.g. `×2`) you'd need instead.
+
+## Somersloop shards
+
+Recipe blocks for buildings that support Somersloop production shards show a
+`+`/`−` stepper (up to that building's max slots). Adding shards raises that
+block's output (up to double at full slots), at the cost of extra power (up to
+×4 at full amplification). The planner automatically scales the building
+count/clock speed down to match, so you keep producing exactly what's routed
+downstream instead of an unrouted surplus. Removing shards scales it back up
+the same way.
+
+:::note
+Shards raise a building's **output-per-input** ratio, not the input rate
+itself the input rate a recipe needs stays what it was; only the building
+count/clock speed needed to reach the same routed output goes down.
+:::
+
+## Marking blocks as built
+
+Each block has a check button in its top-right corner. Click it to mark that
+part of your factory as built, turning the block green so you can track progress
+at a glance. When both ends of a connection are built, the line and its amount
+label turn green too. The state is saved with your plan.
+
+## Connection line style
+
+Use the line-style button in the toolbar to switch connections between 90°
+(right-angle) and curved. Your choice is remembered.
+
+## Light & dark
+
+Toggle the theme with the button on the canvas. Your choice is remembered.
+
+## Exporting the diagram (Patreon)
+
+The PNG/SVG/PDF buttons in the toolbar capture the whole diagram (not just
+what's on screen) as an image. PNG and SVG download directly. PDF opens your
+browser's print dialog with the diagram as the page, so you can print or save
+it as a PDF.

@@ -1,0 +1,24 @@
+---
+title: Satisfactory Plus Compatibility
+description: How Satisfactory Plus integrates with the k-mods tooling — a hard dependency on KAPI and a soft dependency on KDataForge.
+sidebar:
+  order: 1
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Satisfactory Plus (SF+) is a large content mod. To stay maintainable alongside the rest of the k-mods ecosystem — and to let other mods extend or rebalance it without needing SF+'s own source — it plugs into two different k-mods tools, at two different levels of coupling:
+
+- **KAPI** — a **hard dependency**, compiled and linked directly into SF+'s C++. Used to *create* the mod's own data-driven content (new miners, cleaners, air collectors, ...) as real `UPrimaryDataAsset` instances that any other KAPI-aware mod can discover and read.
+- **KDataForge** — a **soft dependency**, resolved at runtime via Unreal reflection with no build-time link at all. Used by *third-party pack authors* to patch or extend SF+'s (and any other mod's) KAPI data assets from plain YAML, without writing any C++.
+
+<CardGrid>
+	<LinkCard title="KAPI — creating DataAssets" href="/satisfactory-plus/kapi/" description="The hard dependency SF+ itself compiles against." />
+	<LinkCard title="KDataForge — soft-dependency packs" href="/satisfactory-plus/kdataforge/" description="How anyone can extend SF+ content with a YAML pack, no C++ required." />
+</CardGrid>
+
+:::note
+Everything on this page is verified directly against the SF+, KAPI, and KDataForge source (`SatisfactoryPlus.uplugin`, `.Build.cs` files, `KDFPackScanner.cpp`, `KDFSubsystem.cpp`) — not inferred from docs alone. Where the source and an older doc comment disagreed, the source wins (see the KDataForge page for one such case).
+:::
+
+![Satisfactory Plus overview screenshot placeholder](../../../assets/satisfactory-plus/overview.svg)

@@ -1,0 +1,86 @@
+---
+title: UE Editor Integration
+description: Applying YAML cdo patches directly onto assets inside the Unreal Editor with KDF.ApplyToAssets — turning runtime patches into permanent asset edits (WITH_EDITOR builds only).
+sidebar:
+  order: 5
+---
+
+Everything else in these docs happens **at runtime**: YAML is re-applied every session and never
+touches the assets on disk. This page covers the opposite workflow, for mod developers working
+inside the **Unreal Editor**. You apply your YAML packs **directly onto the editor's assets** so
+the changes can be saved and become permanent.
+
+> Editor builds only (`WITH_EDITOR`). None of this exists in the packaged game or on dedicated
+> servers. Players keep the runtime pipeline.
+
+## `KDF.ApplyToAssets [PathFilter]`
+
+`KDF.ApplyToAssets` is a console command available only in editor builds. Run it with no arguments
+to sweep every scanned pack, or pass a path prefix to restrict the sweep to one branch of the
+content tree:
+
+```
+KDF.ApplyToAssets
+KDF.ApplyToAssets /Game/FactoryGame/Recipes
+```
+
+It only touches [`type: cdo`](/kdataforge/features/patching-cdo) documents. It uses
+the same reflection pipeline (`FKDFOpEngine::ApplyOp`) that resolves `target`/`properties` at
+runtime, just pointed at editor objects instead of live game instances. Other document types
+(`item`, `recipe`, `asset`, …) are runtime concepts, and this command skips them entirely.
+
+For each `cdo` patch, the optional `PathFilter` restricts application to targets whose path
+**starts with** the filter. For example, `/Game/FactoryGame/Recipes` applies only recipe patches
+and leaves everything else untouched. The `target` field resolves the same way it does elsewhere
+in `cdo` patches: a class path resolves to that class's CDO, and anything else is loaded as an
+object path.
+
+Every modified package is **marked dirty**. For a Blueprint CDO, that is the generated class's
+outer package, so the standard editor save flow (Save All or source-control checkout) persists the
+changes. Your YAML pack has effectively become a set of permanent asset edits. Afterwards, a
+summary line is logged with the number of ops applied, assets touched, and packages marked dirty.
+
+## In-game editor property categories
+
+The in-game `/kdf editor` groups reflected fields by their Unreal `Category` metadata. Categories are collapsed by default so large CDOs remain navigable. Reflected fields without `CPF_Edit` are placed in a separate **Non-UPROPERTY / Internal** category. They remain available for inspection and editing through the same reflection operation pipeline.
+
+CDO exports include these non-edit reflected fields as well.
+
+## Deferring a CDO patch
+
+Set `deferOneGameTick: true` on a `type: cdo` patch when the base game initializes the target during startup and the patch must run after that initialization:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Some/Class.Some_C
+    deferOneGameTick: true
+    properties:
+      - path: SomeProperty
+        value: 123
+```
+
+KDataForge waits for the matching world to enter `BeginPlay`, then applies the patch on the following game tick. The flag is deliberately a one-tick startup delay, not a general timer.
+
+## When to use which pipeline
+
+Both pipelines share the same op engine and property-path resolution. A patch that works at
+runtime will behave identically when applied through the editor command. The only difference is
+where the result ends up:
+
+|                 | Runtime (players, packs)                                                                  | Editor (`KDF.ApplyToAssets`)                                 |
+| ----------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Changes live in | YAML, re-applied every session                                                            | The assets themselves, after saving                          |
+| Reversible      | Always (delete the YAML)                                                                  | Via source control / not saving                              |
+| Audience        | Players, pack authors                                                                     | Mod developers cooking their own content                     |
+| Document types  | All (`item`, `recipe`, `asset`, `cdo`, …)                                                 | `cdo` only                                                   |
+| Debug logging   | `debug:` / `KDF.Debug` ([Debugging](/kdataforge/getting-started#debugging)) | Same — global debug logging covers editor-originated ops too |
+
+## Still open
+
+Asset/image import into the editor (bringing [`type: asset`](/kdataforge/features/data-assets#2d-image-assets-type-asset)
+files in as real texture assets) and editor-side UI polish (search/filter/sort over patchable
+assets) are not implemented yet.
+
+Do not confuse this with the **in-game** editor (`/kdf editor`, opened from chat while playing).
+That is a separate, runtime-only tool for browsing and editing content live in a running session.

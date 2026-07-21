@@ -1,0 +1,114 @@
+---
+title: Building Plans
+description: Pick recipes, configure miners, add notes, and group sub-assemblies.
+sidebar:
+  order: 3
+---
+
+Once a plan exists, refine it until it matches the factory you want to build.
+
+## Desired outputs
+
+Open the **Outputs** panel to add or remove target items and change their
+amounts. The whole plan recalculates automatically.
+
+## Recipes & alternates
+
+Each step shows the recipe it uses. Open **Summary → Plan validation → Recipe
+routes** to inspect the available complete routes for each produced item. The
+planner selects the best route for your current strategy automatically, but
+you can choose from up to ten valid alternatives where they exist or switch
+back to **Automatic (best route)**. Each option includes a short comparison of
+route depth, raw-input score, and byproducts. You can also exclude recipes you
+never want the planner to pick.
+
+Under **Plan settings → Recipe Filters** you can exclude specific **raw
+resources**, for example an ore you haven't unlocked mining for yet. Any
+recipe that needs an excluded resource directly is skipped. The planner then
+falls back to a different recipe or ore for that item where one exists. If no
+route remains, it shows an error card instead of silently using the excluded
+resource or a crushed variant that still depends on it.
+
+The picker only contains genuine mineable/extractable resources. A normal
+item is not added merely because the current catalog has no recipe producing
+it.
+
+The resolver only accepts a mineable resource or an item tagged
+`KMods.PlannerResource` as a final external input. A normal item with no
+producer is never silently treated as raw: calculation marks the plan invalid
+and explains the unresolved item or cycle instead.
+
+The recipe catalog is stored as a versioned item/recipe graph. Candidate
+routes are only offered when their complete dependency chain reaches an
+allowed raw resource or one of your Available Inputs. Calculating and balancing
+those routes runs in a bounded backend worker pool, so a large plan does not
+block unrelated API requests.
+
+## Miners
+
+Open **Configure Miner** from the Outputs panel and set the resource, node
+**purity**, **miner tier**, and **overclock**. Not sure what overclock to
+use? Enter a **target rate** instead and it calculates the overclock
+percentage needed to hit it. Your configured miners show up under
+**Configured Miners** in the same panel, and the calculator applies each one
+directly wherever the plan needs that resource no manual available input
+needed, and no fixed rate: the miner scales with the rest of the plan just
+like a recipe node does, with its own output, byproduct, and any required
+fluid input wired in as real connections.
+
+A resource deposit is treated as the miner's extraction source, not as a
+material that the miner consumes and reproduces. This matters for Fluid
+Modules whose output is still the same resource: their required Water or other
+fluid remains part of the material balance instead of being optimized away.
+Waste Module replacement outputs and byproducts likewise remain real outputs
+and can feed another recipe or appear as surplus.
+
+For the Modular Miner, some resources also let you attach modules. The
+**Waste Module** (Crusher or Smelter, pick one) replaces the raw ore with a
+crushed intermediate or a primary ingot at the same total rate, plus a small
+byproduct. The **Fluid Module** boosts the extraction rate using a supplied
+fluid (Water, Muriatic Acid, etc.) some resources (Sulfur, for example) can
+only be extracted with it attached at all. The two modules sit on
+independent attachment slots in-game, so you can combine a Waste Module with
+a Fluid Module on the same miner for both effects at once.
+
+## Slug Hatchery
+
+Open **Hatchery Info** from the Outputs panel and pick a slug color to see
+the heat and humidity range it needs to hatch or breed, whether a Tank
+module supplying a fluid is required, the Incubator tier, and which modules
+to build. The mod treats hatching as something you test for in-game, so
+these are target ranges to dial modules toward, not exact settings.
+
+Any recipe elsewhere in your plan that consumes a slug directly also shows
+that slug's conditions right on its own node, so you don't need to look it
+up separately.
+
+:::note
+Purity comes from the actual node in the game world (impure/normal/pure) it's
+not something you choose freely, so set it to match the node you actually plan
+to build on.
+:::
+
+## Notes
+
+Drop a sticky **note** anywhere to label parts of your factory. Double-click a
+note to edit it, and recolor it if you like.
+
+## Sub-assemblies
+
+Select a few related blocks and right-click to **group** them into one tidy
+block. You can collapse or expand this block, which keeps large plans
+readable.
+
+## Planning strategies
+
+Under **Plan settings → Algorithm** you can control alternate recipes,
+resource/building filters, and route priorities such as route depth, raw
+resources, power, balance, or byproducts. Automatic selection ranks the
+complete dependency route, not just the final recipe, and always remains
+deterministic when scores tie. A manually selected route stays selected while
+the other ranked options remain available. Identical recipe executions are
+aggregated only after their complete material flows have been resolved. Some
+advanced strategies are **Patreon** features. See the
+[Patreon page](/production-planner/patreon) for details.

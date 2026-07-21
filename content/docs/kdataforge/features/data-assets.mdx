@@ -1,0 +1,402 @@
+---
+title: Data Assets
+description: Editing every KAPI PrimaryDataAsset type, creating new instances with type dataasset, loading 2D images with type asset, and RefinedR&D (RRDA) mod integration.
+sidebar: { order: 18 }
+---
+
+Most of the reference pages nearby cover generated **classes** such as buildings, recipes, and
+schematics. Data assets are different: they are PrimaryDataAsset **instances**, meaning objects
+rather than classes. A huge amount of gameplay tuning for KAPI and the RefinedR&D mods lives inside
+these instances instead of inside a CDO.
+
+KDataForge can both **edit** existing instances, using plain `cdo` documents just like any other
+object, and **create** brand-new ones with `type: dataasset`. Use `dataasset` when a mod needs a
+fresh instance rather than an edit to an existing one. This page also covers the other asset-stage
+document, `type: asset`, which loads [2D images](#2d-image-assets-type-asset) from your pack folder
+into real textures that you can point icon properties at.
+
+## Editing KAPI data assets
+
+KAPI is the biggest single consumer of PrimaryDataAsset instances in the mod ecosystem. It drives
+modular miners, cleaner buildings, air collectors, manufacturer tuning, slug breeding, extractor
+allow-lists, and tooltip injection entirely from data assets rather than code. This lets other mods,
+including KDataForge packs, retune all of it without touching KAPI's own source.
+
+Because they're ordinary UObject instances, KDataForge reaches them with the exact same three
+selectors documented in [Targeting](/kdataforge/features/targeting):
+
+1. `target:` with the **asset object path** (note: no `_C` suffix, since these are instances, not classes).
+2. `allAssetsOfClass:` to patch every asset of a given KAPI type at once.
+3. `matchTag:` + `ofClass:` to select by gameplay tag. KAPI assets carry their tags on `mTags` and
+   are read like any other `IGameplayTagAssetInterface` object, so tags match directly.
+
+### `UKAPIDataAssetBase`: common base properties
+
+Every KAPI data asset instance, whatever its concrete type, inherits the same handful of admin
+fields from `UKAPIDataAssetBase`. There's a display `mName` and `mDescription` (both `FText`, shown
+in whatever UI surfaces the asset), an `mIcon` (soft texture reference), a hard on/off switch
+`mIsDisabled`, a tie-break `mPriority` (`int32`, where higher wins when more than one asset could
+apply), and `mTags` (`FGameplayTagContainer`), the same field `matchTag:` reads. Because these five
+fields exist on every KAPI asset, a single patch document can disable one specific asset by path
+while also bulk-adjusting every asset carrying a particular tag:
+
+```yaml
+type: cdo
+conditions:
+  hasMod: KAPI
+patches:
+  # Disable one specific KAPI data asset by object path:
+  - target: /KLib/Assets/MinerDescriptions/DA_MinerDesc_Iron.DA_MinerDesc_Iron
+    properties:
+      - path: mIsDisabled
+        value: true
+  # Bump priority on every KAPI asset tagged as event-only:
+  - matchTag: KMods.EventOnly
+    ofClass: /Script/KAPI.KAPIDataAssetBase
+    properties:
+      - path: mPriority
+        op: add
+        value: 100
+```
+
+### `UKAPIModularMinerDescription`: modular miner resources
+
+Each instance describes one resource variant that a KAPI modular miner can extract: which resource
+class it targets, what item it actually produces, which drill and scanner tiers and which modules
+are required or excluded, and its fluid coolant/byproduct behavior. The `mResourceClass` field is
+the asset's identity. Never `set` it to `none`, since KAPI hard-crashes on a null resource class
+(see the [key-field warning](#fkdfrandomdata-note--key-field-warning) below). Retuning throughput
+across every modular miner resource at once is a single `allAssetsOfClass` patch:
+
+```yaml
+type: cdo
+conditions: { hasMod: KAPI }
+patches:
+  - allAssetsOfClass: /Script/KAPI.KAPIModularMinerDescription
+    properties:
+      - path: mNormalFluidCountPerSecond
+        op: multiply
+        value: 1.5
+```
+
+Other properties on this type worth knowing about: `mProductionItem`, `mDrillTier`, `mScannerTier`,
+`mNeededModules`, `mPreventModules`, `mModuleInformation`, `mFluidInfo`, `mTryProductionDynamic`,
+`mTrashItem`, `mIsFallbackDescriptor`, `mFoundText`, `mRarityText`, `mNodeScreenshot`.
+
+### `UKAPICleanerItemDescription`: cleaner recipes
+
+This is effectively a recipe for KAPI's cleaner building: an input fluid, an optional item that
+gets consumed alongside it, a production time, and the item(s) produced in return. `mInFluid` is a
+struct rather than a class reference, so its **nested** `ItemClass` member is the actual key field.
+Keeping `mInFluid.ItemClass` valid matters exactly the same way `mResourceClass` does on a miner
+description. Multiplying `mProductionTime` and clamping the input fluid amount both work as ordinary
+numeric ops, including through the nested path:
+
+```yaml
+type: cdo
+conditions: { hasMod: KAPI }
+patches:
+  - allAssetsOfClass: /Script/KAPI.KAPICleanerItemDescription
+    properties:
+      - path: mProductionTime
+        op: multiply
+        value: 0.75
+      - path: mInFluid.Amount # nested struct member on an asset instance
+        op: max
+        value: 1000
+```
+
+Other properties: `mOutFluid`, `mNeedCleanItem`, `mProduceItem`, `mProduceAmount`,
+`mBypassProducts`, `mCleanerItemInfo`.
+
+### `UKAPIAirCollectorData`: air collector production
+
+Air collectors harvest a resource passively over time from the surrounding air rather than from a
+node. This asset governs how much: production per hit, a hit cap, the trace range used to scan for
+valid targets, and min/max output bounds around a base count. `clamp` is the natural op for a
+range-scan property like `mRangeToScan`, since it lets you pin the value inside sane bounds in one
+step instead of chaining `min`/`max`:
+
+```yaml
+type: cdo
+conditions: { hasMod: KAPI }
+patches:
+  - allAssetsOfClass: /Script/KAPI.KAPIAirCollectorData
+    properties:
+      - path: mProduceItemCountMax
+        op: add
+        value: 2
+      - path: mRangeToScan
+        op: clamp
+        min: 1000
+        max: 50000
+```
+
+Other properties: `mItemClass`, `mActorClass`, `mProductionTime`, `mProductionPerHit`, `mMaxHit`,
+`mTraceChannel`, `mRecipePrio`, `mProduceItemCountBase`, `mProduceItemCountMin`.
+
+### `UKAPIManufacturerModifications`: manufacturer I/O tuning
+
+Rather than editing every recipe a manufacturer building runs, this asset lets you scale an entire
+building class's throughput at once. Solid, fluid, and gas connections each get their own
+multiplier, plus there are separate slot-icon overrides for solid and fluid connectors. It's the
+tool of choice when the goal is "every recipe on this building runs faster/slower" instead of "this
+one recipe":
+
+```yaml
+type: cdo
+conditions: { hasMod: KAPI }
+patches:
+  - allAssetsOfClass: /Script/KAPI.KAPIManufacturerModifications
+    properties:
+      - path: mSolidMultiplier
+        op: multiply
+        value: 2
+```
+
+Other properties: `mTargetClass`, `mInput`, `mOutput`, `mFluidMultiplier`, `mGasMultiplier`,
+`mSolidSlotIcons`, `mFluidSlotIcons`.
+
+### `UKAPISugHatchingData`: slug breeding/hatching
+
+This is the largest KAPI data asset type by property count, since it drives a full
+breeding-simulation mechanic. It covers which slug and egg pair it describes,
+breeding/hatching/die durations, the environmental comfort window (heat, humidity, compatible
+neighbors) the pair needs, food and fluid/power consumption rates, incubator/tank tier
+requirements, and the output counts and odds for the resulting eggs or slugs. Breeding time and
+hatch chance are the two levers most packs touch first:
+
+```yaml
+type: cdo
+conditions: { hasMod: KAPI }
+patches:
+  - allAssetsOfClass: /Script/KAPI.KAPISugHatchingData
+    properties:
+      - path: mBreedingTime
+        op: multiply
+        value: 0.5
+      - path: mChance
+        op: max
+        value: 0.1
+```
+
+The full property set: `mSlug`, `mEgg`, `mEggColor`, `mSlugTier`, `mChance`, `mProbability`,
+`mHatchDuration`, `mDieTime`, `mDayTime`, `mMinHeat`/`mMaxHeat`, `mMinHumidity`/`mMaxHumidity`,
+`mComfortableWith`, `mRequiredFood`, `mFoodConsumePerCycle`, `mFoodDuration`, `mFluidClass`,
+`mFluidConsume`, `mFluidConsumeTime`, `mPowerConsume`, `mIncubatorTier`, `mTankTier`,
+`mProductionCount`, `mProductionCountEggs`, `mFixedChanceMultiplier`, `mPossibleSlugs`.
+
+### `UKAPIExtractorAllowList`: scanner/extractor allow lists
+
+Rather than a per-resource property, this asset is a compatibility table: which resource types a
+given extractor building is allowed (or explicitly disallowed) to mine, and the mirror image of
+which extractors a given resource accepts. That makes it the right place to hook up a new resource
+type, or a new miner added by another mod, so they recognize each other. Do this by appending to
+the relevant list instead of replacing it wholesale:
+
+```yaml
+type: cdo
+conditions: { hasMod: KAPI }
+patches:
+  - allAssetsOfClass: /Script/KAPI.KAPIExtractorAllowList
+    properties:
+      - path: mAllowedExtractors
+        op: append
+        value:
+          - /Game/FactoryGame/Buildable/Factory/MinerMk3/Build_MinerMk3.Build_MinerMk3_C
+```
+
+Other properties: `mAllowedResources`, `mDisallowResources`, `mDisallowExtractors`.
+
+### `UKAPTooltipWidgetInjector`: tooltip widget injection
+
+This one doesn't tune gameplay numbers at all. It injects an extra UI widget into item tooltips for
+a filtered set of classes, at a chosen position in the tooltip's widget list. `mWidgetClass` is the
+key field here (the widget that actually gets inserted), so it carries the same never-null
+guarantee as `mResourceClass` and `mInFluid.ItemClass` above:
+
+```yaml
+type: cdo
+conditions: { hasMod: KAPI }
+patches:
+  - allAssetsOfClass: /Script/KAPI.KAPTooltipWidgetInjector
+    properties:
+      - path: mInjectAtIndex
+        value: 0
+```
+
+Other properties: `mClassFilter`.
+
+### `FKDFRandomData` note & key-field warning
+
+`FKAPIRandomData` (with its `mProbability` field) appears nested inside several of the asset types
+above rather than as its own top-level asset. Edit it the same way as any other nested struct
+member, through a dotted path like `mSomething.mProbability`.
+
+> ⚠️ KAPI **crashes intentionally** (fgcheck) when a key field is null: `mResourceClass` on miner
+> descriptions, `mInFluid.ItemClass` on cleaner items, `mWidgetClass` on tooltip injectors. Never
+> `set` these to `none`. Use `mIsDisabled: true` to turn an asset off instead.
+
+### KMods native gameplay tags
+
+KAPI registers a handful of gameplay tags itself at startup, so they're usable in `matchTag:` (and
+in any tag-container op) immediately, without your pack needing its own `gametag` document first.
+These are `KMods.ExcludeFromNodeRandomization`, `KMods.Disabled`, `KMods.AlternateRecipe`,
+`KMods.PlannerExclude`, `KMods.WikiExclude`, `KMods.Deprecated`, `KMods.WIP`, `KMods.Cheat`, and
+`KMods.EventOnly`. Since `mTags` lives on the common `UKAPIDataAssetBase`, any of them works as a
+`matchTag:` selector across every KAPI asset type shown above, not just the one it was originally
+meant for:
+
+```yaml
+type: cdo
+conditions: { hasMod: KAPI }
+patches:
+  - matchTag: KMods.Cheat # hide all cheat-tagged KAPI content
+    ofClass: /Script/KAPI.KAPIDataAssetBase
+    properties:
+      - path: mIsDisabled
+        value: true
+```
+
+See [Game Tags](/kdataforge/features/game-tags) for how `matchTag:` and tag-container ops work in general, and
+[Tag-Based Bulk Balancing](/kdataforge/tutorials/tag-based-bulk-balancing) for a full worked example built around this
+exact tag list.
+
+## Creating new instances: `type: dataasset`
+
+Editing only gets you so far. Sometimes a pack genuinely needs a **new** data asset instance that
+doesn't exist yet, such as a new modular miner resource, a new cleaner recipe, or a new slug
+pairing. A `dataasset` document creates a real instance at runtime in package
+`/KDataForge/GenAssets/<PackRef>` under a save-stable name `Gen_<PackRef>_<Id>`, and announces it to
+the asset registry. Any subsystem that scans the registry for assets of its type picks the new
+instance up on its next scan:
+
+```yaml
+# file: cleaner.dataasset.yml
+type: dataasset
+conditions: { hasMod: KAPI }
+assets:
+  - id: CleanerItem_MyFluid
+    class: /Script/KAPI.KAPICleanerItemDescription # any UDataAsset subclass
+    properties:
+      - path: mProductionTime
+        value: 4.0
+      - path: mInFluid
+        value:
+          {
+            ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C,
+            Amount: 1000,
+          }
+```
+
+`dataasset` runs in the **Assets** stage, the second stage in the pipeline, right after `GameTags`
+and before `Localization`/`CDOChanges`. This means a generated instance already exists by the time
+any later `cdo`, `item`, or `recipe` document in the same load needs to reference it. YAML changes are loaded on the next session start.
+
+The same example appears inside the end-to-end pack in
+[End-to-End Pack](/kdataforge/examples/end-to-end-pack). There it sits next to the item/recipe/schematic files it
+belongs with.
+
+Remember: `dataasset` is only for **creating** new instances. Existing PrimaryDataAssets (KAPI's,
+RRDA's, any mod's) are already editable via the `cdo` selectors shown above. There's no need to
+"recreate" one just to change a value on it.
+
+## 2D image assets: `type: asset`
+
+Generated items and buildings need icons, and those icons have to come from somewhere. Your pack
+doesn't ship a `.uasset`, it ships a plain image file instead. An `asset` document loads an image
+file shipped **inside your pack** and turns it into a real, referenceable `UTexture2D`. This is the
+missing piece for giving generated content its own icon instead of borrowing one from an existing
+item:
+
+```
+<your-mod>/DataForge/
+  pack.yml                  # ref: MyPack
+  icons/
+    my-icon.png
+  my-icons.asset.yml
+```
+
+```yaml
+# file: my-icons.asset.yml
+type: asset
+assets:
+  - id: MyIcon
+    file: icons/my-icon.png # relative to the pack root; png / jpg / tga / bmp
+```
+
+The result is a **transient** `UTexture2D` at `/KDataForge/GenAssets/<PackRef>.Gen_<PackRef>_<Id>`,
+announced to the asset registry the same way a `dataasset` instance is:
+
+- Image changes are decoded on the next session start.
+- `file:` is pack-relative. Absolute paths and `..` traversal outside the pack are rejected.
+- The texture object stays stable for the running GameInstance. A new session recreates the
+  transient object and resolves YAML references again.
+- **2D only**: no FBX/glTF, ever (design policy). Only PNG, JPG/JPEG, TGA, and BMP are decoded
+  today. DDS and WAV aren't supported yet, and an unrecognized extension fails validation with the
+  supported-format list in the error message.
+
+### Using a loaded image as an item icon
+
+Point any object-reference icon property, most commonly an item descriptor's `mSmallIcon` /
+`mPersistentBigIcon`, at the generated texture's path, exactly like referencing any other asset:
+
+```yaml
+type: cdo
+patches:
+  - target: MySuperIngot # a generated item — short id, same as /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot
+    # …or any existing one: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      - path: mSmallIcon
+        value: MyIcon # short id — same as /KDataForge/GenAssets/MyPack.Gen_MyPack_MyIcon
+      - path: mPersistentBigIcon
+        value: MyIcon
+```
+
+Both `target:` and the icon values above use the bare `id:` because everything referenced was
+generated by this same pack — see
+[Generated Content Short Ids](/kdataforge/reference/yaml-schema#generated-content-short-ids)
+for cross-pack resolution and the full path form.
+
+For a generated item you can just as well put these two entries straight into the `item`
+document's `properties:` instead (see [Items](/kdataforge/features/items)), same ops, one file less.
+
+## Automatic consumer rescans
+
+Neither KAPI nor RRDA notice a new or changed data asset on their own. Somebody has to tell their
+scanning subsystem to look again, and KDataForge does that for you. After the initial load, it checks whether any data assets were **modified or added** and only then
+triggers a rescan. You never have to poke a subsystem yourself:
+
+- **KAPI**: rescanned via reflection only when the KAPI mod is actually loaded, no hard dependency
+  needed.
+- **RefinedRDApi**: rescanned only when the RefinedRDApi mod is actually loaded, with no link
+  dependency needed on it. It's what covers RefinedPower / FicsitFarming
+  boiler/cooler/heater/turbine/generator/dirt data assets, below.
+
+## Editing RefinedR&D data assets (RRDA)
+
+RefinedPower and FicsitFarming machine tuning lives in the same kind of PrimaryDataAsset instance
+KAPI uses, just under RRDA's own classes: `RRDABoilerDataAsset`, `RRDACoolerDataAsset`,
+`RRDAHeaterDataAsset`, `RRDATurbineDataAsset`, `RRDAGeneratorDataAsset`, and `RRDADirtDataAsset`. All
+of these are editable with plain `cdo` documents exactly like the KAPI types above. Because the
+rescan that picks up your changes runs entirely via reflection (see above), a `hasMod` condition is
+all the gating a pack needs. There's no RRDA API dependency to add:
+
+```yaml
+# file: faster-boilers.cdo.yml
+type: cdo
+conditions: { hasMod: RefinedRDApi }
+patches:
+  - allAssetsOfClass: /Script/RefinedRDApi.RRDABoilerDataAsset
+    properties:
+      - path: mDuration
+        op: multiply
+        value: 0.5 # every RefinedPower/FicsitFarming boiler produces twice as fast
+```
+
+Heater and turbine assets work identically: swap the class
+(`allAssetsOfClass: /Script/RefinedRDApi.RRDAHeaterDataAsset`, `…RRDATurbineDataAsset`) and patch
+their properties the same way. `/kdf report` lists every matched asset so you can confirm the
+selection before tuning values. See
+[Editing Another Mod's Data Assets](/kdataforge/tutorials/editing-another-mods-data-assets) for a full walkthrough that
+starts from "I don't know this mod's class names yet" and ends with a working balance pack.

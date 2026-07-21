@@ -1,0 +1,177 @@
+---
+title: Base-Game Unlock Classes
+description: Every base-game FGUnlock class, with concrete examples, settable properties, and caveats.
+sidebar:
+  order: 6
+---
+
+[Type: schematic → Instanced unlocks](/kdataforge/features/schematics#instanced-unlocks-the-normal-way-to-wire-up-a-recipe)
+and [Type: unlock](/kdataforge/features/unlocks) both work with **any** concrete
+`FGUnlock` subclass — the mechanism is fully generic (resolve `class:`, `NewObject` it onto the
+schematic's CDO, apply `properties:`, append to `mUnlocks`). Only a couple of unlock types show up
+in most examples (`FGUnlockRecipe`, `FGUnlockInventorySlot`); this page catalogs every one the base
+game ships, so you don't have to go spelunking through engine headers to find them.
+
+> ℹ️ Several of these classes are tagged `abstract` in their C++ declaration. That only blocks
+> instantiating the _base_ class from a Blueprint asset picker in the editor — it does not stop
+> `NewObject` at runtime, which is exactly how KDataForge (and the base game's own Blueprint
+> schematics) create every unlock instance. If a class below isn't literally instantiable for some
+> other reason, `/kdf report` will show the failed patch; nothing here is guesswork, every property
+> name comes straight from the FactoryGame headers.
+
+## Recipes & schematics
+
+```yaml
+unlocks:
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
+    properties:
+      - path: mRecipes
+        value: [/KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot]
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockSchematic.BP_UnlockSchematic_C # unlocks OTHER schematics directly —
+    properties: # bypasses MAM/HUB purchase entirely
+      - path: mSchematics
+        value: [/Game/FactoryGame/Schematics/Progression/Schematic_2-3.Schematic_2-3_C]
+```
+
+The current game build ships no Blueprint variant for FGUnlockVisualizationMode; use a mod-provided concrete subclass for that abstract native type.
+
+| Class                | Key property                                     | What it does                                                                      |
+| --------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `FGUnlockRecipe`     | `mRecipes: TArray<TSubclassOf<UFGRecipe>>`       | Unlocks the given recipes for manufacturing                                       |
+| `FGUnlockSchematic`  | `mSchematics: TArray<TSubclassOf<UFGSchematic>>` | Directly purchases/unlocks other schematics — no MAM/HUB step for those           |
+| `FGUnlockBlueprints` | `mRecipes` (inherited from `FGUnlockRecipe`)     | Unlocks the Blueprint Designer **feature** and the designer's own recipe together |
+
+## Player capability & inventory
+
+```yaml
+unlocks:
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockInventorySlot.BP_UnlockInventorySlot_C
+    properties:
+      - path: mNumInventorySlotsToUnlock
+        value: 3
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockArmEquipmentSlot.BP_UnlockArmEquipmentSlot_C
+    properties:
+      - path: mNumArmEquipmentSlotsToUnlock
+        value: 1
+```
+
+| Class                      | Key property                           | What it does                                                                                                                                                    |
+| ---------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FGUnlockInventorySlot`    | `mNumInventorySlotsToUnlock: int32`    | Adds inventory slots                                                                                                                                            |
+| `FGUnlockArmEquipmentSlot` | `mNumArmEquipmentSlotsToUnlock: int32` | Adds arm-equipment slots (extra equipped tool)                                                                                                                  |
+| `FGUnlockGiveItem`         | `mItemsToGive: TArray<FItemAmount>`    | A container of items other systems read — doesn't hand out items on its own; use `FGUnlockRecipe`/direct inventory grants for an actual give-on-purchase effect |
+
+## Central Storage
+
+Three separate classes, one per axis — combine as many as you need on one schematic:
+
+```yaml
+unlocks:
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockCentralStorageItemLimit.BP_UnlockCentralStorageItemLimit_C
+    properties:
+      - path: mItemStackLimitIncrease
+        value: 5
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockCentralStorageUploadSpeed.BP_UnlockCentralStorageUploadSpeed_C
+    properties:
+      - path: mUploadSpeedPercentageDecrease
+        value: 10 # % faster upload (decreases UFGCentralStorageSettings::mDefaultTimeToUpload)
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockCentralStorageUploadSlots.BP_UnlockCentralStorageUploadSlots_C
+    properties:
+      - path: mNumSlotsToUnlock
+        value: 1
+```
+
+| Class                               | Key property                                        | What it does                                 |
+| -------------------------------------- | ------------------------------------------------------ | ------------------------------------------------- |
+| `FGUnlockCentralStorageItemLimit`   | `mItemStackLimitIncrease: int32`                    | More item stacks storable in Central Storage |
+| `FGUnlockCentralStorageUploadSpeed` | `mUploadSpeedPercentageDecrease: float` (`Percent`) | Faster central-storage uploads               |
+| `FGUnlockCentralStorageUploadSlots` | `mNumSlotsToUnlock: int32`                          | More concurrent upload queue slots           |
+
+## Scanning & world interaction
+
+```yaml
+unlocks:
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockScannableResource.BP_UnlockScannableResource_C
+    properties:
+      - path: mResourcePairsToAddToScanner
+        value:
+          - ResourceDescriptor: /Game/FactoryGame/Resource/RawResources/Bauxite/Desc_OreBauxite.Desc_OreBauxite_C
+            ResourceNodeType: Node # Node | FrackingSatellite | FrackingCore | Geyser | Deposit
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockScannableObject.BP_UnlockScannableObject_C
+    properties:
+      - path: mScannableObjects
+        value: [] # FScannableObjectData entries — world-object scan targets (crates, POIs, …)
+```
+
+| Class                       | Key property                                                                                               | What it does                                                   |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `FGUnlockScannableResource` | `mResourcePairsToAddToScanner: TArray<FScannableResourcePair>` (`ResourceDescriptor` + `ResourceNodeType`) | Grants Object Scanner detection for a resource                 |
+| `FGUnlockScannableObject`   | `mScannableObjects: TArray<FScannableObjectData>`                                                          | Grants Object Scanner detection for non-resource world objects |
+| `FGUnlockMap`               | _(no properties)_                                                                                          | Unlocks the in-game map                                        |
+
+## Customization & cosmetics
+
+```yaml
+unlocks:
+  - class: /Script/FactoryGame.FGUnlockCustomization
+    properties:
+      - path: mCustomizationUnlocks
+        value: [] # TSubclassOf<UFGPlayerCustomizationDesc> entries — outfits/skins
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockEmote.BP_UnlockEmote_C
+    properties:
+      - path: mEmotes
+        value: [/Game/FactoryGame/Emotes/Wave/Emote_Wave.Emote_Wave_C]
+```
+
+| Class                       | Key property                                                               | What it does                                                        |
+| ----------------------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| `FGUnlockCustomization`     | `mCustomizationUnlocks: TArray<TSubclassOf<UFGPlayerCustomizationDesc>>`   | Player outfit/skin customization options                            |
+| `FGUnlockCustomizer`        | _(no properties)_                                                          | Unlocks the build-gun paint customizer feature itself               |
+| `FGUnlockEmote`             | `mEmotes: TArray<TSubclassOf<UFGEmote>>`                                   | Grants emotes                                                       |
+| `FGUnlockVisualizationMode` | `mVisualizationModes: TArray<TSubclassOf<UFGVisualizationModeDescriptor>>` | Grants factory visualization modes (e.g. production/power overlays) |
+
+## Feature flags (no properties — presence alone unlocks the feature)
+
+These have no configurable properties at all; adding one to `unlocks:` is a bare `class:` entry:
+
+```yaml
+unlocks:
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockBuildOverclock.BP_UnlockBuildOverclock_C
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockBuildProductionBoost.BP_UnlockBuildProductionBoost_C
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockBuildEfficiency.BP_UnlockBuildEfficiency_C
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockCircuitDaisyChaining.BP_UnlockCircuitDaisyChaining_C
+```
+
+| Class                          | What it does                                             |
+| --------------------------------- | ------------------------------------------------------------- |
+| `FGUnlockBuildOverclock`       | Unlocks overclocking (potential shards) on buildings     |
+| `FGUnlockBuildProductionBoost` | Unlocks inserting production-boost shards into buildings |
+| `FGUnlockBuildEfficiency`      | Unlocks the build-efficiency display on buildings        |
+| `FGUnlockCircuitDaisyChaining` | Unlocks power-line daisy-chaining between poles          |
+
+## Misc
+
+```yaml
+unlocks:
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockSAMIntensity.BP_UnlockSAMIntensity_C
+    properties:
+      - path: mSAMIntensity
+        value: 2
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockInfoOnly.BP_UnlockInfoOnly_C
+    properties:
+      - path: mUnlockName
+        value: 'A cosmetic note'
+      - path: mUnlockDescription
+        value: 'Shown in the unlock UI — grants nothing by itself.'
+```
+
+| Class                  | Key property                                                                               | What it does                                                                               |
+| ------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `FGUnlockSAMIntensity` | `mSAMIntensity: int32`                                                                     | Sets the intensity of SAM-node effects (e.g. VO)                                           |
+| `FGUnlockInfoOnly`     | `mUnlockName`/`mUnlockDescription: FText`, `mUnlockIconBig`/`Small`/`Category: UTexture2D` | Pure UI entry in the unlock list — grants no gameplay effect on its own                    |
+| `FGUnlockCheckmark`    | _(inherits `FGUnlockInfoOnly`'s fields)_                                                   | Same as `FGUnlockInfoOnly`, plus tracks a per-player "seen/unlocked" checkmark in the save |
+
+These classes plug into [schematic instanced unlocks](/kdataforge/features/schematics#instanced-unlocks-the-normal-way-to-wire-up-a-recipe).
+Use [Type: unlock](/kdataforge/features/unlocks) to reuse one preconfigured unlock
+class across several schematics. Schematic [`dependencies:`](/kdataforge/features/schematics#gating-a-schematic-on-prerequisites)
+uses the equivalent instanced-array mechanism for `mSchematicDependencies`.

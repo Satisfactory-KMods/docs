@@ -1,0 +1,90 @@
+---
+title: KDataForge
+description: Create and patch Satisfactory content with YAML packs, without writing C++.
+sidebar:
+  order: 1
+---
+
+KDataForge is a YAML-driven runtime content framework for Satisfactory. Put pack files under
+`<your-mod>/DataForge/**/*.yml` to rebalance existing content, generate new classes and assets, or
+ship integrations with other mods. Generated content has save-stable identity, and the in-game
+editor can inspect live objects and export drafts. In multiplayer, every process loads its own pack
+set. KDataForge does not negotiate checksums or stream applied operations.
+
+## For Pack Authors
+
+If you want to rebalance a recipe, add an item, or ship a small content pack without touching C++,
+start with [Getting Started](/kdataforge/getting-started). It builds the smallest
+possible pack and verifies that it loaded. Next, [Lint Your Pack](/kdataforge/lint-your-pack)
+with KPatchwork's static checker before starting the game. Continue with the
+[Task Guides](/kdataforge/tutorials), including
+[Item + Icon + Recipe + Tier-1 Unlock](/kdataforge/tutorials/item-icon-recipe-schematic)
+for the most common first content chain.
+
+Once you know the pack shape, use [Features](/kdataforge/features) to understand a
+capability and [Reference](/kdataforge/reference) for exact schema or API details.
+[Property Types](/kdataforge/features/property-types) and
+[Operations](/kdataforge/features/operations) explain the codec every patch value
+uses. [Recipes](/kdataforge/features/recipes) and
+[Items](/kdataforge/features/items) cover two common document types.
+
+The [Examples](/kdataforge/examples) section contains complete multi-capability packs such as
+[Balancing](/kdataforge/examples/balancing) and [End-to-End Pack](/kdataforge/examples/end-to-end-pack).
+Use these when you want to see several document types wired together.
+
+## For Mod Developers / Contributors
+
+If you are extending KDataForge, adding a native document handler, embedding it from another mod,
+or reviewing the pipeline, use [Internals & Architecture](/kdataforge/background).
+It is contributor material, not a prerequisite for authoring a pack.
+
+[Architecture](/kdataforge/background/architecture) walks the full data flow from
+filesystem scan to reflection-based property edits, and [Module Structure](/kdataforge/background/module-structure)
+maps the plugin's runtime modules.
+
+The [Reference](/kdataforge/reference) section contains the normative detail.
+[YAML Schema](/kdataforge/reference/yaml-schema) is the complete grammar, [Handler Template](/kdataforge/reference/handler-template)
+is a reference C++ implementation for a new handler, [API Design](/kdataforge/reference/api-design)
+covers the public API surface for third-party mods, and [Editor Integration](/kdataforge/reference/editor-integration)
+documents `KDF.ApplyToAssets` for applying YAML packs directly onto assets inside the Unreal Editor.
+
+## Commands
+
+KDataForge exposes a small set of chat commands (typed in-game as `/kdf ...`) and console variables
+for inspecting and controlling a running instance without editing files:
+
+| Command                          | Where                               | Effect                                                                                                                                                                                                   |
+| --------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/kdf report`                    | chat                                | Prints the load report: packs, applied documents, ops, warnings, errors                                                                                                                                  |
+| `/kdf editor`                    | chat (host)                         | Toggles the in-game editor: browse content, edit properties live, undo/redo, and export changes to YAML                                                                                                  |
+| `KDF.Editor`                     | console                             | Same as `/kdf editor`                                                                                                                                                                                    |
+| `/kdf debug on\|off`             | chat                                | Flips global debug logging (same switch as `KDF.Debug`). Bare `/kdf debug` toggles the current state                                                                                                     |
+| `KDF.Debug 1`                    | console (or launch arg `-KDFDebug`) | Global [debug logging](/kdataforge/getting-started#debugging): one `[KDF DEBUG]` line per applied op, including editor edits. Narrower scopes: `debug: true` per document or in `pack.yml` |
+| `KDF.ApplyToAssets [PathFilter]` | console (**UE editor builds only**) | Applies loaded YAML directly onto editor assets and marks packages dirty. See [Editor Integration](/kdataforge/reference/editor-integration)                                               |
+
+## Quick Start
+
+Create `<your-mod>/DataForge/pack.yml`:
+
+```yaml
+ref: MyTweaks
+name: My Tweaks
+version: 1.0.0
+```
+
+Then create `<your-mod>/DataForge/my-tweaks.cdo.yml`:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.5
+```
+
+Start the game. The recipe now smelts twice as fast. Use `/kdf report` in chat to inspect the load
+report. Restart the session after changing YAML files. Prefer a UI? `/kdf editor` opens the in-game
+editor with live property editing and YAML export. Before shipping, run
+[Lint Your Pack](/kdataforge/lint-your-pack) to catch static schema errors.

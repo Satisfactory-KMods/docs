@@ -1,0 +1,29 @@
+---
+title: Reference
+description: Normative grammar, public API, handler implementation, and editor tooling — lookup material for advanced KDataForge work, not a tutorial.
+sidebar:
+  order: 1
+---
+
+This section is lookup material, not a walkthrough. Consult these pages when you already know
+roughly what you're building and need the exhaustive, field-by-field detail rather than a guided
+example. [Features](/kdataforge/features) explains what a capability does and why
+it's shaped the way it is, and [Examples](/kdataforge/examples) gives you
+copy-pasteable YAML. The pages below cover what those sections deliberately leave out: normative
+grammar, the stable C++ surface, editor tooling, and catalogs.
+
+- [YAML Schema](/kdataforge/reference/yaml-schema) is the complete, normative grammar for
+  packs, document types, property paths, all 22 operations, conditions, and includes. It's for pack
+  authors who need to check the exact shape or default of a field rather than read a worked example.
+- [API Design](/kdataforge/reference/api-design) documents the public C++ API surface in
+  the `KDataForgeApi` module. It's for third-party mod developers who link against KDataForge from
+  native code and need to know which symbols are stable to build against long-term.
+- [Handler Template](/kdataforge/reference/handler-template) is a reference C++
+  implementation of a document handler, built around a worked `RecipeHandler` example. It's for
+  developers extending KDataForge itself with support for a new YAML root type.
+- [UE Editor Integration](/kdataforge/reference/editor-integration) covers
+  `KDF.ApplyToAssets`, the console command that applies YAML `cdo` patches directly onto assets inside
+  the Unreal Editor so the changes can be saved as permanent edits. It's for mod developers working in
+  editor builds, not the packaged game.
+- [Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes) catalogs
+  every base-game `FGUnlock` subclass, its properties, concrete examples, and instantiation caveats.

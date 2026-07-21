@@ -1,0 +1,140 @@
+---
+title: Changelog
+description: What's new in the Production Planner, release by release.
+sidebar:
+  order: 8
+---
+
+Every release, in short. Newest first.
+
+## 1.3-alpha (July 2026)
+
+- The canvas now zooms out to 10%, making even very large plans easier to see in full.
+- Game Mode settings can be selected during plan creation or changed later: Recipe Parts Cost offers `0.25×` through `2×` with whole-ingredient rounding for `Recipe.Part`, while Power Consumption offers `0.25×` through `5×` for every production machine and configured miner.
+- Fixed: the selected Recipe Parts Cost could be saved without rebuilding affected input rates; initial calculation and later graph rebuilds now use its rounded costs consistently.
+- Fixed: build-gun recipes, building descriptors, and items without an allowed automated producer no longer appear in planner target or recipe selectors. Producerless items remain available as manual inputs.
+- Fixed: fluid and gas amount fields now accept and display `m³/min`, convert to internal liters automatically, and no longer cap input at `99.999 m³/min`.
+
+## 1.2-alpha (July 2026)
+
+- The authoritative planner catalog is now a versioned item/recipe graph in MongoDB. Every selectable route must have a complete dependency path to an allowed raw resource or Available Input; unresolved items and cycles are reported instead of becoming implicit raw inputs.
+- Heavy route scoring and material-balance calculations now run in a bounded backend worker pool. Large calculations no longer block unrelated API requests, and each worker reuses the current catalog snapshot.
+- Plan validation now offers up to ten ranked recipe routes per active production step. The best complete route remains the automatic default, while each option shows concise depth, raw-input, and byproduct details and can be selected without losing the other choices.
+- Fixed: a configured Fluid Module whose miner outputs the same resource no longer gets optimized out. Its required fluid is now a real material input, while Waste Module replacement outputs and byproducts remain real outputs/surplus. Older saved miner configurations receive compatible fallbacks.
+- Fixed: Unrouted Outputs no longer lists duplicate output rows or numerical remnants displayed as `0/min` or `0 m³/min`.
+- Fixed: long sidebar panels now scroll their content internally instead of expanding the whole planner page; the panel header, footer, and canvas remain fixed.
+- Fixed: Exclude Raw Resources now only offers genuine mineable/extractable resources; producerless normal or catalog-only items no longer appear in the picker.
+- Fixed: configured raw-resource nodes now show the required whole miner/extractor building count in their header, always rounded up from fractional machine demand.
+- Fixed: recipes locked to 100% clock now use whole building counts in backend material balancing. Boiler/heater inputs and outputs run at their full per-building rates, upstream supply grows to match, and excess output becomes surplus.
+- Fixed: unsuffixed per-minute rates above 100 now keep their configured decimal precision throughout the planner.
+- Fixed: Low Power now scores the actual producing-building consumption across the complete route. Disabled producers are removed before scoring, and the selected enabled building is preserved in the canvas, statistics, and exports.
+- Fixed: combined strategies are blended evenly regardless of selection order, while Byproduct Reuse now prefers inputs that are genuinely produced as co-products elsewhere in the active plan.
+- Fixed: planner-resource-tagged items are valid external inputs, circular routes are rejected before efficiency ranking, and malformed configured-miner values now produce a safe validation error instead of invalid flow numbers.
+- Fixed: building counts and power totals now use physical clock-distributed buildings consistently in Stats, the page header, and exports. Variable-power recipes, configured-miner scaling, and Somersloop output are included without applying their multipliers twice.
+- Fixed: manual supply/sink actions now reuse the backend graph's hub IDs, and clearing all desired outputs also clears stale plan diagnostics.
+- Fixed: a manually inserted consumer recipe with no routed output edge now shows its theoretical output rate instead of `0/min`; the actually routed amount remains separate for unused-output and trim actions.
+- Premium strategies and automatic byproduct sinking are now enforced by the build API as well as the planner UI.
+
+## 1.1-alpha (July 2026)
+
+- Configured miners are now real production nodes. A configured miner no longer needs a matching Available Input the calculator applies it directly wherever the plan needs its resource, scaling with the rest of the plan and wiring its output, byproduct, and any required fluid input as real connections (proper input/output handles, clock/power display), instead of a fixed-rate external input.
+- A Configured Miners list (Outputs panel) shows what's set up; click an entry to edit its settings, or remove it.
+- The Modular Miner's Waste Module (Crusher/Smelter) and Fluid Module can now be combined on the same miner, matching the real building's two independent attachment slots. Configure Miner shows them as two separate pickers instead of one shared module choice.
+- The miner resource picker now only lists resources with real module data, so you can't pick one the game data has nothing to configure for.
+- Tooltips added to icon-only buttons across the planner (fill tier, remove, configure) so their purpose is clear on hover.
+- Fixed: excluding a raw resource now forces route selection to avoid it; when no valid alternative exists, the planner shows an error card instead of using the excluded resource or its crushed variant.
+- Fixed: Byproduct Reuse no longer creates a circular byproduct route that produces and sinks a co-product while using that same co-product's byproduct as an input.
+- Fixed: recipe selection now falls back to another complete input chain when the preferred route cannot be supplied, and shows an error when none can.
+- Fixed: production chains now stay on the selected output's dependency routes; unrelated co-product recipes no longer inflate a small plan into millions of raw resources, and every external input must be a real raw resource.
+- Fixed: saved per-plan alternate-recipe selections are now normalized and preserved when loading, importing, restoring snapshots, or creating a plan from a template.
+
+## 1.0-alpha (July 2026)
+
+- Modular Miner modules in Configure Miner: **Crusher**/**Smelter** swap the ore output for a crushed intermediate or ingot plus a small waste byproduct; **Fluid** boosts extraction with a supplied fluid and is required for some resources (e.g. Sulfur). Module outputs, byproducts, and fluid inputs are wired into the real plan graph.
+- Recipes can be tagged to never overclock; they now stay pinned at exactly 100% clock everywhere no overclock, no underclock, with extra demand rounding up to a whole additional building.
+- Hatchery Info button next to Configure Miner: pick a slug color to see its heat/humidity ranges, required Tank fluid, Incubator tier, hatch/breeding durations, power draw, and needed modules.
+- Byproduct Reuse strategy (Patreon, Plan settings → Algorithm): prefers recipes that consume a byproduct already produced elsewhere in the plan; anything it can't cover is filled the normal way.
+- Combine up to 2 strategies at once: pairing Byproduct Reuse with another strategy tries the byproduct gate first, then falls back; any other pair blends both scores evenly.
+- Fixed: the Fluid module's boost combined with node purity multiplicatively instead of additively like in-game; miner output and required fluid now match real numbers on any purity.
+- Fixed: Byproduct Reuse could promise supply that was never actually produced (a hub showing 0/min produced but routing a real amount out); such shortfalls are now backfilled from a fresh source.
+- Fixed: recipes without a single shared cadence (Fluid Conditioner bypass outputs, Slug Hatchery/Terrarium timers) showed 0 rates on the canvas, in panels, and in exports; they now fall back to each item's own per-minute rate.
+
+## 0.14 (July 2026)
+
+- Sidebar panel width is now resizable on desktop, remembered between visits.
+- Scale all desired outputs by a factor at once.
+- Power Generation Assistant: pick power plants to cover your plan's power draw, choose fuel per plant, see buildings and fuel needed.
+- Alternate recipes tagged **ALT** in the Recipes Used list.
+- Reverse miner overclock calculator: enter a target rate, get the overclock percentage needed.
+- Snapshot diff compare: either side of the Compare page can diff a saved snapshot instead of the live plan.
+- Keyboard shortcuts **1** to **7** switch sidebar panels from anywhere.
+- Auto-configure miners button sets a default extraction rate on unconfigured raw nodes.
+- Fill belt/pipe tier shortcut sets an output's quantity to a belt or pipeline tier's max throughput.
+- Recipes Used list grouped by recipe category with collapsible sub-headings.
+
+## 0.13 (July 2026)
+
+- Unrouted-output actions (Suggest Consuming Recipe, Route to Sink, Add as Desired Output) reachable from the sidebar list, not just the canvas.
+- Fixed: Suggest Consuming Recipe and Auto-build chain doing nothing (used the output rate instead of the input rate).
+- Fixed: actions button missing on byproduct sink cards.
+- Fixed: some buildings showed no Somersloop slots at all.
+- Fixed: adding a Somersloop overproduced instead of scaling the build down.
+- Fixed: a byproduct could silently show 0/min if item data was still loading.
+- New: pull a starved input's missing supply from a raw/available hub with one click.
+- New: exclude raw resources you haven't unlocked yet.
+- Fixed: clock speed now rounds to 4 decimal places instead of 2.
+
+## 0.12 (July 2026)
+
+- Unused recipe outputs get a right-click menu: Suggest Consuming Recipe (Patreon), Route to Sink, Add as Desired Output, Duplicate Node, Trim Output to Demand, Highlight Item Flow.
+- Sidebar redesigned: icon rail replaces the 7-tab strip and opens a slide-out panel; last-open panel is remembered.
+- Summary no longer repeats Power/Sink Points already shown in Stats; its resource rows link to the wiki.
+- Stats gained a recipe search filter and remembers your collapsed sections.
+- Balance shows an at-a-glance "balanced / N off target" summary.
+- Byproducts sort by amount and got a Focus on Canvas button.
+- Available Inputs shows an empty state and merges duplicate entries instead of silently overwriting.
+- Snapshots reload on session switch; relative timestamps stay live.
+- Bezier offset is now a slider.
+
+## 0.11 (July 2026)
+
+- Byproducts are reused across the whole graph before starting a new production line.
+- Per-minute rates round to 2 decimals instead of 1 (11.25 no longer shows as 11.3), with a **Rate Decimal Places** setting (1-3) to control it.
+- Bottleneck highlighting: a recipe node turns red when its incoming supply falls short of what it needs.
+- Belt/pipe tier badges on every edge showing the smallest tier that can carry the flow.
+- Alternate recipes flagged from the game's own data instead of guessed from the name.
+- Sink point overview (whether a plan can sink byproducts) visible to everyone; exact pts/min stays Patreon.
+- Power/Resources planning strategies now score the whole chain, not just local data.
+- Somersloop production boost: shard stepper on supported buildings.
+- Raw resource totals aggregate demand per item across the whole plan.
+- PDF diagram export.
+- Recipe/building exclusion checks game tags, not just name patterns.
+
+## 0.10 (June 2026)
+
+- Hovering a connection highlights every line on the same blocks and animates flow back to the source.
+- Refreshed "Create plan" wizard to match the rest of the design system.
+- Guide grew into a full docs site with a sidebar.
+- Forced recipes now apply at every occurrence of an item, not just the final step.
+
+## 0.9 (June 25, 2026)
+
+- Added an in-app Guide: getting started, canvas, panels, saving, shortcuts, and a free vs. Patreon comparison.
+
+## 0.8 (June 25, 2026)
+
+- Fixed vertical layout connecting edges to the wrong side.
+- Fixed the recipe star button selecting instead of pinning.
+- Added item pinning, alongside recipe pinning.
+- Fixed doubled search placeholder text.
+- Added a Guide link to the planner's top bar.
+
+## 0.7 (June 23, 2026)
+
+- Compact Identical Recipes (Patreon): merge every occurrence of a recipe into one shared building cluster.
+- Refreshed Patreon bonus list with full perk descriptions and a back button.
+
+## 0.6 (May 2026)
+
+- Group selected nodes into collapsible sub-assemblies.
+- Pin favourite recipes to the top of every picker.

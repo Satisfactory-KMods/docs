@@ -1,0 +1,205 @@
+---
+title: 'Tag-Based Bulk Balancing'
+description: Register your own gameplay tag, mark a pile of content as yours or as needing rebalancing, and bulk-edit everything carrying that tag in one patch instead of one cdo patch per target.
+sidebar:
+  order: 6
+---
+
+You're rebalancing a dozen recipes and you don't want a dozen `target:` patches to keep in sync as
+the list grows. This tutorial builds a small, reusable tag, marks a handful of recipes with it
+across separate files, and bulk-edits every one of them with a single `matchTag:` patch. That's the
+same mechanism the [Balancing](/kdataforge/examples/balancing#bulk-edits-with-the-tag-matcher) page shows
+in miniature. Here it's worked all the way through with real files, and the exact matching rules are
+verified against `UKDFCdoHandler`'s target-gathering code.
+
+## The problem this solves
+
+One `target:` patch per recipe works fine for three recipes. It stops working once you're
+maintaining thirty: every new tuned recipe needs its own patch entry, and nothing tells you which
+recipes are "yours" versus vanilla, untouched ones.
+
+A gameplay tag fixes both problems. Tag every recipe you touch as you create or edit it, then write
+**one** patch that matches the tag and applies to whatever currently carries it. That covers today's
+four recipes or next month's forty, with no patch-list maintenance required.
+
+## Step 1: register your own tag
+
+```yaml
+# file: myoverhaul-tags.gametag.yml
+type: gametag
+tags:
+  - tag: MyOverhaul.Rebalanced
+    comment: Recipes tuned by MyOverhaul's balance pass
+```
+
+Full mechanics are in [Game Tags](/kdataforge/features/game-tags), but the short
+version matters here. `UKDFGameTagHandler` does **not** write a tag `.ini` file anywhere. Instead it
+appends a row straight onto the `UGameplayTagsSettings` CDO's `GameplayTagList` array, in memory
+only, never saved to disk, then calls `DestroyGameplayTagTree()` / `ConstructGameplayTagTree()` so
+the engine's tag tree picks it up.
+
+That rebuild is what makes `FGameplayTag::RequestGameplayTag("MyOverhaul.Rebalanced")` resolve to a
+valid tag afterward. Registration is idempotent, so an already-listed tag is skipped. This needs
+`GameplayTags.ImportTagsFromConfig = true`, which Satisfactory ships with enabled, so you don't need
+to configure anything for that part.
+
+**GameTags is always the first stage**, ahead of every other document type in the same load. That
+means this tag is already registered and usable by the time any `cdo` document in the same pack
+runs, so no `include:` is needed for the gametag file itself.
+
+## Step 2: tag the content
+
+### Existing content (vanilla or another mod's): a plain `cdo` patch
+
+```yaml
+# file: myoverhaul-tag-batch-a.cdo.yml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Recipes/Constructor/Recipe_IronPlate.Recipe_IronPlate_C
+    properties:
+      - path: mGameplayTags
+        op: append
+        value: [MyOverhaul.Rebalanced]
+  - target: /Game/FactoryGame/Recipes/Constructor/Recipe_IronRod.Recipe_IronRod_C
+    properties:
+      - path: mGameplayTags
+        op: append
+        value: [MyOverhaul.Rebalanced]
+```
+
+```yaml
+# file: myoverhaul-tag-batch-b.cdo.yml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Recipes/Constructor/Recipe_Wire.Recipe_Wire_C
+    properties:
+      - path: mGameplayTags
+        op: append
+        value: [MyOverhaul.Rebalanced]
+  - target: /Game/FactoryGame/Recipes/Constructor/Recipe_Screw.Recipe_Screw_C
+    properties:
+      - path: mGameplayTags
+        op: append
+        value: [MyOverhaul.Rebalanced]
+```
+
+That's two files and four recipes, with no coordination between them beyond both existing. This is
+the point: tagging is additive, and it doesn't care which file or which pack a given target was
+tagged from.
+
+### Your own freshly generated content: tag it in its OWN document, not a separate `cdo` patch
+
+If a recipe is one you're generating in this same pack (`type: recipe`, `id:` form), put
+`mGameplayTags` straight into that document's own `properties:` instead of writing a follow-up `cdo`
+patch for it:
+
+```yaml
+# file: my-recipe.recipe.yml
+type: recipe
+recipes:
+  - id: Recipe_MyThing
+    properties:
+      - path: mDisplayName
+        value: My Thing
+      - path: mGameplayTags
+        value: [MyOverhaul.Rebalanced]
+      # … mIngredients, mProduct, mManufactoringDuration, mProducedIn …
+```
+
+This isn't a style preference. It's the only version guaranteed to work on the very first load. See
+[Step 3](#step-3-the-bulk-patch-matchtag--ofclass--tagproperty) and
+[Troubleshooting](#troubleshooting) for why a separate `cdo` patch targeting a same-pass generated
+recipe doesn't resolve on that first load.
+
+## Step 3: the bulk patch: `matchTag` + `ofClass` + `tagProperty`
+
+```yaml
+# file: myoverhaul-rebalance.cdo.yml
+type: cdo
+include:
+  - myoverhaul-tag-batch-a.cdo.yml
+  - myoverhaul-tag-batch-b.cdo.yml
+patches:
+  - matchTag: MyOverhaul.Rebalanced
+    ofClass: /Script/FactoryGame.FGRecipe
+    tagProperty: mGameplayTags
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.8 # 20% faster
+```
+
+`myoverhaul-tag-batch-a.cdo.yml` and `myoverhaul-tag-batch-b.cdo.yml` are both `cdo` documents, in the
+same `CDOChanges` stage as the bulk patch, so they need explicit `include:` ordering here. That's
+different from the gametag file in Step 1. GameTags is a stage that always finishes before
+CDOChanges even starts, so it never needs an `include:` entry. Two `cdo` documents in the same stage
+need one whenever one depends on the other having already run.
+
+## The worked scenario, end to end
+
+Four vanilla recipes, tagged from two files, sped up 20% by one bulk patch:
+
+`myoverhaul-tags.gametag.yml` registers `MyOverhaul.Rebalanced`. `myoverhaul-tag-batch-a.cdo.yml`
+tags `Recipe_IronPlate` and `Recipe_IronRod`. `myoverhaul-tag-batch-b.cdo.yml` tags `Recipe_Wire` and
+`Recipe_Screw`. `myoverhaul-rebalance.cdo.yml` scans `FGRecipe` with `matchTag` for the tag and
+multiplies `mManufactoringDuration` by `0.8`.
+
+Add a fifth recipe to the tag next month. That's one more `target:` line in whichever tagging file
+makes sense, with zero changes to `myoverhaul-rebalance.cdo.yml`. The patch keeps applying to
+"everything tagged `MyOverhaul.Rebalanced`," not to a fixed list.
+
+A self-contained version of this exact pattern uses four real vanilla recipes, one gametag file, and
+one cdo file. It applies tag-then-matchTag in a single document instead of splitting across files,
+since ops inside one document's `patches:` list apply top-to-bottom. It looks like this:
+`rebalance-tags.gametag.yml` + `rebalance-vanilla-recipes.cdo.yml`.
+
+## When to reach for a native `KMods.*` tag instead of your own
+
+KAPI already registers a set of native tags: `KMods.AlternateRecipe`, `KMods.EventOnly`,
+`KMods.Deprecated`, `KMods.WIP`, `KMods.Cheat`, `KMods.Disabled`, `KMods.ExcludeFromNodeRandomization`,
+`KMods.PlannerExclude`, and `KMods.WikiExclude`. See the full list in
+[Data Assets → KMods native gameplay tags](/kdataforge/features/data-assets), and a
+worked `matchTag` example against them in
+[Balancing → Buffing all alternate recipes](/kdataforge/examples/balancing#buffing-all-alternate-recipes-kapi-tags).
+
+| Use a native `KMods.*` tag when…                                                                                       | Register your own tag when…                                                  |
+| -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| You want content that's ALREADY carrying the tag (e.g. every alternate recipe in the game, tagged by KAPI/other KMods) | You're marking content **you're** touching: nothing upstream tags it for you |
+| The category is a general, cross-pack concept (deprecated, WIP, event-only, cheat)                                     | The category is specific to your pack's own balance pass or content set      |
+| You're fine gating the whole document behind `hasMod: KAPI`                                                            | You don't want a KAPI dependency at all                                      |
+
+The two aren't mutually exclusive. A single `matchTag:` list can include both, for example
+`matchTag: [KMods.AlternateRecipe, MyOverhaul.Rebalanced]`, remembering that's an AND: "alternates
+that are ALSO mine." Native tags always require `conditions: { hasMod: KAPI }` on the document,
+since they don't exist without KAPI loaded. Your own tags never need any `hasMod` gate.
+
+## Troubleshooting
+
+- **Tag not registering / "Invalid tag" at load time.** The error includes the engine's own
+  suggested fix, usually a stray space or extra dot in the dotted tag string. Fix the YAML string,
+  not the tag. See [Game Tags → Troubleshooting](/kdataforge/features/game-tags#troubleshooting).
+- **`matchTag` matched no objects: check `ofClass` first.** `ofClass` has to be the class the
+  tagged content actually is, or an ancestor of it. `ofClass: /Script/FactoryGame.FGSchematic` will
+  never match a recipe's tags, even if the tag name is identical. Confirm with `/kdf report` which
+  classes were actually scoped.
+- **`matchTag` matched no objects: check `tagProperty` next.** If a class exposes a tag container
+  under a non-standard name, an unnamed or mis-typed `tagProperty` silently finds nothing rather
+  than erroring. The lookup fails closed, not loud.
+- **`matchTag` matched no objects, and the target is content YOU generated in the SAME pack.**
+  `type: cdo` runs before the content-generation stages. A `matchTag` scan cannot discover a class
+  that this initialization pass has not generated yet. Put the tag and initial property values in
+  the generated entry's `properties:` block. Do not rely on a later session: short-id and tag
+  discovery still happen before generation. An exact canonical generated-class path can be watched
+  and patched when that class is created, but this is a narrow lazy-resolution mechanism, not
+  general cross-stage ordering. Inline properties are the predictable solution.
+- **A `KMods.*` tag "doesn't exist", or the whole document silently skips.** You forgot
+  `conditions: { hasMod: KAPI }`. Without KAPI loaded, KAPI's own tags never register, so
+  `matchTag: KMods.AlternateRecipe` fails with "unknown gameplay tag." If you _did_ gate the
+  document, a missing KAPI install just skips it quietly, an Info diagnostic in `/kdf report`, not
+  an error, rather than breaking your pack.
+
+[Game Tags](/kdataforge/features/game-tags) covers registration mechanics, ordering,
+and session initialization. [Targeting](/kdataforge/features/targeting) catalogs every
+selector, including `matchTag` with `ofClass`, `target:`, and `allAssetsOfClass:`. For more bulk-edit
+examples, including the native `KMods.*` alternate-recipe buff, see
+[Balancing](/kdataforge/examples/balancing).

@@ -1,0 +1,168 @@
+---
+title: 'Item + Icon + Recipe + Tier-1 Unlock'
+description: The most common first pack — a new item with a placeholder icon, a recipe that produces it, and a Tier-1 schematic that actually makes it obtainable in a fresh game.
+sidebar:
+  order: 2
+---
+
+If you've generated an item and can't find it anywhere in-game, this tutorial is almost certainly
+the fix. It walks through the **complete, minimum chain**: item, icon, recipe, schematic, end to
+end. Every snippet below is a complete, working example, not a hypothetical fragment.
+
+## The mistake this tutorial fixes
+
+A generated `item` and a `recipe` producing it are **not enough** on their own. `Recipe:` documents
+register the recipe class into SML's `UModContentRegistry`, so the game knows the class exists.
+Registration alone doesn't put the recipe in front of the player, though. Satisfactory gates every
+recipe behind an **unlock**, normally granted by a schematic (a HUB milestone or a MAM node).
+Without a schematic unlocking your recipe, the class exists and the recipe is "known" to the mod
+content registry, but the player still never sees it. That's the whole story behind "I don't see my
+created item."
+
+## Step 1: the item
+
+```yaml
+# file: super-ingot.item.yml
+type: item
+items:
+  - id: SuperIngot
+    parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      - path: mDisplayName
+        value:
+          key: SuperIngot_Name
+          ns: KDFSample
+          source: Super Ingot
+      - path: mDescription
+        value: Forged from YAML. Stacks high, sinks well.
+      - path: mStackSize
+        value: SS_HUGE
+      - path: mResourceSinkPoints
+        value: 42
+      # Placeholder icon — see Step 2, loaded by super-ingot-icon.asset.yml
+      - path: mSmallIcon
+        value: /KDataForge/GenAssets/KDFSample.Gen_KDFSample_SuperIngotIcon
+      - path: mPersistentBigIcon
+        value: /KDataForge/GenAssets/KDFSample.Gen_KDFSample_SuperIngotIcon
+```
+
+`mStackSize` is an `EStackSize` **enum** (`SS_ONE`/`SS_SMALL`/`SS_MEDIUM`/`SS_BIG`/`SS_HUGE`/
+`SS_FLUID`), not a plain item count. See
+[Balancing → Items](/kdataforge/examples/balancing#items-ufgitemdescriptor) for the full caveat about
+the engine's stack-size cache. KDataForge refreshes that cache automatically, so you don't need to
+do anything extra. Just don't write a raw number here expecting it to mean "N items per stack".
+
+## Step 2: a placeholder icon (`type: asset`)
+
+You don't need real art to get an item on-screen and testable. Any PNG/JPG/TGA/BMP works, even your
+mod's own logo, as a stand-in until you have real icons:
+
+```yaml
+# file: super-ingot-icon.asset.yml
+type: asset
+assets:
+  - id: SuperIngotIcon
+    file: mod-logo.png # pack-relative path — any 2D image
+```
+
+Result: `/KDataForge/GenAssets/KDFSample.Gen_KDFSample_SuperIngotIcon`, referenced directly from the
+item's `mSmallIcon`/`mPersistentBigIcon` in Step 1. **No `include:` needed.** `type: asset` always
+runs in the `Assets` stage, and `Assets` always runs before `Items`, regardless of file or pack
+order. See [Data Assets](/kdataforge/features/data-assets) for the full `type: asset` reference.
+This is the same 2D-image mechanism, just used for an item icon instead of a KAPI data asset.
+
+## Step 3: the recipe
+
+```yaml
+# file: super-ingot.recipe.yml
+type: recipe
+recipes:
+  - id: Recipe_SuperIngot
+    properties:
+      - path: mDisplayName
+        value: 'Super Ingot'
+      - path: mIngredients
+        value:
+          - ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+            Amount: 2
+      - path: mProduct
+        value:
+          - ItemClass: /KDataForge/Gen/KDFSample.Gen_KDFSample_SuperIngot
+            Amount: 1
+      - path: mManufactoringDuration
+        value: 4.0
+      - path: mProducedIn
+        value:
+          - /Game/FactoryGame/Buildable/Factory/SmelterMk1/Build_SmelterMk1.Build_SmelterMk1_C
+```
+
+No `include:` needed for the item reference. `Items` always finishes before `Recipes` starts. This
+alone gets you a real, registered recipe class, but it's still **locked**.
+
+## Step 4: the Tier-1 schematic (the step that was missing)
+
+```yaml
+# file: super-ingot.schematic.yml
+type: schematic
+schematics:
+  - id: Schematic_SuperIngot
+    properties:
+      - path: mType
+        value: EST_Milestone
+      - path: mDisplayName
+        value: Super Ingot Production
+      - path: mDescription
+        value: Unlocks production of the Super Ingot.
+      - path: mTechTier
+        value: 1
+      - path: mTimeToComplete
+        value: 10
+      - path: mCost
+        value:
+          - ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+            Amount: 20
+    unlocks:
+      - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
+        properties:
+          - path: mRecipes
+            value: [/KDataForge/Gen/KDFSample.Gen_KDFSample_Recipe_SuperIngot]
+```
+
+- `mType: EST_Milestone` + `mTechTier: 1` is what makes this a **Tier 1 HUB milestone**: the
+  standard "unlocked early, no MAM required" pattern.
+- No `include:` needed. `Recipes` always finishes before `Schematics` starts.
+- `register: true` is the default, so this schematic (and, via SML's auto-propagation, the recipe
+  and item it touches) registers into `UModContentRegistry` automatically. The schematic is the
+  **only** piece in this whole chain you need registration for. See
+  [Type: recipe → auto-propagation](/kdataforge/features/recipes#register-and-auto-propagation).
+
+With this file in place, a fresh save now shows "Super Ingot Production" as a purchasable Tier 1
+HUB milestone. Purchasing it unlocks `Recipe_SuperIngot` for the player to build.
+
+## Recap: what each file contributes
+
+| File                         | `type:`     | Contributes                                          |
+| ----------------------------- | ------------- | ------------------------------------------------------ |
+| `super-ingot.item.yml`       | `item`      | The item class itself                                |
+| `super-ingot-icon.asset.yml` | `asset`     | A 2D texture the item references as its icon         |
+| `super-ingot.recipe.yml`     | `recipe`    | A recipe producing the item (registered, but locked) |
+| `super-ingot.schematic.yml`  | `schematic` | **The unlock**: this is what makes it obtainable     |
+
+## Troubleshooting
+
+- **Item still not appearing after adding the schematic**: run `/kdf report` and confirm all four
+  documents applied with no errors. A typo'd generated-class path (missing pack ref, wrong id
+  spelling) is the most common cause, and it's always visible there.
+- **Icon shows as a checkerboard/missing texture**: check that `file:` is spelled exactly right and
+  is relative to the **pack root** (the directory containing `pack.yml`), not the mod's own folder.
+- **Recipe exists but isn't selectable at the smelter**: the recipe needs the schematic's unlock
+  applied. In a fresh save that means actually purchasing "Super Ingot Production" in the HUB.
+- **Want to unlock a NEW recipe from a schematic that already exists** (vanilla or another mod's,
+  instead of generating your own): that's a slightly different shape, covered in
+  [Adding a Recipe to an Existing Schematic](/kdataforge/tutorials/existing-schematic-unlock).
+
+For per-document details, use [Type: item](/kdataforge/features/items),
+[Type: recipe](/kdataforge/features/recipes), and
+[Type: schematic](/kdataforge/features/schematics). [Data Assets](/kdataforge/features/data-assets)
+documents the full `type: asset` 2D-image mechanism. [End-to-End Pack](/kdataforge/examples/end-to-end-pack)
+shows a similar chain with localization and sink points.

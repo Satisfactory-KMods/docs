@@ -1,0 +1,106 @@
+---
+title: Features
+description: One page per capability KDataForge supports — the value you put after `type:` in a YAML document, plus the cross-cutting mechanics every document shares.
+sidebar: { order: 1 }
+---
+
+Every KDataForge YAML document starts with a `type:` field, and that single field decides which of
+the pages below covers it. `type: item` behaves nothing like `type: gametag`: each has its own
+entries key, its own load stage, and its own session-start behavior. This section gives every one of
+those `type:` values its own page, plus a handful of pages for mechanics that cut across all of
+them. Those cross-cutting pages cover the property codec every `value:` is parsed through, the 22
+operations a patch can apply, the selectors that pick what gets patched, and the
+conditions/pack-manifest options that sit above any single document.
+
+Read a page here to understand **what a capability does and why it is shaped the way it is**. For
+complete packs that combine several capabilities, use [Examples](/kdataforge/examples).
+[Task Guides](/kdataforge/tutorials) walk specific goals step by step. For normative
+field and API details, use [Reference](/kdataforge/reference).
+
+## Patch mechanics
+
+`type: cdo` is the workhorse document that every other type either resembles or builds on
+internally. These five pages cover the parts that make a patch a patch: what a value looks like,
+what an operation does to it, how a target is selected, when a document applies at all, and how
+the pieces fit together in one patch entry.
+
+- [Property Types](/kdataforge/features/property-types): every value shape the
+  property codec accepts, including bool, all numeric widths, enums, strings, `FText` (plain and
+  localized), object/class/soft references, all three struct forms, arrays, sets, maps, and
+  gameplay tags.
+- [Operations](/kdataforge/features/operations): what each of the 22 `op:` values
+  does and which property kinds accept it, covering numeric math and clamping, container
+  mutation, string concatenation, array reordering, and cross-property copy/move.
+- [Targeting](/kdataforge/features/targeting): every way to select what a patch
+  applies to, a class CDO, a single asset instance, every asset of a class, tag matching,
+  subclass expansion, and spawned-actor propagation.
+- [Conditions & Packs](/kdataforge/features/conditions-and-packs): `conditions:`
+  for gating whether a document applies, `pack.yml` manifest fields, `redirects:` for safe id
+  renames, and `include:` ordering between files in one pack.
+- [Patching (type: cdo)](/kdataforge/features/patching-cdo): how a `patches:` entry
+  ties target selectors, modifiers, and a `properties:` list together, plus the current snapshot
+  and restart boundaries.
+
+## Runtime documents
+
+Two document types register something into a global engine system rather than patching an object
+directly. Both are unusual enough about _when_ they take effect to deserve their own page.
+
+- [Game Tags](/kdataforge/features/game-tags): registering new gameplay tags at
+  runtime, how that registration survives the engine's tag-tree rebuilds, and why the `GameTags`
+  stage always runs first.
+- [Localization](/kdataforge/features/localization): new or overridden display text
+  per namespace and culture, source-hash matching for overrides, and culture prefix-matching
+  rules.
+
+## Content creation
+
+These seven types generate a brand-new class at runtime, or, for the last three, register an
+existing one you didn't generate. This is the actual "add new stuff to the game" side of
+KDataForge. All seven share the same id/parent/properties shape and the same save-stable
+generated-class identity.
+
+- [Items](/kdataforge/features/items): generating new `FGItemDescriptor` classes,
+  the parent/required-base rules, and the generated-class identity every other content-creation
+  type shares.
+- [Resources and Resource Nodes](/kdataforge/features/resources): generating
+  `FGResourceDescriptor` classes, patching node actor classes, scanner unlocks, and the limits on
+  selecting or placing world nodes.
+- [Buildings](/kdataforge/features/buildings): generating new
+  building/buildable-descriptor classes, what a generated building actually is, and the hard
+  limit on genuinely new meshes or components.
+- [Unlocks](/kdataforge/features/unlocks): generating a standalone, reusable
+  `FGUnlock` subclass, and why a schematic's own inline `unlocks:` list is what most packs
+  actually want.
+- [Recipes](/kdataforge/features/recipes): generating new recipes, registering
+  existing recipe classes, and how registration into SML's content registry actually happens.
+- [Schematics](/kdataforge/features/schematics): generating new
+  schematics/milestones, registering existing ones, and the instanced `unlocks:` list that wires
+  a recipe up to a schematic.
+- [Research Trees](/kdataforge/features/research-trees): generating new M.A.M.
+  research trees, registering existing ones, and why a schematic doesn't "point at" a tree the
+  way a recipe points at a schematic.
+
+## Sink points, the escape hatch, data assets, and curves
+
+These pages round out the type list with a narrow registry document, a general class escape hatch,
+object-instance assets, and Unreal curves.
+
+- [Sink Points](/kdataforge/features/sinkpoints): setting AWESOME Sink point values
+  for items, its registration timing, and why this is separate from Resource Nodes.
+- [Custom Classes](/kdataforge/features/custom-classes): generating a class of any
+  kind from any parent (native or Blueprint), with optional `registerAs:` for the three
+  registered kinds, the escape hatch beyond the preset types above.
+- [Data Assets](/kdataforge/features/data-assets): editing every KAPI
+  `PrimaryDataAsset` type, creating new instances with `type: dataasset`, loading 2D images with
+  `type: asset`, and RefinedR&D (RRDA) integration.
+- [Float and Vector Curves](/kdataforge/features/curves): creating or editing
+  `UCurveFloat` and `UCurveVector` assets with key interpolation, tangents, defaults, and
+  extrapolation.
+
+:::tip
+Not sure which page you need? If you already know the `type:` value from a YAML file, jump straight
+to its page above. If you're starting from a goal instead ("I want players to unlock a new item"),
+[Task Guides](/kdataforge/tutorials) walks the whole chain instead of making you piece
+it together from several of these pages yourself.
+:::

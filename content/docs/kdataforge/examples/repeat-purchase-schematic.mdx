@@ -1,0 +1,118 @@
+---
+title: Repeat-Purchase Schematic (KLIB)
+description: A complete UKLUnlockMaxRepeatPurchases pack with generated cost and reward curves.
+sidebar: { order: 6 }
+---
+
+## Full example: Repeat-Purchase Schematic
+
+`UKLUnlockMaxRepeatPurchases` from KLib combines two float curves with an instanced schematic
+unlock. It makes its schematic repeatable, limits total purchases, changes complete reward and
+cost lists at selected purchase levels, adds one-time costs to exact levels, and scales those lists
+with curves. Rewards are deposited once into the Trading Post storage; overflow spawns in a crate
+beside it.
+
+Gate the pack on KLib because `/Script/KLib.KLUnlockMaxRepeatPurchases` only exists while that mod
+is loaded. `ref` also determines generated curve object paths:
+
+```yaml
+# file: pack.yml
+ref: RepeatRewards
+name: Repeatable Rewards
+version: 1.0.0
+conditions: { hasMod: KLib }
+```
+
+Create cost and reward multiplier curves in one Assets-stage document. Curve X is the number of
+completed purchases, so X=0 controls first purchase, X=1 second, and X=2 third:
+
+```yaml
+# file: repeat-purchase-curves.curve.yml
+type: curve
+curveType: float
+curves:
+  - id: RepeatPurchaseCost
+    keys:
+      - { time: 0, value: 1 }
+      - { time: 1, value: 2 }
+      - { time: 2, value: 3 }
+  - id: RepeatPurchaseReward
+    keys:
+      - { time: 0, value: 1 }
+      - { time: 1, value: 2 }
+      - { time: 2, value: 3 }
+```
+
+Reference both generated curves from one `UKLUnlockMaxRepeatPurchases` instance:
+
+```yaml
+# file: repeat-purchase.schematic.yml
+type: schematic
+schematics:
+  - id: Schematic_RepeatableRewards
+    properties:
+      - path: mDisplayName
+        value: Repeatable Rewards
+      - path: mType
+        value: EST_Milestone
+      - path: mTechTier
+        value: 3
+      - path: mTimeToComplete
+        value: 30
+      - path: mCost
+        value:
+          - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C
+            Amount: 50
+    unlocks:
+      - class: /Script/KLib.KLUnlockMaxRepeatPurchases
+        properties:
+          - path: mMaxPurchaseCount
+            value: 3
+          - path: mAmounts
+            value:
+              - ItemClass: /Game/FactoryGame/Resource/Parts/CopperSheet/Desc_CopperSheet.Desc_CopperSheet_C
+                Amount: 20
+          - path: mCostMultiplierCurve
+            value: /KDataForge/GenAssets/RepeatRewards.Gen_RepeatRewards_RepeatPurchaseCost
+          - path: mRewardMultiplierCurve
+            value: /KDataForge/GenAssets/RepeatRewards.Gen_RepeatRewards_RepeatPurchaseReward
+          - path: mRewardItemsByLevel
+            value:
+              - mPurchaseLevel: 2
+                mItemsToGive:
+                  - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlateReinforced/Desc_IronPlateReinforced.Desc_IronPlateReinforced_C
+                    Amount: 5
+                mAdditionalCosts:
+                  - ItemClass: /Game/FactoryGame/Resource/Parts/Cable/Desc_Cable.Desc_Cable_C
+                    Amount: 10
+              - mPurchaseLevel: 3
+                mItemsToGive:
+                  - ItemClass: /Game/FactoryGame/Resource/Parts/Rotor/Desc_Rotor.Desc_Rotor_C
+                    Amount: 2
+                bOverrideCosts: true
+                mCosts:
+                  - ItemClass: /Game/FactoryGame/Resource/Parts/ModularFrame/Desc_ModularFrame.Desc_ModularFrame_C
+                    Amount: 5
+```
+
+Result:
+
+| Purchase | Curve X | Final cost                 | Reward deposited into Trading Post storage |
+| -------- | ------- | -------------------------- | ------------------------------------------ |
+| 1        | 0       | 50 Iron Plates             | 20 Copper Sheets                           |
+| 2        | 1       | 100 Iron Plates + 20 Cable | 10 Reinforced Iron Plates                  |
+| 3        | 2       | 15 Modular Frames          | 6 Rotors                                   |
+
+`mAmounts` and schematic `mCost` are level-one defaults. At each later purchase,
+`mRewardItemsByLevel` selects the highest `mPurchaseLevel` not above current 1-based purchase level.
+`mItemsToGive` replaces complete reward list. A level with `bOverrideCosts: true` replaces complete
+raw cost list from that level onward. `mAdditionalCosts` is added only when its `mPurchaseLevel`
+exactly matches current purchase; it does not carry into later levels. Both raw cost lists are
+combined before cost curve is applied, so 10 Cable becomes 20 on purchase 2. Rewards are granted
+once to Trading Post storage; any amount that does not fit spawns in an inventory crate beside
+storage. `mMaxPurchaseCount: 3` prevents further repeat
+purchases. Values at or below zero mean unlimited. Null curve properties use multiplier 1.
+
+See [Curves](/kdataforge/features/curves) for curve field grammar and
+[Schematics](/kdataforge/features/schematics#instanced-unlocks-the-normal-way-to-wire-up-a-recipe)
+for generic `unlocks:` behavior.

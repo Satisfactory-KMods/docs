@@ -1,0 +1,256 @@
+---
+title: 'Conditional Multi-Mod Integration Packs'
+description: Adding bonus content only when another mod (or a specific version of it, or just one of its classes) is present — without a hard dependency and without breaking the load for players who don't have it.
+sidebar:
+  order: 7
+---
+
+The goal is for your pack to add extra content when another specific mod is installed: a KAPI data
+asset, a patch to another mod's buildable, or a bonus recipe. It must not error, warn, or crash for
+the majority of players who don't have that mod. [Conditions & Packs](/kdataforge/features/conditions-and-packs)
+already documents every condition key's syntax individually. This tutorial covers the missing
+piece: how the pieces actually behave under the hood, verified against
+`Source/KDataForge/Private/Loader/KDFConditionEvaluator.cpp`, and how to combine them into a real
+optional-integration pack.
+
+## The core idea
+
+`conditions:` is a top-level key accepted by **every** document type, including `cdo`, `item`,
+`dataasset`, `schematic`, and more. All listed keys are **AND-combined**: every one has to pass for
+the document to apply at all.
+
+```yaml
+type: cdo
+conditions:
+  hasMod: KAPI
+patches:
+  - target: /Script/KAPI.KAPIDataAssetBase
+    # ...
+```
+
+If any condition fails, `KDFConditionEvaluator::Evaluate` returns false for that document. The
+document is dropped **before** its handler ever runs, so no `properties:`, no `patches:`, nothing
+inside it is touched. The loader records a single **Info**-severity diagnostic
+(`Skipped by conditions: <reason>`) and moves on to the next document.
+
+Nothing else in the pack, or in any other pack, is affected. This is the entire mechanism behind
+optional integration: write the bonus content as if the other mod is always there, then gate the
+whole document on a condition that's false when it isn't.
+
+## `hasMod:` scalar, sequence, and version-pinned forms
+
+```yaml
+conditions:
+  hasMod: KAPI                              # scalar — one mod, any version
+
+conditions:
+  hasMod: [KAPI, RefinedPower]              # sequence — ALL must be loaded
+
+conditions:
+  hasMod: RefinedPower@>=4.0.0              # inline version pin, one mod reference
+
+conditions:
+  hasMod: [KAPI, "RefinedPower@>=4.0.0"]    # mix plain refs and pinned refs in one sequence
+```
+
+Straight from the evaluator: a scalar value becomes a one-element list, and a sequence becomes a
+list of strings. **Each entry is checked independently**: for a sequence, every entry must pass or
+the whole condition, and therefore the whole document, fails. For each entry, everything before
+the first `@` is the mod reference, trimmed of surrounding whitespace. Everything after `@`, if
+present, is parsed as an SML semver range (`>=1.2.3`, `^1.2.0`, `~1.2.0`, exact `1.2.3`, `||`
+unions, see [Conditions & Packs](/kdataforge/features/conditions-and-packs)) and checked against
+that mod's actual loaded version. No `@` means the mod just needs to be loaded, any version.
+
+`hasMod` calls `UModLoadingLibrary::GetLoadedModInfo(ModReference, …)`. The reference has to match
+the mod's actual plugin reference or id exactly, case-sensitive, not a display name.
+
+## `modVersion:` vs `hasMod`: what's actually different
+
+`modVersion:` is an explicit map form:
+
+```yaml
+conditions:
+  modVersion:
+    SML: '>=3.12.0'
+    KAPI: '>=2026.0.0'
+```
+
+Reading the evaluator, `modVersion` doesn't do anything structurally different from `hasMod`. For
+every `Ref: range` entry it builds the exact string `"Ref@range"` and calls the **same**
+`EvaluateHasMod` function `hasMod` uses. There is no separate "this is a hard dependency, so assume
+it's present and only check the version" code path. Presence is checked every time, for both forms.
+
+|                                | `hasMod` (with a pin)                    | `modVersion`                                                                                     |
+| -------------------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Under the hood                 | `EvaluateHasMod("Ref@range", …)`         | Builds `"Ref@range"` per map entry, calls the same `EvaluateHasMod`                              |
+| If the mod isn't loaded at all | Document skipped (Info)                  | **Identical** — document skipped (Info), not a harder failure                                    |
+| Idiomatic use                  | One or two optional integrations, inline | Several version constraints stated together, typically for mods you already expect to be present |
+
+Practically, use `hasMod` (bare or pinned) for content that's genuinely optional: a mod you have
+not declared anywhere as a dependency of your own plugin. Reach for `modVersion` when you want to
+state, in one readable block, the version floor for several mods you already treat as real
+dependencies, whether declared in your own `.uplugin` or bundled together in a modpack. It reads
+better than several separate `hasMod` entries, but **it will not error louder if one of those mods
+turns out to be missing.**
+
+If a mod is truly required for your pack to make sense at all, that's a job for your `.uplugin`'s
+own `Plugins:` dependency list. SML refuses to load your mod if a _real_ dependency is missing.
+`conditions:` only ever produces a quiet per-document skip, never a hard failure.
+
+## `hasClass:` gating on a class existing, no mod dependency needed
+
+```yaml
+conditions:
+  hasClass: /Script/FactoryGame.FGBuildableFrackingActivator     # scalar — one class
+
+conditions:
+  hasClass:                                                       # sequence — ALL must exist
+    - /Script/RefinedPower.RPWindTurbine
+    - /Game/FicsitFarming/Buildable/FarmPlot/Build_FarmPlot.Build_FarmPlot_C
+```
+
+`hasClass` resolves each entry with the exact same class-path resolver KDataForge uses for every
+`target:`/`class:`/`parent:` reference elsewhere (`FKDFValueCodec::ResolveClass`). It accepts a
+full `/Script/Module.Class` or `/Game/....Asset_C` path, with an automatic `_C` retry for Blueprint
+classes written without the suffix. As a last resort, for name-only input with no `/` or `.` at
+all, it falls back to a bare-class-name lookup against whatever's currently loaded in memory.
+Ambiguous matches log an error and pick the first sorted match, so use full paths in anything you
+publish.
+
+The reason `hasClass` exists alongside `hasMod` is what happens when the check **fails silently
+vs. loudly**. A `cdo` document whose `target:` (or `allAssetsOfClass:`) points at a class that
+doesn't resolve produces an **Error** diagnostic: the class was expected to be there and wasn't.
+Wrap the same patch in `conditions: { hasClass: ... }` and a missing class instead produces the
+quiet Info-level "skipped by conditions" message, and nothing else happens.
+
+That's the whole value of `hasClass` for optional integration: it turns "this class doesn't exist"
+from a load error into an expected, silent no-op. It does that without your pack, or its
+`.uplugin` if it has one, needing to declare a dependency on the other mod at all, since you're
+checking for the class directly rather than asking SML whether a specific plugin id is loaded.
+
+## Combining conditions in one block (AND)
+
+Every key inside one `conditions:` map is ANDed together, so you can require several independent
+things at once:
+
+```yaml
+type: schematic
+conditions:
+  hasMod: KAPI
+  gameVersion: '>=416000.0.0'
+schematics:
+  - id: Schematic_KAPIBonusResearch
+    properties:
+      - path: mDisplayName
+        value: KAPI Integration Research
+    # ... unlocks a recipe that only makes sense once KAPI's data assets exist
+```
+
+This schematic only applies when **both** KAPI is loaded **and** the game build is recent enough.
+If either one is false, the whole document (research entry, unlock, everything) is skipped as a
+unit, with one Info diagnostic naming whichever condition failed first.
+
+## Worked scenario: base content + two independent optional integrations
+
+A pack that always ships a base item, then layers on two independent bonuses: one gated by
+`hasMod`, one by `hasClass`. Neither blocks the other, or the base item, if its target mod is
+missing.
+
+### (a) The base item: always applies, no conditions
+
+```yaml
+# file: super-ingot.item.yml (excerpt — no conditions: key at all)
+type: item
+items:
+  - id: SuperIngot
+    parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      - path: mDisplayName
+        value: Super Ingot
+```
+
+Every player gets the item, the recipe, and the schematic that unlocks it. See
+[Item + Icon + Recipe + Tier-1 Unlock](/kdataforge/tutorials/item-icon-recipe-schematic) for that
+full chain. Nothing about it depends on any other mod.
+
+### (b) A KAPI data asset: only if KAPI is loaded
+
+```yaml
+# file: super-ingot-cleaner.dataasset.yml
+type: dataasset
+conditions: { hasMod: KAPI }
+assets:
+  - id: CleanerItem_SuperIngot
+    class: /Script/KAPI.KAPICleanerItemDescription
+    properties:
+      - path: mProductionTime
+        value: 6.0
+      - path: mInFluid
+        value:
+          {
+            ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C,
+            Amount: 500,
+          }
+```
+
+This is the standard shape for KAPI-integrated content. See
+[Data Assets](/kdataforge/features/data-assets) for the full field reference. If KAPI isn't
+installed, this document is skipped and the base item from (a) is completely unaffected.
+
+### (c) A RefinedPower patch: only if the class actually exists
+
+```yaml
+# file: refinedpower-windturbine-boost.cdo.yml
+type: cdo
+conditions:
+  hasClass: /Script/RefinedPower.RPWindTurbine
+patches:
+  - target: /Script/RefinedPower.RPWindTurbine
+    applyToSubclasses: true
+    properties:
+      - path: mMaxTurbinePowerProduction
+        op: multiply
+        value: 1.25
+```
+
+This pack never lists RefinedPower as a dependency anywhere. `hasClass` checks for the actual
+`ARPTurbineBaseActor`-derived class at load time and skips cleanly (Info, no error) if it's absent.
+
+This is the same no-hard-dependency philosophy as the RRDA integration pattern already documented
+in [Data Assets → Editing RefinedR&D data assets (RRDA)](/kdataforge/features/data-assets#editing-refinedrd-data-assets-rrda).
+That pattern gates on `hasMod: RefinedRDApi` because it's patching RRDA's own data assets, whose
+consumer rescan already runs by reflection. Here, we go one level more direct and gate on the
+RefinedPower class itself with `hasClass`. This is useful whenever you want to touch another mod's
+actual buildable/actor class rather than a data asset built for cross-mod integration.
+
+Three independent documents, three independent outcomes: (a) always applies, (b) applies only
+with KAPI, (c) applies only with RefinedPower present. Any subset, "only (a)", "(a)+(b)",
+"(a)+(c)", or all three, is a valid, error-free load depending on what's actually installed.
+
+## Troubleshooting
+
+- **A document seems to be silently doing nothing, no errors anywhere.** This is very likely a
+  failed condition. Today, `/kdf report` only prints **Warning**/**Error** diagnostics and only
+  counts those two severities in its summary line. A condition failure is **Info** severity and is
+  filtered out of both, so there's no explicit "Skipped by conditions" line to read in the chat
+  output right now. The indirect tell is the summary's "N document(s) applied" count: a
+  condition-skipped document never gets counted there. So if that number is lower than the number
+  of `.yml` files you expect to apply, a condition mismatch on one of them is the most likely
+  cause. Temporarily delete the `conditions:` block to confirm the rest of the document is
+  otherwise correct, then reintroduce it.
+- **A condition that should pass never does.** The single most common cause is a typo'd mod
+  reference: `hasMod`/`modVersion` match the mod's exact plugin reference, case-sensitive (`KAPI`,
+  not `Kapi` or `kapi`). Double check the spelling against the actual mod's `.uplugin`
+  `SemVersion`/reference id, not its display name in the mod list.
+- **`hasClass` never passes even though the mod is definitely installed.** Check for a missing
+  `_C` on a Blueprint class, or a class that only exists in a newer/older version of that mod than
+  what's installed. `hasClass` checks the class as it exists right now, not a version range, so
+  pair it with `hasMod: OtherMod@>=X.Y.Z` in the same block if you need both.
+- **Want the load to hard-fail instead of quietly skipping when a mod is missing?**
+  `conditions:` never does that, by design: diagnostics are never fatal. If a mod is a genuine
+  hard requirement, declare it in your own `.uplugin`'s dependency list instead. SML will refuse to
+  load your mod at all rather than silently skip content.
+
+[Conditions & Packs](/kdataforge/features/conditions-and-packs) is the syntax reference
+for condition keys, `pack.yml`, `redirects:`, and `include:`. [Data Assets](/kdataforge/features/data-assets)
+documents `type: dataasset` and the RefinedR&D integration pattern used above.

@@ -1,0 +1,320 @@
+---
+title: Property Types
+description: One working example for every supported property datatype, and the gotchas specific to each.
+sidebar: { order: 2 }
+---
+
+Every `properties:` entry inside a `type: cdo` patch (see [Patching](/kdataforge/features/patching-cdo))
+targets one reflected UE property, and the `value:` you write has to match that property's kind.
+KDataForge's value codec recognizes each UE property class in turn: bool, enum, numeric, string,
+object/class reference, struct, container. It only falls through to raw UE text-import for
+anything it doesn't special-case. This page walks through every kind it handles, in the order the
+codec checks them, so you know exactly what YAML shape to reach for. Pair this with
+[Operations](/kdataforge/features/operations) for what you can _do_ to a value once
+you've written it, and [Targeting](/kdataforge/features/targeting) for picking what
+object the patch applies to.
+
+## bool
+
+Booleans accept more than just `true`/`false`: `yes`/`no` and `on`/`off` (case-insensitive) and the
+bare digits `1`/`0` all parse too, so you can match whichever style reads best in context:
+
+```yaml
+- path: mCanBeDiscarded
+  value: false # true/false, yes/no, on/off, 1/0
+```
+
+## int32 / uint8 / int64 (all integer widths)
+
+Every plain integer property takes a bare number, regardless of its bit width. You never need to
+worry about the exact C++ type:
+
+```yaml
+- path: mResourceSinkPoints
+  value: 500
+- path: mMenuPriority
+  value: 42
+```
+
+## float / double
+
+Floating-point properties take a decimal number. Setting `mManufactoringDuration` to a fraction
+halves the crafting time, since it's read in seconds:
+
+```yaml
+- path: mManufactoringDuration
+  value: 2.5
+- path: mEnergyValue
+  value: 300.0
+```
+
+## enum (typed `enum class` and `TEnumAsByte`)
+
+Unreal exposes two enum styles: the typed `enum class` and the older `TEnumAsByte` (a numeric
+property with an attached enum). Both are handled the same way. Write the value's name, optionally
+qualified with the enum's own name, or its numeric ordinal:
+
+```yaml
+- path: mForm
+  value: RF_LIQUID # plain value name
+- path: mForm
+  value: EResourceForm::RF_GAS # qualified form
+- path: mForm
+  value: 2 # numeric value (the enum's underlying ordinal)
+- path: mStackSize
+  value: SS_HUGE # EStackSize — always use the name, not a raw count
+```
+
+:::caution
+A numeric value sets the underlying **ordinal**, not "the number". `mStackSize: 500` is **rejected
+with a validation error** `EStackSize` only has 6 valid ordinals (`SS_ONE`=0 … `SS_FLUID`=5), and
+KDataForge refuses any number that isn't one of them, exactly to stop it from silently becoming
+garbage at every use site that reads `mStackSize`. Always use the value name unless you specifically
+know the ordinal you want.
+:::
+
+## FString
+
+Plain reflected strings take a quoted scalar as-is, no escaping beyond normal YAML quoting rules:
+
+```yaml
+- path: mSomeString
+  value: 'Hello Ficsit'
+```
+
+## FName
+
+`FName` properties look identical to `FString` in YAML. The codec just wraps the text in an
+`FName` before writing it. This matters for fields UE compares by name identity, like the
+quick-switch group below, rather than by string content:
+
+```yaml
+- path: mQuickSwitchGroup
+  value: 'ingots'
+```
+
+## FText: plain (culture-invariant)
+
+A bare scalar for an `FText` property produces a culture-invariant literal text useful for
+internal/debug strings, but not localizable. For anything player-facing, prefer the keyed form
+below or route it through [Localization](/kdataforge/features/localization):
+
+```yaml
+- path: mDisplayName
+  value: 'Better Iron Ingot'
+```
+
+## FText: localized (key/namespace/source)
+
+Passing a map instead of a scalar creates a properly keyed, localizable `FText` instead of an
+invariant literal. The `key` field is required, while `ns` and `source` are optional. This uses the
+same runtime-safe construction path the localization system relies on:
+
+```yaml
+- path: mDisplayName
+  value:
+    key: BetterIronIngot_Name
+    ns: MyPack
+    source: Better Iron Ingot
+```
+
+## Object reference (hard)
+
+Hard object references (`UObject*` properties) take a full asset or object path, resolved and
+loaded immediately. Use `none` (or an empty string) to null one out:
+
+```yaml
+- path: mCategory
+  value: /Game/FactoryGame/Resource/ItemCategories/Cat_Ingots.Cat_Ingots_C
+- path: mSmallIcon
+  value: /Game/FactoryGame/Resource/Parts/IronIngot/UI/IconDesc_IronIngot_64.IconDesc_IronIngot_64
+- path: mConveyorMesh
+  value: none # null out a reference with none or ""
+```
+
+## Class reference (`TSubclassOf`)
+
+Class references also take a path, but the codec tries several forms in order before giving up:
+
+1. The path as given.
+2. The path with a `_C` suffix appended (Blueprint class paths are frequently written without it).
+3. The asset-path-to-object-path expansion.
+4. For a bare name with no `/` or `.` at all, a search across every currently loaded class by short
+   name (see [Targeting](/kdataforge/features/targeting) for the same shortcut
+   applied to `target:`).
+
+```yaml
+- path: mOverriddenCategory
+  value: /Game/FactoryGame/Resource/ItemCategories/Cat_Ingots.Cat_Ingots_C # BP class (`_C` auto-retried)
+- path: mClassToScanFor
+  value: /Script/FactoryGame.FGBuildableResourceExtractor # native class
+- path: mFluidClass
+  value: Desc_Water # bare-name shortcut for Desc_Water.Desc_Water_C — see Targeting
+```
+
+## Soft references (`TSoftObjectPtr` / `TSoftClassPtr`)
+
+The value is stored as a path string and never force-loads the target. The referenced asset only
+loads if and when the game actually needs it:
+
+```yaml
+- path: mPersistentBigIcon
+  value: /Game/FactoryGame/Resource/Parts/IronIngot/UI/IconDesc_IronIngot_256.IconDesc_IronIngot_256
+  # stored as a path, not loaded until the game needs it
+```
+
+## Struct: native text form
+
+For structs with a native text representation, like `FLinearColor`, `FVector`, `FGuid`, and
+`FGameplayTag`, a plain scalar is parsed through that format. This is the same round-trip form the
+editor's "Copy" action produces:
+
+```yaml
+- path: mFluidColor
+  value: '(R=255,G=100,B=0,A=255)'
+```
+
+## Struct: map form (member names, Blueprint-authored names work too)
+
+Any struct also accepts a YAML map keyed by member name. This is resolved through the same flexible
+member lookup used elsewhere, so Blueprint-authored display names work, not just the raw C++ field
+name. Each value is recursively converted through this same codec for that member's type:
+
+```yaml
+- path: mFluidColor
+  value: { R: 255, G: 100, B: 0, A: 255 }
+```
+
+## Struct: positional sequence form (members in declaration order)
+
+A YAML sequence assigns struct members positionally, in C++ declaration order. This is handy for
+terse, well-known structs, like a color or vector, where the member order never changes:
+
+```yaml
+- path: mScannerLightColor
+  value: [1.0, 0.5, 0.0, 1.0]
+```
+
+## Nested structs (any depth)
+
+Struct members that are themselves structs recurse through the same map/sequence/scalar rules to
+arbitrary depth. Deeply nested data, like a struct inside a struct inside an array, reads and
+writes exactly like the flat cases above, just indented:
+
+```yaml
+- path: mCustomScannableDetails
+  value:
+    ScannableType: STY_Default
+    NewDetails:
+      Range: 500
+```
+
+## TArray
+
+Setting a `TArray` property, the default `set` operation, empties the array and rebuilds it from
+the given sequence element by element. The value you write always fully replaces whatever was
+there before, rather than merging into it:
+
+```yaml
+- path: mIngredients
+  value: # `set` replaces the whole array
+    - ItemClass: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
+      Amount: 2
+    - ItemClass: /Game/FactoryGame/Resource/RawResources/Coal/Desc_Coal.Desc_Coal_C
+      Amount: 1
+```
+
+### Instanced UObject arrays
+
+Arrays whose elements are instanced `UObject` references also use a sequence, but each element can
+define a new instance with `class:` and nested `properties:`. KDataForge creates the instance as a
+subobject of the patched target. This still uses `set`, so the array is replaced rather than merged:
+
+```yaml
+- path: mSchematicDependencies
+  value:
+    - class: /Game/FactoryGame/AvailabilityDependencies/BP_SchematicPurchasedDependency.BP_SchematicPurchasedDependency_C
+      properties:
+        - path: mSchematics
+          value:
+            - /SatisfactoryPlus/Content/SchematicManager/Schematics/Milestones/T1/Schematic_SF+_T1_0.Schematic_SF+_T1_0_C
+        - path: mRequireAllSchematicsToBePurchased
+          value: true
+```
+
+The `class:` must be a concrete subclass accepted by the array. For example, `mUnlocks` accepts
+`FGUnlock` subclasses and `mSchematicDependencies` accepts `FGAvailabilityDependency` subclasses.
+Nested entries use the same property paths and operations as top-level patch entries.
+
+## Array element access (index paths)
+
+Rather than replacing a whole array, a path can index straight into one element, and from there
+into that element's own members. This lets you tweak a single ingredient's amount without
+re-listing every other ingredient:
+
+```yaml
+- path: mIngredients[0].Amount
+  value: 3
+```
+
+## TSet
+
+`TSet` properties also take a plain YAML sequence. Entries collapse if the type's equality would
+make them duplicates, since a set has no concept of ordering or repeated elements:
+
+```yaml
+- path: mSubCategories # sets take sequences; duplicates collapse
+  value:
+    - /Game/FactoryGame/Resource/ItemCategories/SC_Smelted.SC_Smelted_C
+```
+
+## TMap
+
+A `TMap` property takes a YAML map. Each key is converted through the map's own key property type
+before insertion, not just kept as a raw string. A bracketed key path lets you update a single
+entry in place instead of replacing the whole map:
+
+```yaml
+- path: mSomeMap
+  value:
+    Iron: 10 # keys converted through the map's key property type
+    Copper: 20
+- path: mSomeMap["Iron"] # single-entry access via key path
+  value: 15
+```
+
+## FGameplayTag
+
+A single gameplay tag is a struct with a native text importer under the hood, so it takes a plain
+dotted scalar just like any other native-text struct:
+
+```yaml
+- path: mStatisticGameplayTag
+  value: KMods.AlternateRecipe
+```
+
+## FGameplayTagContainer
+
+A tag container takes a sequence of tags. As with arrays, the default `set` operation replaces the
+whole container rather than adding to it. See [Operations](/kdataforge/features/operations)
+for the `add`/`remove` variants that mutate a container instead, and
+[Game Tags](/kdataforge/features/game-tags) for registering your own tags before you
+reference them:
+
+```yaml
+- path: mGameplayTags
+  value: # `set` replaces all tags
+    - KMods.WikiExclude
+    - MyPack.Special
+```
+
+## Anything else (fallback)
+
+Any reflected type not listed above still works. The codec falls back to UE's own generic text
+import, so it accepts whatever text form the editor's "Copy" action produces for that property.
+This holds even for exotic or third-party struct types this page doesn't know about by name:
+
+```yaml
+- path: mSomeExoticStruct
+  value: '(InnerValue=3,Flags=(bEnabled=True))'
+```

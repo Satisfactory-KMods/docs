@@ -1,0 +1,35 @@
+---
+title: Task Guides
+description: Goal-oriented procedures for building, integrating, debugging, and shipping KDataForge packs.
+sidebar:
+  order: 1
+---
+
+Each page here starts from a **goal** and walks through however many files and document types it
+takes to get there. Every page includes complete, working YAML that you can copy directly.
+[Features](/kdataforge/features) explains individual capabilities, while
+[Reference](/kdataforge/reference) provides normative fields and APIs.
+
+If this is your first pack, start with [Getting Started](/kdataforge/getting-started)
+before the guides below. It builds the smallest possible pack and confirms it loads, then covers
+`/kdf` commands, debug logging, the load report, session restarts, and current multiplayer limits.
+That is the groundwork these guides assume.
+
+| Page                                                                                                                  | Goal                                                                                                                                                                |
+| ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Item + Icon + Recipe + Tier-1 Unlock](/kdataforge/tutorials/item-icon-recipe-schematic)                | The most common first pack: a new item with a placeholder icon, a recipe that produces it, and a Tier-1 schematic that actually makes it obtainable in a fresh game |
+| [Custom Research Trees](/kdataforge/tutorials/research-trees)                                           | Generate a tree, place MAM schematics into its visual node graph, then extend or prune branches safely                                                              |
+| [Adding a Recipe to an Existing Schematic](/kdataforge/tutorials/existing-schematic-unlock)             | Unlocking something new from a schematic you didn't generate, vanilla, another mod's, or your own from an earlier pack version                                      |
+| [Localizing Your Pack](/kdataforge/tutorials/localizing-your-pack)                                      | Shipping new text in multiple languages and overriding existing vanilla or modded strings without retyping them                                                     |
+| [Tag-Based Bulk Balancing](/kdataforge/tutorials/tag-based-bulk-balancing)                              | Registering your own gameplay tag and bulk-editing everything carrying it in one patch instead of one patch per target                                              |
+| [Conditional Multi-Mod Integration Packs](/kdataforge/tutorials/conditional-multi-mod-packs)            | Adding bonus content only when another mod (or a specific version or class of it) is present, without a hard dependency                                             |
+| [Debugging a Pack That Won't Apply](/kdataforge/tutorials/debugging-a-pack-that-wont-apply)             | An ordered, top-to-bottom checklist for "my YAML file doesn't seem to be doing anything"                                                                            |
+| [Renaming Content Safely](/kdataforge/tutorials/renaming-content-safely)                                | What you can rename in a pack for free, what needs a `redirects` entry, and the one rename `redirects` genuinely can't fix                                          |
+| [Editing Another Mod's Data Assets](/kdataforge/tutorials/editing-another-mods-data-assets)             | Rebalancing existing KAPI or RefinedR&D `PrimaryDataAsset` instances without creating a new one and without a hard dependency on the mod that owns them             |
+| [From Live Editor Edits to a Shareable Pack](/kdataforge/tutorials/from-live-edits-to-a-shareable-pack) | Turning values you tweaked live in `/kdf editor` into a real YAML pack that survives a restart and that you can hand to other people                                |
+
+If you're not sure whether you want a tutorial or a reference page, here is the difference.
+Task Guides assume you know the basics from [Getting Started](/kdataforge/getting-started)
+and are trying to get one specific thing working. Use [Features](/kdataforge/features)
+for conceptual and per-capability explanations. Use [Examples](/kdataforge/examples)
+when you want complete, copy-pasteable packs that wire several capabilities together.

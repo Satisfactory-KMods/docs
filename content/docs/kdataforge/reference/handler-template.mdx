@@ -1,0 +1,159 @@
+---
+title: Handler Template
+description: Reference C++ implementation for creating a new document handler (worked RecipeHandler example).
+sidebar:
+  order: 4
+---
+
+A handler owns one YAML root type and runs in one fixed `EKDFStage`. It receives parsed `FKDFNode`
+documents and never sees raw YAML text directly. Third-party mods write handlers when they want
+KDataForge's validation, dry-run preview, diagnostics, and patch records applied to a new root type.
+
+Every handler normally derives from `UKDFHandlerBase`, which lives in the `KDataForgeApi` module.
+Registration uses `UKDFSubsystem` from the main `KDataForge` module, so the registering mod links
+both. See
+[Module Structure](/kdataforge/background/module-structure) for why that module
+boundary exists and what else lives on either side of it. See
+[API Design](/kdataforge/reference/api-design) for the rest of the public contract
+surface.
+
+## Minimal Skeleton
+
+A handler is normally two files: a header declaring the `UCLASS` and overrides, and a `.cpp`
+implementing them. The example below is a `UMyRecipeHandler` that owns a `type: recipe` document
+containing a `recipes` sequence. Start with the header:
+
+```cpp
+// MyRecipeHandler.h
+#pragma once
+
+#include "CoreMinimal.h"
+
+#include "KDFHandlerBase.h"
+
+#include "MyRecipeHandler.generated.h"
+
+UCLASS()
+class MYMOD_API UMyRecipeHandler : public UKDFHandlerBase
+{
+	GENERATED_BODY()
+
+public:
+	UMyRecipeHandler();
+
+	virtual bool ValidateDocument(const FKDFNode& Document, FKDFValidationContext& Context) override;
+	virtual bool ApplyDocument(const FKDFNode& Document, FKDFApplyContext& Context) override;
+};
+```
+
+The constructor sets the three identity fields that `UKDFHandlerBase` exposes: `mRootType`,
+`mStage`, and `mPriority`. `ValidateDocument` does cheap structural checks before anything is
+written, and `ApplyDocument` does the actual work. Only `ApplyDocument` is mandatory.
+`UKDFHandlerBase`'s default `ValidateDocument` simply returns `true`:
+
+```cpp
+// MyRecipeHandler.cpp
+#include "MyRecipeHandler.h"
+
+UMyRecipeHandler::UMyRecipeHandler()
+{
+	mRootType = TEXT("recipe");          // matches `type: recipe` documents
+	mStage = EKDFStage::Recipes;         // fixed stage — never reordered by priority
+	mPriority = 0;                       // tie-break within (stage, root type); higher runs earlier
+}
+
+bool UMyRecipeHandler::ValidateDocument(const FKDFNode& Document, FKDFValidationContext& Context)
+{
+	if (Document.Find(TEXT("recipes")) == nullptr)
+	{
+		Context.AddError(TEXT("recipe document requires a 'recipes' sequence"));
+		return false;                    // skips ApplyDocument; never halts the load
+	}
+	return true;
+}
+
+bool UMyRecipeHandler::ApplyDocument(const FKDFNode& Document, FKDFApplyContext& Context)
+{
+	const FKDFNode* Recipes = Document.Find(TEXT("recipes"));
+	for (const TSharedRef<FKDFNode>& Recipe : Recipes->Sequence)
+	{
+		const FString Id = Recipe->GetString(TEXT("id"), FString());
+		if (Id.IsEmpty())
+		{
+			Context.AddError(TEXT("recipe entry needs an 'id'"), Recipe->Line);
+			continue;                    // per-entry problems are diagnostics, keep going
+		}
+		if (Context.bDryRun)
+		{
+			continue;                    // resolve/validate only — no writes
+		}
+		// … create/modify the recipe class, write properties via FKDFOpEngine/FKDFValueCodec …
+		++Context.mAppliedOpCount;
+		if (Context.mPatchRecord != nullptr)
+		{
+			FKDFOpRecord& Op = Context.mPatchRecord->mOps.AddDefaulted_GetRef();
+			Op.mTargetObjectPath = /* target path */ Id;
+			Op.mOp = EKDFOp::Set;
+		}
+	}
+	return Context.mAppliedOpCount > 0;
+}
+```
+
+Stage order is fixed and shared across every handler, whether built-in or third-party. See
+[Architecture](/kdataforge/background/architecture) for the full
+`GameTags → Assets → Localization → CDOChanges → Items → Recipes → Buildings → …` pipeline that your
+`mStage` slots into. `mPriority` only breaks ties between multiple handlers that share the same
+`(stage, root type)` pair. It never lets a handler jump into a different stage.
+
+## Registration (your mod's game instance module)
+
+A handler object is useless until KDataForge knows about it. Registration has a hard timing
+requirement: it must happen during the `CONSTRUCTION` lifecycle phase, because KDataForge's own
+`RunInitialLoad()` (scan, parse, validate, apply) runs at the later `INITIALIZATION` phase.
+
+Register too late and your handler simply never sees any documents. Do it from your own game
+instance module's lifecycle dispatch:
+
+```cpp
+#include "Module/GameInstanceModuleManager.h"
+#include "Subsystems/KDFSubsystem.h"
+
+void UMyModGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
+{
+	Super::DispatchLifecycleEvent(Phase);
+	if (Phase == ELifecyclePhase::CONSTRUCTION)   // MUST be CONSTRUCTION —
+	{                                              // KDataForge applies at INITIALIZATION
+		UGameInstanceModuleManager* Modules =
+			GetGameInstance()->GetSubsystem<UGameInstanceModuleManager>();
+		if (Modules != nullptr)
+		{
+			Modules->EnsureSubsystemInitialized(UKDFSubsystem::StaticClass());
+			if (UKDFSubsystem* KDF = UKDFSubsystem::Get(GetGameInstance()))
+			{
+				KDF->RegisterHandler(NewObject<UMyRecipeHandler>(KDF));
+			}
+		}
+	}
+}
+```
+
+Add `KDataForgeApi` and `KDataForge` to your module dependencies. The explicit initialization is
+required because SML may dispatch lifecycle phases before custom GameInstance subsystems exist.
+
+## Contract Checklist
+
+`UKDFHandlerBase` is forgiving about what you override, but diagnostics, dry-run preview, reports,
+and editor history depend on a few contracts. Run through these before shipping a handler:
+
+- [ ] `mRootType` is lowercase and unique to your mod, or intentionally shared: all handlers for a
+      type run, priority-ordered.
+- [ ] Report diagnostics via `Context.AddError/AddWarning/AddInfo`. **Never** halt, and never call
+      `check()` on user data.
+- [ ] Honor `Context.bDryRun`: resolve and validate, but do not write.
+- [ ] Record ops into `Context.mPatchRecord`. Reporting and editor history depend on it.
+- [ ] If you write CDO properties yourself, snapshot originals first via
+      `UKDFSubsystem::GetVanillaCache().RecordSnapshot(...)` and retain patched objects via
+      `RetainObject(...)`.
+- [ ] Optional overrides are `ExportObject` for editor export and `GetEditorPanelClass` for a
+      custom editor panel. The current interface has no `RevertDocument` hook.

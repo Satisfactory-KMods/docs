@@ -1,0 +1,160 @@
+---
+title: Power & Machines
+description: Editing examples for buildables — power, manufacturing speed, generators, extractors, pipelines, power storage, and runtime actor patches.
+sidebar: { order: 3 }
+---
+
+This page covers _patching_ stats on buildables that already exist. That includes power
+consumption, manufacturing speed, generator output, extraction rate, pipeline throughput, and
+storage capacity, all through a plain `type: cdo` document. This is the far more common thing to
+want.
+
+If you're instead looking to add a genuinely **new** building/buildable descriptor class to the
+build menu, that's a different mechanism. [Type: building](/kdataforge/features/buildings)
+covers generation. This page never generates anything: it only patches CDOs.
+
+Buildable CDOs expose factory tuning: `mPowerConsumption`, `mPowerConsumptionExponent`,
+`mManufacturingSpeed`, significance/overclock settings, `mDisplayName`, `mDescription`.
+
+> ℹ️ **Verify property names against your game version.** The buildable examples on this page use
+> real FactoryGame properties, but game updates occasionally rename or move them. If a `target:`
+> path or `path:` doesn't resolve, nothing breaks. The load report tells you exactly which patch
+> failed (`/kdf report`, see [Getting Started → Troubleshooting](/kdataforge/getting-started)). Confirm the
+> effect in-game after every patch.
+
+## Combining an exact target with a subclass-wide target in one document
+
+A single `cdo` document can mix a precise, single-building `target:` with a native base-class
+`target:` that fans out via `applyToSubclasses: true`. Below, the Mk.1 Smelter gets its own power
+draw and speed tweaks by exact class path. A second patch entry reaches every resource node and
+deposit through their shared native base class `AFGResourceNode`, doubling the extraction
+multiplier for miners across the board, vanilla and modded alike, in one pass:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Buildable/Factory/SmelterMk1/Build_SmelterMk1.Build_SmelterMk1_C
+    properties:
+      - path: mPowerConsumption
+        op: multiply
+        value: 0.75
+      - path: mManufacturingSpeed
+        op: multiply
+        value: 1.25
+  # Double the extraction yield of every resource node/deposit via the native base class:
+  - target: /Script/FactoryGame.FGResourceNode
+    applyToSubclasses: true # FGResourceDeposit derives from FGResourceNode too
+    properties:
+      - path: mExtractMultiplier
+        op: multiply
+        value: 2
+```
+
+## Power generator output
+
+All fuel-burning generators (coal, fuel, biomass burner) derive from `AFGBuildableGeneratorFuel`.
+The produced megawatts live on the generator base as `mPowerProduction`:
+
+```yaml
+type: cdo
+patches:
+  - target: /Script/FactoryGame.FGBuildableGeneratorFuel
+    applyToSubclasses: true # coal, fuel, biomass, modded fuel generators
+    properties:
+      - path: mPowerProduction
+        op: multiply
+        value: 2 # double output; fuel burn rate scales with it
+```
+
+Target a single generator class (e.g. `Build_GeneratorCoal.Build_GeneratorCoal_C`) instead when you
+don't want the subclass blast radius. See [Targeting](/kdataforge/features/targeting).
+
+## Extractor cycle speed
+
+`mExtractCycleTime` is the seconds per extraction cycle. This property lives on the miner
+buildable itself, not the resource node. Halving it doubles the output rate:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Buildable/Factory/MinerMk1/Build_MinerMk1.Build_MinerMk1_C
+    properties:
+      - path: mExtractCycleTime
+        op: multiply
+        value: 0.5
+```
+
+## Pipeline flow limit
+
+Every pipeline mark derives from `AFGBuildablePipeline`. `mFlowLimit` is the throughput cap in
+m³/s (Mk.1 = 300 m³/min = 5 m³/s):
+
+```yaml
+type: cdo
+patches:
+  - target: /Script/FactoryGame.FGBuildablePipeline
+    applyToSubclasses: true # Mk.1 + Mk.2 + modded pipes
+    properties:
+      - path: mFlowLimit
+        op: multiply
+        value: 2
+```
+
+## Power storage capacity
+
+Power Storage buildables cap how many megawatt-hours they can bank before topping out.
+`mPowerStoreCapacity` is that ceiling. This patch omits `op:` entirely, so it defaults to a plain
+`set` overwrite rather than a relative scale:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Buildable/Factory/PowerStorage/Build_PowerStorageMk1.Build_PowerStorageMk1_C
+    properties:
+      - path: mPowerStoreCapacity
+        value: 200 # MWh (vanilla: 100)
+```
+
+## Drone station logistics
+
+`AFGBuildableDroneStation` is an ordinary buildable, so its per-trip cargo/fuel tuning is a plain
+`cdo` patch like anything else:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Buildable/Factory/DroneStation/Build_DroneStation.Build_DroneStation_C
+    properties:
+      - path: mTransferSpeed
+        op: multiply
+        value: 2 # faster cargo load/unload
+      - path: mStackTransferSize
+        value: 4 # items moved per transfer tick
+      - path: mTripPowerPerMeterCost
+        op: multiply
+        value: 0.5 # cheaper long-haul routes
+```
+
+## Runtime actor patches (values that saves/archetypes would override)
+
+CDO edits only affect _newly built_ actors when the value is serialised into the save. Placed
+buildings keep their saved values. `applyToSpawnedActors` re-applies the ops to every instance the
+moment it spawns:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Buildable/Factory/StorageContainerMk1/Build_StorageContainerMk1.Build_StorageContainerMk1_C
+    applyToSpawnedActors: true # re-applied to every instance the moment it spawns
+    applyToSubclasses: false # exact class only
+    properties:
+      - path: mInventorySizeX
+        value: 12
+      - path: mInventorySizeY
+        value: 8
+```
+
+All targeting modifiers are documented in [Targeting](/kdataforge/features/targeting).
+Belt speed, also a buildable patch but balance-flavored, lives in [Balancing](/kdataforge/examples/balancing).
+To generate a brand-new building/buildable descriptor class instead of patching an existing one,
+see [Type: building](/kdataforge/features/buildings).

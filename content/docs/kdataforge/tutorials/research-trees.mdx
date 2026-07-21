@@ -1,0 +1,213 @@
+---
+title: 'Custom Research Trees'
+description: Build a named M.A.M. research tree and place a MAM-type schematic in its visual node graph entirely from YAML.
+sidebar:
+  order: 3
+---
+
+KDataForge can generate and register a M.A.M. research tree, create MAM-type schematics, and place
+those schematics into the tree's visual graph. You can then extend an existing tree or remove a
+branch without leaving dangling graph links. No Unreal Editor step is required. Use `type: research`
+(or the filename-convention alias `mam`, such as `my-tree.mam.yml`).
+
+## Step 1: create the tree
+
+```yaml
+# file: kdf-sample.research.yml
+type: research
+research:
+  - id: KDFSampleTree
+    properties:
+      - path: mDisplayName
+        value: KDF Sample Research
+      - path: mPreUnlockDisplayName
+        value: '???'
+      - path: mPreUnlockDescription
+        value: Complete the HUB milestone that reveals this tree.
+      - path: mPostUnlockDescription
+        value: Research refined ingot processing.
+```
+
+This generates a real `UFGResearchTree` subclass. `register: true`, the default, queues it into
+SML's `UModContentRegistry`. The pre-unlock fields appear before the tree is revealed; the normal
+display name and post-unlock description appear afterward.
+
+## Step 2: create a MAM-type schematic
+
+`mType: EST_MAM` uses the same generation, registration, cost, and `unlocks:` mechanisms as a HUB
+milestone. It marks the schematic as research:
+
+```yaml
+# file: pure-super-ingot.schematic.yml
+type: schematic
+schematics:
+  - id: Schematic_PureSuperIngot
+    properties:
+      - path: mType
+        value: EST_MAM
+      - path: mDisplayName
+        value: Refined Ingot Processing
+      - path: mDescription
+        value: Research a purer smelting process for the Super Ingot.
+      - path: mTechTier
+        value: 1
+      - path: mTimeToComplete
+        value: 30
+      - path: mCost
+        value:
+          - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlateReinforced/Desc_IronPlateReinforced.Desc_IronPlateReinforced_C
+            Amount: 10
+    unlocks:
+      - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
+        properties:
+          - path: mRecipes
+            value: [/KDataForge/Gen/KDFSample.Gen_KDFSample_Recipe_PureSuperIngot]
+```
+
+Build the item and recipe behind this schematic with the pattern from
+[Item + Icon + Recipe + Tier-1 Unlock](/kdataforge/tutorials/item-icon-recipe-schematic).
+
+## Step 3: place the schematic in the tree
+
+Add `addNodes:` to the research entry. Each entry creates an instanced research-tree node:
+
+```yaml
+# file: kdf-sample.research.yml
+type: research
+research:
+  - id: KDFSampleTree
+    properties:
+      - path: mDisplayName
+        value: KDF Sample Research
+      - path: mPreUnlockDisplayName
+        value: '???'
+      - path: mPreUnlockDescription
+        value: Complete the HUB milestone that reveals this tree.
+      - path: mPostUnlockDescription
+        value: Research refined ingot processing.
+    addNodes:
+      - schematic: Schematic_PureSuperIngot
+        coordinate: { X: 0, Y: 0 }
+```
+
+KDataForge creates the shared base-game `BPD_ResearchTreeNode`, writes the schematic and coordinate
+into its Blueprint data struct, and appends it to the tree's `mNodes` array.
+
+## Step 4: add prerequisites and roads
+
+Reference another node by schematic id in `parents:`. Set `autoPath: true` on the research entry to
+generate straight roads automatically:
+
+```yaml
+type: research
+research:
+  - id: KDFSampleTree
+    autoPath: true
+    properties:
+      - path: mDisplayName
+        value: KDF Sample Research
+    addNodes:
+      - schematic: Schematic_PureSuperIngot
+        coordinate: { X: 0, Y: 0 }
+      - schematic: Schematic_PureSuperIngotAdvanced
+        coordinate: { X: 1, Y: 0 }
+        parents:
+          - schematic: Schematic_PureSuperIngot
+```
+
+References can point forward or backward in the same `addNodes:` list because KDataForge records all
+coordinates before resolving relationships. It also indexes nodes that already exist on the target
+tree. Following example adds one node to vanilla Mycelia tree; `register: false` prevents redundant
+content-registry registration while still applying node mutation:
+
+```yaml
+type: research
+research:
+  - class: /Game/FactoryGame/Schematics/Research/Mycelia_RS/ResearchTree_Mycelia.ResearchTree_Mycelia_C
+    register: false
+    autoPath: true
+    addNodes:
+      - schematic: Schematic_MyExtension
+        coordinate: { X: 4, Y: 2 }
+        parents:
+          - schematic: Schematic_ExistingParent
+        nodesToUnhide:
+          - { X: 5, Y: 2 }
+```
+
+`nodesToUnhide:` and `unhiddenBy:` use the same literal-coordinate or `{ schematic: ... }` reference
+form as `parents:`. A custom `UFGResearchTreeNode` subclass can be selected with `class:`; use its
+`properties:` list for any additional reflected fields.
+
+For a custom route, keep `autoPath: false` and define `childrenAndRoads:` on the parent:
+
+```yaml
+addNodes:
+  - schematic: Schematic_PureSuperIngot
+    coordinate: { X: 0, Y: 0 }
+    childrenAndRoads:
+      key: { X: 1, Y: 0 }
+      points:
+        - { X: 0, Y: 0 }
+        - { X: 0, Y: 1 }
+        - { X: 1, Y: 1 }
+        - { X: 1, Y: 0 }
+```
+
+See the [`addNodes:` schema](/kdataforge/reference/yaml-schema#nodes-placing-a-schematic-in-a-research-tree)
+for `nodesToUnhide:`, `unhiddenBy:`, multiple children, and custom node classes.
+
+## Step 5: add, remove, or move nodes safely
+
+Use tree-entry-level `removeNodes:` when a branch is no longer part of your pack. Select each node
+by its schematic class; a generated short id works when it resolves unambiguously. Put `addNodes:`
+beside it to add a replacement or another branch in the same mutation. `autoPath: true` generates
+roads for newly added parent relationships:
+
+```yaml
+type: research
+research:
+  - class: /Game/FactoryGame/Schematics/Research/Mycelia_RS/ResearchTree_Mycelia.ResearchTree_Mycelia_C
+    autoPath: true
+    removeNodes:
+      - Schematic_ObsoleteExtension
+    addNodes:
+      - schematic: Schematic_NewExtension
+        coordinate: { X: 6, Y: 3 }
+        parents:
+          - schematic: Schematic_ExistingParent
+```
+
+KDataForge removes the selected node and cleans every surviving reference to its coordinate:
+`Parents`, `NodesToUnhide`, `UnhiddenBy`, and `ChildrenAndRoads`. In one tree entry, removals run
+before the new `addNodes:` list is appended, so example above removes obsolete branch before adding
+new one. Omit `addNodes:` when node should disappear completely. To move or replace a node, use same
+schematic in both lists and give `addNodes:` entry its new coordinate. Legacy `nodes:` remains
+accepted, but `addNodes:` wins when both keys exist.
+
+## How the Blueprint node data is writable
+
+The base C++ node exposes `GetNodeSchematic()` as a `BlueprintImplementableEvent`. The shared
+`BPD_ResearchTreeNode` class also stores its data in the Blueprint variable `mNodeDataStruct`.
+KDataForge resolves the struct's authored member names through reflection, including Blueprint
+members whose internal storage names contain GUIDs.
+
+This is the same property-resolution mechanism used elsewhere in KDataForge. A custom
+`UFGResearchTreeNode` subclass can be selected with `class:` and can receive extra operations
+through the node's `properties:` list.
+
+## Troubleshooting
+
+- **The tree does not appear:** Confirm `register: true` and inspect `/kdf report`.
+- **A node field is missing:** Check `/kdf report` or `KDF.Debug 1` for an unresolved schematic or
+  authored field name.
+- **A custom `class:` fails:** It must derive from `UFGResearchTreeNode`.
+- **Automatic roads are not shaped correctly:** `autoPath` only creates straight two-point roads.
+  Use manual `childrenAndRoads:` for bends.
+- **The MAM schematic is not purchasable:** Verify its cost item, registration, and unlock classes.
+
+The [Research Trees](/kdataforge/features/research-trees) and
+[Schematics](/kdataforge/features/schematics) feature pages explain the two
+capabilities independently. The [node schema](/kdataforge/reference/yaml-schema#nodes-placing-a-schematic-in-a-research-tree)
+is the normative field reference. If the item, recipe, and schematic chain is new to you, start
+with [Item + Icon + Recipe + Tier-1 Unlock](/kdataforge/tutorials/item-icon-recipe-schematic).

@@ -1,0 +1,98 @@
+---
+title: Panels
+description: Read your factory's totals at a glance.
+sidebar:
+  order: 4
+---
+
+The side panels turn your diagram into numbers you can act on. Click an icon
+on the rail at the left edge of the sidebar to open that panel. Click the
+same icon again to collapse it back down to just the rail. Your last-open
+panel and whether it's open are remembered between visits. On desktop you
+can also drag the panel's right edge to resize it; the width you pick is
+remembered too. Press **1** to **7** to jump straight to a panel from
+anywhere on the page.
+
+## Outputs
+
+Your target items and the amount per minute you asked for. A scale control
+above the list multiplies every output quantity by a factor at once, handy
+for scaling a whole plan up or down. Each output also has a fill button that
+sets its quantity to a belt or pipeline tier's maximum throughput.
+Fluid and gas fields use `m³/min` in the UI; the planner converts them to its
+internal liter-based rates automatically (`1 m³ = 1,000` internal units).
+
+## Balance
+
+This panel compares target versus actual production for each output, so
+you can spot shortfalls or overproduction at a glance. A summary line at
+the top tells you at once whether everything's balanced. Unbalanced
+outputs sort to the top.
+
+## Byproducts
+
+This panel lists the leftover items a recipe produces and shows which of
+them can go to the AWESOME Sink. Everyone can see whether a plan has
+sinkable byproducts at all, and with Patreon the planner also totals the
+exact points per minute for you. Each card has a "focus on canvas" button
+that jumps straight to that item on the diagram, plus an actions button
+(⋮) with "Suggest Consuming Recipe" (Patreon) and "Add as Desired Output",
+so you don't need to find the exact node on the diagram first.
+
+Recipe outputs that aren't routed anywhere show up in their own "Unrouted
+outputs" section below. Each of those rows has the same actions button,
+plus "Route to Sink" (which the byproduct cards above skip, since they're
+already routed to a sink). Duplicate catalog rows for the same output are
+combined before the remainder is calculated, and numerical remnants that
+would display as `0/min` or `0 m³/min` are omitted.
+
+Panel headers and the canvas stay fixed when a list gets long. Only the active
+panel content scrolls, and its scrollbar remains inside the sidebar instead of
+making the whole planner page taller.
+
+:::tip
+Even on a free plan you can always see _whether_ a plan has sinkable
+byproducts. Patreon only adds the exact points-per-minute total nothing is
+hidden behind the perk, it's a convenience.
+:::
+
+## Stats
+
+This panel gives you the detailed breakdown: total power draw, buildings
+used, raw inputs, and recipe and connection counts, including
+extraction/miner nodes. Long recipe lists get a search box and are grouped
+by recipe category with collapsible sub-headings, and your
+collapsed/expanded sections are remembered. Alternate recipes are tagged
+**ALT**. When your plan draws power, the **Power Generation Assistant** lets
+you pick which power plants to use, choose the fuel for plants with more
+than one option, and see how many buildings and how much fuel are needed to
+cover the draw.
+
+## Summary
+
+This panel gives you the big-picture totals for the whole plan: building
+types and raw resources per minute, showing whether your configured miners
+actually cover the demand. If any raw resource nodes have no miner
+configured yet, an **Auto-configure miners** button sets a default
+extraction rate for them. **Plan validation** also shows material-balance
+errors, allowed external inputs, and the ranked recipe-route selector with up
+to ten choices per active production step.
+
+## Settings
+
+Rename the plan, switch cloud saving on or off, and adjust the planning
+options (strategy, alternates, overclocking, filters). **Rate decimals** controls
+how many decimal places per-minute amounts show throughout the planner.
+The two **Game Mode** settings can be selected when a plan is created and
+changed later in its settings. **Recipe Parts Cost Multiplier** offers `0.25×`,
+`0.5×`, `0.75×`, `1×`, `1.25×`, `1.5×`, `1.75×`, and `2×`. It multiplies every
+per-craft ingredient amount used by recipes tagged `Recipe.Part`, then rounds
+that ingredient to a whole number like the game. **Power Consumption
+Multiplier** offers `0.25×`, `0.5×`, `0.75×`, `1×`, `2×`, and `5×` and applies
+to the production power draw of every machine and configured miner. Changing
+either setting recalculates the plan immediately.
+Build-gun recipes and their building, vehicle, decoration, or customization
+descriptors are excluded from target and recipe selectors because they are not
+automated production routes. Items without any remaining allowed automated
+producer are also omitted from target selectors, but remain available as manual
+inputs.

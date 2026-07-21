@@ -1,0 +1,119 @@
+---
+title: API Design
+description: Public C++ handler contract in KDataForgeApi and the KDataForge registration surface used by third-party mods.
+sidebar:
+  order: 3
+---
+
+Third-party handler types derive against `KDataForgeApi`. Registering those handlers calls
+`UKDFSubsystem`, which lives in the main `KDataForge` module, so a registering mod links both
+modules. Other implementation details may change between versions.
+
+## Stability guarantees
+
+`IKDFDataEditorHandler`, `UKDFHandlerBase`, `FKDFNode`, `EKDFStage`, `EKDFOp`, the context structs,
+and `FKDFPatchRecord` form the public handler contract. Additive changes are preferred. The main
+module exposes the registration and integration methods described below.
+
+The YAML schema is versioned through the documentation rather than C++ compatibility rules.
+Breaking schema changes belong in the changelog.
+
+## The `KDataForgeApi` contract
+
+Implement `IKDFDataEditorHandler`, or normally derive from `UKDFHandlerBase`, for one YAML root
+type. The interface is C++ only because `UKDFDataEditorHandler` declares
+`CannotImplementInterfaceInBlueprint`.
+
+```cpp
+class IKDFDataEditorHandler
+{
+    virtual FName GetRootType() const = 0;
+    virtual EKDFStage GetStage() const = 0;
+    virtual int32 GetPriority() const;
+    virtual bool ValidateDocument(const FKDFNode&, FKDFValidationContext&) = 0;
+    virtual bool ApplyDocument(const FKDFNode&, FKDFApplyContext&) = 0;
+    virtual bool ExportObject(UObject*, FKDFNode&, FKDFExportContext&); // optional
+    virtual UClass* GetEditorPanelClass() const;                        // optional
+};
+```
+
+There is no `RevertDocument` virtual in the current interface. The framework parser handles raw
+YAML loading. `ApplyDocument` performs writes, `ValidateDocument` performs structural checks,
+`ExportObject` supports editor export, and `GetEditorPanelClass` can provide a custom panel.
+
+### `FKDFNode`, the document model
+
+Handlers receive an order-preserving map, sequence, and scalar tree rather than YAML text. Key
+helpers include `Find`, `FindShared`, `GetString`, `GetBool`, `GetInt`, `GetFloat`, their `TryGet*`
+variants, and the `MakeMap`, `MakeSequence`, and `MakeScalar` builders used by exporters.
+
+### Contexts
+
+Contexts carry `mGameInstance`, `mSourceFile`, and a diagnostic sink with `AddInfo`, `AddWarning`,
+and `AddError`. Diagnostics are non-fatal. `FKDFApplyContext` adds `bDryRun`, `mPatchRecord`, and
+`mAppliedOpCount`.
+
+There is no `bLiveReload` flag in the current API. YAML is scanned once during GameInstance
+initialization.
+
+## Registration
+
+Register during your game instance module's `CONSTRUCTION` phase. Explicit subsystem
+initialization is required because SML can dispatch module lifecycle phases before custom
+GameInstance subsystems have been created.
+
+```cpp
+#include "Module/GameInstanceModuleManager.h"
+#include "Subsystems/KDFSubsystem.h"
+
+UGameInstanceModuleManager* Modules =
+    GetGameInstance()->GetSubsystem<UGameInstanceModuleManager>();
+if (Modules != nullptr)
+{
+    Modules->EnsureSubsystemInitialized(UKDFSubsystem::StaticClass());
+    if (UKDFSubsystem* KDF = UKDFSubsystem::Get(GetGameInstance()))
+    {
+        KDF->RegisterHandler(NewObject<UMyHandler>(KDF));
+    }
+}
+```
+
+- Add `KDataForgeApi` for handler types and `KDataForge` for registration to your module
+  dependencies.
+- The subsystem retains handler objects against garbage collection.
+- Registration after the initial load logs a warning. The documents apply on the next session.
+- Multiple handlers may claim the same root type. They all run in priority order.
+
+## Optional soft integration
+
+If you only want your mod's content to be editable, you do not need a custom handler. Reflected
+properties are already reachable through built-in [`cdo` documents](/kdataforge/features/patching-cdo)
+using `target`, `allAssetsOfClass`, and `matchTag`. Recommend a mod-presence condition:
+
+```yaml
+conditions:
+  hasMod: YourModRef
+```
+
+## Main-module surface
+
+Handler registration already links the main module. Handlers that generate content or integrate
+with the editor can also use these stable, additive entry points:
+
+| API                                                       | Purpose                                                                   |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `GetDynamicContent().GetOrCreateClass / GetOrCreateAsset` | Create save-stable generated classes or `PrimaryDataAsset` instances      |
+| `QueueContentRegistration / QueueSinkTableRegistration`   | Queue per-world SML content registration before the freeze                |
+| `MarkDataAssetsChanged`                                   | Request optional KAPI or RefinedRDApi consumer rescans after initial load |
+| `ApplyEditorOp / RestorePropertyText`                     | Apply editor writes and restore canonical property text for undo          |
+| `ExportObjectToYaml`                                      | Export an object to full or changes-only `cdo` YAML                       |
+| `OnToggleEditorRequested()`                               | Multicast hook used by the in-game editor UI                              |
+| `FKDFPatchUtil::ApplyOpsToObject`                         | Apply a parsed `properties:` sequence with pipeline semantics             |
+
+Everything else in the main module remains internal.
+
+## Versioning
+
+`KDataForgeApi` follows the mod's CI version. Handler ABI additions should be backwards compatible.
+Breaking schema changes must update the [YAML Schema](/kdataforge/reference/yaml-schema)
+and the changelog.

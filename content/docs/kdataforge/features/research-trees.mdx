@@ -1,0 +1,148 @@
+---
+title: 'Type: research'
+description: Generating new M.A.M. research trees from YAML, registering existing ones, and how this fits alongside schematics and recipes.
+sidebar: { order: 15 }
+---
+
+This entry type runs at the `Research` stage, after `Schematics`. It does not support
+live-reload, so changes require a restart. Its entries key is `research`, and the default
+`parent` is `/Script/FactoryGame.FGResearchTree`. The required base class is the same,
+`/Script/FactoryGame.FGResearchTree` (or a subclass). Register-only mode via `class:` is
+supported here too, with the same duality as `recipe`/`schematic`.
+
+`research` (or its filename-convention alias `mam`, for example `my-tree.mam.yml`) generates or
+registers `UFGResearchTree`-derived classes: the individual M.A.M. (Molecular Analysis Machine)
+research trees themselves, not the schematics nested inside them. Like
+[Recipes](/kdataforge/features/recipes), it supports two modes. You can generate a
+brand-new tree with `id:`, or register an existing one untouched except for a property tweak with
+`class:`. The mode-selection mechanics are identical to `recipe`, so see that page's "register an
+existing class" section if you need the general rules. This page only covers what's specific to
+trees.
+
+## Editing an existing research tree
+
+Most of the time you don't need to _generate_ a research tree. The base game's trees already
+exist, and you just want to rename or retune one. That's register-only mode, or honestly, just a
+plain `cdo` patch: both work identically for editing something that already exists. Here's an
+example renaming the Mycelia tree's display text:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Schematics/Research/Mycelia_RS/ResearchTree_Mycelia.ResearchTree_Mycelia_C
+    properties:
+      - path: mDisplayName
+        value: 'Mycelia (Rebalanced)'
+```
+
+## Generating a new research tree
+
+Use `type: research` with `id:` when you actually want a **new** tree. This applies when your
+pack adds a whole new content line that deserves its own M.A.M. entry, rather than living inside
+an existing tree. `mDisplayName` is the tree's name in the menu, and `mMenuPriority` controls
+where it sorts relative to other trees:
+
+```yaml
+# file: my-content-line.research.yml
+type: research
+research:
+  - id: MyContentLineTree
+    properties:
+      - path: mDisplayName
+        value: My Content Line
+      - path: mMenuPriority
+        value: 50
+```
+
+`register: true` (default) queues it into SML's `UModContentRegistry` per-world before the freeze,
+same mechanism as recipes and schematics.
+
+> ⚠️ **A schematic does not "point at" a tree.** Unlike `mProducedIn`/`mProduct` on a recipe, there
+> is no field on `UFGSchematic` that associates it with a research tree. The relationship works
+> the other way around: the tree's `mNodes` array visually places schematics inside it.
+
+## Adding and removing visual nodes
+
+Node mutation lives directly on each `research:` entry. `addNodes:` is additive: it appends real
+`BPD_ResearchTreeNode` instances and does not replace an existing node implicitly. Each useful node
+names a `schematic:` and a `coordinate:`; it can also define `parents:`, `nodesToUnhide:`,
+`unhiddenBy:`, and optional `properties:`. A graph reference may be a literal coordinate or another
+node's schematic class.
+References work both for nodes in the same list, regardless of their order, and for nodes that are
+already present in the tree. This example adds one node to the vanilla Mycelia tree without
+re-registering that existing tree:
+
+```yaml
+research:
+  - class: /Game/FactoryGame/Schematics/Research/Mycelia_RS/ResearchTree_Mycelia.ResearchTree_Mycelia_C
+    register: false
+    autoPath: true
+    addNodes:
+      - schematic: Schematic_MyExtension
+        coordinate: { X: 4, Y: 2 }
+        parents:
+          - schematic: Schematic_ExistingParent
+        nodesToUnhide:
+          - { X: 5, Y: 2 }
+```
+
+For a concrete base-game example, this adds the Pure Super Ingot schematic after the Mycelia Gas
+Mask research node:
+
+```yaml
+type: research
+research:
+  - class: /Game/FactoryGame/Schematics/Research/BPD_ResearchTree_Mycelia.BPD_ResearchTree_Mycelia_C
+    register: false
+    autoPath: true
+    addNodes:
+      - schematic: Schematic_PureSuperIngot
+        coordinate: { X: 4, Y: 6 }
+        parents:
+          - schematic: /Game/FactoryGame/Schematics/Research/Mycelia_RS/Research_Mycelia_GasMask.Research_Mycelia_GasMask_C
+```
+
+With `autoPath: true`, KDataForge turns every resolved `parents:` edge from `addNodes:` into a
+matching straight road on the parent. For custom or bent roads, use `autoPath: false` with
+`childrenAndRoads:`; a parent can provide one `{ key, points }` map or a sequence of them for
+multiple children. Set `class:` on a node only when a custom `UFGResearchTreeNode` subclass is
+required. Its ordinary `properties:` list remains available, but convenience fields that the
+subclass does not expose are
+reported and skipped rather than failing the whole document.
+
+To remove a node, select it by schematic class with tree-entry-level `removeNodes:`. It accepts a
+scalar class reference or `{ schematic: ... }`. KDataForge applies removals before `addNodes:`
+additions in the same tree entry, then removes the node and all surviving `Parents`,
+`NodesToUnhide`, `UnhiddenBy`, and `ChildrenAndRoads` references to its coordinate. `addNodes:` then
+appends replacements or unrelated new nodes. `autoPath: true` applies to those additions and writes
+straight roads from every resolved parent:
+
+```yaml
+research:
+  - class: /Game/FactoryGame/Schematics/Research/Mycelia_RS/ResearchTree_Mycelia.ResearchTree_Mycelia_C
+    autoPath: true
+    removeNodes:
+      - Schematic_ObsoleteExtension
+    addNodes:
+      - schematic: Schematic_NewExtension
+        coordinate: { X: 6, Y: 3 }
+        parents:
+          - schematic: Schematic_ExistingParent
+```
+
+For a move or replacement, use the same schematic in `removeNodes:` and `addNodes:` with its new
+coordinate. Removal still happens first, so duplicate nodes and stale roads are not retained.
+
+`nodes:` remains a legacy alias. When both keys are present, `addNodes:` wins and KDataForge warns
+that `nodes:` was ignored. `autoPath:` works with `addNodes:` and legacy `nodes:`.
+
+## Troubleshooting
+
+- **New tree doesn't appear in the M.A.M. menu**: confirm registration succeeded
+  (`/kdf report`). An empty tree with no nodes may also simply not render meaningfully in the
+  M.A.M. UI, so see the callout above and the linked tutorial for what's currently achievable.
+- **Just want to rename or reprioritise a vanilla tree**: don't generate anything. Use a plain
+  `cdo` patch as shown above. It's simpler and doesn't touch the content registry at all.
+- **Want a schematic unlocked through research instead of the HUB**: that's just
+  `mType: EST_MAM` on an ordinary [Type: schematic](/kdataforge/features/schematics)
+  entry. Nothing tree-specific about it.

@@ -1,0 +1,74 @@
+---
+title: 'Type: unlock'
+description: Generating a standalone, reusable FGUnlock subclass from YAML — and why most people actually want the schematic-level unlocks list instead.
+sidebar: { order: 12 }
+---
+
+This document type sits in the `Items` stage at priority `40`, after generic `class` (`50`) and
+ahead of `item`, `resource`, and `building`. That ordering lets later content reference generated
+unlock classes. It loads during session initialization, so a restart is needed after changes. Its
+entries key is `unlocks`. There is no default `parent`; provide a concrete `FGUnlock` subclass that
+derives from `/Script/FactoryGame.FGUnlock`. Register-only entries (`class:`) are not supported, so
+use `id:`.
+
+Read this carefully before reaching for it: **most packs never need this document type.** If you
+just want a schematic to unlock a recipe, which is the overwhelmingly common case, use the
+schematic's own inline `unlocks:` list instead. See
+[Schematics → Instanced unlocks](/kdataforge/features/schematics#instanced-unlocks-the-normal-way-to-wire-up-a-recipe).
+That creates an unlock instance directly on the schematic's CDO with no separate class needed.
+
+`type: unlock` exists for a narrower case. You want one preconfigured unlock class, with baked-in
+default properties, that you intend to reference by class from multiple schematics, or hand off to
+another mod, without repeating the same property block every time.
+
+`parent:` can be any concrete `FGUnlock` subclass the base game ships — see the
+[Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes) for the full list and their
+settable properties.
+
+## Worked example, a reusable "give starter items" unlock
+
+The pattern below generates a single `FGUnlockInventorySlot` subclass with its slot count baked in.
+Any schematic can then grant the exact same reward just by pointing at the generated class, instead
+of re-declaring the property every time:
+
+```yaml
+# file: starter-kit.unlock.yml
+type: unlock
+unlocks:
+  - id: MyStarterKitUnlock
+    parent: /Game/FactoryGame/Unlocks/BP_UnlockInventorySlot.BP_UnlockInventorySlot_C # any concrete FGUnlock subclass
+    properties:
+      - path: mNumInventorySlotsToUnlock
+        value: 3
+```
+
+This generates `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_MyStarterKitUnlock`, a class, not an
+instance. Reference it from a schematic exactly like any other unlock class:
+
+```yaml
+# file: some.schematic.yml
+type: schematic
+schematics:
+  - id: Schematic_UsesStarterKit
+    properties: [...]
+    unlocks:
+      - class: /KDataForge/Gen/MyPack.Gen_MyPack_MyStarterKitUnlock
+```
+
+## Why it has to run first
+
+Unlocks generate at priority `40`, after generic `class` (`50`) and ahead of `item` (`30`),
+`resource` (`25`), and `building` (`20`). All five sit within the `Items` stage. This ordering exists specifically so that a schematic
+generated later in the same pack can reference the unlock class the moment it's created, with no
+`include:` gymnastics needed.
+
+## Troubleshooting
+
+- **"Why didn't my item unlock show up on the schematic?"** Nine times out of ten this means you
+  meant the schematic's inline `unlocks:` list (a `FGUnlockRecipe`/`FGUnlockSchematic`/etc. instance
+  configured right where it's used), not a standalone generated class. See
+  [Type: schematic](/kdataforge/features/schematics) first.
+- **Reusing one unlock class across many schematics and want to change a default later?** Edit the
+  `type: unlock` document's `properties:`. Every schematic referencing that generated class picks up
+  the new CDO default the next time a fresh instance is created from it. Existing save data that
+  already holds an old instance is unaffected, same as any other CDO-default change.

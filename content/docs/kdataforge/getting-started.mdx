@@ -1,0 +1,158 @@
+---
+title: Getting Started
+description: Build the smallest possible pack, confirm it loads, and learn the report, logging, and restart workflow.
+sidebar:
+  order: 2
+---
+
+Start here if you have never written a KDataForge pack before.
+
+It walks through the smallest useful pack: **one folder with two files**. Along the way you'll touch every piece of tooling you need on day one, including where files go, the `/kdf` chat commands, how to read the load report, debug logging, multiplayer, and the most common ways a fresh pack silently does nothing.
+
+The [Task Guides](/kdataforge/tutorials) build on this shape to accomplish specific
+goals. [Examples](/kdataforge/examples) contains complete packs that combine several
+capabilities, while [Features](/kdataforge/features) explains each capability.
+
+## Where files go
+
+Author packs under your mod's canonical root:
+
+```
+<your-mod>/DataForge/
+  pack.yml
+  faster-smelting.cdo.yml
+```
+
+KDataForge starts its recursive scan at the Unreal project directory, which is `FactoryGame/` in a
+packaged game. Up to six levels below that project root, it recognizes any directory named
+`DataForge`, the legacy name `data-editor`, or any directory that directly contains `pack.yml`.
+Names are case-insensitive. Every `*.yml` or `*.yaml` file below a detected root is a document, or
+several documents when separated with `---`. See
+[Multiple Documents Per File](/kdataforge/reference/yaml-schema#multiple-documents-per-file).
+
+Detected roots may nest. A YAML file belongs only to its deepest enclosing root, so a nested pack
+is not also loaded by its parent. Heavy engine directories such as `Content`, `Saved`, `Plugins`,
+and `Source` are pruned during root discovery.
+
+## pack.yml
+
+A `pack.yml` manifest is how a set of documents becomes a named, versioned unit instead of a pile of loose files.
+
+It is optional. Without a manifest, the implicit pack ref and name come from the parent directory
+of the detected root. That fallback can change when a folder moves, so declare an explicit stable
+`ref` from day one. The ref is the save-persistence contract:
+
+```yaml
+ref: MyFirstPack
+name: My First Pack
+version: 1.0.0
+```
+
+## The first patch: half smelting time
+
+A `type: cdo` document patches properties directly on a class's default object. Setting `mManufactoringDuration` to a fraction of its original value halves the crafting time. It's a good first patch to try because the result is immediately visible in-game:
+
+```yaml
+# file: faster-smelting.cdo.yml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.5
+```
+
+Start the game and iron ingots now smelt twice as fast.
+
+The `type:` key is optional here. The `.cdo.yml` filename suffix would set the root type via the filename convention (`<name>.<type>.yml`), but an explicit `type:` always wins.
+
+## `/kdf report` and loading changes
+
+- **`/kdf report`**: prints the load report, showing which packs and documents were found, what was applied, and every diagnostic (see below).
+
+KDataForge loads YAML once during session initialization. After editing a file, restart the session and use `/kdf report` to verify the new load.
+
+Prefer clicking over typing? **`/kdf editor`** opens the in-game editor, where you can browse content, edit properties live, and export your changes as ready-made YAML.
+
+## Reading the report
+
+Diagnostics are **never fatal**. A broken file is skipped and the load continues. Each one carries a severity that tells you how much attention it deserves:
+
+| Severity    | Meaning                                          | Example                                                                 |
+| ----------- | ------------------------------------------------ | ------------------------------------------------------------------------- |
+| **Info**    | Expected skips, **not printed by `/kdf report`** | A document's `conditions:` failed (mod not installed, version mismatch) |
+| **Warning** | Tolerated problems                               | Unknown root type, duplicate pack ref                                   |
+| **Error**   | A file, document, or single patch was skipped    | Malformed YAML, target class not found, unsupported op×type combination |
+
+## Debugging
+
+Every applied op can be traced with debug logging, and you get to choose how wide the net is cast: per document, per pack, or globally across every pack loaded.
+
+**Per document**: add `debug: true` at the top level of **any** document type. Every applied op from that file logs:
+
+```yaml
+# file: faster-smelting.cdo.yml
+type: cdo
+debug: true
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.5
+```
+
+**Per pack**: add `debug: true` to `pack.yml`. Every document of the pack logs:
+
+```yaml
+ref: MyFirstPack
+name: My First Pack
+version: 1.0.0
+debug: true
+```
+
+**Global**: set the console variable `KDF.Debug 1` (open the console with <kbd>~</kbd>) or launch the game with `-KDFDebug`. **Everything** logs then, including ops originating from the in-game editor.
+
+Each applied op produces one line at Log verbosity:
+
+```
+[KDF DEBUG] faster-smelting.cdo.yml: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C.mManufactoringDuration multiply : 2.000000 -> 1.000000
+```
+
+The format is `<file>: <target path>.<property path> <op> : <pre value> -> <post value>`. The pre/post pair is what makes it useful: you see exactly what a `multiply` or `append` actually did.
+
+**Where the log lives**: in a packaged game the log file is
+`%LOCALAPPDATA%\FactoryGame\Saved\Logs\FactoryGame.log`. Search it for `[KDF DEBUG]`.
+
+## Multiplayer
+
+KDataForge loads YAML independently in every game process. It does not negotiate pack checksums,
+reject mismatches, or stream applied operations from the server. Install the same pack set and
+versions on the dedicated server or host and on every client.
+
+The in-game editor's live property changes are local to the process where they are made. Export
+those changes to YAML and distribute the resulting pack when they must be consistent for all
+players.
+
+## Troubleshooting
+
+Most "nothing happened" reports trace back to one of a small handful of causes. Check these before
+assuming something is broken:
+
+| Symptom                                            | Likely cause / fix                                                                                                                                                                                                                                                                                                                                                                                                          |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| File is ignored entirely                           | Missing `type:` key **and** the filename doesn't follow the `<name>.<type>.yml` convention — add one of the two                                                                                                                                                                                                                                                                                                             |
+| One document of a multi-document file is ignored   | Every document in a `---`-separated file needs its own `type:` key — the filename convention only works for single-document files, see [Multiple Documents Per File](/kdataforge/reference/yaml-schema#multiple-documents-per-file)                                                                                                                                                                           |
+| "class not found"                                  | Check the path form: cooked Blueprint asset classes use `_C` (`/Game/....Asset.Asset_C`, auto-retried if omitted), native classes use `/Script/Module.Class`, and KDataForge-generated classes use `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>` with no `_C`. The short `id:` also works when unambiguous; see [Generated Content Short Ids](/kdataforge/reference/yaml-schema#generated-content-short-ids) |
+| Op rejected at load time                           | Unsupported op×type combination — check the op table in the [YAML Schema](/kdataforge/reference/yaml-schema#operations) and the per-op examples in [Operations](/kdataforge/features/operations)                                                                                                                                                                                                |
+| Data-asset instance not found                      | Instances (not classes) have **no** `_C` suffix — see [Targeting](/kdataforge/features/targeting)                                                                                                                                                                                                                                                                                                             |
+| Change applied but not visible on placed buildings | Saves/archetypes override CDO values — use a runtime actor patch (`applyToSpawnedActors`), see [Buildings](/kdataforge/features/buildings)                                                                                                                                                                                                                                                                    |
+
+## Next steps
+
+- [Lint Your Pack](/kdataforge/lint-your-pack): catch malformed YAML and common schema mistakes before launching the game
+- [Targeting](/kdataforge/features/targeting): every way to select what a patch applies to
+- [Balancing](/kdataforge/examples/balancing): recipes, items, schematics, research
+- [Items](/kdataforge/features/items), [Recipes](/kdataforge/features/recipes), [Schematics](/kdataforge/features/schematics): new content from YAML, or the tied-together [End-to-End Pack](/kdataforge/examples/end-to-end-pack)
+- [Item + Icon + Recipe + Tier-1 Unlock](/kdataforge/tutorials/item-icon-recipe-schematic): this tutorial series' natural next step, walking through exactly that trio

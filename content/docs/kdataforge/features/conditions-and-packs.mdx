@@ -1,0 +1,142 @@
+---
+title: Conditions & Packs
+description: 'Every condition form for gating whether a document applies, pack manifest options, id redirects, and include: ordering between files in the same pack.'
+sidebar: { order: 5 }
+---
+
+Two mechanisms sit above the individual document types covered elsewhere in this section. The
+`conditions:` block decides whether a single document applies at all. The `pack.yml` manifest
+describes the folder of documents around it: a stable ref for save persistence, a load-order
+priority, and optional dependencies on other packs. Both are cross-cutting, so they work the same
+way no matter which document `type:` (`cdo`, `item`, `gametag`, …) they're attached to.
+
+## Conditions: gating whether a document applies at all
+
+A `conditions:` block lets a document skip itself when the environment doesn't match: a required
+mod isn't loaded, the game version is too old, or a class from another mod doesn't exist. All keys
+inside it are AND-combined, and ranges use SML's semver syntax (`>=`, `^`, `~`, exact versions,
+`||` unions). The example below exercises every supported key, including both the scalar and
+sequence forms of `hasMod`/`hasClass`:
+
+```yaml
+type: cdo
+conditions:
+  gameVersion: '>=1.0.0' # semver range vs FactoryGame version
+
+  hasMod: KAPI # single mod (loaded check)
+  # hasMod:                                    # sequence — ALL must be loaded
+  #   - KAPI
+  #   - RefinedPower@>=4.0.0                   # inline version constraint
+
+  modVersion: # explicit version map form
+    SML: '>=3.12.0'
+    KAPI: '>=2026.0.0'
+
+  hasClass: /Script/FactoryGame.FGBuildableFrackingActivator
+  # hasClass:                                  # sequence — ALL must exist
+  #   - /Game/FicsitFarming/Buildable/FarmPlot/Build_FarmPlot.Build_FarmPlot_C
+patches:
+  - target: /Script/FactoryGame.FGBuildableFrackingActivator
+    properties:
+      - path: mDefaultPotentialExtractionPerMinute
+        op: multiply
+        value: 1.5
+```
+
+Failing conditions skip the document with an `Info`-severity diagnostic. However, `/kdf report`
+filters `Info` diagnostics out of its printed output entirely, so a condition skip is currently
+**not** visible there. The only signal is a lower-than-expected "document(s) applied" count. See
+[Debugging a Pack That Won't Apply](/kdataforge/tutorials/debugging-a-pack-that-wont-apply#step-3-did-conditions-pass)
+for the workaround.
+
+## pack.yml: the pack manifest
+
+A `pack.yml` at a detected pack root turns it into a named pack instead of the loader's fallback.
+The implicit ref and name come from the detected root's parent directory. The manifest gives a
+group of documents a stable identity across saves, a load-order priority relative to other packs,
+and dependency ordering. The fields below are read directly by the pack scanner:
+
+```yaml
+ref: MyOverhaul # stable ref — the save-persistence and conflict-report contract
+name: My Overhaul Pack
+version: 2.1.0
+priority: 200 # higher than default (100) → applies earlier in every stage
+enabled: true
+dependencies:
+  - KDFSample # packs that must load before this one
+conditions: # same grammar/evaluator as a document's conditions: — see above
+  hasMod: RefinedPower@>=4.0.0
+```
+
+`dependencies:` are hard ordering constraints. A pack is rejected if a dependency is missing,
+self-referential, or already invalid; that rejection propagates to transitive dependants. Packs in
+a dependency cycle are also rejected. The remaining packs are topologically ordered so every
+dependency runs first. Among packs whose dependencies are ready, `priority` descending is the
+tie-break, followed by `ref` ascending. `priority` defaults to 100.
+
+## pack.yml conditions: gating a whole pack
+
+`pack.yml` accepts the exact same `conditions:` block and evaluator as a document — every key from
+[Conditions: gating whether a document applies at all](#conditions-gating-whether-a-document-applies-at-all)
+above (`gameVersion`, `hasMod`, `modVersion`, `hasClass`) works here unchanged. It's evaluated
+**once, before any file in the pack is even read**, a failing pack is skipped entirely with a
+single `Info`-severity diagnostic naming the pack, instead of every document in it failing its own
+copy of the same condition:
+
+```yaml
+# file: pack.yml
+ref: MyRefinedPowerAddon
+name: My RefinedPower Addon
+version: 1.0.0
+conditions:
+  hasMod: RefinedPower@>=4.0.0 # the whole pack only loads when RefinedPower 4.0+ is present
+```
+
+Use this for "this whole pack is a compat/addon layer for mod X" instead of repeating
+`conditions: { hasMod: X }` at the top of every document. A document can still carry its own
+`conditions:` on top of the pack's; both are AND-combined.
+
+## redirects: renaming generated-content ids
+
+Generated class names are id-based (`Gen_<PackRef>_<Id>`), so renaming an `id` would orphan save
+data. A `redirects:` entry in `pack.yml` feeds `FCoreRedirects` so old class paths in existing
+saves resolve to the renamed class. Renaming a _file_ never needs a redirect. Only `id` renames do:
+
+```yaml
+ref: MyOverhaul
+name: My Overhaul Pack
+version: 3.0.0
+redirects:
+  OldItemId: NewItemId # OldId: NewId
+```
+
+Full worked example (rename `MySuperIngot` → `SuperIngotMk2` across a save):
+[End-to-End Pack → Renaming an id](/kdataforge/examples/end-to-end-pack#renaming-an-id-later-redirects).
+
+## include: file ordering inside a pack
+
+Documents in the same stage use deterministic relative-path order unless `include:` adds an
+ordering constraint. List another file's path under `include:` (relative to the pack root) when
+this document must apply after it, even though both stay in the same stage:
+
+```yaml
+# file: overrides/late-tweaks.cdo.yml
+type: cdo
+include:
+  - base/base-values.cdo.yml # relative to the pack root; applies first (same stage)
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      - path: mManufactoringDuration
+        op: multiply # multiplies the value base-values.cdo.yml already set
+        value: 2.0
+```
+
+## Tags registered elsewhere in the same pack
+
+A `gametag` document doesn't need `include:` ordering against the documents that use its tags. The
+`GameTags` stage always runs before every other stage, so a tag registered anywhere in a pack is
+already usable via `matchTag:` or tag-container ops in that same pack's `cdo` documents. The full
+syntax for registering tags, how registration survives the engine's tag-tree rebuilds, and worked
+examples of tagging content and then bulk-patching by tag all live on their own page:
+[Type: gametag](/kdataforge/features/game-tags).

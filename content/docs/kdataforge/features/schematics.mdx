@@ -1,0 +1,222 @@
+---
+title: 'Type: schematic'
+description: Generating new schematics/milestones, registering existing ones, the instanced unlocks list that's the normal way to hook up a recipe, and gating a schematic on prerequisites.
+sidebar: { order: 14 }
+---
+
+A `type: schematic` document generates new schematic classes (milestones, MAM research, alt
+recipes' tech-tree entries, HUB upgrades) or registers an existing one. It works exactly like
+[Type: recipe](/kdataforge/features/recipes) does for recipes.
+
+What makes schematics different is two sublists only they support: an inline `unlocks:` list and
+an inline `dependencies:` list. `unlocks:` instances real `FGUnlock` subobjects directly onto the
+schematic, and it's how you actually wire a generated recipe to something the player can unlock.
+`dependencies:` does the same for `FGAvailabilityDependency` subobjects, gating the schematic on
+prerequisites.
+
+This type runs in the `Schematics` stage, after `Recipes`, so a schematic can reference recipes
+generated in the same pack. It does not support live-reload: changing it needs a restart. Its
+entries key is `schematics`, its default `parent` is `/Script/FactoryGame.FGSchematic`, and its
+required base is `/Script/FactoryGame.FGSchematic` or a subclass of it. Register-only mode
+(`class:`) is supported, the same as for `recipe`. The `unlocks:` and `dependencies:` sublists are
+supported only by `schematic`.
+
+## Worked example: generate + unlock a recipe
+
+A schematic entry uses the same generate-or-register duality as recipes: `id:` generates a brand
+new class, and `class:` registers an existing one. `properties:` configures it with the usual op
+grammar. Here a new milestone is generated with a display name, tech tier, cost, and a build time,
+and its `unlocks:` list immediately hooks up the recipe generated elsewhere in the pack:
+
+```yaml
+# file: super-ingot.schematic.yml
+type: schematic
+schematics:
+  - id: Schematic_MySuperIngot
+    properties:
+      - path: mDisplayName
+        value: Super Ingot Smelting
+      - path: mTechTier
+        value: 2
+      - path: mTimeToComplete
+        value: 60
+      - path: mCost
+        value:
+          - {
+              ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C,
+              Amount: 50,
+            }
+    unlocks:
+      - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
+        properties:
+          - path: mRecipes
+            value: [/KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot]
+```
+
+`register: true` (the default) queues this into SML's `UModContentRegistry` per-world before the
+freeze. Importantly, it **auto-propagates**: registering the schematic also registers
+`Recipe_MySuperIngot` and every item that recipe touches. You almost never need to register a
+recipe or item separately once its owning schematic is registered.
+
+## Instanced `unlocks:`, the normal way to wire up a recipe
+
+Under the hood, each entry in `unlocks:` resolves the schematic CDO's `mUnlocks` array by
+reflection. It instantiates the given `class:` as a subobject of that CDO, then applies
+`properties:` to that new instance before appending it. This is the exact same mechanism vanilla
+schematics use to hold their unlocks, just driven from YAML instead of a Blueprint graph. A
+schematic can carry more than one unlock, for example a recipe unlock alongside an inventory-slot
+unlock:
+
+```yaml
+unlocks:
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C # any concrete FGUnlock subclass
+    properties:
+      - path: mRecipes
+        value: [/KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot]
+  - class: /Script/FactoryGame.FGUnlockInventorySlot
+    properties:
+      - path: mNumInventorySlotsToUnlock
+        value: 1
+```
+
+`class:` here must resolve to a concrete `FGUnlock` subclass, either native or a class you
+generated with [Unlocks](/kdataforge/features/unlocks). `properties:` then configures
+that specific instance. This is what you want for a one-off unlock tied to a single schematic.
+Reach for a standalone `type: unlock` document only if you want to **reuse the exact same
+preconfigured unlock class** across several schematics: see
+[Unlocks](/kdataforge/features/unlocks) for that narrower case.
+
+Only `FGUnlockRecipe` and `FGUnlockInventorySlot` are shown above, but the mechanism works with
+**any** concrete `FGUnlock` subclass the base game ships (scanner unlocks, emotes, customizer
+options, Central Storage upgrades, …) — see the
+[Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes) for the full list with every
+class's settable properties.
+
+For a repeatable schematic with a purchase cap, level-dependent rewards and costs, and generated
+cost/reward curves, see the complete
+[`UKLUnlockMaxRepeatPurchases` example](/kdataforge/examples/repeat-purchase-schematic#full-example-repeat-purchase-schematic).
+
+## Shortcut unlocks
+
+For the common unlocks, `schematic` also accepts compact fields alongside (not instead of) the
+fully generic `unlocks:` list. They still create normal engine `FGUnlock` instances in `mUnlocks`,
+so they work with generated content, vanilla classes, and other mods exactly as a hand-written
+unlock does:
+
+```yaml
+schematics:
+  - id: Schematic_Convenience
+    recipes:
+      [Recipe_MySuperIngot, /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C]
+    schematics: [/Game/FactoryGame/Schematics/Progression/Schematic_2-3.Schematic_2-3_C]
+    handSlots: 1
+    inventorySlots: 3
+    scannableResources:
+      - resource: /Game/FactoryGame/Resource/RawResources/Bauxite/Desc_OreBauxite.Desc_OreBauxite_C
+        nodeType: Node # optional; Node is the default
+```
+
+`recipes:` accepts only `UFGRecipe` classes and produces one `FGUnlockRecipe`; `schematics:`
+accepts only `UFGSchematic` classes and produces one `FGUnlockSchematic`. `handSlots:` and
+`inventorySlots:` are positive integers and produce the matching arm-equipment/inventory unlock.
+Each `scannableResources:` entry takes a resource descriptor class and optional `nodeType:` (`Node`,
+`FrackingSatellite`, `FrackingCore`, `Geyser`, or `Deposit`) and produces an
+`FGUnlockScannableResource`. Use `unlocks:` whenever a shortcut does not cover the unlock type or
+when you need custom properties.
+
+## Unlocking resource scanner visibility
+
+`FGUnlockScannableResource` adds a resource descriptor and node-type pair to the Object Scanner.
+It does not create or place a Resource Node:
+
+```yaml
+unlocks:
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockScannableResource.BP_UnlockScannableResource_C
+    properties:
+      - path: mResourcePairsToAddToScanner
+        value:
+          - ResourceDescriptor: MyCustomOre
+            ResourceNodeType: Node
+```
+
+`ResourceNodeType` accepts `Node`, `FrackingSatellite`, `FrackingCore`, `Geyser`, or `Deposit`.
+See [Resources and Resource Nodes](/kdataforge/features/resources) for descriptor
+generation, node actor patches, and placement limits.
+
+## Gating a schematic on prerequisites
+
+`dependencies:` is the mirror image of `unlocks:`, using the exact same instanced-object mechanism
+— each entry creates a real **instanced** `FGAvailabilityDependency` subobject directly on the
+schematic's CDO, appended to `mSchematicDependencies`:
+
+```yaml
+type: schematic
+schematics:
+  - id: Schematic_AdvancedSuperIngot
+    properties: [...]
+    dependencies:
+      - class: /Script/FactoryGame.FGSchematicPurchasedDependency
+        properties:
+          - path: mSchematics
+            value: [/KDataForge/Gen/MyPack.Gen_MyPack_Schematic_MySuperIngot]
+          - path: mRequireAllSchematicsToBePurchased
+            value: true
+```
+
+That schematic won't be purchasable until `Schematic_MySuperIngot` is. A few other
+`FGAvailabilityDependency` subclasses worth knowing about (same base game headers, same
+mechanism — properties vary per class, check the header or export an existing dependency from the
+in-game editor to confirm the exact field names for your game version):
+
+- `FGSchematicNotPurchasedDependency` — inverse of `FGSchematicPurchasedDependency`
+- `FGItemPickedUpDependency` — requires specific items to have been picked up
+- `FGResearchTreeProgressionDependency` — requires progress in a M.A.M. research tree
+- `FGGamePhaseReachedDependency` — requires a minimum Space Elevator game phase
+
+Two flags on the schematic itself control what happens **while** dependencies aren't met:
+`mDependenciesBlocksSchematicAccess` (block purchase, but don't hide the entry) and
+`mHiddenUntilDependenciesMet` (hide the schematic entirely until then) — set them via ordinary
+`properties:` alongside `dependencies:`.
+
+## Making a milestone (schematic) free
+
+Because `properties:` is ordinary op grammar, the usual tricks apply to an existing, registered
+schematic too. `clear` wipes an array, and a plain numeric `value:` overrides a duration without
+having to compute a relative offset:
+
+```yaml
+type: schematic
+schematics:
+  - class: /Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C # register-only: editing a vanilla milestone
+    properties:
+      - path: mCost
+        op: clear # no item cost
+      - path: mTimeToComplete
+        value: 1 # 1-second freighter turnaround
+```
+
+(This particular example edits an **existing** vanilla schematic. For a genuinely simpler one-off
+tweak like this, a plain `cdo` patch with `target:` works identically and doesn't need the
+`register-only` framing at all. See
+[Balancing → Making a milestone free](/kdataforge/examples/balancing#making-a-milestone-free).
+Using `class:` here is only meaningful when you also want SML registration semantics applied, which
+a vanilla schematic that's already registered doesn't need.)
+
+## Troubleshooting
+
+- **The schematic shows up but the recipe never unlocks**: check that the `unlocks:` entry's
+  `class:` actually resolves (`/kdf report` will show a failed patch if it doesn't) and that
+  `mRecipes` points at the exact generated class path, `_C` suffix included.
+- **Two mods both try to unlock the same recipe**: that's fine. `FGUnlockRecipe` instances are
+  additive, and duplicate unlocks of an already-unlocked recipe are a no-op in the base game.
+- **Want to unlock a recipe from a schematic you didn't generate** (vanilla, another mod's, or your
+  own from an earlier pack): `unlocks:` works in register-only (`class:`) mode too, it's just easy
+  to miss. See
+  [Adding a Recipe to an Existing Schematic](/kdataforge/tutorials/existing-schematic-unlock).
+- **A schematic with `dependencies:` is purchasable even though its prerequisite isn't met**:
+  `dependencies:` alone only registers the check; you also need
+  `mDependenciesBlocksSchematicAccess: true` (block purchase until met) and/or
+  `mHiddenUntilDependenciesMet: true` (hide the entry entirely) as ordinary `properties:` on the
+  same schematic.
+- Full worked pack: [End-to-End Pack](/kdataforge/examples/end-to-end-pack) ties an item + recipe + this
+  schematic + sink points + localization together in one folder.

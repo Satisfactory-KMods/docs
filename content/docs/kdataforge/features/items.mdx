@@ -1,0 +1,100 @@
+---
+title: 'Type: item'
+description: Generating new item classes from YAML — parent/required-base rules, generated class identity, and property defaults.
+sidebar: { order: 9 }
+---
+
+The `item` document type runs in the `Items` stage at priority `30`, after `class` (`50`) and
+`unlock` (`40`), and before `resource` (`25`) and `building` (`20`). Documents load during
+GameInstance initialization. Restart the session after changing YAML. Entries live under the
+`items` key, and each one defaults
+to a `parent` of `/Script/FactoryGame.FGItemDescriptor`, which is also the required base class (or
+a subclass of it). Register-only mode (`class:`) is not supported here; items are always
+generated, so use `id:` instead.
+
+`item` creates a genuinely new `UFGItemDescriptor`-derived class at runtime. This is the same kind
+of class every base-game part or component is. It shares the entry grammar with `resource`,
+`building`, `unlock`, `recipe`, `schematic`, and `research` (see [YAML Schema → Content Creation](/kdataforge/reference/yaml-schema#content-creation-item-resource-building-recipe-schematic-research-unlock)).
+However, `item` (along with `resource`, `building`, and `unlock`) can only _generate_ a class,
+never register an existing one. That register-only mode is reserved for `recipe`/`schematic`/`research`,
+see [Recipes](/kdataforge/features/recipes).
+
+## Minimal example
+
+A pack that wants a new tier-2 ingot needs exactly one `items:` entry. The `id:` field gives the
+class a stable identity, `parent:` seeds it from an existing item's mesh, icon, and form, and
+`properties:` overrides only what should actually differ:
+
+```yaml
+# file: super-ingot.item.yml
+type: item
+items:
+  - id: MySuperIngot # required, stable id
+    parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C # optional
+    properties: # ordinary cdo-style ops
+      - path: mDisplayName
+        value: { key: MySuperIngot_Name, ns: MyPack, source: Super Ingot }
+      - path: mDescription
+        value: A far superior ingot.
+      - path: mStackSize
+        value: SS_HUGE # EStackSize enum — see Balancing → Items for the full value list
+```
+
+- `id:` is **required** and forms the save-persistence contract, see below.
+- `parent:` defaults to plain `FGItemDescriptor` if omitted. Giving an existing item's class (like
+  `Desc_IronIngot` above) copies its mesh, icon, form, and category defaults, so `properties:` only
+  needs to override what actually differs.
+- `properties:` uses the exact same op grammar as `cdo` patches. Every `UFGItemDescriptor`
+  property is fair game. The common ones (`mStackSize`, `mForm`, `mEnergyValue`,
+  `mResourceSinkPoints`, `mCategory`, `mGameplayTags`, …) are cataloged with more examples in
+  [Balancing → Items](/kdataforge/examples/balancing#items-ufgitemdescriptor).
+
+## Generated class identity (the save-persistence contract)
+
+Every generated item lands in a deterministic package and class name, derived purely from the
+pack's ref and the entry's `id:`, never from file path or load order. That means the same YAML
+always regenerates the exact same class path on every load and across every machine:
+
+- The class lives in package `/KDataForge/Gen/<PackRef>` and is named `Gen_<PackRef>_<Id>`. This
+  is **deterministic and id-based**, never derived from file path or load order.
+- Reference it from anywhere else (a recipe's `mProduct`, a schematic's `mCost`, a `sinkpoints`
+  entry, another pack's YAML) as `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>` — or, from
+  within the same pack (or if the id is unique across packs), just the bare `id:` itself, e.g.
+  `MySuperIngot`. See
+  [Generated Content Short Ids](/kdataforge/reference/yaml-schema#generated-content-short-ids).
+- **Renaming the YAML file is always safe.** Renaming the `id:` changes the generated class path,
+  though, and that would orphan any save that already references it. Declare the rename as a
+  `redirects:` entry in `pack.yml` instead (`FCoreRedirects` resolves the old path transparently).
+  See [End-to-End Pack → Renaming an id](/kdataforge/examples/end-to-end-pack#renaming-an-id-later-redirects).
+- Classes are created at GameInstance `INITIALIZATION`, strictly before any save loads, so save
+  data referencing them resolves correctly the moment the save starts loading.
+- **Constraint:** a generated class has exactly the parent's layout. There are no new reflected
+  properties and no new components. All customisation lives in the CDO defaults `properties:`
+  sets. If you need a building with a genuinely different mesh or a new component, reparent an
+  existing buildable instead of trying to add one, see [Buildings](/kdataforge/features/buildings).
+
+## Why `Items` runs before `Recipes`/`Schematics`/`Research`
+
+`class`, `unlock`, `item`, `resource`, and `building` all generate in the same `Items` stage,
+priority-ordered as `class` → `unlock` → `item` → `resource` → `building`. This ordering exists specifically
+so that later stages can reference whatever they generated. For example, a `recipe` document can
+put a freshly generated item in its `mProduct` without any `include:`, because the Items stage has
+already finished by the time Recipes runs.
+
+## Troubleshooting
+
+- **"class: is only valid for recipe/schematic/research"**: you tried the register-only mode on an
+  `item` entry. Items can only be generated (`id:`), never just registered from an existing class.
+  If you already have a class you want KDataForge to leave alone, you don't need this document
+  type for it at all. Just reference the class path directly wherever you'd otherwise reference
+  the generated one.
+- **Item generated fine, but a `properties:` entry silently didn't apply**: this is the same as
+  any `cdo` patch. Check `/kdf report` for a rejected op or a bad `path:`. Nothing about generation
+  changes how property ops are validated.
+- **Need this item in a recipe or schematic right away?** No `include:` is needed, ever, see "Why
+  `Items` runs before..." above. If a reference still fails to resolve, double-check the id
+  spelling matches exactly (`Gen_<PackRef>_<Id>` is case-sensitive).
+- **Made an item but don't see it anywhere in-game**: this almost always means nothing unlocks it
+  yet. An item and a recipe producing it are not enough on their own. Walk through
+  [Item + Icon + Recipe + Tier-1 Unlock](/kdataforge/tutorials/item-icon-recipe-schematic)
+  for the complete chain, including the schematic step that's usually missing.

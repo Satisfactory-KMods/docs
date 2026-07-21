@@ -1,0 +1,240 @@
+---
+title: A Complete Building
+description: The full reference chain for a dynamically created building — buildable class, building descriptor, build recipe, production recipes, schematic, and sinkpoints — in dependency order, in one pack.
+sidebar: { order: 4 }
+---
+
+This page walks the **full reference chain** for dynamically created content, in dependency order,
+with copy-pasteable YAML. Everything lives in one pack:
+
+```yaml
+# file: pack.yml
+ref: MyFactory
+name: My Factory Pack
+version: 1.0.0
+```
+
+Every step references the previous one **by generated class path**. The `id:` of each entry is
+the contract that makes those paths deterministic, in the form
+`/KDataForge/Gen/MyFactory.Gen_MyFactory_<Id>`
+(see [YAML Schema → generated class identity](/kdataforge/reference/yaml-schema#generated-class-identity-save-persistence-contract)).
+
+:::caution[Honest scope callout — read this first]
+A truly **new** machine with its own mesh or its own logic is **out of scope** — KDataForge is
+2D-only (no mesh import, ever) and generated classes copy their parent's layout (no new
+components or reflected properties). This chain **re-skins and re-parametrises existing
+buildable behaviour**: your machine looks like and ticks like its parent, but is a separate
+class with its own build-menu entry, recipes, stats, and save identity. For genuinely new
+behaviour you need real C++/Blueprint content.
+:::
+
+## The ordering guarantee
+
+You never need `include:` between these files. Stages run in a fixed order. The whole **Items**
+stage, which generates buildables via `class`, descriptors via `building`, and items via `item`,
+finishes before **Recipes** starts. **Recipes** in turn finishes before **Schematics** starts.
+
+Within Items, the generation types are priority-ordered. So every file below can reference every
+class generated in an earlier step by its `/KDataForge/Gen/...` path, regardless of file names or
+scan order.
+
+## Step 1: the buildable actor (`type: class`)
+
+Does `type: building` create the building **actor**? No, `type: building` generates the
+_descriptor_, which is the build-menu entry.
+
+The **buildable actor**, the `Build_X_C` class placed in the world, generally comes from an
+existing buildable parent. You define a `type: class` entry with `parent:` set to an existing
+`/Game/....Build_*_C`, effectively **reparenting an existing buildable**.
+
+There are no custom meshes, since the policy is 2D-only, and no new components. You get the
+parent's mesh, connections, and production logic, with your own CDO overrides.
+
+```yaml
+# file: 1-buildable.class.yml
+type: class
+classes:
+  - id: Build_MyMachine
+    parent: /Game/FactoryGame/Buildable/Factory/SmelterMk1/Build_SmelterMk1.Build_SmelterMk1_C
+    properties:
+      - path: mDisplayName
+        value: { key: Build_MyMachine_Name, ns: MyFactory, source: Compact Smelter }
+      - path: mPowerConsumption
+        value: 12.0
+```
+
+This generates `/KDataForge/Gen/MyFactory.Gen_MyFactory_Build_MyMachine`, a real
+`AFGBuildableManufacturer` subclass via the smelter parent.
+
+## Step 2: the building descriptor (`type: building`)
+
+The `FGBuildingDescriptor` subclass whose `mBuildableClass` points at the buildable from step 1:
+
+```yaml
+# file: 2-descriptor.building.yml
+type: building
+buildings:
+  - id: Desc_MyMachine
+    properties:
+      - path: mDisplayName
+        value: { key: Desc_MyMachine_Name, ns: MyFactory, source: Compact Smelter }
+      - path: mBuildableClass
+        value: /KDataForge/Gen/MyFactory.Gen_MyFactory_Build_MyMachine
+```
+
+See [Buildings](/kdataforge/features/buildings) for the descriptor-vs-buildable split in general.
+
+## Step 3: the build recipe (`type: recipe`)
+
+Construction recipes are ordinary `FGRecipe`s whose **product is the building descriptor**. Their
+`mProducedIn` includes the **build gun**, which is how the game knows a recipe belongs in the
+build menu:
+
+```yaml
+# file: 3-build-recipe.recipe.yml
+type: recipe
+recipes:
+  - id: Recipe_Build_MyMachine
+    properties:
+      - path: mDisplayName
+        value: Compact Smelter
+      - path: mIngredients
+        value:
+          - {
+              ItemClass: /Game/FactoryGame/Resource/Parts/IronPlateReinforced/Desc_IronPlateReinforced.Desc_IronPlateReinforced_C,
+              Amount: 4,
+            }
+          - { ItemClass: /Game/FactoryGame/Resource/Parts/Rotor/Desc_Rotor.Desc_Rotor_C, Amount: 2 }
+      - path: mProduct
+        value:
+          - { ItemClass: /KDataForge/Gen/MyFactory.Gen_MyFactory_Desc_MyMachine, Amount: 1 }
+      - path: mProducedIn
+        value:
+          - /Script/FactoryGame.FGBuildGun
+```
+
+## Step 4: production recipes for the machine (`type: recipe`)
+
+This step defines what the machine can produce: recipes whose `mProducedIn` is the **generated
+buildable class** from step 1. Adding a new item for it to produce shows the item side of the
+chain too:
+
+```yaml
+# file: 4a-output-item.item.yml
+type: item
+items:
+  - id: Desc_CompactIngot
+    parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      - path: mDisplayName
+        value: { key: Desc_CompactIngot_Name, ns: MyFactory, source: Compact Ingot }
+      - path: mStackSize
+        value: SS_HUGE
+```
+
+:::note[Stack-size caveat]
+The engine caches item stack sizes — KDataForge automatically resets the descriptor's cached
+stack size (`mCachedStackSize`) whenever an op writes `mStackSize`, so the value above just
+works. Inventories that already contain the item may need the item re-added (or a game reload)
+to reflect a changed limit. Details:
+[YAML Schema → Special-cased properties](/kdataforge/reference/yaml-schema#special-cased-properties).
+:::
+
+```yaml
+# file: 4b-production-recipe.recipe.yml
+type: recipe
+recipes:
+  - id: Recipe_CompactIngot
+    properties:
+      - path: mDisplayName
+        value: Compact Ingot
+      - path: mIngredients
+        value:
+          - {
+              ItemClass: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C,
+              Amount: 2,
+            }
+      - path: mProduct
+        value:
+          - { ItemClass: /KDataForge/Gen/MyFactory.Gen_MyFactory_Desc_CompactIngot, Amount: 1 }
+      - path: mManufactoringDuration
+        value: 3.0
+      - path: mProducedIn
+        value:
+          - /KDataForge/Gen/MyFactory.Gen_MyFactory_Build_MyMachine # the step-1 buildable
+```
+
+## Step 5: the schematic (`type: schematic`)
+
+Unlocks **both** recipes via an instanced `FGUnlockRecipe`:
+
+```yaml
+# file: 5-schematic.schematic.yml
+type: schematic
+schematics:
+  - id: Schematic_MyMachine
+    properties:
+      - path: mDisplayName
+        value: Compact Smelting
+      - path: mType
+        value: EST_Milestone
+      - path: mTechTier
+        value: 2
+      - path: mCost
+        value:
+          - {
+              ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C,
+              Amount: 100,
+            }
+    unlocks:
+      - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
+        properties:
+          - path: mRecipes
+            value:
+              - /KDataForge/Gen/MyFactory.Gen_MyFactory_Recipe_Build_MyMachine
+              - /KDataForge/Gen/MyFactory.Gen_MyFactory_Recipe_CompactIngot
+```
+
+Registering the schematic auto-propagates: its recipes register, and the recipes' items register
+in turn. The schematic is therefore the only piece you strictly need `register:` for
+(see [Recipes → auto-propagation](/kdataforge/features/recipes#register-and-auto-propagation)).
+
+## Step 6: sinkpoints for the new items (`type: sinkpoints`)
+
+New items have no AWESOME Sink value until you give them one:
+
+```yaml
+# file: 6-sinkpoints.sinkpoints.yml
+type: sinkpoints
+track: Default
+entries:
+  - item: /KDataForge/Gen/MyFactory.Gen_MyFactory_Desc_CompactIngot
+    points: 8
+```
+
+## Recap: the chain at a glance
+
+Six files, six generation steps, each one consuming the class path the previous one produced. The
+table below is a quick lookup for which file generates what and what it points back at, once you
+have read the walkthrough above:
+
+| #                  | File                                | Generates                                                               | References                                          |
+| ------------------ | ----------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------- |
+| 1                  | `1-buildable.class.yml`             | buildable actor class                                                   | existing `Build_SmelterMk1_C` parent                |
+| 2                  | `2-descriptor.building.yml`         | building descriptor                                                     | step 1 via `mBuildableClass`                        |
+| 3                  | `3-build-recipe.recipe.yml`         | build recipe                                                            | step 2 as `mProduct`, `FGBuildGun` in `mProducedIn` |
+| 4                  | `4a`/`4b`                           | output item + production recipe                                         | step 1 in `mProducedIn`, item in `mProduct`         |
+| 5                  | `5-schematic.schematic.yml`         | schematic                                                               | steps 3+4 via `FGUnlockRecipe`                      |
+| 6: Session restart | Did you restart after editing YAML? | KDataForge reads every document type once during session initialization |
+
+Ids are the contract. You can rename any **file** freely, but renaming an **id** needs a
+`redirects:` entry in `pack.yml`
+(see [Conditions & Packs](/kdataforge/features/conditions-and-packs#redirects-renaming-generated-content-ids)).
+
+[Custom Classes](/kdataforge/features/custom-classes) explains the generic generation
+escape hatch used in step 1. The [Buildings](/kdataforge/features/buildings),
+[Recipes](/kdataforge/features/recipes), [Schematics](/kdataforge/features/schematics),
+and [Sink Points](/kdataforge/features/sinkpoints) pages cover each later capability.
+Use the [content-creation schema](/kdataforge/reference/yaml-schema#content-creation-item-resource-building-recipe-schematic-research-unlock)
+for exact fields. [End-to-End Pack](/kdataforge/examples/end-to-end-pack) is the
+item-centric counterpart to this building walkthrough.

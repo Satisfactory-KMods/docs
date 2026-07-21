@@ -1,0 +1,154 @@
+---
+title: 'Renaming Content Safely'
+description: What you can rename in a pack for free, what needs a redirects entry, and the one rename redirects genuinely can't fix — verified against the actual redirect implementation.
+sidebar:
+  order: 9
+---
+
+Sooner or later you'll want to rename something in a pack that's already shipped. Three different
+things can be "renamed," and only one of them is free. This walks through all three, the exact
+mechanism behind the safe one, and a worked before/after so you can copy-paste the real fix.
+
+## The three renames
+
+| What you rename                                        | Changes the generated class path? | Safe by default?           | Fix                                                           |
+| --------------------------------------------------------- | ------------------------------------ | ----------------------------- | ----------------------------------------------------------------- |
+| A **file** (`super-ingot.item.yml` → `ingot.item.yml`) | No                                | Yes, always                | Nothing: the filename is never part of any generated identity |
+| An **`id`** (`id: MyItem` → `id: MyItemV2`)            | Yes                               | No                          | Add a `redirects:` entry in `pack.yml` (see below)            |
+| A pack's **`ref`**                                     | Yes, for _every_ id in the pack   | **No, and there's no fix** | Don't. See "Renaming the pack `ref`" below                    |
+
+Generated classes live at `/KDataForge/Gen/<PackRef>` and are named `Gen_<PackRef>_<Id>`. This
+naming is deterministic and built from `PackRef` + `id`, never from a file path
+([Generated class identity](/kdataforge/reference/yaml-schema#generated-class-identity-save-persistence-contract)).
+That's why the file is free and the other two aren't: the file was never part of the identity to
+begin with.
+
+## What `redirects:` actually does
+
+Syntax, in `pack.yml`:
+
+```yaml
+ref: MyPack
+version: 2.0.0
+redirects:
+  OldId: NewId # OldId: NewId, one entry per renamed id
+```
+
+Under the hood (`FKDFDynamicContentRegistry::ApplyRedirects` in
+`Source/KDataForge/Private/Content/KDFDynamicContent.cpp`), each entry becomes one
+`FCoreRedirect` built from the pack's **current** `ref`:
+
+```cpp
+const FString OldPath = MakeClassPackageName(PackRef) + TEXT(".") + MakeClassName(PackRef, Redirect.Key);
+const FString NewPath = MakeClassPackageName(PackRef) + TEXT(".") + MakeClassName(PackRef, Redirect.Value);
+Redirects.Emplace(ECoreRedirectFlags::Type_Class, OldPath, NewPath);
+```
+
+So a `MyPack` redirect `MySuperIngot: SuperIngotMk2` registers a `Type_Class` redirect from
+`/KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot` to `/KDataForge/Gen/MyPack.Gen_MyPack_SuperIngotMk2`
+via `FCoreRedirects::AddRedirectList`. When an old save deserialises a reference to the old class
+path, the engine's own class-path resolution walks through `FCoreRedirects` first and lands on the
+new class instead. The object loads normally, with no missing-class warning.
+
+**It has to ship in the same version bump as the rename.** `ApplyRedirects` runs once per pack ref,
+every session, right before any generated class can be referenced
+(`UKDFSubsystem::ApplyStages`, guarded by `mRedirectedPacks` so a live a session restart doesn't
+re-register it).
+
+There's nothing baked into the save. The redirect is re-derived from `pack.yml` on every load. That
+has one important consequence: if you ever delete the `redirects:` entry in a later version, the
+redirect stops being registered on the very next launch, and any save that still references the old
+class path breaks again.
+
+There's no expiry or "safe after N versions" in the code. Keep the entry in `redirects:` for as long
+as you want to support saves made before the rename. In practice that means indefinitely, unless
+you're certain every player has re-saved since.
+
+## Worked scenario: `MySuperIngot` → `SuperIngotMk2` in v2.0.0
+
+Before (pack version 1.0.0), generates `/KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot`:
+
+```yaml
+# file: super-ingot.item.yml
+type: item
+items:
+  - id: MySuperIngot
+    parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      - path: mDisplayName
+        value: Super Ingot
+```
+
+After: rename the `id`, bump `pack.yml`, and add the redirect in the **same** version:
+
+```yaml
+# file: super-ingot.item.yml
+type: item
+items:
+  - id: SuperIngotMk2 # renamed
+    parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      - path: mDisplayName
+        value: Super Ingot
+```
+
+```yaml
+# file: pack.yml
+ref: MyPack
+name: My Content Pack
+version: 2.0.0
+redirects:
+  MySuperIngot: SuperIngotMk2 # OldId: NewId
+```
+
+The class is now generated as `/KDataForge/Gen/MyPack.Gen_MyPack_SuperIngotMk2`. Any reference
+elsewhere in your own YAML (recipes, schematics, sink points) needs updating to the new path too.
+`redirects:` only fixes resolution of **old save data**: it doesn't rewrite your other documents for
+you. Any save made under v1.0.0 that still has `Gen_MyPack_MySuperIngot` embedded resolves straight
+through to `Gen_MyPack_SuperIngotMk2` on load, with no warning.
+
+A second worked copy of this exact scenario also lives in
+[End-to-End Pack → Renaming an id later](/kdataforge/examples/end-to-end-pack#renaming-an-id-later-redirects)
+if you want to see it next to a full multi-file pack.
+
+## Renaming the pack `ref`
+
+Don't. This is the one case where the honest answer is "unsupported," not "here's the workaround."
+
+`ApplyRedirects` takes a single `PackRef` and builds **both** the old and new class paths from it:
+`MakeClassPackageName(PackRef)` is the same call for `OldPath` and `NewPath`. There is no code path
+that builds an old path from one `ref` and a new path from a different `ref`.
+
+Since a `ref` rename changes `/KDataForge/Gen/<PackRef>` for every single generated class in the pack
+simultaneously, there's no mechanism, `redirects:` or otherwise, that bridges an old ref's package to
+a new ref's package. Every id in the pack would need its own cross-package redirect, and the feature
+simply doesn't build one.
+
+Treat `ref:` as permanent once you've shipped a version with real players. If you genuinely need a
+different display name, change `name:` instead. `ref:` is the save-persistence contract, and `name:`
+is cosmetic.
+
+## Troubleshooting
+
+- **Shipped an id rename, then got reports of missing items in old saves:** you forgot the
+  `redirects:` entry. Add it retroactively in a follow-up version. It's read fresh at every load,
+  never baked into the save, so adding it late still fixes existing saves the next time they load.
+  No save wipe needed.
+- **Added a redirect, but old saves still show a missing class:** check direction and spelling
+  first. The map is `OldId: NewId`, not the reverse, and both sides are the raw `id:` value (not the
+  display name), matched exactly. `SanitizeToken` only swaps non-alphanumeric characters for
+  underscores, so it doesn't fix a typo or a case mismatch.
+- **How to verify a redirect actually took effect:** `ApplyRedirects` logs one line per entry to
+  the game log at `Log` severity (visible without enabling `KDF.Debug`):
+  `[LogKDataForge] Redirect: /KDataForge/Gen/MyPack.Gen_MyPack_OldId -> /KDataForge/Gen/MyPack.Gen_MyPack_NewId`.
+  `/kdf report` shows load diagnostics (errors/warnings/tombstones) but doesn't list applied
+  redirects directly, so the log is the source of truth here.
+- **Accidentally renamed a pack `ref`:** there's no redirect fix (see above). The practical options
+  are reverting the `ref` back, or accepting that saves made before the change lose those generated
+  objects. They'll come back as tombstones with a warning if the old `ref`'s YAML still exists
+  somewhere, otherwise they're gone.
+
+The [generated class identity contract](/kdataforge/reference/yaml-schema#generated-class-identity-save-persistence-contract)
+is the normative persistence reference. [Conditions & Packs](/kdataforge/features/conditions-and-packs#redirects-renaming-generated-content-ids)
+has the compact `redirects:` syntax, while [End-to-End Pack](/kdataforge/examples/end-to-end-pack#renaming-an-id-later-redirects)
+shows the same rename inside a complete multi-file pack.

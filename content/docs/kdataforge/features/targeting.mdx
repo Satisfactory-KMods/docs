@@ -1,0 +1,205 @@
+---
+title: Targeting
+description: Every way to select patch targets — class CDOs, asset instances, all assets of a class, tag matching, subclasses, and spawned actors.
+sidebar: { order: 4 }
+---
+
+Every `type: cdo` patch needs at least one target selector. The current validator accepts multiple
+selectors and `GatherTargets` accumulates their matches, but one clear selector per patch is easier
+to reason about. This page shows all selectors and the modifiers that widen a selection.
+
+## `target:` — class path → the class default object (CDO)
+
+The most common form. Blueprint asset classes use the `_C` suffix (auto-retried if forgotten);
+native classes use `/Script/Module.Class`:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.5
+```
+
+## `target:` — bare class name → shortcut for the full class path
+
+Anywhere a class path is accepted, a **bare class name** (no `/` or `.`) resolves against every
+class currently loaded in memory, so you don't have to spell out the full asset path:
+
+```yaml
+type: cdo
+patches:
+  - target: Desc_Water # same class as
+    #   /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
+    properties:
+      - path: mResourceSinkPoints
+        value: 0
+```
+
+If the short name matches **more than one** loaded class, KDataForge logs an `Error` to
+`LogKDataForge` listing every match. It still applies the patch, using the first match sorted by
+full class path, so the result stays deterministic. Prefer the full class path in published packs
+to avoid relying on load order. This shortcut is meant for quick local tweaks.
+
+## `target:` — generated-content id → shortcut for `/KDataForge/Gen/...`
+
+A bare id also resolves to a class **your own pack generated**, so you can target your own
+`item`/`recipe`/`schematic`/... content without spelling out `/KDataForge/Gen/<PackRef>.Gen_...`:
+
+```yaml
+type: cdo
+debug: true
+patches:
+  - target: MySuperIngot # same as /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot
+    properties:
+      - path: mResourceSinkPoints
+        value: 50
+```
+
+This is checked **before** the bare class-name shortcut above, and works the same way everywhere a
+class or object reference is accepted — not just `target:` — see
+[Generated Content Short Ids](/kdataforge/reference/yaml-schema#generated-content-short-ids)
+for the full write-up (resolution order, cross-pack matches, and which reference kinds support it).
+
+## `target:` — object path → one asset instance
+
+The same key also accepts an **object path** (PrimaryDataAsset instances etc.) and patches that
+object directly. Instances have **no** `_C` suffix: they are objects, not classes.
+
+```yaml
+type: cdo
+conditions: { hasMod: KAPI }
+patches:
+  - target: /KLib/Assets/MinerDescriptions/DA_MinerDesc_Iron.DA_MinerDesc_Iron
+    properties:
+      - path: mIsDisabled
+        value: true
+```
+
+## `target:` — a sequence of paths → patch several targets in one entry
+
+`target:` also accepts a **list** of paths instead of a single scalar. Every entry is resolved the
+same way a scalar `target:` would be (class path, bare class name, generated-content id, or object
+path), and the same `properties:`/`applyToSubclasses:`/`applyToSpawnedActors:` apply to each one:
+
+```yaml
+type: cdo
+debug: true
+patches:
+  - target:
+      - MySuperIngot # generated-content id
+      - /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C
+    properties:
+      - path: mResourceSinkPoints
+        value: 50
+```
+
+This is purely a convenience for "these unrelated targets happen to want the exact same
+`properties:` block", it does **not** widen a single class the way `applyToSubclasses:` does, and
+mixing target kinds (a class path alongside an object path) in one list is fine, each entry is
+resolved independently. Prefer `applyToSubclasses:` or `matchTag:` instead when the targets share a
+common base class or tag; reach for a `target:` list when they don't.
+
+## `allAssetsOfClass:` — every asset of a class
+
+Patches every asset of that class (and its subclasses) found in the asset registry. This is ideal
+for data-asset families:
+
+```yaml
+type: cdo
+conditions: { hasMod: KAPI }
+patches:
+  - allAssetsOfClass: /Script/KAPI.KAPICleanerItemDescription
+    properties:
+      - path: mProductionTime
+        op: multiply
+        value: 0.75
+```
+
+## `matchTag:` + `ofClass:` — select by gameplay tag
+
+Selects everything of `ofClass:` (required scope) that carries the tag(s). `matchTag:` accepts a
+scalar or a sequence, and when it's a sequence, **all** tags must match. Two optional keys are
+available: `tagProperty:` names the tag container property explicitly, and `matchAssets:` also
+matches data-asset instances (default `true`):
+
+```yaml
+type: cdo
+conditions: { hasMod: KAPI }
+patches:
+  - matchTag: KMods.AlternateRecipe # scalar — or a sequence: [KMods.AlternateRecipe, MyPack.Buffed]
+    ofClass: /Script/FactoryGame.FGRecipe # required scope
+    tagProperty: mGameplayTags # optional explicit tag container property
+    matchAssets: true # also match data-asset instances (default true)
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.8
+```
+
+Register your own tags first using `type: gametag`. The GameTags stage always runs before
+everything else. Then match on them in the same pack: see
+[Game Tags](/kdataforge/features/game-tags).
+
+## `applyToSubclasses:` — widen a class target to every derived class
+
+With a class target, `applyToSubclasses: true` also patches every derived class's CDO:
+
+```yaml
+type: cdo
+patches:
+  - target: /Script/FactoryGame.FGBuildableResourceExtractor
+    applyToSubclasses: true # every miner, oil extractor, water pump, …
+    properties:
+      - path: mExtractMultiplier
+        op: min
+        value: 2
+```
+
+> ⚠️ **Wide blast radius.** Subclass expansion covers _every_ derived class, including ones added
+> by other mods you may never have heard of. Prefer the most-derived class that still covers what
+> you mean. Use `min`/`max`/`clamp`/`multiply` rather than absolute `set` where possible, and check
+> `/kdf report` to see exactly which classes were patched.
+
+## `applyToSpawnedActors:` — runtime actor patches
+
+For actor classes, saves and archetypes override CDO values on already-placed instances. Setting
+`applyToSpawnedActors: true` re-applies the ops to **every instance the moment it spawns** (world
+begin play and every later spawn):
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Buildable/Factory/StorageContainerMk1/Build_StorageContainerMk1.Build_StorageContainerMk1_C
+    applyToSpawnedActors: true # re-applied to every instance the moment it spawns
+    applyToSubclasses: false # exact class only
+    properties:
+      - path: mInventorySizeX
+        value: 12
+      - path: mInventorySizeY
+        value: 8
+```
+
+These instance writes are unconditional. They do not compare a value against the vanilla snapshot
+or preserve a value changed by a player or save.
+
+Resource Nodes are an important consequence of class-only actor matching. KDataForge cannot select
+one placed node by location, descriptor, purity, amount, or node type. See
+[Resources and Resource Nodes](/kdataforge/features/resources#what-resource-node-editing-can-and-cannot-do).
+
+## Choosing a selector
+
+The selector keys cover targets from a single class to every actor in a class family. Use the table
+below to choose the narrowest useful selector:
+
+| I want to patch…                                   | Selector                                    |
+| -------------------------------------------------- | ------------------------------------------- |
+| One recipe / item / building class                 | `target:` class path                        |
+| One data-asset instance                            | `target:` object path (no `_C`)             |
+| A handful of unrelated targets, same `properties:` | `target:` sequence of paths                 |
+| A whole data-asset family                          | `allAssetsOfClass:`                         |
+| Everything carrying a tag                          | `matchTag:` + `ofClass:`                    |
+| A base class **and** everything derived            | class `target:` + `applyToSubclasses: true` |
+| Values on placed/spawning actors                   | + `applyToSpawnedActors: true`              |

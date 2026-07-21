@@ -1,0 +1,721 @@
+---
+title: YAML Schema
+description: Complete grammar for packs, document types, property paths, all 22 operations, conditions, and includes.
+sidebar:
+  order: 2
+---
+
+> This document is normative. Every construct here is implemented and covered by an example in
+> [Examples](/kdataforge/examples).
+
+## File Discovery
+
+- Author root: `<your-mod>/DataForge/`.
+- Author glob: `<your-mod>/DataForge/**/*.yml` (and `*.yaml`).
+- Scanner root: the Unreal project directory, which is `FactoryGame/` in a packaged game.
+- Up to six levels below the project root, a directory is a **pack root** when it is named
+  `DataForge`, uses the legacy name `data-editor`, or directly contains `pack.yml`. Names are
+  case-insensitive. Root discovery prunes `Content`, `Saved`, `Intermediate`, `Binaries`,
+  `DerivedDataCache`, `Plugins`, `Source`, and `Config`.
+- Roots may nest. Each YAML file belongs only to its deepest enclosing root.
+- All `*.yml` / `*.yaml` files under a pack root are parsed as documents. A file normally holds one
+  document, but may hold several separated by `---` lines — see
+  [Multiple Documents Per File](#multiple-documents-per-file) below.
+- Malformed YAML produces an Error and that file is skipped. The rest of the load continues.
+
+## Pack Manifest (`pack.yml`)
+
+Optional, at the pack root. Files without a manifest form an implicit pack whose ref and name come
+from the detected root's parent directory. Prefer an explicit stable `ref`; moving the root can
+otherwise change its implicit identity.
+
+```yaml
+ref: MyBalancePack # stable pack reference (save-persistence contract) — required if present
+name: My Balance Pack # display name (default: ref)
+version: 1.2.0 # semver, informational + used by conflict reports
+priority: 100 # higher applies earlier within each stage (default 100)
+enabled: true # false disables the whole pack (default true)
+debug: false # true logs every applied op from every document in this pack (see Debug Logging)
+dependencies: # pack refs that must load before this pack
+  - SomeOtherPack
+redirects: # id renames for generated content (see Content Creation)
+  OldId: NewId # old save class paths resolve to the renamed class (FCoreRedirects)
+conditions: { hasMod: [KAPI, KLib] } # optional — same grammar as a document's `conditions:` (see
+#                                       Conditions); gates every document in the pack (AND)
+```
+
+`conditions:` on the manifest is evaluated once, before any file in the pack is even read, a
+failing pack is skipped entirely with one Info diagnostic, instead of every document failing its
+own copy of the same condition. Use it for "this whole pack is a compat layer for mod X" instead of
+repeating `conditions: { hasMod: X }` at the top of every document.
+
+`dependencies:` are topological constraints. Missing or self-referential dependencies reject the
+pack, and invalidity propagates to transitive dependants. Dependency cycles are rejected. Among
+packs whose dependencies are ready, higher `priority` runs first and `ref` ascending breaks ties.
+
+`redirects:` maps **old generated-content ids to new ones**. Generated class names are id-based
+(`Gen_<PackRef>_<Id>`), so renaming an `id` would orphan save data. A redirect entry feeds
+`FCoreRedirects` so class paths in existing saves resolve to the renamed class. Renaming a _file_
+never needs a redirect. Only `id` renames do.
+
+## Document Structure
+
+Every document is a YAML map with a root type:
+
+```yaml
+type: cdo # required (or use the `<name>.<type>.yml` filename convention)
+debug: true # optional — log every applied op from this document (see Debug Logging)
+conditions: { ... } # optional — see Conditions
+include: # optional — same-pack files that must apply BEFORE this one
+  - base-values.cdo.yml
+# … type-specific content
+```
+
+Root type detection order: `type:` key → filename convention (`iron.recipe.yml` → `recipe`).
+Unknown types warn once and are skipped (they may belong to a handler from another mod or a later
+phase).
+
+### Multiple Documents Per File
+
+A file can hold more than one document by separating them with a `---` line — the same convention
+Kubernetes multi-manifest YAML files use. This lets a small, self-contained pack live in one file
+instead of several:
+
+```yaml
+type: item
+items:
+  - id: MySuperIngot
+    parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      - path: mDisplayName
+        value: Super Ingot
+      - path: mResourceSinkPoints
+        value: 100
+---
+type: sinkpoints
+track: Default
+entries:
+  - item: /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot
+    points: 100
+```
+
+- Every document still runs through the normal pipeline independently — its own `debug:`,
+  `conditions:`, and `include:`, staged and ordered exactly like a document from a separate file.
+- **The `<name>.<type>.yml` filename convention only applies to single-document files** — a file's
+  name can't encode more than one type, so once a file holds multiple documents, every one of them
+  **must** set its own `type:` key. A document with no `type:` in a multi-document file is skipped
+  with a warning rather than falling back to the filename.
+- Diagnostics identify documents as `file.yml[0]`, `file.yml[1]`, … (zero-based, source order) so a
+  warning always points at the right one.
+- `include: file.yml` — referencing a multi-document file by its bare name — waits for **all** of
+  that file's documents to apply first; you don't need to know (or reference) how many documents it
+  was split into.
+- A stray trailing `---` with nothing after it produces a harmless empty document and is silently
+  ignored — you don't need to trim it.
+
+### Root types
+
+Each root type is dispatched to its own stage-specific handler. The table below lists every
+built-in type, the stage it runs in during a load, and the page with its full grammar and worked
+examples:
+
+| Type                 | Stage            | Detailed page                                                           |
+| --------------------- | ---------------- | ----------------------------------------------------------------------- |
+| `gametag`            | GameTags         | [Game Tags](/kdataforge/features/game-tags)               |
+| `asset`              | Assets           | [Data Assets](/kdataforge/features/data-assets)           |
+| `dataasset`          | Assets           | [Data Assets](/kdataforge/features/data-assets)           |
+| `curve`              | Assets           | [Float and Vector Curves](/kdataforge/features/curves)    |
+| `localization`       | Localization     | [Localization](/kdataforge/features/localization)         |
+| `cdo`                | CDOChanges       | [Patching (type: cdo)](/kdataforge/features/patching-cdo) |
+| `item`               | Items            | [Items](/kdataforge/features/items)                       |
+| `resource`           | Items            | [Resources](/kdataforge/features/resources)               |
+| `building`           | Items            | [Buildings](/kdataforge/features/buildings)               |
+| `unlock`             | Items            | [Unlocks](/kdataforge/features/unlocks)                   |
+| `class`              | Items            | [Custom Classes](/kdataforge/features/custom-classes)     |
+| `recipe`             | Recipes          | [Recipes](/kdataforge/features/recipes)                   |
+| `schematic`          | Schematics       | [Schematics](/kdataforge/features/schematics)             |
+| `research` / `mam`   | Research         | [Research Trees](/kdataforge/features/research-trees)     |
+| `sinkpoints`         | SubsystemMods    | [Sink Points](/kdataforge/features/sinkpoints)            |
+| custom (third-party) | handler-declared | registered via `RegisterHandler`, no page, it's yours                   |
+
+> All class **generation** types (`item`, `resource`, `building`, `unlock`, and the generic
+> `class`) run in the **Items** stage, priority-ordered
+> (`class` → `unlock` → `item` → `resource` → `building`), so
+> later stages (`recipe`, `schematic`, `research`) can reference every generated class.
+
+## Property Patches (`type: cdo`)
+
+A `cdo` document patches properties on something that **already exists**: a class's default
+object, a live `PrimaryDataAsset` instance, or every asset matching a class/tag scan. It does not
+generate new content. Exactly one target selector picks what gets patched, and one or more
+`properties:` ops describe the write:
+
+```yaml
+type: cdo
+patches:
+  - # ---- exactly one target selector is required ----
+    target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    #   class path  → patches the class default object
+    #   object path → patches that object directly (PrimaryDataAsset instances etc.)
+    #   a sequence of either → every entry resolved and patched independently
+    # OR:
+    allAssetsOfClass: /Script/KAPI.KAPIDataAssetBase
+    #   every asset of that class (and subclasses) found in the asset registry
+    # OR:
+    matchTag: KMods.AlternateRecipe # scalar or sequence (all must match)
+    ofClass: /Script/FactoryGame.FGRecipe # required scope for matchTag
+    tagProperty: mGameplayTags # optional explicit tag container property
+    matchAssets: true # also match data-asset instances (default true)
+
+    # ---- modifiers ----
+    applyToSubclasses: false # class targets: also patch every derived class CDO
+    applyToSpawnedActors: false # actor classes: re-apply ops to every spawning instance
+
+    # ---- the ops ----
+    properties:
+      - path: mManufactoringDuration # see Property Paths
+        op: multiply # see Operations (default: set)
+        value: 0.5
+```
+
+## Property Paths
+
+`path:` addresses a single property, or a nested member reached through arrays, sets, maps, or
+object references. It uses a small path grammar shared by every operation below:
+
+```
+Segment(.Segment)*      Segment = Name([<int>] | ["key"] | [key])*
+```
+
+| Example                          | Meaning                                                             |
+| --------------------------------- | -------------------------------------------------------------------- |
+| `mManufactoringDuration`         | plain property                                                      |
+| `mIngredients[0].Amount`         | struct member of array element 0                                    |
+| `mSomeMap["Iron"].Value`         | struct member of map value for key `Iron`                           |
+| `mSomeSet[2]`                    | third element of a set (logical order)                              |
+| `mMeshComponent.RelativeScale3D` | dereference through an object-typed member (components, subobjects) |
+
+Blueprint-defined properties match on their **authored** name (case-insensitive), so mangled BP
+names never appear in YAML.
+
+## Operations
+
+`op:` values and their argument keys. Full worked examples: [Operations](/kdataforge/features/operations).
+
+| Op                                                    | Applies to                                                    | Arguments                                                           |
+| ------------------------------------------------------ | ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `set` (default)                                       | everything                                                    | `value`                                                             |
+| `add`, `subtract`, `multiply`, `divide`, `min`, `max` | numeric                                                       | `value`                                                             |
+| `clamp`                                               | numeric                                                       | `min`, `max`                                                        |
+| `append`                                              | array, set, map, string/name/text, tag container              | `value` (scalar or sequence)                                        |
+| `prepend`                                             | array, set, string/name/text, tag container                   | `value` (scalar or sequence)                                        |
+| `insert`                                              | array                                                         | `index`, `value`                                                    |
+| `remove`                                              | array (by value), set (by value), map (by key), tag container | `value`                                                             |
+| `remove_at`                                           | array                                                         | `index`                                                             |
+| `clear`                                               | array, set, map, string/name/text, tag container              | none                                                                |
+| `swap`                                                | array                                                         | `index`, `with`                                                     |
+| `replace`                                             | array                                                         | `index`, `value`                                                    |
+| `duplicate`                                           | array                                                         | `index`                                                             |
+| `sort`, `reverse`                                     | array                                                         | none                                                                |
+| `unique`                                              | array (set: no-op)                                            | none                                                                |
+| `copy`, `move`                                        | everything                                                    | `from` (property path on the same object; `move` clears the source) |
+
+Unsupported op×type combinations are **diagnostics at load time**, never silent no-ops.
+
+### Special-cased properties
+
+A few properties need more than a plain reflected write. KDataForge handles them automatically:
+
+- **`FGameplayTagContainer`**: accepts `set`/`append`/`remove`/`clear` with plain tag names
+  (no native-struct text form needed).
+- **`mStackSize`** (any `FGItemDescriptor`-derived target): this is an **`EStackSize` enum**
+  (`SS_ONE`/`SS_SMALL`/`SS_MEDIUM`/`SS_BIG`/`SS_HUGE`/`SS_FLUID`), not a plain integer. Set it with
+  an enum value name like any other enum property. The engine also **caches** item stack sizes, so
+  writing the property alone would not change anything in-game. This is why KBFL ships a dedicated
+  `UKBFLCDOItemStackSize` helper. Any op that writes `mStackSize` also resets the descriptor's
+  cached stack size (`mCachedStackSize`), so the change takes effect out of the box.
+  There are two caveats. Inventories that **already contain** the item may need the item re-added
+  (or a game reload) before slots reflect the new limit. Also, if you use KBFL's own CDO assets for
+  stack sizes, don't patch the same descriptor from both sides. Example with the full caveat:
+  [Balancing → Items](/kdataforge/examples/balancing#items-ufgitemdescriptor).
+
+## Value Forms (by property type)
+
+Each reflected property type accepts its own YAML shape when used as an operation's `value:` (or
+`min`/`max`/`with` argument). The table below is the authoritative mapping from UE property type
+to accepted YAML form:
+
+| Property type                      | YAML form                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bool`                             | `true` / `false` / `yes` / `no` / `on` / `off` / `1` / `0`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `int32`, `int64`, `uint*`, `uint8` | integer scalar                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `float`, `double`                  | number scalar                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| enum                               | value name (`RF_SOLID`, `EResourceForm::RF_SOLID`) or numeric value (must be a valid ordinal, rejected otherwise)                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `FString`, `FName`                 | string scalar                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `FText`                            | string scalar (culture-invariant) **or** map `{ key, ns, source }` (localized)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| object reference                   | full object path; a bare **generated-content id** (e.g. `SuperIngotIcon` for a `dataasset`/`asset` entry — see [Generated Content Short Ids](#generated-content-short-ids)); `""`/`none` → null                                                                                                                                                                                                                                                                                                                                                                                           |
+| class reference                    | class path (`/Script/Module.Class` or `/Game/....Asset_C`; `_C` auto-retried) — or a bare **generated-content id** (e.g. `MySuperIngot` for an `item`/`resource`/`building`/`class`/... entry — see [Generated Content Short Ids](#generated-content-short-ids)) — or, as a last resort, a **bare class name** (`Desc_Water`) resolved by name against every class currently loaded in memory; ambiguous bare-name forms log an error (`LogKDataForge`, listing every match) and use the first match (sorted by full class path), so prefer full paths in published packs when it matters |
+| `TSoftObjectPtr` / `TSoftClassPtr` | path string (not loaded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| struct                             | native text form (`"(X=1,Y=2,Z=3)"`), map form (`{X: 1, Y: 2, Z: 3}`), or positional sequence (`[1, 2, 3]`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `FGameplayTag`                     | tag name string                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `FGameplayTagContainer`            | sequence of tag names                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `TArray`                           | sequence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `TSet`                             | sequence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `TMap`                             | map (keys converted via the key property type)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| nested structs                     | nested maps, any depth                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+
+## Gameplay Tag Registration (`type: gametag`)
+
+A `gametag` document registers new `FGameplayTag` names with the engine's gameplay tag tree before
+any other document type runs. This matters because tags referenced from `cdo` targeting
+(`matchTag:`) or from a `FGameplayTagContainer` property write must already exist to resolve:
+
+```yaml
+type: gametag
+tags:
+  - tag: MyPack.Machines.Special # map form with comment
+    comment: Marks special machines
+  - MyPack.Simple # scalar shorthand
+```
+
+Tags are registered at runtime by appending to the gameplay-tag settings list in memory, never
+written to config files, with a tag-tree rebuild when needed. This is the only runtime channel
+that survives the engine's own tree reconstructs. Register tags **before** using them in cdo
+documents: the GameTags stage always runs first.
+
+## Content Creation (`item`, `resource`, `building`, `recipe`, `schematic`, `research`, `unlock`)
+
+These seven root types **generate new classes at runtime**. All share the same entry grammar. Only
+the plural list key and the default parent differ:
+
+```yaml
+type: item # or resource / building / recipe / schematic / research / unlock
+items: # plural key per type — see table below
+  - id: MySuperIngot # required — stable id, the save-persistence contract
+    parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C # optional
+    properties: # identical op entries to cdo patches, applied to the new class's CDO
+      - path: mDisplayName
+        value: Super Ingot
+      - path: mStackSize
+        value: SS_HUGE # EStackSize enum, not a plain integer — see Special-cased properties
+```
+
+| Type        | Plural key   | Default `parent`                                                   |
+| ----------- | ------------ | -------------------------------------------------------------------- |
+| `item`      | `items`      | `/Script/FactoryGame.FGItemDescriptor`                             |
+| `resource`  | `resources`  | `/Script/FactoryGame.FGResourceDescriptor`                         |
+| `building`  | `buildings`  | `/Script/FactoryGame.FGBuildingDescriptor`                         |
+| `recipe`    | `recipes`    | `/Script/FactoryGame.FGRecipe`                                     |
+| `schematic` | `schematics` | `/Script/FactoryGame.FGSchematic`                                  |
+| `research`  | `research`   | `/Script/FactoryGame.FGResearchTree`                               |
+| `unlock`    | `unlocks`    | none: a concrete `FGUnlock` subclass **must** be given as `parent` |
+
+### Generated class identity (save-persistence contract)
+
+- Classes live in package `/KDataForge/Gen/<PackRef>` and are named `Gen_<PackRef>_<Id>`:
+  **deterministic and id-based**, never derived from file paths or load order.
+- Reference a generated class elsewhere (recipes, unlocks, sinkpoints, other YAML) as
+  `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>` with no `_C` suffix.
+- The `id` is the contract. **Renaming a file is safe. Renaming an `id` needs a pack redirect**
+  (`redirects:` in `pack.yml`).
+- Classes are created during GameInstance INITIALIZATION **strictly before any save loads**, so
+  save class-path resolution finds them in memory.
+- **Constraint**: generated classes have the parent's layout, with no new reflected properties or
+  components. All variation lives in CDO defaults (which is exactly what `properties:` sets).
+
+### Generated Content Short Ids
+
+Anywhere a class or object reference is accepted (`parent:`, `properties:` values, `target:`,
+`item:` on sinkpoints, `class:`, …), a bare id — just the `id:` a document gave the content, e.g.
+`MySuperIngot` — resolves in addition to the full `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>`
+path. Both forms always work; use whichever reads better:
+
+```yaml
+type: item
+items:
+  - id: PureSuperIngot
+    parent: SuperIngot # short id — same as /KDataForge/Gen/MyPack.Gen_MyPack_SuperIngot
+```
+
+- **Resolution order**: the id is looked up in the current document's own pack first (the common
+  case — most references are to something the same pack just generated). If it isn't there, every
+  pack's generated content is searched; a match in exactly one other pack still resolves. Matches in
+  more than one pack log an error (`LogKDataForge`, listing every match) and apply to the first
+  match (sorted by full path) — same ambiguity handling as the bare class-name shortcut above.
+  Qualify with the full path to remove any ambiguity or to reference another pack's content
+  unambiguously.
+- Covers both generated **classes** (`item`/`resource`/`building`/`recipe`/`schematic`/`research`/
+  `unlock`/`class`) and generated **asset instances** (`dataasset`/`asset`, e.g. an icon's id in
+  `mSmallIcon: SuperIngotIcon` instead of `/KDataForge/GenAssets/MyPack.Gen_MyPack_SuperIngotIcon`).
+- Only tried for **name-only** input (no `/` and no `.` at all) — anything that looks like a path is
+  always treated as a path, never as an id.
+- Works everywhere a class/object reference is resolved: `properties:` values, `target:`,
+  `allAssetsOfClass:`, `ofClass:`, `parent:`, register-only `class:`, `item:` on sinkpoints, and
+  spawn-time actor patches (`applyToSpawnedActors: true`) re-applied to newly spawned actors.
+
+### Registration (`recipe`, `schematic`, `research`)
+
+```yaml
+type: recipe
+recipes:
+  - id: Recipe_MySuperIngot
+    register: true # default — omit unless you want registration off
+    properties: [...]
+```
+
+- `register: true` (default) queues the class for per-world registration into SML's
+  `UModContentRegistry`, **before the registry freezes at world begin play**. Auto-propagation
+  applies: registering a schematic registers its recipes. Recipes register their items.
+- **Register-only mode**: use `class:` instead of `id:` to register an **existing** class without
+  generating one:
+
+```yaml
+type: schematic
+schematics:
+  - class: /Game/SomeMod/Schematics/Schematic_Hidden.Schematic_Hidden_C # register, don't generate
+```
+
+### Nodes: placing a schematic in a research tree
+
+A `research` entry modifies its visual M.A.M. graph directly. `addNodes:` appends node instances; it
+does not update or deduplicate an existing node with the same schematic. A usable node
+normally supplies the displayed `schematic:` and a `coordinate:`. `parents:` creates prerequisite
+relationships; with `autoPath: true` on the research entry, KDataForge also creates straight roads
+for those relationships:
+
+```yaml
+type: research
+research:
+  - id: MyResearchTree
+    autoPath: true
+    addNodes:
+      - schematic: Schematic_First
+        coordinate: { X: 0, Y: 0 }
+      - schematic: Schematic_Second
+        coordinate: { X: 2, Y: 0 }
+        parents:
+          - schematic: Schematic_First
+```
+
+- `schematic:` accepts a generated short id or a full `UFGSchematic` class path.
+- `coordinate:` is `{ X: <number>, Y: <number> }`. Supply it for a node that participates in graph
+  relationships or roads.
+- `parents:`, `nodesToUnhide:`, and `unhiddenBy:` are optional. Each reference may name another
+  node's `schematic:` or a literal coordinate. References may point forward or backward within the
+  same `addNodes:` list, or to a node already present on the target tree.
+- `autoPath:` defaults to `false`. When enabled, each resolved `parents:` relationship gets a
+  straight, two-point visual road. Leave it off and provide `childrenAndRoads:` on the parent for a
+  bent or otherwise custom route.
+- `class:` optionally selects a `UFGResearchTreeNode` subclass; `properties:` applies ordinary
+  property operations to that node. A convenience field missing from a custom node logs a warning
+  and is skipped rather than failing the whole document.
+
+A custom road uses a child coordinate and every point along the path. `childrenAndRoads:` can be one
+`{ key, points }` map or a sequence of them when a node has multiple children:
+
+```yaml
+addNodes:
+  - schematic: Schematic_First
+    coordinate: { X: 0, Y: 0 }
+    childrenAndRoads:
+      - key: { X: 2, Y: 0 }
+        points:
+          - { X: 0, Y: 0 }
+          - { X: 0, Y: 1 }
+          - { X: 2, Y: 1 }
+          - { X: 2, Y: 0 }
+      - key: { X: 0, Y: 2 }
+        points: [{ X: 0, Y: 0 }, { X: 0, Y: 2 }]
+```
+
+Use tree-entry-level `removeNodes:` to remove nodes by schematic class or short id. Each selector
+may be a scalar (`Schematic_Obsolete`) or a map (`{ schematic: Schematic_Obsolete }`). KDataForge
+performs all removals before appending the same entry's `addNodes:` list and removes every surviving
+`Parents`, `NodesToUnhide`, `UnhiddenBy`, and `ChildrenAndRoads` reference to each removed
+coordinate. The same entry may remove one node and add another; `autoPath:` applies to additions:
+
+```yaml
+research:
+  - class: /Game/FactoryGame/Schematics/Research/Mycelia_RS/ResearchTree_Mycelia.ResearchTree_Mycelia_C
+    register: false
+    autoPath: true
+    removeNodes: [Schematic_Obsolete]
+    addNodes:
+      - schematic: Schematic_Replacement
+        coordinate: { X: 3, Y: 1 }
+        parents:
+          - schematic: Schematic_ExistingParent
+```
+
+`autoPath:` is a sibling of `addNodes:` on the research entry and generates straight roads for its
+resolved `parents:` relationships. To move a node, select and re-add the same schematic with its new
+coordinate. `nodes:` remains a legacy alias. If both keys exist,
+`addNodes:` wins and KDataForge warns that `nodes:` was ignored.
+
+### Instanced Unlocks on Schematics (`unlocks:`)
+
+Schematic entries accept an `unlocks:` list. Each entry creates an **instanced** `FGUnlock`
+subobject on the schematic's CDO — works with any concrete `FGUnlock` subclass the base game
+ships, not just `FGUnlockRecipe`; see the
+[Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes) for the full list:
+
+```yaml
+type: schematic
+schematics:
+  - id: Schematic_MySuperIngot
+    properties: [...]
+    unlocks:
+      - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
+        properties:
+          - path: mRecipes
+            value: [/KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot]
+```
+
+### Schematic shortcut unlocks
+
+In addition to generic `unlocks:`, schematic entries accept `recipes:` (sequence of `UFGRecipe`
+classes), `schematics:` (sequence of `UFGSchematic` classes), positive-integer `handSlots:` and
+`inventorySlots:`, and `scannableResources:` (sequence of `{ resource:, nodeType: }`, with
+`nodeType: Node` by default). Each shortcut creates the corresponding normal `FGUnlock` instance;
+class references resolve exactly like every other generated, vanilla, or mod class reference.
+
+### Instanced Dependencies on Schematics (`dependencies:`)
+
+Schematic entries also accept a `dependencies:` list — the same instanced-object mechanism as
+`unlocks:`, targeting `mSchematicDependencies` instead of `mUnlocks`. Each entry creates an
+**instanced** `FGAvailabilityDependency` subobject on the schematic's CDO:
+
+```yaml
+type: schematic
+schematics:
+  - id: Schematic_AdvancedSuperIngot
+    properties: [...]
+    dependencies:
+      - class: /Script/FactoryGame.FGSchematicPurchasedDependency
+        properties:
+          - path: mSchematics
+            value: [/KDataForge/Gen/MyPack.Gen_MyPack_Schematic_MySuperIngot]
+          - path: mRequireAllSchematicsToBePurchased
+            value: true
+```
+
+Pair it with `mDependenciesBlocksSchematicAccess`/`mHiddenUntilDependenciesMet` (ordinary
+`properties:`) to control whether the schematic is merely blocked from purchase or hidden entirely
+until the dependency is met. See
+[Type: schematic → Gating a schematic on prerequisites](/kdataforge/features/schematics#gating-a-schematic-on-prerequisites)
+for the full worked example and other `FGAvailabilityDependency` subclasses worth knowing about.
+
+## Generic Class Generation (`type: class`)
+
+The seven preset types above are the recommended, ergonomic forms. `class` is the **escape hatch
+for everything else**: it generates a new class from **any** parent, whether native C++
+(`/Script/Module.Class`) or Blueprint (`/Game/....Thing_C`). Examples include equipment
+descriptors, vehicle descriptors, item/schematic categories, `FGUnlock` subclasses, other mods'
+classes gated behind `hasMod`, reparented buildables, and more.
+
+```yaml
+type: class
+debug: true # optional (see Debug Logging)
+classes:
+  - id: MyCustomThing
+    parent: /Script/FactoryGame.FGEquipmentDescriptor # ANY class: native C++ or /Game/...Thing_C
+    registerAs: recipe # OPTIONAL: recipe | schematic | research — queues SML content
+    #                    registration for kinds that need it; omit for everything else
+    properties: [...] # cdo-style op entries applied to the new class's CDO
+```
+
+- **Same save-stable identity as the preset kinds**: `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>`.
+  Manifest, tombstones, and `redirects:` all apply identically.
+- Runs in the **Items** stage (same as `item`/`resource`/`building`/`unlock`), so `recipe`,
+  `schematic`, and `research` documents can reference the generated classes.
+- `registerAs:` queues the class into SML's `UModContentRegistry` like the corresponding preset
+  type would. It's only needed for the three registered kinds. Everything else just needs to
+  exist.
+- The constraint stays: generated classes copy the parent's **layout**, with no new reflected
+  properties or components. All variation is CDO defaults.
+
+Worked examples (equipment descriptor, category, modded parent behind `hasMod`) live at
+[Custom Classes](/kdataforge/features/custom-classes). For reparenting a buildable
+as part of a complete building, see
+[A Complete Building](/kdataforge/examples/building-chain).
+
+## 2D Image Assets (`type: asset`)
+
+Loads image files from the pack and turns them into real, referenceable `UTexture2D` assets:
+
+```yaml
+type: asset
+assets:
+  - id: MyIcon
+    file: icons/my-icon.png # relative to the pack root; png / jpg / tga / bmp
+```
+
+- Decoded at load into a **transient `UTexture2D`** at
+  `/KDataForge/GenAssets/<PackRef>.Gen_<PackRef>_<Id>` and announced to the asset registry.
+- Reference it from any `properties:` entry like any other object path:
+  `value: /KDataForge/GenAssets/MyPack.Gen_MyPack_MyIcon`.
+- Image files are decoded during the next GameInstance initialization after they change.
+- **2D only**: no FBX/glTF, ever, by design. DDS and WAV image formats aren't supported yet
+  (PNG/JPG/TGA/BMP are).
+
+Icon usage example (item `mSmallIcon` / `mPersistentBigIcon`):
+[Data Assets → 2D image assets](/kdataforge/features/data-assets#2d-image-assets-type-asset).
+
+## Dynamic PrimaryDataAsset Instances (`type: dataasset`)
+
+Creates real `UPrimaryDataAsset` **instances** (not classes) at runtime, using package
+`/KDataForge/GenAssets/<PackRef>` and name `Gen_<PackRef>_<Id>`. It announces them to the asset
+registry so scanning subsystems find them.
+
+```yaml
+type: dataasset
+conditions: { hasMod: KAPI }
+assets:
+  - id: CleanerItem_MyFluid
+    class: /Script/KAPI.KAPICleanerItemDescription # any UPrimaryDataAsset subclass
+    properties:
+      - path: mProductionTime
+        value: 4.0
+      - path: mInFluid
+        value:
+          {
+            ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C,
+            Amount: 1000,
+          }
+```
+
+After the initial load, KDataForge automatically triggers consumer rescans
+when data assets were **modified or added**:
+
+- **KAPI**: called via reflection only when the KAPI mod is loaded, no hard dependency needed.
+- **RefinedRDApi**: called via reflection only when the RefinedRDApi mod is loaded, with no
+  dependency needed. It covers RefinedPower / FicsitFarming boiler/cooler/heater/turbine/generator/dirt
+  data assets.
+
+Existing PrimaryDataAssets (KAPI's, RRDA's, any mod's) are already **editable** via `cdo` documents
+(`target:` object path, `allAssetsOfClass:`, `matchTag:`). The `dataasset` type is only for
+creating new instances.
+
+## Float and Vector Curve Assets (`type: curve`)
+
+Creates new or edits existing `UCurveFloat` and `UCurveVector` assets. `keys:` replaces complete
+key set on each entry.
+
+```yaml
+type: curve
+curveType: float # float | vector
+curves:
+  - id: DamageFalloff # exactly one of id or target
+    # target: /Game/Curves/Curve_Damage.Curve_Damage
+    defaultValue: 0 # vector: { X: 0, Y: 0, Z: 0 }
+    preInfinityExtrap: constant
+    postInfinityExtrap: linear
+    isEventCurve: false # float only
+    keys:
+      - time: 0
+        value: 1 # vector: { X: 1, Y: 2, Z: 3 } or [1, 2, 3]
+        interpMode: cubic # constant | linear | cubic
+        tangentMode: auto # auto | smartAuto | user | break
+        tangentWeightMode: none # none | arrive | leave | both
+        arriveTangent: 0
+        leaveTangent: 0
+        arriveTangentWeight: 0
+        leaveTangentWeight: 0
+```
+
+`preInfinityExtrap` and `postInfinityExtrap` accept `none`, `constant`, `linear`, `cycle`,
+`cycleWithOffset`, or `oscillate`. Times must be finite and unique within one entry. Vector values
+and tangent fields accept an X/Y/Z map or three-number sequence. Generated curves use object path
+`/KDataForge/GenAssets/<PackRef>.Gen_<PackRef>_<Id>` and have no `_C` suffix. See
+[Float and Vector Curves](/kdataforge/features/curves) for full examples and
+troubleshooting.
+
+## AWESOME Sink Point Values (`type: sinkpoints`)
+
+A `sinkpoints` document sets the AWESOME Sink point value for one or more items on a named track.
+The `FGResourceSinkSubsystem` consults this whenever it looks up how many points an item is worth:
+
+```yaml
+type: sinkpoints
+track: Default # Default | Exploration
+entries:
+  - item: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    points: 100
+    overridden: 50 # optional
+```
+
+**Not live-reloadable** (registry freeze): sinkpoint changes need a session restart.
+
+## Runtime Text Entries (`type: localization`)
+
+A `localization` document injects or overrides `FText` string table entries at runtime. It is
+scoped to a namespace and optionally a single culture, and it needs no separate localization asset
+shipped:
+
+```yaml
+type: localization
+namespace: MyPack
+culture: de # optional; prefix-matched against current language; omit = all
+entries:
+  SimpleKey: 'Übersetzter Text'
+  KeyWithSource: { source: 'Original English', text: 'Deutscher Text' } # override existing texts
+```
+
+- `culture:` is prefix-matched against the current language (`de` matches `de-DE`). Omitting it
+  applies the entries for every language.
+- The scalar form sets the text for `namespace`/key. The `{ source, text }` map form overrides
+  **existing** texts by their original source string.
+- Localization documents apply during GameInstance initialization. Restart the session after edits.
+
+## Debug Logging
+
+Every applied op can be traced. Three levels, from narrow to global:
+
+| Level    | How                                                        | Effect                                                |
+| -------- | ------------------------------------------------------------ | -------------------------------------------------------- |
+| Document | `debug: true` top-level key in **any** document type       | Every applied op from that document logs              |
+| Pack     | `debug: true` in `pack.yml`                                | Every applied op from every document of the pack logs |
+| Global   | console variable `KDF.Debug 1` (or launch arg `-KDFDebug`) | **Everything** logs, including editor-originated ops  |
+
+Log lines go to the game log at Log verbosity, one per applied op:
+
+```
+[KDF DEBUG] <file>: <target path>.<property path> <op> : <pre value> -> <post value>
+```
+
+Walkthrough (where the log file lives, reading the lines):
+[Getting Started → Debugging](/kdataforge/getting-started#debugging).
+
+## Conditions
+
+All listed conditions must pass (AND). Failing documents are skipped with an Info diagnostic.
+
+```yaml
+conditions:
+  gameVersion: '>=416000.0.0' # semver range vs the game version, reported as <changelist>.0.0
+  #                             (SML convention) — gate on the game's build changelist, e.g. the
+  #                             CL from the game's main menu / `>=491125.0.0` for the SML baseline
+  hasMod: KAPI # scalar…
+  # hasMod: [KAPI, "RefinedPower@>=4.0.0"]   # …or sequence; `Ref@<range>` pins a version
+  modVersion: # explicit map form for version constraints
+    SML: '>=3.12.0'
+  hasClass: /Script/FactoryGame.FGBuildableFrackingActivator
+  # hasClass: [/Game/A.A_C, /Game/B.B_C]     # sequence form
+```
+
+Version ranges use SML's semver syntax: `>=1.2.3`, `^3.12.0`, `~1.2.0`, exact `1.2.3`, unions with
+`||`.
+
+## Dependency Ordering (`include:`)
+
+`include:` lists relative file paths (same pack) whose documents must **apply before** this one
+within the same stage. It is ordering, not textual inclusion. Cycles fall back to path order with a
+warning.
+
+## Determinism
+
+Apply order is deterministic: dependency-aware pack topology (priority descending and `ref`
+ascending among ready packs) → stage → handler (priority descending, root type ascending) →
+same-stage `include:` constraints → relative path. KDataForge does not negotiate a multiplayer pack
+checksum or stream general operations between peers. See
+[Architecture](/kdataforge/background/architecture).

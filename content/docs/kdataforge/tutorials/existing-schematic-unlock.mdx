@@ -1,0 +1,84 @@
+---
+title: 'Adding a Recipe to an Existing Schematic'
+description: Unlocking a new or existing recipe from a schematic you didn't generate — vanilla, another mod's, or your own from an earlier pack — and why a plain cdo patch can't do this.
+sidebar:
+  order: 4
+---
+
+Maybe you already have a schematic. It could be vanilla, from another mod, or one you generated in an earlier
+version of your own pack. Either way, you just want it to **also** unlock a recipe. This is one of the
+most common requests. The natural first instinct is a `cdo` patch that `append`s to `mUnlocks`, but that
+doesn't work: `cdo` array ops resolve elements as object references by path, and can't construct a brand
+new unlock instance out of thin air. Use `type: schematic` with `class:` instead, the two line fix below.
+
+## The fix: `type: schematic` with `class:` (not `cdo`)
+
+```yaml
+# file: unlock-extra-recipe.schematic.yml
+type: schematic
+schematics:
+  - class: /Game/FactoryGame/Schematics/Progression/Schematic_1-2.Schematic_1-2_C # the EXISTING schematic
+    register: false # it's already registered by the base game — don't re-register it
+    unlocks:
+      - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
+        properties:
+          - path: mRecipes
+            value: [/KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MyNewRecipe]
+```
+
+- `class:` (instead of `id:`) tells KDataForge "don't generate a class, resolve this **existing**
+  one". See [Type: recipe → register-only mode](/kdataforge/features/recipes) for the general
+  `id:`/`class:` duality, since schematics work the same way.
+- `unlocks:` still applies, **even in register-only mode**. The schematic content-creation handler
+  runs `properties:` and `unlocks:` against whatever CDO it resolved, whether that CDO came from
+  generating a new class or from resolving an existing one. This is the one detail that makes the
+  whole pattern work.
+- **`register: false` matters here.** `register: true` (the default) is right when the schematic is
+  _yours_ and this is the first time anything registers it. For a **vanilla** schematic, or one
+  another mod already registers, it's already known to `UModContentRegistry`. You're only reaching
+  into its CDO to add an extra unlock, not re-announcing its existence. Set `register: false` to
+  avoid registering it a second time under your mod's reference.
+
+## Same pattern for one of YOUR OWN existing schematics
+
+Nothing changes if the schematic is one you generated in an earlier pack version. Just point
+`class:` at its generated path instead of a vanilla one, and leave `register: false` for the same
+reason: it's already registered from whichever document first created and registered it.
+
+```yaml
+type: schematic
+schematics:
+  - class: /KDataForge/Gen/MyPack.Gen_MyPack_Schematic_SuperIngot
+    register: false
+    unlocks:
+      - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
+        properties:
+          - path: mRecipes
+            value: [/KDataForge/Gen/MyPack.Gen_MyPack_Recipe_PureSuperIngot]
+```
+
+## Unlocking something other than a recipe
+
+The same `class:` + `unlocks:` shape works for any concrete `FGUnlock` subclass, not just
+`FGUnlockRecipe`. That includes inventory slots, schematics that unlock other schematics, custom
+unlock types from other mods, and anything else you'd normally put in a schematic's `unlocks:`
+list at generation time. See
+[Type: schematic → Instanced unlocks](/kdataforge/features/schematics#instanced-unlocks-the-normal-way-to-wire-up-a-recipe)
+for the full list of what an unlock entry can configure.
+
+## Troubleshooting
+
+- **"class: could not be resolved"**: double check the exact path, including the `_C` suffix for
+  Blueprint schematics. The bare class-name shortcut also works here
+  (see [Targeting → bare class name](/kdataforge/features/targeting#target--bare-class-name--shortcut-for-the-full-class-path)) if you only know the short name.
+- **The recipe registers but the schematic seems to unlock it twice, or you see a warning about
+  duplicate registration**: you likely left `register: true` (the default) on a schematic that's
+  already registered elsewhere. Add `register: false`.
+- **This is for adding an unlock to something that already exists.** For building a brand new
+  schematic from scratch, see
+  [Item + Icon + Recipe + Tier-1 Unlock](/kdataforge/tutorials/item-icon-recipe-schematic) instead.
+
+The [Type: schematic](/kdataforge/features/schematics) reference covers `mType`,
+`unlocks:`, and generate-versus-register behavior. [Type: recipe](/kdataforge/features/recipes)
+uses the same `id:` and `class:` duality one stage earlier. For the full new-content chain, see
+[Item + Icon + Recipe + Tier-1 Unlock](/kdataforge/tutorials/item-icon-recipe-schematic).

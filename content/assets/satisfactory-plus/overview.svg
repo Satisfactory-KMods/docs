@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#121a26"/>
+  <rect x="1" y="1" width="1278" height="718" fill="none" stroke="#26344a" stroke-width="2"/>
+  <text x="640" y="340" text-anchor="middle" font-family="monospace" font-size="28" fill="#93a4bd">SCREENSHOT PLACEHOLDER</text>
+  <text x="640" y="380" text-anchor="middle" font-family="monospace" font-size="20" fill="#4a90d9">satisfactory-plus/overview.png</text>
+  <text x="640" y="420" text-anchor="middle" font-family="monospace" font-size="16" fill="#5e6f8a">See src/assets/satisfactory-plus/README.md</text>
+</svg>
