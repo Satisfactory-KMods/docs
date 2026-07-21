@@ -70,7 +70,7 @@ for the full list of what an unlock entry can configure.
 
 - **"class: could not be resolved"**: double check the exact path, including the `_C` suffix for
   Blueprint schematics. The bare class-name shortcut also works here
-  (see [Targeting → bare class name](/kdataforge/features/targeting#target--bare-class-name--shortcut-for-the-full-class-path)) if you only know the short name.
+  (see [Targeting → bare class name](/kdataforge/features/targeting#target-bare-class-name-shortcut-for-the-full-class-path)) if you only know the short name.
 - **The recipe registers but the schematic seems to unlock it twice, or you see a warning about
   duplicate registration**: you likely left `register: true` (the default) on a schematic that's
   already registered elsewhere. Add `register: false`.
