@@ -18,7 +18,7 @@ See [Patching (type: cdo)](/kdataforge/features/patching-cdo) for the full patch
 structure these entries live inside. See [Property Types](/kdataforge/features/property-types)
 for what each underlying property looks like in YAML.
 
-## set (default) — everything
+## set (default): everything
 
 `set` overwrites the property outright. It works on any property type, which is why it can be
 left implicit. On `mDisplayName` (an `FString`), setting a value simply replaces the string:
@@ -28,7 +28,7 @@ left implicit. On `mDisplayName` (an `FString`), setting a value simply replaces
   value: 'Reinforced Iron Ingot' # op: set is implied
 ```
 
-## add / subtract — numeric
+## add / subtract: numeric
 
 `add` and `subtract` do in-place arithmetic on a plain numeric property. They add or subtract
 `value` from whatever is currently stored. Both reject enum-backed integers (see the callout
@@ -43,7 +43,7 @@ below), since there is no meaningful "current + 1" for an enum ordinal:
   value: 30
 ```
 
-## multiply / divide — numeric
+## multiply / divide: numeric
 
 `multiply` and `divide` scale a numeric property by `value`. Setting `mManufactoringDuration` to a
 fraction of itself halves the crafting time, while dividing `mEnergyValue` doubles the effective
@@ -58,7 +58,7 @@ fuel efficiency. Dividing by `0` is rejected outright, rather than producing inf
   value: 2
 ```
 
-## min / max — numeric (result = min/max of current and value)
+## min / max: numeric (result = min/max of current and value)
 
 `min` enforces a ceiling: the property is replaced with whichever is smaller, the current value or
 `value`. `max` enforces a floor, replacing the property with whichever is larger. Neither can push
@@ -82,7 +82,7 @@ an enum value name works. See
 [Property Types → Enums](/kdataforge/features/property-types#enum-typed-enum-class-and-tenumasbyte).
 :::
 
-## clamp — numeric
+## clamp: numeric
 
 `clamp` is the two-sided version of min/max: instead of a single `value`, it takes `min` and `max`
 keys and pins the current value inside that range in one step:
@@ -94,7 +94,7 @@ keys and pins the current value inside that range in one step:
   max: 999
 ```
 
-## append — array / set / map / string / tag container
+## append: array / set / map / string / tag container
 
 `append` adds to the end of a container, or concatenates onto a string. It behaves differently
 depending on the target property's kind.
@@ -128,7 +128,7 @@ updates. See [Localization](/kdataforge/features/localization) if you need the
 result to stay localizable instead.
 :::
 
-## prepend — array / string (tag containers: same as append)
+## prepend: array / string (tag containers: same as append)
 
 `prepend` mirrors `append`, but it adds at the front instead of the end for arrays, and inserts
 before the existing text for strings. Tag containers treat it identically to `append`, since a tag
@@ -140,7 +140,7 @@ container has no ordering. Maps do not support `prepend` at all: only `append` m
   value: '[MP] '
 ```
 
-## insert — array
+## insert: array
 
 `insert` places one or more elements at a specific `index` inside an array, rather than always at
 the end, and shifts later elements back. An out-of-range index fails with an error, instead of
@@ -157,7 +157,7 @@ clamping to the array's bounds:
     }
 ```
 
-## remove — array (by value) / set (by value) / map (by key) / tag container
+## remove: array (by value) / set (by value) / map (by key) / tag container
 
 `remove` deletes by content rather than by position. On arrays and sets, it deletes every element
 that matches `value` exactly. An array remove that matches nothing fails, rather than silently
@@ -180,7 +180,7 @@ doing nothing. On maps, `value` is the _key_ to delete, and on tag containers, `
   value: KMods.WikiExclude
 ```
 
-## remove_at — array
+## remove_at: array
 
 `remove_at` deletes the element at a specific position instead of matching by value. It is the
 right tool when you know the slot but not, or don't want to spell out, the exact contents:
@@ -191,7 +191,7 @@ right tool when you know the slot but not, or don't want to spell out, the exact
   index: 1
 ```
 
-## clear — array / set / map / string / tag container
+## clear: array / set / map / string / tag container
 
 `clear` empties a container-shaped property entirely: arrays, sets, maps, and tag containers all
 lose every element. Strings are reset to empty, rather than to their class-default text:
@@ -201,7 +201,7 @@ lose every element. Strings are reset to empty, rather than to their class-defau
   op: clear
 ```
 
-## swap — array
+## swap: array
 
 `swap` exchanges the elements at two positions, `index` and `with`, in an array without touching
 anything else in the list. It is useful for reordering a couple of entries without rewriting the
@@ -214,7 +214,7 @@ whole array:
   with: 1
 ```
 
-## replace — array
+## replace: array
 
 `replace` overwrites the element at `index` with a new `value`, keeping every other element and
 the array's length unchanged:
@@ -230,7 +230,7 @@ the array's length unchanged:
     }
 ```
 
-## duplicate — array (copies element to the end)
+## duplicate: array (copies element to the end)
 
 `duplicate` copies the element at `index` and appends the copy to the end of the same array. It is
 handy for cloning an existing ingredient or product entry as a starting point, before tweaking it
@@ -242,7 +242,7 @@ with a follow-up `replace`:
   index: 0
 ```
 
-## sort / reverse — array
+## sort / reverse: array
 
 `sort` reorders an array in ascending order. Numeric and string inner types sort by their actual
 value. Anything else, such as structs or object references, sorts by its exported text form.
@@ -255,7 +255,7 @@ value. Anything else, such as structs or object references, sorts by its exporte
   op: reverse
 ```
 
-## unique — array (removes later duplicates; sets: no-op)
+## unique: array (removes later duplicates; sets: no-op)
 
 `unique` walks an array and removes any element that is byte-identical to an earlier one, keeping
 the first occurrence of each value. Running it on a set is always a no-op, since a set is already
@@ -266,7 +266,7 @@ guaranteed to contain no duplicates:
   op: unique
 ```
 
-## copy — any property (from another path on the same object)
+## copy: any property (from another path on the same object)
 
 `copy` reads the value at another property path (`from`) on the same object and writes it into the
 target property. When source and destination are exactly the same property type, it copies the raw
@@ -281,7 +281,7 @@ can still work, as long as the text parses back cleanly for the destination type
   from: mDisplayName
 ```
 
-## move — copy, then reset the source to its default
+## move: copy, then reset the source to its default
 
 `move` performs the exact same copy as `copy`, then additionally clears the source property back
 to its default value. This makes it the right choice when a value should live at the new path

@@ -1,6 +1,6 @@
 ---
 title: Targeting
-description: Every way to select patch targets — class CDOs, asset instances, all assets of a class, tag matching, subclasses, and spawned actors.
+description: Every way to select patch targets, including class CDOs, asset instances, all assets of a class, tag matching, subclasses, and spawned actors.
 sidebar: { order: 4 }
 ---
 
@@ -8,7 +8,7 @@ Every `type: cdo` patch needs at least one target selector. The current validato
 selectors and `GatherTargets` accumulates their matches, but one clear selector per patch is easier
 to reason about. This page shows all selectors and the modifiers that widen a selection.
 
-## `target:` — class path → the class default object (CDO)
+## `target:` class path: the class default object (CDO)
 
 The most common form. Blueprint asset classes use the `_C` suffix (auto-retried if forgotten);
 native classes use `/Script/Module.Class`:
@@ -23,7 +23,7 @@ patches:
         value: 0.5
 ```
 
-## `target:` — bare class name → shortcut for the full class path
+## `target:` bare class name: shortcut for the full class path
 
 Anywhere a class path is accepted, a **bare class name** (no `/` or `.`) resolves against every
 class currently loaded in memory, so you don't have to spell out the full asset path:
@@ -43,7 +43,7 @@ If the short name matches **more than one** loaded class, KDataForge logs an `Er
 full class path, so the result stays deterministic. Prefer the full class path in published packs
 to avoid relying on load order. This shortcut is meant for quick local tweaks.
 
-## `target:` — generated-content id → shortcut for `/KDataForge/Gen/...`
+## `target:` generated-content id: shortcut for `/KDataForge/Gen/...`
 
 A bare id also resolves to a class **your own pack generated**, so you can target your own
 `item`/`recipe`/`schematic`/... content without spelling out `/KDataForge/Gen/<PackRef>.Gen_...`:
@@ -59,11 +59,11 @@ patches:
 ```
 
 This is checked **before** the bare class-name shortcut above, and works the same way everywhere a
-class or object reference is accepted — not just `target:` — see
+class or object reference is accepted, not just `target:`. See
 [Generated Content Short Ids](/kdataforge/reference/yaml-schema#generated-content-short-ids)
 for the full write-up (resolution order, cross-pack matches, and which reference kinds support it).
 
-## `target:` — object path → one asset instance
+## `target:` object path: one asset instance
 
 The same key also accepts an **object path** (PrimaryDataAsset instances etc.) and patches that
 object directly. Instances have **no** `_C` suffix: they are objects, not classes.
@@ -78,7 +78,7 @@ patches:
         value: true
 ```
 
-## `target:` — a sequence of paths → patch several targets in one entry
+## `target:` a sequence of paths: patch several targets in one entry
 
 `target:` also accepts a **list** of paths instead of a single scalar. Every entry is resolved the
 same way a scalar `target:` would be (class path, bare class name, generated-content id, or object
@@ -102,7 +102,7 @@ mixing target kinds (a class path alongside an object path) in one list is fine,
 resolved independently. Prefer `applyToSubclasses:` or `matchTag:` instead when the targets share a
 common base class or tag; reach for a `target:` list when they don't.
 
-## `allAssetsOfClass:` — every asset of a class
+## `allAssetsOfClass:` every asset of a class
 
 Patches every asset of that class (and its subclasses) found in the asset registry. This is ideal
 for data-asset families:
@@ -118,7 +118,7 @@ patches:
         value: 0.75
 ```
 
-## `matchTag:` + `ofClass:` — select by gameplay tag
+## `matchTag:` + `ofClass:` select by gameplay tag
 
 Selects everything of `ofClass:` (required scope) that carries the tag(s). `matchTag:` accepts a
 scalar or a sequence, and when it's a sequence, **all** tags must match. Two optional keys are
@@ -143,7 +143,7 @@ Register your own tags first using `type: gametag`. The GameTags stage always ru
 everything else. Then match on them in the same pack: see
 [Game Tags](/kdataforge/features/game-tags).
 
-## `applyToSubclasses:` — widen a class target to every derived class
+## `applyToSubclasses:` widen a class target to every derived class
 
 With a class target, `applyToSubclasses: true` also patches every derived class's CDO:
 
@@ -163,7 +163,7 @@ patches:
 > you mean. Use `min`/`max`/`clamp`/`multiply` rather than absolute `set` where possible, and check
 > `/kdf report` to see exactly which classes were patched.
 
-## `applyToSpawnedActors:` — runtime actor patches
+## `applyToSpawnedActors:` runtime actor patches
 
 For actor classes, saves and archetypes override CDO values on already-placed instances. Setting
 `applyToSpawnedActors: true` re-applies the ops to **every instance the moment it spawns** (world

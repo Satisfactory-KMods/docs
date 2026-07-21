@@ -1,6 +1,6 @@
 ---
 title: 'Type: class'
-description: Generating classes of any kind from YAML — any parent (C++ or Blueprint), optional content registration via registerAs, and where the preset types stop and this escape hatch begins.
+description: Generating classes of any kind from YAML, any parent (C++ or Blueprint), optional content registration via registerAs, and where the preset types stop and this escape hatch begins.
 sidebar: { order: 17 }
 ---
 
@@ -31,7 +31,7 @@ Everything that holds for the preset generation types holds here too:
 - **Layout-copy constraint**: the generated class copies the parent's layout exactly, with no new reflected properties and no new components. All variation lives in the CDO defaults that `properties:` sets.
 - `registerAs:` is only for the three kinds SML's `UModContentRegistry` tracks: `recipe`, `schematic`, and `research`. If you generate one of those through `class` instead of the preset type, set it so registration is queued. Everything else, such as descriptors, categories, and unlocks, just needs to exist and be referenced.
 
-## Example 1 — an equipment descriptor from a C++ parent
+## Example 1: an equipment descriptor from a C++ parent
 
 ```yaml
 # file: my-equipment.class.yml
@@ -50,7 +50,7 @@ classes:
 
 The result is a real `UFGEquipmentDescriptor` subclass, usable in recipes, schematics, and sinkpoints like any other descriptor. Because of the layout-copy constraint, `mEquipmentClass` has to point at an **existing** equipment actor, here the jetpack. You are re-parametrising existing equipment behaviour, not writing new equipment logic.
 
-## Example 2 — a build-menu / item category
+## Example 2: a build-menu / item category
 
 There is no preset type for categories, which makes them the textbook `class` use case:
 
@@ -80,7 +80,7 @@ items:
         value: /KDataForge/Gen/MyPack.Gen_MyPack_Cat_MyPackParts
 ```
 
-## Example 3 — a modded parent class, gated behind `hasMod`
+## Example 3: a modded parent class, gated behind `hasMod`
 
 Any loaded mod's classes work as parents. Gate the document so it is skipped cleanly (Info diagnostic) when the mod is missing:
 
@@ -96,7 +96,7 @@ classes:
         value: My Custom Crop
 ```
 
-## `registerAs:` — generating a registered kind through `class`
+## `registerAs:` (generating a registered kind through `class`)
 
 If you generate a recipe, schematic, or research class via `class`, for example because you want a specific modded subclass as the parent, queue its registration with `registerAs:`. It does exactly what the preset type's default `register: true` does:
 

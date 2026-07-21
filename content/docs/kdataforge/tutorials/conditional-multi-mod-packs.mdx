@@ -1,6 +1,6 @@
 ---
 title: 'Conditional Multi-Mod Integration Packs'
-description: Adding bonus content only when another mod (or a specific version of it, or just one of its classes) is present — without a hard dependency and without breaking the load for players who don't have it.
+description: Adding bonus content only when another mod (or a specific version of it, or just one of its classes) is present, without a hard dependency and without breaking the load for players who don't have it.
 sidebar:
   order: 7
 ---
@@ -9,8 +9,7 @@ The goal is for your pack to add extra content when another specific mod is inst
 asset, a patch to another mod's buildable, or a bonus recipe. It must not error, warn, or crash for
 the majority of players who don't have that mod. [Conditions & Packs](/kdataforge/features/conditions-and-packs)
 already documents every condition key's syntax individually. This tutorial covers the missing
-piece: how the pieces actually behave under the hood, verified against
-`Source/KDataForge/Private/Loader/KDFConditionEvaluator.cpp`, and how to combine them into a real
+piece: how the pieces actually behave under the hood, and how to combine them into a real
 optional-integration pack.
 
 ## The core idea
@@ -83,7 +82,7 @@ it's present and only check the version" code path. Presence is checked every ti
 |                                | `hasMod` (with a pin)                    | `modVersion`                                                                                     |
 | -------------------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | Under the hood                 | `EvaluateHasMod("Ref@range", …)`         | Builds `"Ref@range"` per map entry, calls the same `EvaluateHasMod`                              |
-| If the mod isn't loaded at all | Document skipped (Info)                  | **Identical** — document skipped (Info), not a harder failure                                    |
+| If the mod isn't loaded at all | Document skipped (Info)                  | **Identical**, document skipped (Info), not a harder failure                                    |
 | Idiomatic use                  | One or two optional integrations, inline | Several version constraints stated together, typically for mods you already expect to be present |
 
 Practically, use `hasMod` (bare or pinned) for content that's genuinely optional: a mod you have

@@ -1,6 +1,6 @@
 ---
 title: A Complete Building
-description: The full reference chain for a dynamically created building — buildable class, building descriptor, build recipe, production recipes, schematic, and sinkpoints — in dependency order, in one pack.
+description: The full reference chain for a dynamically created building (buildable class, building descriptor, build recipe, production recipes, schematic, and sinkpoints), in dependency order, in one pack.
 sidebar: { order: 4 }
 ---
 
@@ -19,8 +19,8 @@ the contract that makes those paths deterministic, in the form
 `/KDataForge/Gen/MyFactory.Gen_MyFactory_<Id>`
 (see [YAML Schema → generated class identity](/kdataforge/reference/yaml-schema#generated-class-identity-save-persistence-contract)).
 
-:::caution[Honest scope callout — read this first]
-A truly **new** machine with its own mesh or its own logic is **out of scope** — KDataForge is
+:::caution[Honest scope callout, read this first]
+A truly **new** machine with its own mesh or its own logic is **out of scope**. KDataForge is
 2D-only (no mesh import, ever) and generated classes copy their parent's layout (no new
 components or reflected properties). This chain **re-skins and re-parametrises existing
 buildable behaviour**: your machine looks like and ticks like its parent, but is a separate
@@ -133,7 +133,7 @@ items:
 ```
 
 :::note[Stack-size caveat]
-The engine caches item stack sizes — KDataForge automatically resets the descriptor's cached
+The engine caches item stack sizes. KDataForge automatically resets the descriptor's cached
 stack size (`mCachedStackSize`) whenever an op writes `mStackSize`, so the value above just
 works. Inventories that already contain the item may need the item re-added (or a game reload)
 to reflect a changed limit. Details:

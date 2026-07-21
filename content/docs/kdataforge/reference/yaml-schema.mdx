@@ -19,7 +19,7 @@ sidebar:
   `DerivedDataCache`, `Plugins`, `Source`, and `Config`.
 - Roots may nest. Each YAML file belongs only to its deepest enclosing root.
 - All `*.yml` / `*.yaml` files under a pack root are parsed as documents. A file normally holds one
-  document, but may hold several separated by `---` lines — see
+  document, but may hold several separated by `---` lines. See
   [Multiple Documents Per File](#multiple-documents-per-file) below.
 - Malformed YAML produces an Error and that file is skipped. The rest of the load continues.
 
@@ -77,8 +77,8 @@ phase).
 
 ### Multiple Documents Per File
 
-A file can hold more than one document by separating them with a `---` line — the same convention
-Kubernetes multi-manifest YAML files use. This lets a small, self-contained pack live in one file
+A file can hold more than one document by separating them with a `---` line (the same convention
+Kubernetes multi-manifest YAML files use). This lets a small, self-contained pack live in one file
 instead of several:
 
 ```yaml
@@ -99,19 +99,19 @@ entries:
     points: 100
 ```
 
-- Every document still runs through the normal pipeline independently — its own `debug:`,
+- Every document still runs through the normal pipeline independently, with its own `debug:`,
   `conditions:`, and `include:`, staged and ordered exactly like a document from a separate file.
-- **The `<name>.<type>.yml` filename convention only applies to single-document files** — a file's
+- **The `<name>.<type>.yml` filename convention only applies to single-document files.** A file's
   name can't encode more than one type, so once a file holds multiple documents, every one of them
   **must** set its own `type:` key. A document with no `type:` in a multi-document file is skipped
   with a warning rather than falling back to the filename.
 - Diagnostics identify documents as `file.yml[0]`, `file.yml[1]`, … (zero-based, source order) so a
   warning always points at the right one.
-- `include: file.yml` — referencing a multi-document file by its bare name — waits for **all** of
-  that file's documents to apply first; you don't need to know (or reference) how many documents it
+- `include: file.yml` (referencing a multi-document file by its bare name) waits for **all** of
+  that file's documents to apply first. You don't need to know (or reference) how many documents it
   was split into.
 - A stray trailing `---` with nothing after it produces a harmless empty document and is silently
-  ignored — you don't need to trim it.
+  ignored. You don't need to trim it.
 
 ### Root types
 
@@ -253,8 +253,8 @@ to accepted YAML form:
 | enum                               | value name (`RF_SOLID`, `EResourceForm::RF_SOLID`) or numeric value (must be a valid ordinal, rejected otherwise)                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `FString`, `FName`                 | string scalar                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `FText`                            | string scalar (culture-invariant) **or** map `{ key, ns, source }` (localized)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| object reference                   | full object path; a bare **generated-content id** (e.g. `SuperIngotIcon` for a `dataasset`/`asset` entry — see [Generated Content Short Ids](#generated-content-short-ids)); `""`/`none` → null                                                                                                                                                                                                                                                                                                                                                                                           |
-| class reference                    | class path (`/Script/Module.Class` or `/Game/....Asset_C`; `_C` auto-retried) — or a bare **generated-content id** (e.g. `MySuperIngot` for an `item`/`resource`/`building`/`class`/... entry — see [Generated Content Short Ids](#generated-content-short-ids)) — or, as a last resort, a **bare class name** (`Desc_Water`) resolved by name against every class currently loaded in memory; ambiguous bare-name forms log an error (`LogKDataForge`, listing every match) and use the first match (sorted by full class path), so prefer full paths in published packs when it matters |
+| object reference                   | full object path; a bare **generated-content id** (e.g. `SuperIngotIcon` for a `dataasset`/`asset` entry, see [Generated Content Short Ids](#generated-content-short-ids)); `""`/`none` → null                                                                                                                                                                                                                                                                                                                                                                                           |
+| class reference                    | class path (`/Script/Module.Class` or `/Game/....Asset_C`; `_C` auto-retried), or a bare **generated-content id** (e.g. `MySuperIngot` for an `item`/`resource`/`building`/`class`/... entry, see [Generated Content Short Ids](#generated-content-short-ids)), or, as a last resort, a **bare class name** (`Desc_Water`) resolved by name against every class currently loaded in memory; ambiguous bare-name forms log an error (`LogKDataForge`, listing every match) and use the first match (sorted by full class path), so prefer full paths in published packs when it matters |
 | `TSoftObjectPtr` / `TSoftClassPtr` | path string (not loaded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | struct                             | native text form (`"(X=1,Y=2,Z=3)"`), map form (`{X: 1, Y: 2, Z: 3}`), or positional sequence (`[1, 2, 3]`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `FGameplayTag`                     | tag name string                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -326,8 +326,8 @@ items: # plural key per type — see table below
 ### Generated Content Short Ids
 
 Anywhere a class or object reference is accepted (`parent:`, `properties:` values, `target:`,
-`item:` on sinkpoints, `class:`, …), a bare id — just the `id:` a document gave the content, e.g.
-`MySuperIngot` — resolves in addition to the full `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>`
+`item:` on sinkpoints, `class:`, …), a bare id (just the `id:` a document gave the content, e.g.
+`MySuperIngot`) resolves in addition to the full `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>`
 path. Both forms always work; use whichever reads better:
 
 ```yaml
@@ -338,16 +338,16 @@ items:
 ```
 
 - **Resolution order**: the id is looked up in the current document's own pack first (the common
-  case — most references are to something the same pack just generated). If it isn't there, every
+  case: most references are to something the same pack just generated). If it isn't there, every
   pack's generated content is searched; a match in exactly one other pack still resolves. Matches in
   more than one pack log an error (`LogKDataForge`, listing every match) and apply to the first
-  match (sorted by full path) — same ambiguity handling as the bare class-name shortcut above.
+  match (sorted by full path), the same ambiguity handling as the bare class-name shortcut above.
   Qualify with the full path to remove any ambiguity or to reference another pack's content
   unambiguously.
 - Covers both generated **classes** (`item`/`resource`/`building`/`recipe`/`schematic`/`research`/
   `unlock`/`class`) and generated **asset instances** (`dataasset`/`asset`, e.g. an icon's id in
   `mSmallIcon: SuperIngotIcon` instead of `/KDataForge/GenAssets/MyPack.Gen_MyPack_SuperIngotIcon`).
-- Only tried for **name-only** input (no `/` and no `.` at all) — anything that looks like a path is
+- Only tried for **name-only** input (no `/` and no `.` at all). Anything that looks like a path is
   always treated as a path, never as an id.
 - Works everywhere a class/object reference is resolved: `properties:` values, `target:`,
   `allAssetsOfClass:`, `ofClass:`, `parent:`, register-only `class:`, `item:` on sinkpoints, and
@@ -455,7 +455,7 @@ coordinate. `nodes:` remains a legacy alias. If both keys exist,
 ### Instanced Unlocks on Schematics (`unlocks:`)
 
 Schematic entries accept an `unlocks:` list. Each entry creates an **instanced** `FGUnlock`
-subobject on the schematic's CDO — works with any concrete `FGUnlock` subclass the base game
+subobject on the schematic's CDO. This works with any concrete `FGUnlock` subclass the base game
 ships, not just `FGUnlockRecipe`; see the
 [Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes) for the full list:
 
@@ -481,8 +481,8 @@ class references resolve exactly like every other generated, vanilla, or mod cla
 
 ### Instanced Dependencies on Schematics (`dependencies:`)
 
-Schematic entries also accept a `dependencies:` list — the same instanced-object mechanism as
-`unlocks:`, targeting `mSchematicDependencies` instead of `mUnlocks`. Each entry creates an
+Schematic entries also accept a `dependencies:` list (the same instanced-object mechanism as
+`unlocks:`), targeting `mSchematicDependencies` instead of `mUnlocks`. Each entry creates an
 **instanced** `FGAvailabilityDependency` subobject on the schematic's CDO:
 
 ```yaml

@@ -88,7 +88,7 @@ preconfigured unlock class** across several schematics: see
 
 Only `FGUnlockRecipe` and `FGUnlockInventorySlot` are shown above, but the mechanism works with
 **any** concrete `FGUnlock` subclass the base game ships (scanner unlocks, emotes, customizer
-options, Central Storage upgrades, …) — see the
+options, Central Storage upgrades, …). See the
 [Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes) for the full list with every
 class's settable properties.
 
@@ -145,8 +145,8 @@ generation, node actor patches, and placement limits.
 
 ## Gating a schematic on prerequisites
 
-`dependencies:` is the mirror image of `unlocks:`, using the exact same instanced-object mechanism
-— each entry creates a real **instanced** `FGAvailabilityDependency` subobject directly on the
+`dependencies:` is the mirror image of `unlocks:`, using the exact same instanced-object mechanism.
+Each entry creates a real **instanced** `FGAvailabilityDependency` subobject directly on the
 schematic's CDO, appended to `mSchematicDependencies`:
 
 ```yaml
@@ -165,17 +165,17 @@ schematics:
 
 That schematic won't be purchasable until `Schematic_MySuperIngot` is. A few other
 `FGAvailabilityDependency` subclasses worth knowing about (same base game headers, same
-mechanism — properties vary per class, check the header or export an existing dependency from the
+mechanism, properties vary per class, check the header or export an existing dependency from the
 in-game editor to confirm the exact field names for your game version):
 
-- `FGSchematicNotPurchasedDependency` — inverse of `FGSchematicPurchasedDependency`
-- `FGItemPickedUpDependency` — requires specific items to have been picked up
-- `FGResearchTreeProgressionDependency` — requires progress in a M.A.M. research tree
-- `FGGamePhaseReachedDependency` — requires a minimum Space Elevator game phase
+- `FGSchematicNotPurchasedDependency`: inverse of `FGSchematicPurchasedDependency`
+- `FGItemPickedUpDependency`: requires specific items to have been picked up
+- `FGResearchTreeProgressionDependency`: requires progress in a M.A.M. research tree
+- `FGGamePhaseReachedDependency`: requires a minimum Space Elevator game phase
 
 Two flags on the schematic itself control what happens **while** dependencies aren't met:
 `mDependenciesBlocksSchematicAccess` (block purchase, but don't hide the entry) and
-`mHiddenUntilDependenciesMet` (hide the schematic entirely until then) — set them via ordinary
+`mHiddenUntilDependenciesMet` (hide the schematic entirely until then). Set them via ordinary
 `properties:` alongside `dependencies:`.
 
 ## Making a milestone (schematic) free

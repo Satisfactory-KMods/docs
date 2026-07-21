@@ -1,6 +1,6 @@
 ---
 title: 'Type: item'
-description: Generating new item classes from YAML — parent/required-base rules, generated class identity, and property defaults.
+description: Generating new item classes from YAML, covering parent/required-base rules, generated class identity, and property defaults.
 sidebar: { order: 9 }
 ---
 
@@ -58,7 +58,7 @@ always regenerates the exact same class path on every load and across every mach
 - The class lives in package `/KDataForge/Gen/<PackRef>` and is named `Gen_<PackRef>_<Id>`. This
   is **deterministic and id-based**, never derived from file path or load order.
 - Reference it from anywhere else (a recipe's `mProduct`, a schematic's `mCost`, a `sinkpoints`
-  entry, another pack's YAML) as `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>` — or, from
+  entry, another pack's YAML) as `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>`. Or, from
   within the same pack (or if the id is unique across packs), just the bare `id:` itself, e.g.
   `MySuperIngot`. See
   [Generated Content Short Ids](/kdataforge/reference/yaml-schema#generated-content-short-ids).

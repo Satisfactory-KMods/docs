@@ -1,6 +1,6 @@
 ---
 title: UE Editor Integration
-description: Applying YAML cdo patches directly onto assets inside the Unreal Editor with KDF.ApplyToAssets — turning runtime patches into permanent asset edits (WITH_EDITOR builds only).
+description: Applying YAML cdo patches directly onto assets inside the Unreal Editor with KDF.ApplyToAssets, turning runtime patches into permanent asset edits (WITH_EDITOR builds only).
 sidebar:
   order: 5
 ---
@@ -74,7 +74,7 @@ where the result ends up:
 | Reversible      | Always (delete the YAML)                                                                  | Via source control / not saving                              |
 | Audience        | Players, pack authors                                                                     | Mod developers cooking their own content                     |
 | Document types  | All (`item`, `recipe`, `asset`, `cdo`, …)                                                 | `cdo` only                                                   |
-| Debug logging   | `debug:` / `KDF.Debug` ([Debugging](/kdataforge/getting-started#debugging)) | Same — global debug logging covers editor-originated ops too |
+| Debug logging   | `debug:` / `KDF.Debug` ([Debugging](/kdataforge/getting-started#debugging)) | Same, global debug logging covers editor-originated ops too |
 
 ## Still open
 

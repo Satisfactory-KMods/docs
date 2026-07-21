@@ -76,7 +76,7 @@ tie-break, followed by `ref` ascending. `priority` defaults to 100.
 
 ## pack.yml conditions: gating a whole pack
 
-`pack.yml` accepts the exact same `conditions:` block and evaluator as a document — every key from
+`pack.yml` accepts the exact same `conditions:` block and evaluator as a document: every key from
 [Conditions: gating whether a document applies at all](#conditions-gating-whether-a-document-applies-at-all)
 above (`gameVersion`, `hasMod`, `modVersion`, `hasClass`) works here unchanged. It's evaluated
 **once, before any file in the pack is even read**, a failing pack is skipped entirely with a
