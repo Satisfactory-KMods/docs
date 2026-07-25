@@ -1,0 +1,47 @@
+---
+title: 'Adding new Resources to the Air Collector'
+description: How to add new Resource DataAssets to the Air Collector in Satisfactory Plus through KAPI. To allow them in SF+ gameplay.
+sidebar:
+  order: 4
+---
+
+Add the Air Collector resource as a `KAPIAirCollectorData` instance with a `type: dataasset`
+document instead of creating it in the Unreal Editor. See the
+[full property reference](/satisfactory-plus/kapi/air-collector/) for every field.
+
+The example below mirrors Satisfactory Plus's own shipped "Air Collector extract Toxic Air via
+Resource Nodes" asset. `bUseHightBasesdProduction` selects one of two mutually exclusive
+production models — here it's `false`, so `mMaxHit`/`mProductionPerHit` are the active fields and
+`mProduceItemCountMin`/`Max`/`Base` (the other model) are omitted entirely, not just left at
+defaults:
+
+```yaml
+# file: air-collector-toxic-air.dataasset.yml
+type: dataasset
+conditions: { hasMod: KAPI }
+assets:
+  - id: AirCollector_ToxicAirNode
+    class: /Script/KAPI.KAPIAirCollectorData
+    properties:
+      - path: mRecipePrio
+        value: 100
+      - path: mRangeToScan
+        value: 2500
+      - path: bCheckNodes
+        value: true
+      - path: mTraceChannel
+        value: [ObjectTypeQuery1, ObjectTypeQuery2, ObjectTypeQuery9, ObjectTypeQuery6]
+      - path: mItemClass
+        value: /KLib/Assets/Ressources/Raw/Gas/Desc_ToxicAir.Desc_ToxicAir_C
+      - path: mProductionTime
+        value: 6
+      - path: bUseHightBasesdProduction
+        value: false
+      - path: mMaxHit
+        value: 2
+      - path: mProductionPerHit
+        value: 6000
+```
+
+See [Adding KAPI Data Assets](/kdataforge/examples/kapi-data-assets/) for every KAPI type's
+`type: dataasset` example in one place.

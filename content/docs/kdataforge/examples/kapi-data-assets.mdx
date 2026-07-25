@@ -1,0 +1,243 @@
+---
+title: Adding KAPI Data Assets
+description: 'Real, copy-pasteable "type: dataasset" examples for every KAPI PrimaryDataAsset type — air collector, cleaner, modular miner, slug breeding, and extractor/resource allow-lists.'
+sidebar: { order: 7 }
+---
+
+This page is worked `type: dataasset` examples, creating brand-new instances, for every KAPI data
+asset type. Editing *existing* instances via `type: cdo` is already covered on
+[Data Assets](/kdataforge/features/data-assets). Four of the five examples below use real property
+values from actual shipped Satisfactory Plus / KLib content, so the numbers are realistic, not
+placeholders. The fifth (extractor/resource allow-lists) is illustrative since no shipped instance
+of that type exists to read from.
+
+## UKAPIAirCollectorData: air collector production
+
+Each Air Collector resource is its own `UKAPIAirCollectorData` instance — the DataAsset registers a
+new gas/resource the Air Collector can extract, it does not patch an existing one. See the
+[full property reference](/satisfactory-plus/kapi/air-collector/) for every field; the example
+below mirrors Satisfactory Plus's own shipped "Air Collector extract Toxic Air via Resource Nodes"
+asset. Note `bUseHightBasesdProduction` selects one of two mutually exclusive production models —
+here it's `false`, so `mMaxHit`/`mProductionPerHit` are the active fields and
+`mProduceItemCountMin`/`Max`/`Base` (the other model) are omitted entirely, not just left at
+defaults.
+
+```yaml
+# file: air-collector-toxic-air.dataasset.yml
+type: dataasset
+conditions: { hasMod: KAPI }
+assets:
+  - id: AirCollector_ToxicAirNode
+    class: /Script/KAPI.KAPIAirCollectorData
+    properties:
+      - path: mRecipePrio
+        value: 100
+      - path: mRangeToScan
+        value: 2500
+      - path: bCheckNodes
+        value: true
+      - path: mTraceChannel
+        value: [ObjectTypeQuery1, ObjectTypeQuery2, ObjectTypeQuery9, ObjectTypeQuery6]
+      - path: mItemClass
+        value: /KLib/Assets/Ressources/Raw/Gas/Desc_ToxicAir.Desc_ToxicAir_C
+      - path: mProductionTime
+        value: 6
+      - path: bUseHightBasesdProduction
+        value: false
+      - path: mMaxHit
+        value: 2
+      - path: mProductionPerHit
+        value: 6000
+```
+
+## `UKAPICleanerItemDescription`: Filtrator (Cleaner) recipes
+
+A `dataasset` document targeting `KAPICleanerItemDescription` creates a brand-new Filtrator recipe: which input fluid it consumes, what it outputs, and any bonus items produced alongside the main conversion. See the [full property reference](/satisfactory-plus/kapi/filtrator/) for every field, including `FKAPICleanerInfo`. The example below reproduces Satisfactory Plus's own "Filtrator filter Wastewater" recipe: 6000 wastewater in, 4000 clean water out over 6 seconds, plus two bypass products (crushed zinc and crushed caterium) that come out independent of the main fluid conversion. `mCleanerItemInfo` is left out entirely here, it's optional, and this real recipe ships with no extra cleaner item required (`mCleanerItemInfo.mProduceItem` is `None` in the shipped asset).
+
+```yaml
+# file: filtrator-wastewater.dataasset.yml
+type: dataasset
+conditions: { hasMod: KAPI }
+assets:
+  - id: CleanerItem_WasteWater
+    class: /Script/KAPI.KAPICleanerItemDescription
+    properties:
+      - path: bSkipUnlockCheck
+        value: false
+      - path: mProductionTime
+        value: 6
+      - path: mInFluid
+        value:
+          {
+            ItemClass: /KLib/Assets/Ressources/Raw/Fluids/Desc_Wastewater.Desc_Wastewater_C,
+            Amount: 6000,
+          }
+      - path: mOutFluid
+        value:
+          {
+            ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C,
+            Amount: 4000,
+          }
+      - path: mBypassProducts
+        value:
+          - {
+              mProduceItem: /KLib/Assets/Parts/Production/Crushed/Desc_CrushedZinc.Desc_CrushedZinc_C,
+              mProductionTime: 12,
+              mProduceAmount: 6,
+            }
+          - {
+              mProduceItem: /KLib/Assets/Parts/Production/Crushed/Desc_CrushedCaterium.Desc_CrushedCaterium_C,
+              mProductionTime: 12,
+              mProduceAmount: 6,
+            }
+```
+
+## UKAPIModularMinerDescription: modular miner ore entries
+
+Full [property reference](/satisfactory-plus/kapi/modular-miner/). Each `UKAPIModularMinerDescription` instance registers one raw-resource entry the KAPI modular miner can extract, its rarity/found flavor text, node screenshot, which attachment modules are required or blocked, and the minimum drill tier needed. The example below mirrors a real shipped Cryolite raw-ore entry:
+
+```yaml
+# file: modular-miner-cryolite.dataasset.yml
+type: dataasset
+conditions: { hasMod: KAPI }
+assets:
+  - id: MM_Cryolite
+    class: /Script/KAPI.KAPIModularMinerDescription
+    properties:
+      - path: mRarityText
+        value: 'Common'
+      - path: mFoundText
+        value: 'Can be found in every biome.'
+      - path: mNodeScreenshot
+        value: /SatisfactoryPlus/AssetDatas/Miner/UI/TXUI_Wiki_ResourceNode_Cryolite.TXUI_Wiki_ResourceNode_Cryolite
+      - path: mIsFallbackDescriptor
+        value: false
+      - path: mNeededModules
+        value:
+          - /KAPI/Attachments/ModularMiner/Attachment_MM_MiningHead.Attachment_MM_MiningHead_C
+      - path: mPreventModules
+        value:
+          - /KLib/Assets/Buildings/ModularExtractor/Modules/Smelter/Build_SmelterModule.Build_SmelterModule_C
+      - path: mResourceClass
+        value: /Game/FactoryGame/Resource/RawResources/RawQuartz/Desc_RawQuartz.Desc_RawQuartz_C
+      - path: mDrillTier
+        value: 1
+```
+
+`mFluidInfo` and `mModuleInformation` are optional `TMap` fields (keyed by an item class and a waste-producer module class respectively) for entries that feed fluid or waste-producer modules, see the property reference for their map-key/value shapes. A resource entry that doesn't use either module type, like this one, works fine without them. `mScannerTier` is unused and left out entirely.
+
+## UKAPISugHatchingData: slug breeding & incubation
+
+Defines a slug species end to end: what it hatches from, how the incubator raises it, and its
+breeding-cycle behavior. See the [full property reference](/satisfactory-plus/kapi/slug-breeding/)
+for every field, including the fluid-incubator properties (`mTankTier`, `mFluidConsume`,
+`mFluidClass`, `mFluidConsumeTime`) left out below since `bRequireFluid` is `false` here. The
+example reproduces the shipped Red Slug breeder, trimmed to two `mPossibleSlugs` entries for
+readability.
+
+```yaml
+# file: kapi-slug-red.dataasset.yml
+type: dataasset
+conditions: { hasMod: KAPI }
+assets:
+  - id: RedSlugBreeder
+    class: /Script/KAPI.KAPISugHatchingData
+    properties:
+      - path: mSlug
+        value: /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Red.SlugDesc_Red_C
+      - path: mEgg
+        value: /KLib/Assets/Buildings/SlugHatching/Desc/Eggs/EggDesc_Red.EggDesc_Red_C
+      - path: mEggColor
+        value: { R: 1, G: 1, B: 1, A: 1 }
+      - path: mSlugTier
+        value: -1
+      - path: mHatchDuration
+        value: 10
+      - path: mPowerConsume
+        value: 0.1
+      - path: mIncubatorTier
+        value: 1
+      - path: bRequireFluid
+        value: false
+      - path: mPossibleSlugs
+        value:
+          - {
+              mSlug: /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Red.SlugDesc_Red_C,
+              mProductionCount: 1,
+              mProbability: 100,
+              mFixedChanceMultiplier: 0.1,
+              bShouldUseFixedChance: true,
+            }
+          - {
+              mSlug: /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Orange.SlugDesc_Orange_C,
+              mProductionCount: 1,
+              mProbability: 0.38,
+              mFixedChanceMultiplier: 1,
+              bShouldUseFixedChance: true,
+            }
+      - path: mProductionCountEggs
+        value: 1
+      - path: mBreedingTime
+        value: 40
+      - path: mDieTime
+        value: 100
+      - path: mRequiredFood
+        value: /KLib/Assets/Parts/Production/Food/Desc_SnailFood_Tier_20.Desc_SnailFood_Tier_20_C
+      - path: mFoodConsumePerCycle
+        value: 2
+      - path: mFoodDuration
+        value: 20
+      - path: mComfortableWith
+        value:
+          - /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Orange.SlugDesc_Orange_C
+      - path: mMinHumidity
+        value: 0.8
+      - path: mMaxHumidity
+        value: 0.85
+      - path: mMinHeat
+        value: 80
+      - path: mMaxHeat
+        value: 100
+      - path: mDayTime
+        value: Any # EKAPISlugTime enum name (Any/Day/Night), not a raw number; Any is also the default
+```
+
+## UKAPIExtractorAllowList: Registering new Extractors and Resources
+
+Unlike the other examples on this page, no shipped instance of this asset exists to read from — the
+wiki data export has zero `UKAPIExtractorAllowList` entries. SF+ ships its own default allow-list
+as an existing default asset that mods normally `type: cdo` patch instead (see
+[Data Assets](/kdataforge/features/data-assets)); creating a brand new instance from scratch, as
+below, is mainly useful for a self-contained mod that wants its own allow-list rather than editing
+SF+'s. The values below are illustrative — adjust the class paths to your own mod's classes. See
+[Extractors → Properties](/satisfactory-plus/kapi/extractors/) for the full property reference.
+
+This is the same "hooking up a new resource type" scenario described on that reference page: a new
+custom extractor building needs to go in `mAllowedExtractors` before SF+ will treat it as a valid
+extractor, and a new resource descriptor needs to go in `mAllowedResources` before any extractor
+will recognize it as extractable:
+
+```yaml
+# file: my-extractor-allowlist.dataasset.yml
+type: dataasset
+conditions: { hasMod: KAPI }
+assets:
+  - id: MyModExtractorAllowList
+    class: /Script/KAPI.KAPIExtractorAllowList
+    properties:
+      - path: mAllowedExtractors
+        value:
+          - /Game/YourMod/Buildable/Build_YourExtractor.Build_YourExtractor_C
+      - path: mAllowedResources
+        value:
+          - /Game/YourMod/Resource/Desc_YourResource.Desc_YourResource_C
+      - path: mDisallowExtractors
+        value: []
+      - path: mDisallowResources
+        value: []
+      - path: mPriority
+        value: 0
+```
+
+`mPriority` defaults to `0`; raise it only if another mod's allow/disallow list needs to be
+overridden for this class (see the priority note on the reference page).

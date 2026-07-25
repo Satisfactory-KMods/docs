@@ -1,0 +1,45 @@
+---
+title: "Adding new Ore to Modular Miner"
+description: How to add new Ore DataAssets to the Modular Miner in Satisfactory Plus through KAPI. To allow them in SF+ gameplay.
+sidebar:
+  order: 2
+---
+
+## The DataAsset
+
+For adding new Ore to the Modular Miner in Satisfactory Plus, you need to create a new DataAsset of type `KAPIModularMinerDescription` the header can be found [HERE](https://github.com/Satisfactory-KMods/public-source/blob/main/KAPI/Source/KAPI/Public/DataAssets/KAPIModularMinerDescription.h).
+
+![KAPIModularMinerDescription DataAsset properties in the editor](../../../assets/satisfactory-plus/kapi/miner-asset.png)
+
+## Properties
+
+| Property                | Type                                                          | Description                                                                                    |
+| ------------------------ | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `mRarityText`           | `FText`                                                       | The UI text shown for the rarity of the ore.                                                   |
+| `mFoundText`            | `FText`                                                       | The UI text shown when the ore is found.                                                       |
+| `mNodeScreenshot`       | `TObjectPtr<UTexture2D>`                                      | The UI screenshot of the ore node.                                                              |
+| `mIsFallbackDescriptor` | `bool`                                                        | Marks this entry as the fallback descriptor.                                                   |
+| `mFluidInfo`            | `TMap<TSubclassOf<UFGItemDescriptor>, FKAPIMinerInfoFluids>`  | Per-item fluid production settings for fluid modules, see `FKAPIMinerInfoFluids` below.         |
+| `mNeededModules`        | `TArray<TSubclassOf<UKAPIModularAttachmentDescriptor>>`       | The attachment modules that must be installed for this ore to be minable.                      |
+| `mPreventModules`       | `TArray<TSubclassOf<AFGBuildable>>`                           | The buildable modules that, if installed, prevent this ore from being minable.                 |
+| `mModuleInformation`    | `TMap<TSubclassOf<UKAPIWasteProducerType>, FKAPIModuleItems>` | Maps a waste-producer module type to the items it produces for this ore, see `FKAPIModuleItems` below. |
+| `mResourceClass`        | `TSubclassOf<UFGResourceDescriptor>`                          | The ore resource this entry applies to.                                                        |
+| `mDrillTier`            | `int`                                                         | The minimum drill tier required to mine this ore.                                              |
+
+### FKAPIModuleItems
+
+| Property                | Type                              | Description                                                    |
+| ------------------------ | ---------------------------------- | ------------------------------------------------------------------ |
+| `mProductionItem`      | `TSubclassOf<UFGItemDescriptor>` | The item produced by this module.                              |
+| `mTrashItem`           | `TSubclassOf<UFGItemDescriptor>` | The item produced as waste by this module.                     |
+
+### FKAPIMinerInfoFluids
+
+| Property                       | Type    | Description                                        |
+| -------------------------------- | --------- | ----------------------------------------------------- |
+| `mNormalFluidCountPerSecond` | `int`   | The base amount of fluid produced per second.       |
+| `ProductionTimeMulti`        | `float` | Multiplier applied to the production time.          |
+
+## Notes
+
+- `mScannerTier` and `FKAPIModuleItems.mTryProductionDynamic` have no usage yet and may be removed in the future.

@@ -1,0 +1,5 @@
+# Local-dev only: symlink to the docs app's node_modules so Vite can
+# resolve bare imports (e.g. @astrojs/starlight/components) used in MDX
+# content when this repo is symlinked in for live-edit (see frontend/docs
+# in Satisfactory-KMods/web-applications). Never committed.
+/node_modules

@@ -16,20 +16,23 @@ If this is your first time here, [Getting Started](/kdataforge/getting-started) 
 
 Every individual document type (`item`, `recipe`, `schematic`, `cdo`, and the rest) also has its own dedicated page under Features. The full YAML grammar lives in [Reference](/kdataforge/reference).
 
-## The five examples
+## The six examples
 
 Two pages below are **patch-only** collections with many small `type: cdo` examples. Two are
 **build-a-whole-thing** packs that chain several document types into finished content. The fifth is
-a focused complete pack for a Repeat-Purchase Schematic (KLIB) with generated curves.
+a focused complete pack for a Repeat-Purchase Schematic (KLIB) with generated curves. The sixth is a
+per-type creation gallery of `type: dataasset` examples, one for each KAPI data asset type, the same
+spirit as Balancing but for generating new instances instead of patching existing ones.
 
 - [Balancing](/kdataforge/examples/balancing) covers rebalancing base-game content that already exists: recipes, items, resources, equipment, consumables, radioactivity, belt speed, schematics, milestones, research trees, vehicles, trains, creatures, categories, and bulk tag-matched edits across many targets at once. All of it works through `type: cdo` patches against existing classes, and nothing is generated.
 - [Power & Machines](/kdataforge/examples/power-and-machines) covers the buildable-tuning half of patching: power consumption, manufacturing speed, generator output, extractor cycle time, pipeline flow limits, power storage capacity, drone station logistics, and runtime actor patches that also affect already-placed buildings.
 - [A Complete Building](/kdataforge/examples/building-chain) walks the full reference chain for a **dynamically generated** building, in dependency order: buildable class → building descriptor → build recipe → production recipes → schematic → sink points. These are six files, and each one references the class path the previous file produced.
 - [End-to-End Pack](/kdataforge/examples/end-to-end-pack) builds one realistic pack from an item, a recipe, a schematic with an inline unlock, sink points, a German localization file, a dynamic KAPI data asset, and a `cdo` edit to another mod's data-asset instances. It also shows how to rename a generated id safely with `redirects:` once the pack has shipped.
 - [Repeat-Purchase Schematic (KLIB)](/kdataforge/examples/repeat-purchase-schematic) is a complete `UKLUnlockMaxRepeatPurchases` pack with generated cost and reward curves, level-specific overrides, a result table, and the runtime semantics behind each purchase.
+- [Adding KAPI Data Assets](/kdataforge/examples/kapi-data-assets) covers `type: dataasset` creation for every KAPI PrimaryDataAsset type: air collector, cleaner, modular miner, slug breeding, and extractor/resource allow-lists.
 
 For a normative catalog of every base-game `FGUnlock` subclass, including its settable properties
 and caveats, use [Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes).
 
-All five assume a pack living at `<your-mod>/DataForge/`, the canonical author root used throughout
+All six assume a pack living at `<your-mod>/DataForge/`, the canonical author root used throughout
 these docs.

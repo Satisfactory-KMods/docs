@@ -1,0 +1,42 @@
+---
+title: "Adding new Ore to Modular Miner"
+description: How to add new Ore DataAssets to the Modular Miner in Satisfactory Plus through KAPI. To allow them in SF+ gameplay.
+sidebar:
+  order: 2
+---
+
+Register a raw-resource entry for the modular miner as a `KAPIModularMinerDescription` instance
+with a `type: dataasset` document instead of creating it in the Unreal Editor. See the
+[full property reference](/satisfactory-plus/kapi/modular-miner/) for every field.
+
+The example below mirrors a real shipped Cryolite raw-ore entry:
+
+```yaml
+# file: modular-miner-cryolite.dataasset.yml
+type: dataasset
+conditions: { hasMod: KAPI }
+assets:
+  - id: MM_Cryolite
+    class: /Script/KAPI.KAPIModularMinerDescription
+    properties:
+      - path: mIsFallbackDescriptor
+        value: false
+      - path: mNeededModules
+        value:
+          - /KAPI/Attachments/ModularMiner/Attachment_MM_MiningHead.Attachment_MM_MiningHead_C
+      - path: mPreventModules
+        value:
+          - /KLib/Assets/Buildings/ModularExtractor/Modules/Smelter/Build_SmelterModule.Build_SmelterModule_C
+      - path: mResourceClass
+        value: /Game/FactoryGame/Resource/RawResources/RawQuartz/Desc_RawQuartz.Desc_RawQuartz_C
+      - path: mDrillTier
+        value: 1
+```
+
+`mFluidInfo` and `mModuleInformation` are optional `TMap` fields (keyed by an item class and a
+waste-producer module class respectively) for entries that feed fluid or waste-producer modules —
+see the property reference for their map-key/value shapes. A resource entry that doesn't use either
+module type, like this one, works fine without them. `mScannerTier` is unused and left out entirely.
+
+See [Adding KAPI Data Assets](/kdataforge/examples/kapi-data-assets/) for every KAPI type's
+`type: dataasset` example in one place.

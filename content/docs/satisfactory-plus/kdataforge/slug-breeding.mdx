@@ -1,0 +1,84 @@
+---
+title: 'Adding new Slug / Breeding Recipes'
+description: How to add new Slug or Breeding Recipe DataAssets to Satisfactory Plus through KAPI. To allow them in SF+ gameplay.
+sidebar:
+  order: 5
+---
+
+Define a slug species as a `KAPISugHatchingData` instance with a `type: dataasset` document instead
+of creating it in the Unreal Editor. See the [full property reference](/satisfactory-plus/kapi/slug-breeding/)
+for every field, including the fluid-incubator properties (`mTankTier`, `mFluidConsume`,
+`mFluidClass`, `mFluidConsumeTime`) left out below since `bRequireFluid` is `false` here.
+
+The example reproduces the shipped Red Slug breeder, trimmed to two `mPossibleSlugs` entries for
+readability:
+
+```yaml
+# file: kapi-slug-red.dataasset.yml
+type: dataasset
+conditions: { hasMod: KAPI }
+assets:
+  - id: RedSlugBreeder
+    class: /Script/KAPI.KAPISugHatchingData
+    properties:
+      - path: mSlug
+        value: /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Red.SlugDesc_Red_C
+      - path: mEgg
+        value: /KLib/Assets/Buildings/SlugHatching/Desc/Eggs/EggDesc_Red.EggDesc_Red_C
+      - path: mEggColor
+        value: { R: 1, G: 1, B: 1, A: 1 }
+      - path: mSlugTier
+        value: -1
+      - path: mHatchDuration
+        value: 10
+      - path: mPowerConsume
+        value: 0.1
+      - path: mIncubatorTier
+        value: 1
+      - path: bRequireFluid
+        value: false
+      - path: mPossibleSlugs
+        value:
+          - {
+              mSlug: /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Red.SlugDesc_Red_C,
+              mProductionCount: 1,
+              mProbability: 100,
+              mFixedChanceMultiplier: 0.1,
+              bShouldUseFixedChance: true,
+            }
+          - {
+              mSlug: /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Orange.SlugDesc_Orange_C,
+              mProductionCount: 1,
+              mProbability: 0.38,
+              mFixedChanceMultiplier: 1,
+              bShouldUseFixedChance: true,
+            }
+      - path: mProductionCountEggs
+        value: 1
+      - path: mBreedingTime
+        value: 40
+      - path: mDieTime
+        value: 100
+      - path: mRequiredFood
+        value: /KLib/Assets/Parts/Production/Food/Desc_SnailFood_Tier_20.Desc_SnailFood_Tier_20_C
+      - path: mFoodConsumePerCycle
+        value: 2
+      - path: mFoodDuration
+        value: 20
+      - path: mComfortableWith
+        value:
+          - /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Orange.SlugDesc_Orange_C
+      - path: mMinHumidity
+        value: 0.8
+      - path: mMaxHumidity
+        value: 0.85
+      - path: mMinHeat
+        value: 80
+      - path: mMaxHeat
+        value: 100
+      - path: mDayTime
+        value: Any # EKAPISlugTime enum name (Any/Day/Night), not a raw number; Any is also the default
+```
+
+See [Adding KAPI Data Assets](/kdataforge/examples/kapi-data-assets/) for every KAPI type's
+`type: dataasset` example in one place.

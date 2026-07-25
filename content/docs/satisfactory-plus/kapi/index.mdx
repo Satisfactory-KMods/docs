@@ -1,0 +1,39 @@
+---
+title: "Compatibility via KAPI (hard dependency)"
+description: How Satisfactory Plus creates DataAssets directly in Unreal Engine through KAPI to become compatible with the k-mods ecosystem.
+category: Compatibility with KAPI
+sidebar:
+  order: 0
+---
+
+import { CardGrid, LinkCard } from "@astrojs/starlight/components";
+
+Satisfactory Plus declares **KAPI as a mandatory, compiled dependency** and uses it to create its own game content as DataAssets that any other KAPI-aware mod or tool (including [KDataForge](/satisfactory-plus/kdataforge/)) can then discover and read.
+
+<CardGrid>
+  <LinkCard
+    title="Adding new Extractors / Remove Extractors"
+    href="/satisfactory-plus/kapi/extractors"
+    description="How to allow or disallow Extractor and Resource DataAssets in Satisfactory Plus through KAPI, including new Resources / Resource Nodes from other mods."
+  />
+  <LinkCard
+    title="Adding new Recipes to Filtrator"
+    href="/satisfactory-plus/kapi/filtrator"
+    description="How to add new Recipe DataAssets to the Filtrator in Satisfactory Plus through KAPI. To allow them in SF+ gameplay."
+  />
+  <LinkCard
+    title="Adding new Resources to the Air Collector"
+    href="/satisfactory-plus/kapi/air-collector"
+    description="How to add new Resource DataAssets to the Air Collector in Satisfactory Plus through KAPI. To allow them in SF+ gameplay."
+  />
+  <LinkCard
+    title="Adding new Slug / Breeding Recipes"
+    href="/satisfactory-plus/kapi/slug-breeding"
+    description="How to add new Slug or Breeding Recipe DataAssets to Satisfactory Plus through KAPI. To allow them in SF+ gameplay."
+  />
+  <LinkCard
+    title="Adding new Ore to Modular Miner"
+    href="/satisfactory-plus/kapi/modular-miner"
+    description="How to add new Ore DataAssets to the Modular Miner in Satisfactory Plus through KAPI. To allow them in SF+ gameplay."
+  />
+</CardGrid>

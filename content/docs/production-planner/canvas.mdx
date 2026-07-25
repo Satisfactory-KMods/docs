@@ -75,15 +75,30 @@ Right-click an output row that isn't fully routed anywhere (produced but with
 leftover surplus) to open a menu of actions just for that item:
 
 - Suggest a recipe to consume it (Patreon, with a searchable list and an
-  optional "auto-build chain" mode that inserts several recipes deep in one
+  optional "auto-build chain" mode that adds several recipes deep in one
   click)
 - Route it to the AWESOME Sink
 - Add it as a new desired output
 - Trim the node's clock/building count down to only what's actually used
 - Highlight every other place that item flows through the diagram
 
+This menu works on raw-resource and byproduct nodes too, not just recipe
+blocks so a byproduct that has collected somewhere with nothing consuming
+it can be dealt with right where you see it.
+
+A suggested consuming recipe becomes a real part of the plan: the planner
+recalculates with it, produces its other ingredients for you, and counts its
+consumption in the material balance. It is not just a drawn-on connection.
+
 Right-clicking anywhere on a recipe node also offers node-level actions like
 duplicating it.
+
+## Configuring a miner from the canvas
+
+Right-click a raw-resource node, or an input row that needs a mineable
+resource, and pick **Configure Miner** to open the Miner Configuration dialog
+for that resource without leaving the canvas. If a configuration already
+exists it opens for editing instead.
 
 ## Belt/pipe tier badges
 

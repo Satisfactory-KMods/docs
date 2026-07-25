@@ -72,6 +72,22 @@ only be extracted with it attached at all. The two modules sit on
 independent attachment slots in-game, so you can combine a Waste Module with
 a Fluid Module on the same miner for both effects at once.
 
+**Power Modules** come in a `+50%` and a `+25%` version, and you can attach up
+to three of each at the same time. Like the Fluid Module's boost, their
+percentages add together rather than multiplying, so three of each gives
+`+225%` extraction. A Crusher or Smelter dampens that combined boost the same
+way it dampens the Fluid Module's (a Crusher halves it, a Smelter cancels it).
+
+Overclock runs from `1%` to `100%`. Miners use the game's own extractor power
+curve, so their power draw follows the clock you set.
+
+Once a miner is dialed in, **Copy settings to another resource** applies the
+same head tier, purity, overclock, and Power modules to a second resource in
+one click handy when a whole set of nodes shares the same setup. Waste and
+Fluid modules belong to a specific resource, so they are re-picked for the
+target: the same kind of module if it has one, otherwise none (or its required
+Fluid module, if it can only be extracted with one).
+
 ## Slug Hatchery
 
 Open **Hatchery Info** from the Outputs panel and pick a slug color to see
