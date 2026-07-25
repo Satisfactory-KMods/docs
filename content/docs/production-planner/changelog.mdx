@@ -15,6 +15,7 @@ Every release, in short. Newest first.
 - Configure Miner can copy a finished setup onto another resource: head tier, purity, overclock, and Power modules carry over, while Waste/Fluid modules are re-picked for the target resource.
 - Picking an alternate recipe as a consumer now enables that one recipe for the plan, instead of failing because alternates are switched off. The global alternates setting is left alone.
 - Deleting a node that came from a suggested consuming recipe also removes it from the plan, and a pinned recipe the planner can no longer use is dropped automatically instead of leaving the whole plan stuck on "no valid route".
+- New **Pinned Recipes** list in the I/O panel: change how much a suggested consuming recipe should produce, see the building count it works out to, or remove it again. Previously such a recipe could only be added, never adjusted or deleted.
 - Unused-output actions (suggest consumer, route to sink, add as desired output, highlight flow) now also work on raw-resource and byproduct nodes, not just recipe blocks.
 - Miner overclock now tops out at `100%`, matching the real extractor.
 - Fixed: a configured miner was scaled past the single physical building it represents. It is now capped at one unit, so demand it cannot cover is reported instead of silently satisfied.
