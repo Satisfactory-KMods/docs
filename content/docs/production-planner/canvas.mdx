@@ -130,10 +130,58 @@ part of your factory as built, turning the block green so you can track progress
 at a glance. When both ends of a connection are built, the line and its amount
 label turn green too. The state is saved with your plan.
 
+## Card states
+
+Cards use distinct visual states without hiding their normal content. Flow and
+Text use the same role colors and effects:
+
+- **Raw inputs and extraction recipes** use an emerald treatment with animated
+  drilling icons. This includes ores, Oil, Air, and configured miners.
+- **Bypass/surplus** cards use amber with moving packages.
+- **Desired outputs** use purple with animated checkmarks.
+- **AWESOME Sink** cards use dark lime with a money effect and show the amount
+  sunk per minute. Each sunk item has its own card and connection.
+
+- **Built** cards use a green treatment.
+- **Somersloop-boosted** cards use violet color and a subtle distortion effect.
+- **Overclocked** cards use amber color with small lightning bolts that travel
+  around the card.
+
+The effects can appear together when more than one state applies. The animation
+button in the workspace topbar switches all card animations on or off, defaults
+to on, and remembers your choice. Motion is also reduced automatically when
+your device requests reduced motion.
+
 ## Connection line style
 
 Use the line-style button in the toolbar to switch connections between 90°
 (right-angle) and curved. Your choice is remembered.
+
+## Switching views
+
+The buttons in the top-right of the workspace switch between three ways to
+look at the same calculated plan everything described on this page is the
+**Flow** view; the others read better for different purposes.
+
+- **Flow** the canvas: a draggable diagram you can rearrange, connect, and
+  edit by hand.
+- **Text** a flat checklist grouped by build stage, with the same role colors,
+  animations, rates, raw-resource totals, and built/not-built checkbox as the
+  canvas.
+- **Tree** the production chain as an expandable table, indented from your
+  final outputs down to raw resources, with rate, building count, and clock
+  speed as columns. Recipe and extractor buildings are resolved to their
+  catalog names, images, and wiki links. Expand or collapse everything at
+  once, or export the currently visible rows to CSV. A block that feeds more
+  than one consumer is shown in full the first time and as a short reference
+  the next a click on the reference jumps back to the real entry, instead of
+  repeating the whole branch underneath every consumer.
+
+Marking a block built, and the **Calculate**/**Recalculate** button, work the
+same from every view. Jumping to a block from another panel (for example
+**Build Progress**) opens it in whichever view is currently active.
+The selected view and sidebar panel are reflected in the URL, so reloads and
+shared links return to the same workspace context.
 
 ## Light & dark
 

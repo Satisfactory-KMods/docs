@@ -7,6 +7,65 @@ sidebar:
 
 Every release, in short. Newest first.
 
+## 2.0-beta (July 2026)
+
+- **Design refactor**: the planner home, session cards, creation flow, sidebar
+  panels, and catalogs now share the same responsive card-based design. Phones
+  use focused stacked layouts; tablet and desktop progressively add space for
+  persistent navigation and side-by-side content.
+- **Community Templates**: browse, search, and filter publicly shared plan
+  templates on the new Templates page in the planner, then start a fresh plan
+  seeded from one. Publish any of your own plans as a
+  template (with a category) and unpublish it again later; a template's page
+  has a copyable, deep-linkable share URL.
+- **Create Plan redesigned** into one 5-step wizard for both item and recipe
+  targets: Target → Outputs → Strategy → Availability → Review. The new
+  **Availability** step restricts which Recipes, Buildings, and Raw Resources
+  the plan may use with live enabled/total counts and real category/kind
+  filters; the new **Review** step summarises everything with jump-back links
+  and warns if a forced recipe depends on something you disabled elsewhere.
+  Steps scroll horizontally on phones and sit vertically beside the card on
+  tablet and desktop. Direct `itemId`, `recipeId`, `amount`, and
+  `forceEndRecipeId` links remain supported.
+- Recipe, Building, and Raw Resource catalogs replace long picker lists. They
+  add search, real category/type and state filters, availability reasons,
+  grouped collapsible sections, bulk actions, and compact/detailed recipe
+  rows. Forced recipes are protected from accidental disabling.
+- A new **Tree** view shows the calculated plan as an expandable hierarchy
+  with rate/building/clock columns, resolved building images and wiki links,
+  shared-node references, and CSV export. Switch between Flow, Text, and Tree
+  from the workspace toolbar; your marked-built progress and the Calculate
+  button work the same in every view.
+- Surplus handling now offers **Preserve**, **Sink surplus**, and **Maximize
+  Sink Points** objectives, plus a searchable item filter, per-item priority,
+  and a rate to reserve instead of sinking. Point maximization stays inside
+  the raw-resource budget of the requested factory instead of importing extra
+  material just to score points.
+- Each sunk item now gets its own AWESOME Sink building card and incoming
+  amount instead of every material being merged into one node. Eligible
+  surplus is routed through those cards; a catalog recipe with no real output
+  is used when a fluid or gas must be disposed of rather than sunk.
+- Fixed: ores, Oil, Air, and other extractor-backed resources now resolve
+  through their real Modular Miner, Air Collector, or extractor recipe. The
+  Text view's raw-resource total includes those extraction nodes as well as
+  external inputs.
+- Flow and Text now share role-specific cards: emerald raw inputs with drilling
+  icons, amber bypasses with packages, purple outputs with checkmarks, and
+  lime AWESOME Sinks with a money effect. A persistent topbar toggle controls
+  all card animations and defaults to on.
+- Recipe blocks on the canvas now get an animated highlight when overclocked
+  (past 100%) using small lightning bolts that travel around the card,
+  alongside the existing built (green) and Somersloop-boosted (violet)
+  highlights; combined states stack, and the effect respects reduced-motion
+  settings.
+- Fixed: the active view and sidebar panel are now saved to the page URL, so
+  a shared or reloaded link reopens the same view instead of always falling
+  back to Flow.
+- Fixed: switching to Text or Tree view and marking
+  blocks as built could be lost on the next cloud reload; both are now saved
+  and restored correctly.
+- Removed the **Power Generation Assistant** from the Stats panel.
+
 ## 1.4-alpha (July 2026)
 
 - Individual alternate-recipe selector, weighted two-recipe path selection, and building/tier filter are now free for every planner.

@@ -11,11 +11,33 @@ and drawn as a clear diagram. No spreadsheets, no math.
 
 ## Create your first plan
 
-1. Open the planner and click **New Plan**.
-2. Choose what to make an **item** (e.g. _Reinforced Iron Plate_) or a specific
-   **recipe**.
-3. Enter the **amount per minute** you want.
-4. Click **Create**. The full production chain is built instantly.
+Open the planner, click **New Plan**, and work through the five guided steps:
+
+1. **Target** choose an item or a specific recipe. A recipe automatically uses
+   its first output as the target and pins that recipe to it.
+2. **Outputs** enter the amount per minute, add more desired outputs, and
+   optionally force a final recipe for each output.
+3. **Strategy** choose up to two planning priorities and decide whether the
+   plan may use alternate recipes, overclocking, automatic sinking, and compact
+   recipe groups.
+4. **Availability** open the Recipe, Building, and Raw Resource catalogs to
+   define what the solver may use. Enabled counts update immediately, while
+   forced recipes remain protected from accidental disabling.
+5. **Review** check outputs, strategy, availability, and any configuration
+   warnings, then click **Create Plan**. The complete chain is calculated as
+   the planner opens.
+
+The step list scrolls horizontally on phones. On tablets and desktop it stays
+visible vertically to the right of the active step, so you can see where you
+are and return to an earlier completed step.
+
+:::tip[Direct links]
+The create page still accepts `itemId`, `recipeId`, `amount`, and
+`forceEndRecipeId` query parameters. `recipeId` takes priority over `itemId`
+and selects the recipe's first output; a valid `forceEndRecipeId` can override
+the final recipe. Invalid values are shown as non-blocking hints so they can be
+corrected in the wizard.
+:::
 
 :::tip
 Not sure which recipe or page you need? Press **Ctrl+K** to search this whole
@@ -26,7 +48,9 @@ documentation instead of clicking through the sidebar.
 
 You land on the **canvas**, where your factory is drawn as connected blocks.
 Each block is one production step. The lines between them show how resources
-flow, and side panels summarise power, buildings, raw inputs, and more.
+flow, and the card-based side panels summarise build progress, power,
+buildings, raw inputs, balance, snapshots, and more. You can also switch the
+same calculation to a text checklist or expandable tree.
 
 ## Where to go next
 

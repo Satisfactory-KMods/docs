@@ -14,24 +14,42 @@ amounts. The whole plan recalculates automatically.
 
 ## Recipes & alternates
 
-Each step shows the recipe it uses. Open **Summary → Plan validation → Recipe
-routes** to inspect the available complete routes for each produced item. The
-planner selects the best route for your current strategy automatically, but
-you can choose from up to ten valid alternatives where they exist or switch
-back to **Automatic (best route)**. Each option includes a short comparison of
-route depth, raw-input score, and byproducts. You can also exclude recipes you
-never want the planner to pick.
+Each step shows the recipe and building it uses. Open **Summary → Plan
+validation → Recipe routes** to inspect up to ten complete routes for each
+produced item. The planner selects the best route for your current strategy,
+but you can choose another route or return to **Automatic (best route)**. Each
+option compares route depth, raw-input score, and byproducts.
 
-Under **Plan settings → Recipe Filters** you can exclude specific **raw
-resources**, for example an ore you haven't unlocked mining for yet. Any
-recipe that needs an excluded resource directly is skipped. The planner then
-falls back to a different recipe or ore for that item where one exists. If no
-route remains, it shows an error card instead of silently using the excluded
-resource or a crushed variant that still depends on it.
+## Catalogs & availability
 
-The picker only contains genuine mineable/extractable resources. A normal
-item is not added merely because the current catalog has no recipe producing
-it.
+The creation wizard and the in-planner **Settings** panel use searchable
+catalog dialogs instead of long select lists:
+
+- The **Recipe Catalog** filters by name, input, output, building, category,
+  base/alternate recipe, unlock state, and availability. Use compact or
+  detailed rows, enable recipes individually, or apply **All**, **None**,
+  **Base only**, or **Unlocked only** in one action. Detailed rows also expose
+  a recipe contribution cap when you need to limit how much of an item that
+  route may produce.
+- The **Building Catalog** shows each supported producer with its image and
+  recipe count. Search the list or enable and disable producers individually
+  or in bulk.
+- The **Raw Resource Catalog** in the creation wizard groups genuine
+  mineable/extractable resources by kind. Disabling one removes every route
+  that depends on it; ordinary producerless items are never silently treated
+  as raw resources.
+
+Catalog rows explain why an option is unavailable. A recipe explicitly chosen
+as a target or final route is marked **Required** and cannot itself be disabled.
+The Review step still warns when its required building or raw input has been
+disabled, so the effect is visible before calculation.
+
+In **Settings → Availability & unlocks**, import a Satisfactory save to limit
+recipes and buildings to what that save has unlocked. The import summary shows
+what was detected; you can clear it without changing the save file.
+
+If no permitted dependency route remains, the planner reports the unresolved
+item instead of silently using an excluded resource or invalid fallback.
 
 The resolver only accepts a mineable resource or an item tagged
 `KMods.PlannerResource` as a final external input. A normal item with no
@@ -119,12 +137,44 @@ readable.
 
 ## Planning strategies
 
-Under **Plan settings → Algorithm** you can control alternate recipes,
-resource/building filters, and route priorities such as route depth, raw
-resources, power, balance, or byproducts. Automatic selection ranks the
-complete dependency route, not just the final recipe, and always remains
-deterministic when scores tie. A manually selected route stays selected while
-the other ranked options remain available. Identical recipe executions are
-aggregated only after their complete material flows have been resolved. Some
-advanced strategies are **Patreon** features. See the
+Under **Settings → Optimization & byproducts** you can control alternate
+recipes, overclocking, compact recipes, circular-route avoidance, and what to
+do with surplus. Route priorities include depth, raw resources, power,
+balance, and byproducts; select up to two in the creation wizard. Automatic
+selection ranks the complete dependency route, not just the final recipe, and
+remains deterministic when scores tie. A manually selected route stays
+selected while the other ranked options remain available. Identical recipe
+executions are aggregated only after their complete material flows have been
+resolved. **Settings → Logistics & display** contains game multipliers, rate
+precision, and connection layout. Some advanced strategies are **Patreon**
+features. See the
 [Patreon page](/production-planner/patreon) for details.
+
+## Surplus and the AWESOME Sink
+
+Under **Settings → Optimization & byproducts**, choose what the planner does
+after it has satisfied every desired output:
+
+- **Preserve** keeps every unused output in the plan.
+- **Sink surplus** sends all eligible sinkable surplus to the AWESOME Sink.
+- **Maximize Sink Points** prefers production bypasses that turn otherwise
+  unused capacity into valuable sinkable items. It does not increase raw
+  resource inputs merely to manufacture points; the requested factory's raw
+  input budget remains the limit.
+
+Open **Configure items** to search the sinkable item catalog. Enable only the
+items the sink may accept, give preferred items a higher priority, or reserve a
+rate per minute that must remain available instead of being sunk.
+
+Every sunk item is represented by its own AWESOME Sink building card, flow,
+and incoming amount in both Flow and Text views. Different items are never
+merged into one sink card. Fluids and gases cannot enter the AWESOME Sink; when
+the catalog provides a real disposal recipe with no output (or only a `None`
+placeholder output), the planner uses that recipe as a required terminal step
+instead of leaving the material as free surplus.
+
+Raw resources resolve through real extraction routes where the catalog
+provides them. Ores use the Modular Miner, while Oil, Air, and similar resources
+use their matching extractor or collector. These extraction rates are included
+in the Text view and exported text's **Raw resources** section, not just raw
+materials imported as external inputs.

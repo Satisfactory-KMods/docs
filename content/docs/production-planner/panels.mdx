@@ -10,8 +10,21 @@ on the rail at the left edge of the sidebar to open that panel. Click the
 same icon again to collapse it back down to just the rail. Your last-open
 panel and whether it's open are remembered between visits. On desktop you
 can also drag the panel's right edge to resize it; the width you pick is
-remembered too. Press **1** to **7** to jump straight to a panel from
+remembered too. Press **1** to **8** to jump straight to a panel from
 anywhere on the page.
+
+Every panel now uses the same compact card language: an icon-led header,
+clearly grouped controls, inline status counts, and actions next to the value
+they affect. The canvas and panel header stay fixed when content gets long;
+only the active panel scrolls. On phones the sidebar slides over the canvas,
+while tablet and desktop keep both in view.
+
+## Build Progress
+
+The first panel turns the calculated plan into ordered build stages. Expand a
+stage, mark individual blocks complete, or focus one in the current Flow,
+Text, or Tree view. Progress is shared across all three views and saved with
+the plan.
 
 ## Outputs
 
@@ -31,13 +44,19 @@ outputs sort to the top.
 
 ## Byproducts
 
-This panel lists the leftover items a recipe produces and shows which of
-them can go to the AWESOME Sink. Everyone can see whether a plan has
-sinkable byproducts at all, and with Patreon the planner also totals the
-exact points per minute for you. Each card has a "focus on canvas" button
-that jumps straight to that item on the diagram, plus an actions button
-(⋮) with "Suggest Consuming Recipe" (Patreon) and "Add as Desired Output",
-so you don't need to find the exact node on the diagram first.
+This panel lists the leftover items a recipe produces, shows which can enter
+the AWESOME Sink, and totals the resulting points per minute. Its objective
+buttons select **Preserve**, **Sink surplus**, or **Maximize Sink Points**.
+When sinking is enabled, **Configure items** opens a searchable catalog where
+you can include/exclude sinkable items, assign priorities, and reserve an
+amount per minute that must not be sunk.
+
+Each sunk item becomes its own AWESOME Sink card and flow on the canvas, with
+the incoming amount visible on the card; different materials are not combined
+into one sink node. Each byproduct card also has a "focus on canvas" button
+that jumps straight to that item, plus an actions button (⋮) with "Suggest
+Consuming Recipe" and "Add as Desired Output", so you don't need to find the
+exact node on the diagram first.
 
 Recipe outputs that aren't routed anywhere show up in their own "Unrouted
 outputs" section below. Each of those rows has the same actions button,
@@ -46,16 +65,6 @@ already routed to a sink). Duplicate catalog rows for the same output are
 combined before the remainder is calculated, and numerical remnants that
 would display as `0/min` or `0 m³/min` are omitted.
 
-Panel headers and the canvas stay fixed when a list gets long. Only the active
-panel content scrolls, and its scrollbar remains inside the sidebar instead of
-making the whole planner page taller.
-
-:::tip
-Even on a free plan you can always see _whether_ a plan has sinkable
-byproducts. Patreon only adds the exact points-per-minute total nothing is
-hidden behind the perk, it's a convenience.
-:::
-
 ## Stats
 
 This panel gives you the detailed breakdown: total power draw, buildings
@@ -63,10 +72,7 @@ used, raw inputs, and recipe and connection counts, including
 extraction/miner nodes. Long recipe lists get a search box and are grouped
 by recipe category with collapsible sub-headings, and your
 collapsed/expanded sections are remembered. Alternate recipes are tagged
-**ALT**. When your plan draws power, the **Power Generation Assistant** lets
-you pick which power plants to use, choose the fuel for plants with more
-than one option, and see how many buildings and how much fuel are needed to
-cover the draw.
+**ALT**.
 
 ### Pinned Recipes
 
@@ -89,9 +95,21 @@ to ten choices per active production step.
 
 ## Settings
 
-Rename the plan, switch cloud saving on or off, and adjust the planning
-options (strategy, alternates, overclocking, filters). **Rate decimals** controls
-how many decimal places per-minute amounts show throughout the planner.
+Settings are split into collapsible cards so the consequence of each choice
+stays close to its control:
+
+- **Availability & unlocks** imports a savegame and opens the Building Catalog.
+- **Recipe Catalog** searches and filters allowed recipes, shows unavailable
+  reasons, and provides safe bulk presets.
+- **Optimization & byproducts** controls route priorities, surplus handling,
+  alternate recipes, overclocking, compact recipes, and circular-route
+  avoidance.
+- **Logistics & display** controls game multipliers, rate precision, and the
+  connection layout.
+
+The header also provides a shareable configuration link and a reset action.
+**Rate decimals** controls how many decimal places per-minute amounts show
+throughout the planner.
 The two **Game Mode** settings can be selected when a plan is created and
 changed later in its settings. **Recipe Parts Cost Multiplier** offers `0.25×`,
 `0.5×`, `0.75×`, `1×`, `1.25×`, `1.5×`, `1.75×`, and `2×`. It multiplies every
