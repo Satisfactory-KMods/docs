@@ -1,6 +1,6 @@
 ---
 title: Adding KAPI Data Assets
-description: 'Real, copy-pasteable "type: dataasset" examples for every KAPI PrimaryDataAsset type — air collector, cleaner, modular miner, slug breeding, and extractor/resource allow-lists.'
+description: 'Real, copy-pasteable "type: dataasset" examples for every KAPI PrimaryDataAsset type — air collector, cleaner, modular miner, slug breeding, extractor/resource allow-lists, and delivery-task tree nodes.'
 sidebar: { order: 7 }
 ---
 
@@ -241,3 +241,103 @@ assets:
 
 `mPriority` defaults to `0`; raise it only if another mod's allow/disallow list needs to be
 overridden for this class (see the priority note on the reference page).
+
+## `UKAPIDeliveryTask`: research-tree / delivery-task nodes
+
+`UKAPIDeliveryTask` places one node on a 2D coordinate grid and links it to a parent node (or
+several, at once) via `mParentTask` — a **bitmask** property (`EKAPIDeliveryTaskParent`:
+`Above`/`Left`/`Right`/`Bottom`). Like `UKAPIExtractorAllowList` above, there's no shipped instance
+to read real values from — this feature isn't part of Satisfactory Plus, it only needs **`KAPI` +
+`KPrivateCodeLib`** — so the example below is illustrative.
+
+The interesting part is `mParentTask` accepting **more than one flag at once**. A plain
+`meta=(Bitmask, BitmaskEnum=...)` `int32` never gets a runtime `Enum` linked to it by Unreal Header
+Tool, so KDataForge resolves flag names directly against the enum's declared bits: write a YAML
+sequence (`[Above, Left]`, recommended) or a `|`-joined string (`"Above|Left"`); a raw pre-computed
+integer (`3`) still works too. `bRequireAllParents` then switches between AND (`true`, every listed
+parent required) and OR (`false`, any one is enough) semantics — see [Value
+Forms](/kdataforge/reference/yaml-schema/#value-forms-by-property-type) for the full grammar.
+
+Every flag on `mParentTask` must resolve to a real sibling node at the matching coordinate offset
+(`Above` → the node directly above, `Left` → directly left, etc.) or the node is rejected at load
+time, so a small tree needs coordinates laid out to match:
+
+```yaml
+# file: showcase-delivery-task.dataasset.yml
+type: dataasset
+conditions: { hasMod: KAPI }
+assets:
+  - id: DeliveryTask_Root
+    class: /Script/KAPI.KAPIDeliveryTask
+    properties:
+      - path: mCoordinate
+        value: { X: 0, Y: 0 }
+      - path: mName
+        value: { source: "Root Task" }
+
+  - id: DeliveryTask_Child_Above
+    class: /Script/KAPI.KAPIDeliveryTask
+    properties:
+      - path: mCoordinate
+        value: { X: 0, Y: 1 }
+      - path: mName
+        value: { source: "Single-Parent Child" }
+      - path: mParentTask # single flag — still a sequence, just one entry
+        value: [Above]
+      - path: bRequireAllParents
+        value: true
+
+  - id: DeliveryTask_Child_Right
+    class: /Script/KAPI.KAPIDeliveryTask
+    properties:
+      - path: mCoordinate
+        value: { X: 1, Y: 0 }
+      - path: mName
+        value: { source: "Sibling Child" }
+      - path: mParentTask
+        value: [Left] # Left -> {0,0}: points back at the root
+      - path: bRequireAllParents
+        value: true
+
+  - id: DeliveryTask_Child_AboveAndLeft
+    class: /Script/KAPI.KAPIDeliveryTask
+    properties:
+      - path: mCoordinate
+        value: { X: 1, Y: 1 }
+      - path: mName
+        value: { source: "Two-Parent Child" }
+      - path: mParentTask # multiple flags set in parallel
+        value: [Above, Left] # Above -> {1,0}, Left -> {0,1}: both must exist in the tree
+      - path: bRequireAllParents
+        value: true # AND: both parents must be completed
+```
+
+A one-time task (`bIsEndless: false`, the default) can also force-unlock a schematic and grant
+rewards on completion, via `mSchematics`/`mRewards`/`mCosts`:
+
+```yaml
+  - id: DeliveryTask_UnlockSuperIngot
+    class: /Script/KAPI.KAPIDeliveryTask
+    properties:
+      - path: mCoordinate
+        value: { X: 1, Y: 2 }
+      - path: mName
+        value: { source: "Unlock: Pure Super Ingot" }
+      - path: mParentTask
+        value: [Above]
+      - path: bRequireAllParents
+        value: true
+      - path: mSchematics # force-unlocked on completion
+        value:
+          - /Game/YourMod/Schematics/Schematic_PureSuperIngot.Schematic_PureSuperIngot_C
+      - path: mRewards
+        value:
+          - { ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C, Amount: 500 }
+      - path: mCosts
+        value:
+          - { ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C, Amount: 100 }
+```
+
+The full property set (including the Endless-only fields `mPoolElements`/`mTaskRewards`/`mMaxTasks`/
+`mAmountMultiplierCurve`/`mAbsolutMaxItemAmount`) is demonstrated in [KDataForge's own reference
+sample pack](/kdataforge/getting-started/), `showcase-delivery-task.dataasset.yml`.
