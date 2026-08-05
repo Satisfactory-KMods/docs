@@ -35,6 +35,27 @@ sets its quantity to a belt or pipeline tier's maximum throughput.
 Fluid and gas fields use `m³/min` in the UI; the planner converts them to its
 internal liter-based rates automatically (`1 m³ = 1,000` internal units).
 
+### Suggest a sub production line
+
+Pick an item and a rate in the add-output row, then press the **sitemap**
+button next to the plus. Instead of adding the output straight away, the
+planner opens a catalog of small production lines that make that item, ranked
+by how much of your plan's current leftovers each one puts back to work. A card
+shows the end recipe, machines, power, what surplus it eats (`Reuses 60/min
+Tailings Slurry (50 %)`), what extra material it pulls in, and what it leaves
+over itself.
+
+Listed numbers are catalog estimates so the list appears instantly. **Preview**
+solves one candidate together with your plan and replaces the estimate with
+exact numbers; the card is then tagged *Verified*. **Add to plan** puts the item
+in your outputs, keeps the candidate's recipe routes, and recalculates: the
+result is one plan, not two the solver feeds the sub line from the byproducts
+you already had and shares recipes wherever it can. Routes your plan already
+forces are never changed by this.
+
+Free plans get 10 suggestions with chains up to 2 steps; Patreon raises that to
+50 suggestions and chains up to 6 steps.
+
 ## Balance
 
 This panel compares target versus actual production for each output, so
