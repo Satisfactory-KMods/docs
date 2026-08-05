@@ -1,0 +1,154 @@
+---
+title: Delivery Task Trees
+description: A complete UKAPIDeliveryTask tree — five nodes including negative coordinates, multi-flag mParentTask, how completing a task unlocks more of the tree, and a schematic force-unlock example.
+sidebar: { order: 8 }
+---
+
+`UKAPIDeliveryTask` is KAPI's 2D research-tree node type: a small reward/task, placed on an
+integer coordinate grid, that unlocks once its neighboring parent node(s) are completed. This
+feature has **no Satisfactory Plus dependency** — it only needs `KAPI` +
+`KPrivateCodeLib`, so it's usable from any mod that links those two.
+
+This page builds one complete tree end to end. For every other KAPI data asset type, see
+[Adding KAPI Data Assets](/kdataforge/examples/kapi-data-assets); for the underlying YAML grammar
+`mParentTask` uses, see [Value Forms](/kdataforge/reference/yaml-schema/#value-forms-by-property-type).
+
+## The grid and `mParentTask`
+
+Each node has an `mCoordinate` (`FIntVector2` — plain `{ X, Y }`, negative values are perfectly
+valid, the grid isn't anchored to the origin) and an `mParentTask` bitmask
+(`EKAPIDeliveryTaskParent`: `Above` / `Left` / `Right` / `Bottom`). Each flag maps to a fixed
+coordinate offset **relative to the node itself**:
+
+| Flag    | Parent is at         |
+| ------- | --------------------- |
+| `Above` | `{ X, Y - 1 }`         |
+| `Left`  | `{ X - 1, Y }`         |
+| `Right` | `{ X + 1, Y }`         |
+| `Bottom`| `{ X, Y + 1 }`         |
+
+Every flag set on a node must point at a coordinate some other node in the tree actually occupies,
+or the node is rejected at load time. Because a plain `int32` with `meta=(Bitmask, ...)` never gets
+a runtime `Enum` linked to it by Unreal Header Tool, KDataForge resolves the flag names directly:
+write a YAML sequence (`[Above, Left]`, recommended for multiple flags at once), a `|`-joined
+string (`"Above|Left"`), or — still accepted for backward compatibility — a raw pre-computed
+integer (`3`).
+
+## A complete five-node tree
+
+This tree deliberately starts off-origin, in negative coordinate space, to show the grid isn't
+restricted to `{0,0}`-anchored positive layouts:
+
+```yaml
+# file: showcase-delivery-task.dataasset.yml
+type: dataasset
+conditions: { hasMod: KAPI }
+assets:
+  - id: DeliveryTask_Root
+    class: /Script/KAPI.KAPIDeliveryTask
+    properties:
+      - path: mCoordinate
+        value: { X: -2, Y: -1 }
+      - path: mName
+        value: { source: "Root Task" }
+
+  - id: DeliveryTask_Above
+    class: /Script/KAPI.KAPIDeliveryTask
+    properties:
+      - path: mCoordinate
+        value: { X: -2, Y: 0 } # Above -> {-2,-1}: Root
+      - path: mName
+        value: { source: "Single-Parent Child" }
+      - path: mParentTask
+        value: [Above]
+      - path: bRequireAllParents
+        value: true
+
+  - id: DeliveryTask_Right
+    class: /Script/KAPI.KAPIDeliveryTask
+    properties:
+      - path: mCoordinate
+        value: { X: -1, Y: -1 } # Left -> {-2,-1}: Root
+      - path: mName
+        value: { source: "Sibling Child" }
+      - path: mParentTask
+        value: [Left]
+      - path: bRequireAllParents
+        value: true
+
+  - id: DeliveryTask_AboveAndLeft
+    class: /Script/KAPI.KAPIDeliveryTask
+    properties:
+      - path: mCoordinate
+        value: { X: -1, Y: 0 } # Above -> {-1,-1}: Right, Left -> {-2,0}: Above
+      - path: mName
+        value: { source: "Two-Parent Child" }
+      - path: mParentTask # multiple flags set in parallel
+        value: [Above, Left]
+      - path: bRequireAllParents
+        value: true # AND: both parents must be completed first
+
+  - id: DeliveryTask_UnlockSuperIngot
+    class: /Script/KAPI.KAPIDeliveryTask
+    properties:
+      - path: mCoordinate
+        value: { X: -1, Y: 1 } # Above -> {-1,0}: AboveAndLeft
+      - path: mName
+        value: { source: "Unlock: Pure Super Ingot" }
+      - path: mParentTask
+        value: [Above]
+      - path: bRequireAllParents
+        value: true
+```
+
+Five nodes, four edges: `Root` has no parent (the tree's entry point), `Above`/`Right` each depend
+on `Root` alone, `AboveAndLeft` depends on **both** `Above` and `Right` at once (the multi-flag
+case), and `UnlockSuperIngot` depends on `AboveAndLeft`.
+
+## How completing a task unlocks more of the tree
+
+A node becomes available once its `mParentTask` requirement is satisfied:
+
+- **`bRequireAllParents: true`** (the default) — **every** flagged parent must be completed first
+  (AND). `DeliveryTask_AboveAndLeft` above needs both `Above` and `Right` done.
+- **`bRequireAllParents: false`** — **any one** flagged parent completing is enough (OR). Useful
+  for a node reachable from more than one earlier branch, whichever the player finishes first.
+- **`mTaskDependencies`** (an availability-dependency list, checked via `AreTaskDependenciesMet`)
+  adds further gating on top of the parent-tree check itself — a schematic purchase, a research
+  unlock, whatever the dependency subclass checks. Parent completion and `mTaskDependencies` are
+  independent gates: both must pass.
+
+For an **endless** node (`bIsEndless: true`), "unlocking more" also means more concurrent task
+**slots**: `mMaxTasks` caps how many of that node's rolled tasks can be active/queued at once
+(`INDEX_NONE`/`-1` for uncapped), and `mAmountMultiplierCurve` /
+`mAbsolutMaxItemAmount` scale the reward amounts up as the player completes more rounds of it — so
+the effective "how much can I get from this node" grows over time even though the node itself
+doesn't move in the tree.
+
+## Unlock example — force-unlocking a schematic
+
+A one-time task (`bIsEndless: false`, the default) can force-unlock a schematic and grant items on
+completion, via `HandleUnlock`:
+
+```yaml
+      - path: mSchematics # force-unlocked by HandleUnlock on completion
+        value:
+          - /Game/YourMod/Schematics/Schematic_PureSuperIngot.Schematic_PureSuperIngot_C
+      - path: mRewards
+        value:
+          - { ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C, Amount: 500 }
+      - path: mCosts
+        value:
+          - { ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C, Amount: 100 }
+```
+
+Add these three properties to `DeliveryTask_UnlockSuperIngot` above (alongside its `mCoordinate` /
+`mParentTask`) and completing it force-unlocks `Schematic_PureSuperIngot` for the player,
+regardless of whether they'd normally be able to research or purchase it another way — the same
+mechanism `unlocks:` / `dependencies:` use on schematics themselves, just triggered from a
+delivery-task completion instead.
+
+The full property set — every `UKAPIDataAssetBase` field, ADA messages, toast text/icon, and the
+complete Endless-only field set (`mPoolElements`, `mTaskRewards`, `mMaxTasks`,
+`mAmountMultiplierCurve`, `mAbsolutMaxItemAmount`) — is demonstrated in [KDataForge's own reference
+sample pack](/kdataforge/getting-started/), `showcase-delivery-task.dataasset.yml`.
