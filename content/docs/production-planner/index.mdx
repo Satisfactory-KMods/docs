@@ -23,19 +23,25 @@ once per browser. Press **Esc** or **Skip tour** to leave at any point.
 
 ## Create your first plan
 
-Open the planner, click **New Plan**, and work through the five guided steps:
+Open the planner, click **New Plan**, and work through the six guided steps:
 
-1. **Target** choose an item or a specific recipe. A recipe automatically uses
+1. **Savegame** (optional, skippable) upload a Satisfactory `.sav` file to
+   auto-detect which recipes and buildings you've already unlocked. Skip it to
+   start with everything unlocked and manage availability by hand instead.
+2. **Target** choose an item or a specific recipe. A recipe automatically uses
    its first output as the target and pins that recipe to it.
-2. **Outputs** enter the amount per minute, add more desired outputs, and
+3. **Outputs** enter the amount per minute, add more desired outputs, and
    optionally force a final recipe for each output.
-3. **Strategy** choose up to two planning priorities and decide whether the
+4. **Strategy** choose up to two planning priorities and decide whether the
    plan may use alternate recipes, overclocking, automatic sinking, and compact
    recipe groups.
-4. **Availability** open the Recipe, Building, and Raw Resource catalogs to
+5. **Availability** open the Recipe, Building, and Raw Resource catalogs to
    define what the solver may use. Enabled counts update immediately, while
-   forced recipes remain protected from accidental disabling.
-5. **Review** check outputs, strategy, availability, and any configuration
+   forced recipes remain protected from accidental disabling. The
+   **Required Recipes** tile lets you pick recipes (from the currently
+   allowed set) that must appear somewhere in the solved chain, even with no
+   organic demand for them the solver still decides the quantity.
+6. **Review** check outputs, strategy, availability, and any configuration
    warnings, then click **Create Plan**. The complete chain is calculated as
    the planner opens.
 
