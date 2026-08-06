@@ -171,11 +171,6 @@ unlocks:
 | `FGUnlockInfoOnly`     | `mUnlockName`/`mUnlockDescription: FText`, `mUnlockIconBig`/`Small`/`Category: UTexture2D` | Pure UI entry in the unlock list, grants no gameplay effect on its own                    |
 | `FGUnlockCheckmark`    | _(inherits `FGUnlockInfoOnly`'s fields)_                                                   | Same as `FGUnlockInfoOnly`, plus tracks a per-player "seen/unlocked" checkmark in the save |
 
-For the `FGUnlock` subclasses **k-mods** adds on top of these — delivery-task access and capacity,
-the Faxit network, repeatable schematics — see
-[K-Mods Unlock Classes](/kdataforge/reference/kmods-unlock-classes). They are ordinary `FGUnlock`
-subclasses and work in every place the classes above do.
-
 These classes plug into [schematic instanced unlocks](/kdataforge/features/schematics#instanced-unlocks-the-normal-way-to-wire-up-a-recipe).
 Use [Type: unlock](/kdataforge/features/unlocks) to reuse one preconfigured unlock
 class across several schematics. Schematic [`dependencies:`](/kdataforge/features/schematics#gating-a-schematic-on-prerequisites)

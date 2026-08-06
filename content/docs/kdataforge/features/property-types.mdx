@@ -246,30 +246,6 @@ The `class:` must be a concrete subclass accepted by the array. For example, `mU
 `FGUnlock` subclasses and `mSchematicDependencies` accepts `FGAvailabilityDependency` subclasses.
 Nested entries use the same property paths and operations as top-level patch entries.
 
-This is the generic op-engine behaviour, not a per-document-type feature: it applies wherever
-`properties:` does. A schematic's [`unlocks:`](/kdataforge/features/schematics#instanced-unlocks-the-normal-way-to-wire-up-a-recipe)
-and `dependencies:` sublists are conveniences on top of the same mechanism, and a `dataasset` or
-`cdo` document reaches any other instanced array — a delivery task's
-[`mUnlocks`](/kdataforge/examples/delivery-task#granting-unlocks-from-a-task), for instance — the
-same way. Only `set` builds instances: `append`, `insert`, and the other array operations expect
-values, not `class:` maps. An entry that is missing `class:` makes the whole value fall back to
-normal array parsing rather than instancing.
-
-### Single instanced UObject properties
-
-A **non**-array property marked instanced takes the class path on its own, as a plain scalar, and
-KDataForge constructs one default instance of it as a subobject of the patched target:
-
-```yaml
-- path: mSomeInstancedObject
-  value: /Game/YourMod/Unlocks/BP_SomeUnlock.BP_SomeUnlock_C
-```
-
-There is no inline `properties:` block in this form — it creates the instance with its class
-defaults, so bake the values into the class itself (or use
-[`type: unlock`](/kdataforge/features/unlocks) for a reusable preconfigured subclass) when they
-need to differ. An empty value or the literal `none` clears the property to null.
-
 ## Array element access (index paths)
 
 Rather than replacing a whole array, a path can index straight into one element, and from there
