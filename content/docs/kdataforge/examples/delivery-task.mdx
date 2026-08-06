@@ -13,6 +13,50 @@ This page builds one complete tree end to end. For every other KAPI data asset t
 [Adding KAPI Data Assets](/kdataforge/examples/kapi-data-assets); for the underlying YAML grammar
 `mParentTask` uses, see [Value Forms](/kdataforge/reference/yaml-schema/#value-forms-by-property-type).
 
+## Making the tree reachable
+
+A delivery-task tree is invisible until the delivery-task **system** is unlocked. That gate is not
+part of the tree: it lives on a schematic, as `UKPCLDeliveryTaskUnlock` from KPrivateCodeLib.
+Without a schematic carrying it, every node below loads correctly and no player ever sees one.
+
+The same schematic is the natural place for the two capacity unlocks, since both start at `1`: the
+shared manual-delivery input inventory (`KPCLDeliveryTaskInventorySlotUnlock`) and how many tasks
+can be queued at once (`KPCLDeliveryTaskQueueSlotUnlock`).
+
+```yaml
+# file: showcase-delivery-access.schematic.yml
+type: schematic
+conditions: { hasMod: KPrivateCodeLib }
+schematics:
+  - id: Schematic_DeliveryAccess
+    properties:
+      - path: mDisplayName
+        value: Delivery Network Access
+      - path: mType
+        value: EST_Milestone
+      - path: mTechTier
+        value: 2
+      - path: mCost
+        value:
+          - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C
+            Amount: 50
+    unlocks:
+      - class: /Script/KPrivateCodeLib.KPCLDeliveryTaskUnlock # carries no properties
+      - class: /Script/KPrivateCodeLib.KPCLDeliveryTaskInventorySlotUnlock
+        properties:
+          - path: mNumInventorySlotsToUnlock
+            value: 4 # 1 base + 4 = 5 input slots
+      - class: /Script/KPrivateCodeLib.KPCLDeliveryTaskQueueSlotUnlock
+        properties:
+          - path: mAmount
+            value: 2 # 1 base + 2 = 3 tasks queued at once
+```
+
+Both slot unlocks allow repeat purchases, so putting either on a repeatable schematic adds its
+amount again on every purchase. `KPCLDeliveryTaskUnlock` does not — it is a one-shot gate. See
+[K-Mods Unlock Classes](/kdataforge/reference/kmods-unlock-classes#delivery-tasks-kprivatecodelib)
+for the full property list.
+
 ## The grid and `mParentTask`
 
 Each node has an `mCoordinate` (`FIntVector2` — plain `{ X, Y }`, negative values are perfectly
@@ -82,7 +126,8 @@ curves:
 This tree deliberately starts off-origin, in negative coordinate space, to show the grid isn't
 restricted to `{0,0}`-anchored positive layouts. Every node sets every `UKAPIDataAssetBase` common
 field (`mName`/`mDescription`/`mIcon`/`mIsDisabled`/`mPriority`/`mTags`) and every
-`UKAPIDeliveryTask` field common to both variants (`mAdaMessages`/`mToastIcon`/`mToastText`).
+`UKAPIDeliveryTask` field common to both variants (`mAdaMessages`/`mToastIcon`/`mToastText`; the
+two Instanced arrays, `mUnlocks` and `mTaskDependencies`, get their own sections below).
 `DeliveryTask_Right` is switched to `bIsEndless: true` to demonstrate the complete Endless-only
 field set (`mPoolElements`/`mTaskRewards`/`mMaxTasks`/`mAmountMultiplierCurve`/
 `mAbsolutMaxItemAmount`) that a One-Time node never sets; every other node stays One-Time
@@ -295,11 +340,10 @@ assets:
 
 Five nodes, four edges: `Root` has no parent (the tree's entry point), `Above`/`Right` each depend
 on `Root` alone, `AboveAndLeft` depends on **both** `Above` and `Right` at once (the multi-flag
-case), and `UnlockSuperIngot` depends on `AboveAndLeft`. `mTaskDependencies` is the one field left
-unset everywhere: it's an Instanced `TArray<TObjectPtr<UFGAvailabilityDependency>>`, and KDataForge
-only builds new instanced subobjects inline through a schematic's `dependencies:` or a research
-document's `addNodes:`, not through a generic `dataasset` `properties:` op-list — left unset here
-rather than faked.
+case), and `UnlockSuperIngot` depends on `AboveAndLeft`. The two Instanced arrays, `mUnlocks` and
+`mTaskDependencies`, are left unset above only to keep the tree readable — they are authorable from
+a plain `dataasset` `properties:` op-list like any other instanced array, and the next two sections
+add them.
 
 ## How completing a task unlocks more of the tree
 
@@ -328,3 +372,69 @@ doesn't move in the tree.
 normally research or purchase it another way — the same mechanism `unlocks:` / `dependencies:` use
 on schematics themselves, just triggered from a delivery-task completion instead. `mRewards`/
 `mCosts` on that same node are the plain item grant/cost, independent of the schematic unlock.
+
+## Granting unlocks from a task
+
+`mSchematics` hands out a whole schematic. When the reward is a single capability instead, a task
+carries its own `mUnlocks`: an Instanced `TArray<TObjectPtr<UFGUnlock>>` with the exact authoring
+model a schematic's [`unlocks:`](/kdataforge/features/schematics#instanced-unlocks-the-normal-way-to-wire-up-a-recipe)
+list uses. Because `dataasset` `properties:` builds
+[instanced UObject arrays](/kdataforge/features/property-types#instanced-uobject-arrays) like any
+other array, the entries are written inline — `class:` plus an optional nested `properties:`
+op-list:
+
+```yaml
+# add to DeliveryTask_AboveAndLeft's properties:
+- path: mUnlocks
+  value:
+    - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
+      properties:
+        - path: mRecipes
+          value:
+            - /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    - class: /Script/KPrivateCodeLib.KPCLDeliveryTaskQueueSlotUnlock # the tree paying for its own capacity
+      properties:
+        - path: mAmount
+          value: 1
+```
+
+The lifecycle is the same one schematics use, and it matters for anything one-shot:
+
+- **`Unlock()` runs once**, at the moment the task completes (`HandleUnlock`), alongside the ADA
+  messages and `mSchematics`.
+- **`Apply()` runs again** for every already-completed task on each save load (`ApplyUnlocks`).
+  That is what re-asserts persistent state without re-firing item grants or toasts.
+
+An unlock that only makes sense once — a one-time item grant — therefore belongs in `mRewards`, not
+in `mUnlocks`. Anything that must survive a reload, such as a slot count or a feature gate, belongs
+in `mUnlocks` precisely because `Apply()` re-runs. `GetAllUnlocks` reports a task's own `mUnlocks`
+**plus** the unlocks of every schematic in `mSchematics`, which is what the task UI and tooltips
+read; granting stays `HandleUnlock`'s job.
+
+Every class on [K-Mods Unlock Classes](/kdataforge/reference/kmods-unlock-classes) and
+[Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes) is valid here — a
+delivery task is just another `FGUnlock` host.
+
+## Gating a task on dependencies
+
+`mTaskDependencies` is an Instanced `TArray<TObjectPtr<UFGAvailabilityDependency>>` and is written
+exactly like a schematic's [`dependencies:`](/kdataforge/features/schematics#gating-a-schematic-on-prerequisites),
+just as a `properties:` entry rather than a sublist:
+
+```yaml
+# add to DeliveryTask_UnlockSuperIngot's properties:
+- path: mTaskDependencies
+  value:
+    - class: /Game/FactoryGame/AvailabilityDependencies/BP_SchematicPurchasedDependency.BP_SchematicPurchasedDependency_C
+      properties:
+        - path: mSchematics
+          value:
+            - /Game/FactoryGame/Schematics/Progression/Schematic_2-3.Schematic_2-3_C
+        - path: mRequireAllSchematicsToBePurchased
+          value: true
+```
+
+Parent completion and `mTaskDependencies` are **independent** gates, checked separately, and both
+must pass before the node can be queued. `AreTaskDependenciesMet` also folds in the dependencies of
+every schematic listed in `mSchematics` (that is what `GetAllDependencies` returns), so a task
+handing out a gated schematic inherits that schematic's own prerequisites without restating them.

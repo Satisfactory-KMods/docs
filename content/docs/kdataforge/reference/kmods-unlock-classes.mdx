@@ -1,0 +1,155 @@
+---
+title: K-Mods Unlock Classes
+description: Every FGUnlock subclass shipped by KPrivateCodeLib and KLib, with settable properties, repeat-purchase behaviour, and the mod each one needs.
+sidebar:
+  order: 7
+---
+
+[Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes) catalogs what
+FactoryGame itself ships. This page catalogs the `FGUnlock` subclasses that **k-mods** adds. They
+are ordinary `FGUnlock` subclasses, so every mechanism that works with a vanilla unlock works with
+these: a schematic's inline [`unlocks:`](/kdataforge/features/schematics#instanced-unlocks-the-normal-way-to-wire-up-a-recipe)
+list, a reusable [`type: unlock`](/kdataforge/features/unlocks) class, and a delivery task's own
+[`mUnlocks`](/kdataforge/examples/delivery-task#granting-unlocks-from-a-task).
+
+> ⚠️ Every class below only exists while its owning mod is loaded. Gate the pack that uses one on
+> that mod, or the whole document fails to resolve its `class:` on a load without it:
+>
+> ```yaml
+> # file: pack.yml
+> conditions: { hasMod: KPrivateCodeLib }
+> ```
+
+**Repeat purchases** in the tables below is the class's `IsRepeatPurchasesAllowed` answer. `yes`
+means the unlock is designed to sit on a repeatable schematic and add its amount **again on every
+purchase**; `no` means it is a one-shot gate and buying it twice changes nothing.
+
+## Delivery tasks (KPrivateCodeLib)
+
+The delivery-task system starts fully locked: `bDeliveryTaskSystemUnlocked` is `false`, the task
+queue holds one task, and the shared manual-delivery inventory has one slot. All three are raised
+by unlocks, and all three are saved and replicated, so a schematic is the only intended way to move
+them.
+
+```yaml
+# file: delivery-unlocks.schematic.yml
+type: schematic
+conditions: { hasMod: KPrivateCodeLib }
+schematics:
+  - id: Schematic_UnlockDeliverySystem
+    properties:
+      - path: mDisplayName
+        value: Delivery Network Access
+      - path: mType
+        value: EST_Milestone
+      - path: mTechTier
+        value: 2
+    unlocks:
+      - class: /Script/KPrivateCodeLib.KPCLDeliveryTaskUnlock # no properties — presence alone unlocks the system
+      - class: /Script/KPrivateCodeLib.KPCLDeliveryTaskInventorySlotUnlock
+        properties:
+          - path: mNumInventorySlotsToUnlock
+            value: 4
+      - class: /Script/KPrivateCodeLib.KPCLDeliveryTaskQueueSlotUnlock
+        properties:
+          - path: mAmount
+            value: 2
+```
+
+| Class                                  | Key property                          | Repeat purchases | What it does                                                                                                                    |
+| -------------------------------------- | ------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `KPCLDeliveryTaskUnlock`               | _(none)_                              | no               | Enables the delivery-task system as a whole: the task tree, the research queue, and manual delivery. Nothing else grants access |
+| `KPCLDeliveryTaskInventorySlotUnlock`  | `mNumInventorySlotsToUnlock: int32`   | yes              | Adds slots to the **shared** manual delivery input inventory (base 1). Minimum 1 per purchase                                    |
+| `KPCLDeliveryTaskQueueSlotUnlock`      | `mAmount: int32`                      | yes              | Raises how many delivery tasks can be queued at once (base 1). Minimum 1 per purchase                                            |
+
+`KPCLDeliveryTaskUnlock` implements both `Unlock` and `Apply`, so the system flag is re-asserted
+every time the save is loaded, not only on the purchase itself. It is server-authoritative: the
+unlock is a no-op on a client. The two slot unlocks clamp their amount to at least `1`, so a `0` or
+negative value still grants one slot rather than silently doing nothing.
+
+Wire the schematic itself into progression the usual way, and see
+[Delivery Task Trees](/kdataforge/examples/delivery-task) for the task tree those unlocks make
+reachable.
+
+## Faxit network (KPrivateCodeLib)
+
+Faxit unlocks all derive from `UKPCLFaxitUnlockBase`. They carry a **raw amount, never a tier**.
+Unlocking or re-applying any of them triggers a full recompute: the subsystem resets every value to
+its base and then re-walks every purchased schematic, adding each unlock's amount back on top. That
+makes the purchase order irrelevant and makes a removed schematic actually give its value back.
+
+```yaml
+# file: faxit-unlocks.schematic.yml
+type: schematic
+conditions: { hasMod: KPrivateCodeLib }
+schematics:
+  - id: Schematic_FaxitExpansion
+    properties:
+      - path: mDisplayName
+        value: Faxit Expansion
+      - path: mType
+        value: EST_Milestone
+      - path: mTechTier
+        value: 4
+    unlocks:
+      - class: /Script/KPrivateCodeLib.KPCLFaxitCapacityUnlock
+        properties:
+          - path: mCapacityType
+            value: Drive
+          - path: mAmount
+            value: 2
+      - class: /Script/KPrivateCodeLib.KPCLFaxitSpeedUnlock
+        properties:
+          - path: mAmount
+            value: 15 # +15 items/min on the solid side
+      - class: /Script/KPrivateCodeLib.KPCLFaxitSpeedUnlock
+        properties:
+          - path: bIsFluid
+            value: true
+          - path: mAmount
+            value: 15000 # fluid units/min — 1000 units is 1 m³, so +15 m³/min
+      - class: /Script/KPrivateCodeLib.KPCLFaxitFeatureUnlock
+        properties:
+          - path: mFeature
+            value: Depot
+```
+
+| Class                      | Key properties                                        | Repeat purchases | What it does                                                        |
+| -------------------------- | ----------------------------------------------------- | ---------------- | -------------------------------------------------------------------- |
+| `KPCLFaxitCapacityUnlock`  | `mCapacityType: EKPCLFaxitCapacityType`, `mAmount`    | no               | Raises one Faxit capacity by `mAmount`                              |
+| `KPCLFaxitSpeedUnlock`     | `mAmount: int32`, `bIsFluid: bool`                    | no               | Raises the transfer rate of one side of the network                 |
+| `KPCLFaxitFeatureUnlock`   | `mFeature: EKPCLFaxitFeature`                         | no               | Enables one feature gate. Carries no amount — presence is the grant |
+
+`mCapacityType` accepts `MachineNetwork`, `Network`, or `Drive`. `mFeature` accepts `RemoteAccess`,
+`Sink`, or `Depot`. Both are plain enums, so the YAML value is the bare enumerator name — see
+[enum values](/kdataforge/features/property-types#enum-typed-enum-class-and-tenumasbyte).
+
+Starting values before any Faxit unlock is purchased:
+
+| Value                 | Base           | Raised by                                          |
+| --------------------- | -------------- | -------------------------------------------------- |
+| Items per minute      | 15             | `KPCLFaxitSpeedUnlock` with `bIsFluid: false`      |
+| Fluid per minute      | 30000 (30 m³)  | `KPCLFaxitSpeedUnlock` with `bIsFluid: true`       |
+| Network limit         | 1              | `KPCLFaxitCapacityUnlock` / `Network`              |
+| Machine network limit | 1              | `KPCLFaxitCapacityUnlock` / `MachineNetwork`       |
+| Drive limit           | 1              | `KPCLFaxitCapacityUnlock` / `Drive`                |
+
+`UKPCLFaxitUnlockBase` itself is `abstract` and never appears in a `class:` — use one of the three
+concrete subclasses. The abstract note on
+[base-game unlock classes](/kdataforge/reference/base-game-unlock-classes) does not apply here:
+this one has no `ApplyToFaxit` behaviour of its own to instantiate.
+
+## Repeatable schematics (KLib)
+
+`UKLUnlockMaxRepeatPurchases` makes its own schematic repeatable and scales the reward and cost
+lists with generated curves. It has its own full worked pack rather than a table row:
+[Repeat-Purchase Schematic (KLIB)](/kdataforge/examples/repeat-purchase-schematic).
+
+| Class                                | Gate                          | What it does                                                                      |
+| ------------------------------------ | ----------------------------- | --------------------------------------------------------------------------------- |
+| `/Script/KLib.KLUnlockMaxRepeatPurchases` | `conditions: { hasMod: KLib }` | Repeatable schematic with a purchase cap, per-level reward/cost lists, and curves |
+
+KPrivateCodeLib consumes any such unlock through the `IKPCLRepeatPurchaseUnlock` interface
+(`GetMaxPurchaseCount`, `GetCostMultiplier`, `GetRewardMultiplier`, `ApplyLevelState`), which is
+what makes repeat-purchase state save and replicate correctly. That interface is a C++ contract for
+native mods, not something a YAML pack references directly.
