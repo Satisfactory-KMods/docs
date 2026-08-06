@@ -1,0 +1,87 @@
+---
+title: Sign settings
+description: Sign type, size, background, emissive, parallax and the arrow material.
+sidebar:
+  order: 4
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+These apply to the whole sign rather than one element. They live at the bottom
+of the right-hand inspector and stay available even while an element is
+selected.
+
+## Size
+
+The sign size decides the pixel canvas the mod renders, from `256×256` up to
+`2500×200`. It is the first thing you pick, and everything else stays locked
+until you do.
+
+:::caution
+Changing size after you have placed elements does **not** move them. They keep
+their pixel positions, so some may end up outside the new canvas. Anything
+hanging over the edge is drawn faded in the editor and cropped in game.
+:::
+
+## Sign type
+
+<Tabs>
+  <TabItem label="Normal">
+
+A flat, lit sign. This is the default and the one that supports the parallax and
+arrow materials below.
+
+  </TabItem>
+  <TabItem label="Hologram">
+
+Renders translucent, with scanlines across the whole face. It adds its own
+controls:
+
+| Setting                 | What it does                                     |
+| ----------------------- | ------------------------------------------------ |
+| **Distortion intensity**| How much the image wobbles.                      |
+| **Scanline intensity**  | How hard the scanlines read.                     |
+| **Border intensity**    | The glow around the sign's edge.                 |
+| **Use scanlines**       | Turns the lines off while keeping the glow.      |
+
+  </TabItem>
+</Tabs>
+
+## Material
+
+| Setting                | What it does                                                                 |
+| ---------------------- | ---------------------------------------------------------------------------- |
+| **Background color**   | The sign's base colour. Also tints the parallax grid and the arrow material.  |
+| **Emissive intensity** | How brightly the sign glows. Higher is brighter.                             |
+| **Panner speed X / Y** | Scrolls the whole sign's material. **Negative values scroll the other way.** |
+
+## Parallax & arrows
+
+Two extra materials, available on **Normal** signs only.
+
+### Parallax
+
+Draws a receding depth grid behind your elements, speckled with small readouts
+that tick over as you watch. Tinted by the background colour.
+
+### Arrow material
+
+Fills the sign with large scrolling chevrons, tinted by the background colour,
+with its own **direction** and **speed**.
+
+:::danger
+The arrow material covers the entire sign face, so the mod draws **no elements**
+underneath it. The editor hides them to match, and they are left out of exported
+files — the export dialog tells you how many were dropped.
+:::
+
+### Scale
+
+**Parallax / arrow scale X** and **Y** size the grid cells and the chevron
+bands. `-1` means "use the mod's own default ratio", not a scale of one.
+
+:::note
+A hologram ignores both effects. If you switch a sign that had them enabled over
+to hologram, the toggles disappear and nothing of them is previewed or exported —
+the mod would ignore them anyway.
+:::

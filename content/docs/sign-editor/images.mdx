@@ -1,0 +1,65 @@
+---
+title: Images & icons
+description: Browse mod icons and RSS textures, or add your own images by URL.
+sidebar:
+  order: 3
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+The **Icon & image browser** is where every texture comes from. Open it with
+**Add element → Image**, or from the inspector when an image or effect element
+is selected.
+
+## The three tabs
+
+| Tab                    | What is in it                                                                     |
+| ---------------------- | --------------------------------------------------------------------------------- |
+| **Game & mod icons**   | Item, building and schematic icons extracted from the installed mods.             |
+| **RSS sign images**    | The sign textures that Refined Sign Systems itself ships — arrows, symbols, plates. |
+| **My Images**          | Images you added yourself, by URL.                                                |
+
+## Finding an image
+
+Search matches **names, tags and descriptions**, so a rough word usually finds
+the right thing even when the exact name is different.
+
+Two filters narrow it further:
+
+- **Mod** — which mod the asset came from, by its real name (for example
+  *Fluid Extras*, not `ab_fluidextras`).
+- **Type** — the kind of asset: item, building, schematic, and so on.
+
+Each card shows the mod and type it belongs to. Where a wiki entry exists, a
+small book icon in the corner opens the k-mods wiki for it.
+
+## Using one
+
+Click a card to use it. If you opened the browser from **Add element → Image**,
+it creates a new element; if you opened it from a selected element, it swaps
+that element's texture and leaves its position and size alone.
+
+You can also **drag a card straight onto the canvas** to drop the image exactly
+where you want it.
+
+## My Images
+
+Anything the built-in catalog does not cover, you add yourself.
+
+<Steps>
+
+1. Open the **My Images** tab and click **Add**.
+
+2. Paste a direct **image URL** and give it a name.
+
+3. Save. It is now available in every design on your account.
+
+</Steps>
+
+:::caution
+The mod downloads your image **in game, from that URL**. The link has to stay
+publicly reachable — a private host, an expiring link, or a page that returns
+HTML instead of an image file will simply not render.
+:::
+
+Free accounts can keep **50** custom images. Patreon supporters have no limit.

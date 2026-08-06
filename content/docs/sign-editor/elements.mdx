@@ -1,0 +1,109 @@
+---
+title: Elements
+description: Text, image and effect elements, and the settings they share.
+sidebar:
+  order: 2
+---
+
+import { Tabs, TabItem, Badge } from '@astrojs/starlight/components';
+
+Everything you place on a sign is an **element**. There are three kinds, added
+from the buttons above the layer list. A sign holds up to **128** of them.
+
+## Shared settings
+
+Every element, whatever its type, has these in the **Element** panel:
+
+| Setting             | What it does                                                        |
+| ------------------- | ------------------------------------------------------------------- |
+| **X** / **Y**       | Position in canvas pixels, measured from the top-left of the sign.  |
+| **Rotation**        | Turns the element around its own origin.                            |
+| **Opacity**         | How see-through it is. Defaults to `0.50`.                          |
+| **Layer order**     | Z-index. Higher draws in front.                                     |
+| **Color tint**      | Multiplies the element's colour. White leaves it untouched.          |
+
+:::note
+Positions are always in the sign's own pixel space, never in screen pixels. Zooming
+the canvas changes what you see, never the numbers that get saved.
+:::
+
+## The three types
+
+<Tabs>
+  <TabItem label="Text">
+
+Draws a line of text.
+
+| Setting                            | Notes                                                            |
+| ---------------------------------- | ---------------------------------------------------------------- |
+| **Text content**                   | What it says. Line breaks are kept.                              |
+| **Text type**                      | *Normal* draws the glyphs alone; *Background* fills a plate behind them. |
+| **Background color**               | The plate colour, used by *Background* type.                     |
+| **Font variant**                   | Weight and italics — Light through ExtraBold.                    |
+| **Font size**, **Letter spacing**, **Line height** | Standard type controls.                          |
+| **Alignment**                      | Left, center or right.                                           |
+| **Bold**, **Uppercase**            | Quick toggles on top of the chosen variant.                      |
+
+:::caution
+Only **Open Sans** is available, in the weights listed above. The mod ships that
+one family, so any other font would fall back to something you did not pick.
+:::
+
+  </TabItem>
+  <TabItem label="Image">
+
+Draws a texture — a mod icon, an RSS sign texture, or one of your own images.
+
+| Setting                       | Notes                                                        |
+| ----------------------------- | ------------------------------------------------------------ |
+| **Image width** / **height**  | Drawn size in canvas pixels.                                 |
+| **Scale X** / **Scale Y**     | Negative values mirror the image on that axis.               |
+| **Slice X** / **Slice Y**     | 9-slice mode, for textures meant to stretch without distorting their borders. |
+
+Use **Icon & image browser** in the inspector to swap the texture on an image
+element that is already placed. See [Images & icons](/sign-editor/images/).
+
+:::note
+9-slice is passed straight through to the mod and is **not** previewed in the
+editor — the canvas shows the plain texture.
+:::
+
+  </TabItem>
+  <TabItem label="Effect">
+
+Scrolls a texture across the sign — the RSS "panner".
+
+| Setting             | Notes                                                                 |
+| ------------------- | --------------------------------------------------------------------- |
+| **Effect type**     | *Linear panning* scrolls smoothly; *Step panning* jumps in fixed steps. |
+| **Step frequency**  | How many steps per cycle. Only used by *Step panning*.                |
+| **Animation speed** | How fast it scrolls.                                                  |
+| **Effect scale**    | How large the scrolling texture is drawn.                             |
+
+An effect uses a texture just like an image element does, so the image browser
+is available for it too.
+
+  </TabItem>
+</Tabs>
+
+## Selecting and arranging
+
+Click an element on the canvas, or a row in the **Layers** list, to select it.
+The inspector then switches to that element's settings — the whole-sign settings
+stay available below them.
+
+The layer list draws **bottom-last**: the row at the bottom of the list is drawn
+on top on the canvas. Drag a row's handle to reorder, or use the action bar's
+**bring to front** / **send to back** buttons.
+
+Right-clicking an element on the canvas opens a menu with copy, cut, duplicate,
+delete and the layer-order actions.
+
+## Quick actions
+
+The action bar above the canvas acts on whatever is selected:
+
+<Badge text="Duplicate" /> <Badge text="Bring to front" /> <Badge text="Send to back" /> <Badge text="Deselect" /> <Badge text="Delete" variant="danger" />
+
+They stay visible but disabled when nothing is selected, so the bar never
+reflows under your cursor.

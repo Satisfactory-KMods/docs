@@ -1,0 +1,88 @@
+---
+title: Sign Editor
+description: Design Refined Sign Systems signs in your browser, then load them in game.
+sidebar:
+  order: 1
+---
+
+import { CardGrid, LinkCard, Steps } from '@astrojs/starlight/components';
+
+The Sign Editor is a browser-based designer for **Refined Sign Systems (RSS)**
+signs. Lay out text, icons and effects on a real-size canvas, save the design to
+your account, and load it in game — no editing JSON by hand.
+
+## Build your first sign
+
+<Steps>
+
+1. Open the editor and click **New design**. It opens with an empty canvas.
+
+2. Give it a **name** in the left panel. This is what you will recognise it by
+   in your design list.
+
+3. Pick a **sign size**. This is the one setting you have to choose before
+   anything else unlocks — it decides the pixel canvas the mod renders.
+
+4. Add an element with **Text**, **Image** or **Effect** above the layer list.
+
+5. Drag it into place on the canvas, and adjust it in the right-hand panel.
+
+6. Click **Save**. The design is stored on your account, ready to load in game.
+
+</Steps>
+
+:::tip
+Two guided tours are built into the editor, on the **?** and **shape** buttons
+in the action bar: one walks through the workspace, the other covers elements
+and the image browser.
+:::
+
+## The workspace
+
+The editor is three columns:
+
+- **Left** — the design's name, whether it is public, the sign size, the
+  **Add element** buttons, and the layer list.
+- **Middle** — the action bar and the canvas your sign is drawn on.
+- **Right** — the inspector: settings for the selected element, and below them
+  the settings for the sign as a whole.
+
+:::caution
+The editor needs a mouse and a wide screen, so it is not available on phones.
+The read-only preview page works on any device.
+:::
+
+## Where to go next
+
+<CardGrid>
+  <LinkCard
+    title="Elements"
+    href="/sign-editor/elements/"
+    description="Text, image and effect elements, and every setting they share."
+  />
+  <LinkCard
+    title="Images & icons"
+    href="/sign-editor/images/"
+    description="Browse mod icons and RSS textures, or add your own by URL."
+  />
+  <LinkCard
+    title="Sign settings"
+    href="/sign-editor/sign-settings/"
+    description="Sign type, background, emissive, parallax and the arrow material."
+  />
+  <LinkCard
+    title="Canvas"
+    href="/sign-editor/canvas/"
+    description="Move, zoom, pan, snap and order what you have placed."
+  />
+  <LinkCard
+    title="Saving & sharing"
+    href="/sign-editor/saving/"
+    description="Drafts, share links, previews, and JSON export/import."
+  />
+  <LinkCard
+    title="Keyboard shortcuts"
+    href="/sign-editor/shortcuts/"
+    description="Work faster without reaching for the menus."
+  />
+</CardGrid>
