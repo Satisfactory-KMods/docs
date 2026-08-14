@@ -10,7 +10,9 @@ and [Type: unlock](/kdataforge/features/unlocks) both work with **any** concrete
 `FGUnlock` subclass. The mechanism is fully generic (resolve `class:`, `NewObject` it onto the
 schematic's CDO, apply `properties:`, append to `mUnlocks`). Only a couple of unlock types show up
 in most examples (`FGUnlockRecipe`, `FGUnlockInventorySlot`); this page catalogs every one the base
-game ships, so you don't have to go spelunking through engine headers to find them.
+game ships, so you don't have to go spelunking through engine headers to find them. For the unlock
+classes installed mods add on top, see
+[Mod Unlock Classes](/kdataforge/reference/mod-unlock-classes).
 
 > ℹ️ Several of these classes are tagged `abstract` in their C++ declaration. That only blocks
 > instantiating the _base_ class from a Blueprint asset picker in the editor. It does not stop

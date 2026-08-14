@@ -1,0 +1,121 @@
+---
+title: Mod Unlock Classes
+description: Every FGUnlock subclass shipped by KLIB, KPrivateCodeLib, and other installed mods, with the Blueprint path and settable properties for each.
+sidebar:
+  order: 7
+---
+
+[Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes) covers what the game
+itself ships. Installed mods add their own `FGUnlock` subclasses, and those behave exactly the same
+way in a pack. KDataForge resolves `class:`, applies `properties:`, and appends the instance to
+`mUnlocks`, whether the class came from FactoryGame or from a mod.
+
+Use these in a schematic's [instanced unlocks list](/kdataforge/features/schematics#instanced-unlocks-the-normal-way-to-wire-up-a-recipe)
+or in a standalone [type: unlock](/kdataforge/features/unlocks) document.
+
+:::note
+Prefer the Blueprint path where one exists. That is the asset the mod authors configure, so it
+carries their defaults. Classes with no Blueprint are addressed by their native path instead, in the
+form `/Script/<Module>.<Class>`.
+:::
+
+:::caution
+These classes only exist when the mod providing them is installed. A pack that references a KLIB
+unlock without KLIB present fails to resolve the class, and `/kdf report` records the failure. Gate
+optional integrations behind a [condition](/kdataforge/features/conditions-and-packs) so the rest of
+your pack still applies.
+:::
+
+## KLIB
+
+KLIB's unlocks cover player rewards and repeat purchases. The item reward unlock is the common one.
+
+```yaml
+unlocks:
+  - class: /KLib/Unlocks/BP_GiveToPlayersUnlock.BP_GiveToPlayersUnlock_C
+    properties:
+      - path: mAmounts
+        value:
+          - ItemClass: /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot_C
+            Amount: 10
+```
+
+| Class | Blueprint | Key property | What it does |
+| --- | --- | --- | --- |
+| `UKLGiveItemToAllPlayerUnlock` | `/KLib/Unlocks/BP_GiveToPlayersUnlock` | `mAmounts: TArray<FItemAmount>`, `bCanRepeat: bool` | Gives the listed items to every player |
+| `UKLUnlockMaxRepeatPurchases` | `/KLib/Unlocks/BP_GiveChallangeUnlock` | `mMaxPurchaseCount: int32`, `mCostMultiplierCurve` and `mRewardMultiplierCurve: UCurveFloat`, `mRewardItemsByLevel: TArray<FKLRepeatPurchaseRewardLevel>`, plus the inherited `mAmounts` | Level dependent repeat purchase rewards, delivered into Trading Post storage (overflow spawns a crate) |
+| `UUKLUnlockCleanerItem` | `/KLib/Unlocks/BP_CleanerUnlock` | `mItemDescriptor: TSubclassOf<UFGItemDescriptor>` | Info only entry (it extends `FGUnlockInfoOnly`) naming a cleaner item |
+
+Set `mMaxPurchaseCount` to zero or less for unlimited purchases. Both curves take the number of
+*completed* purchases as their X value, so X=0 controls the first purchase and X=1 the second. A null
+curve leaves the configured value unchanged.
+
+`FKLRepeatPurchaseRewardLevel` has five fields. `mPurchaseLevel: int32` starts at 1 for the first
+purchase, and the highest configured level not above the current one wins. `mItemsToGive: TArray<FItemAmount>`
+replaces the reward list from that level onward. `bOverrideCosts: bool` starts a new schematic cost
+list, which `mCosts: TArray<FItemAmount>` then supplies. `mAdditionalCosts: TArray<FItemAmount>`
+adds costs to that exact level only. Both cost fields are raw values, applied before
+`mCostMultiplierCurve`.
+
+A full worked pack using this class lives at
+[Repeat-Purchase Schematic (KLIB)](/kdataforge/examples/repeat-purchase-schematic).
+
+### Deprecated KLIB unlocks
+
+`UKLNetworkLevelUnlock` carries no data of its own and only forces a Faxit tier recompute. Use the
+`UKPCLFaxit*Unlock` classes below instead. `UKLUnlockExtractorScanner` is superseded by the plain
+base-game `FGUnlockScannableResource`. Both still exist because shipped schematic assets instance
+them, so do not use either in a new pack.
+
+## KPrivateCodeLib
+
+KPrivateCodeLib provides the delivery task unlocks and the Faxit network unlocks.
+
+```yaml
+unlocks:
+  - class: /KPrivateCodeLib/Unlocks/BP_FaxitCapaUnlock.BP_FaxitCapaUnlock_C
+    properties:
+      - path: mCapacityType
+        value: Drive
+      - path: mAmount
+        value: 1
+  - class: /KPrivateCodeLib/Unlocks/BP_FaxitSpeedUnlock.BP_FaxitSpeedUnlock_C
+    properties:
+      - path: mAmount
+        value: 15000 # fluid units per minute, where 1000 units is 1 m³
+      - path: bIsFluid
+        value: true
+```
+
+| Class | Blueprint | Key property | What it does |
+| --- | --- | --- | --- |
+| `UKPCLDeliveryTaskUnlock` | `/KPrivateCodeLib/Unlocks/BP_DeliveryTaskUnlock` | none | Enables delivery tasks, the research queue, and manual delivery |
+| `UKPCLDeliveryTaskInventorySlotUnlock` | `/KPrivateCodeLib/Unlocks/BP_DeliverInventorySlotUnlock` | `mNumInventorySlotsToUnlock: int32` | Adds slots to the shared delivery task manual input inventory |
+| `UKPCLDeliveryTaskQueueSlotUnlock` | none (`/Script/KPrivateCodeLib.KPCLDeliveryTaskQueueSlotUnlock`) | `mAmount: int32` | Raises how many delivery tasks can queue at once (the limit starts at one) |
+| `UKPCLFaxitCapacityUnlock` | `/KPrivateCodeLib/Unlocks/BP_FaxitCapaUnlock` | `mCapacityType: EKPCLFaxitCapacityType`, `mAmount: int32` | Raises one Faxit capacity |
+| `UKPCLFaxitFeatureUnlock` | `/KPrivateCodeLib/Unlocks/BP_FaxitFeatureUnlock` | `mFeature: EKPCLFaxitFeature` | Enables one Faxit feature gate |
+| `UKPCLFaxitSpeedUnlock` | `/KPrivateCodeLib/Unlocks/BP_FaxitSpeedUnlock` | `mAmount: int32` (default 15), `bIsFluid: bool` | Raises the Faxit transfer rate |
+
+`mCapacityType` accepts `MachineNetwork`, `Network`, or `Drive`, which map to the machine network
+limit, the network building limit, and drive slots. `mFeature` accepts `RemoteAccess`, `Sink`, or
+`Depot`. Every amount property clamps to a minimum of 1.
+
+For `UKPCLFaxitSpeedUnlock`, the solid side is measured in items per minute, so 15 adds 15 items per
+minute. The fluid side is measured in fluid units per minute, where 1000 units is 1 m³, so 15000 adds
+15 m³ per minute.
+
+Faxit unlocks accumulate. Purchasing one triggers a full recompute that resets every value to its
+base and re-applies each purchased unlock, so there are no tiers and no curves. Two capacity unlocks
+of 1 each produce the same result as one unlock of 2.
+
+`UKPCLDeliveryTaskSlotUnlockBase` and `UKPCLFaxitUnlockBase` are abstract bases. Subclass them from
+native code if you are extending the mod, but never reference them from a pack.
+
+## Other mods
+
+`AB_FluidExtras` ships one unlock, `/AB_FluidExtras/Exhausts/Func/ABUnlock_UnsafeExhaust`, which
+gates its unsafe exhaust. It derives straight from `FGUnlock` with no native class behind it, so its
+logic lives in the Blueprint graph. That means `properties:` can only reach variables that graph
+exposes, unlike the KLIB and KPrivateCodeLib classes above.
+
+No other installed mod defines an `FGUnlock` subclass.
