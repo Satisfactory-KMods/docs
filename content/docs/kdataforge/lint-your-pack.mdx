@@ -1,11 +1,32 @@
 ---
 title: Lint Your Pack
-description: Run KPatchwork's static KDataForge linter before starting the game or opening a pull request.
+description: Run standalone KDataForge Linter or KPatchwork policy linter before starting game or opening pull request.
 sidebar:
   order: 3
 ---
 
-The [KPatchwork repository](https://github.com/Satisfactory-KMods/KPatchwork) includes a static
+Standalone [KDataForge Linter](https://github.com/Satisfactory-KMods/KDataForge-Linter) validates
+packs with bundled schemas:
+
+```text
+kdataforge-linter lint DataForge
+kdataforge-linter lint DataForge --format github
+kdataforge-linter lint DataForge --format json
+```
+
+It also checks instanced `FGUnlock` and `FGAvailabilityDependency` references in schematics,
+research trees, and delivery-task data assets. Native classes with known Blueprint implementations,
+abstract classes without Blueprint variants, wrong-family references, and unknown class paths emit
+warnings only. These warnings never turn an otherwise valid pack into exit code `1`.
+
+[Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes),
+[Mod Unlock Classes](/kdataforge/reference/mod-unlock-classes), and
+[Availability Dependency Classes](/kdataforge/reference/availability-dependency-classes) document
+bundled inventory.
+
+## KPatchwork policy linter
+
+[KPatchwork repository](https://github.com/Satisfactory-KMods/KPatchwork) also includes a static
 [KDataForge pack linter](https://github.com/Satisfactory-KMods/KPatchwork/blob/main/Lint/lint_packs.py).
 Run it after writing or changing a pack to catch malformed YAML and common schema mistakes without
 starting Satisfactory.

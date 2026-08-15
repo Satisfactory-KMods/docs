@@ -453,6 +453,27 @@ resolved `parents:` relationships. To move a node, select and re-add the same sc
 coordinate. `nodes:` remains a legacy alias. If both keys exist,
 `addNodes:` wins and KDataForge warns that `nodes:` was ignored.
 
+### Instanced Dependencies on Research Trees
+
+Research entries accept `unlockDependencies:` and `visibilityDependencies:`. Both use the
+`{ class:, properties: }` instanced `FGAvailabilityDependency` shape; they append to
+`mUnlockDependencies` and `mVisibilityDependencies`, respectively.
+
+```yaml
+research:
+  - id: MyResearchTree
+    unlockDependencies:
+      - class: /Script/FactoryGame.FGSchematicPurchasedDependency
+        properties:
+          - path: mSchematics
+            value: [Schematic_MyPrerequisite]
+    visibilityDependencies:
+      - class: /Script/FactoryGame.FGGamePhaseReachedDependency
+        properties:
+          - path: mGamePhase
+            value: EGP_EarlyGame
+```
+
 ### Instanced Unlocks on Schematics (`unlocks:`)
 
 Schematic entries accept an `unlocks:` list. Each entry creates an **instanced** `FGUnlock`
@@ -471,6 +492,10 @@ schematics:
           - path: mRecipes
             value: [/KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot]
 ```
+
+Known native FactoryGame/KMods class paths automatically remap to their Blueprint implementation.
+Exact Blueprint paths remain valid. Concrete native classes without Blueprints stay native;
+abstract classes without concrete variants cannot be instanced.
 
 ### Schematic shortcut unlocks
 
@@ -596,6 +621,11 @@ when data assets were **modified or added**:
 Existing PrimaryDataAssets (KAPI's, RRDA's, any mod's) are already **editable** via `cdo` documents
 (`target:` object path, `allAssetsOfClass:`, `matchTag:`). The `dataasset` type is only for
 creating new instances.
+
+Data-asset entries may also contain `unlocks:` and `dependencies:` lists. They append instanced
+objects to `mUnlocks` and `mTaskDependencies` when selected class exposes those arrays. This is
+intended for `UKAPIDeliveryTask`; incompatible classes report missing array at runtime. Entry shape
+and native-to-Blueprint remapping match schematic lists.
 
 ## Float and Vector Curve Assets (`type: curve`)
 

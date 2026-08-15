@@ -79,8 +79,10 @@ unlocks:
         value: 1
 ```
 
-`class:` here must resolve to a concrete `FGUnlock` subclass, either native or a class you
-generated with [Unlocks](/kdataforge/features/unlocks). `properties:` then configures
+`class:` here must resolve to an `FGUnlock` subclass, either native, Blueprint, or a class you
+generated with [Unlocks](/kdataforge/features/unlocks). Known native FactoryGame/KMods
+paths automatically remap to their Blueprint implementation before instancing, so
+`/Script/FactoryGame.FGUnlockRecipe` and `BP_UnlockRecipe_C` are equivalent. `properties:` then configures
 that specific instance. This is what you want for a one-off unlock tied to a single schematic.
 Reach for a standalone `type: unlock` document only if you want to **reuse the exact same
 preconfigured unlock class** across several schematics: see
@@ -163,10 +165,10 @@ schematics:
             value: true
 ```
 
-That schematic won't be purchasable until `Schematic_MySuperIngot` is. A few other
-`FGAvailabilityDependency` subclasses worth knowing about (same base game headers, same
-mechanism, properties vary per class, check the header or export an existing dependency from the
-in-game editor to confirm the exact field names for your game version):
+That schematic won't be purchasable until `Schematic_MySuperIngot` is. Dependency entries use the
+same native-to-Blueprint remapping as unlock entries. See
+[Availability Dependency Classes](/kdataforge/reference/availability-dependency-classes) for every
+native and Blueprint class, abstract state, path, and field. Common choices:
 
 - `FGSchematicNotPurchasedDependency`: inverse of `FGSchematicPurchasedDependency`
 - `FGItemPickedUpDependency`: requires specific items to have been picked up

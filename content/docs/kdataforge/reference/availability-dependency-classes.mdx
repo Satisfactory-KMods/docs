@@ -1,0 +1,133 @@
+---
+title: Availability Dependency Classes
+description: Every FGAvailabilityDependency subclass, with abstract status, concrete path, exact field types, accepted values, and owner lists.
+sidebar:
+  order: 8
+---
+
+Availability dependencies gate content without granting rewards. KDataForge instances them in four
+explicit lists:
+
+- schematic `dependencies:` → `UFGSchematic::mSchematicDependencies`;
+- research `unlockDependencies:` → `UFGResearchTree::mUnlockDependencies`;
+- research `visibilityDependencies:` → `UFGResearchTree::mVisibilityDependencies`;
+- KAPI delivery-task `dependencies:` → `UKAPIDeliveryTask::mTaskDependencies`.
+
+Each entry uses `{ class:, properties: }`. Known native paths with Blueprint children automatically
+remap to concrete generated classes; exact Blueprint paths remain valid. Linter emits warning
+`class.native-remapped` for mapped native form. Abstract classes without Blueprint variants cannot
+be instanced.
+
+```yaml
+dependencies:
+  - class: /Script/FactoryGame.FGSchematicPurchasedDependency
+    properties:
+      - path: mSchematics
+        value: [/Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C]
+      - path: mRequireAllSchematicsToBePurchased
+        value: true
+```
+
+## Complete class/path matrix
+
+Unreal Asset Registry scan found **33 native classes** and **17 shipped Blueprint variants** in
+`FGAvailabilityDependency` hierarchy.
+
+| Native class | Abstract | Blueprint variant / concrete path | Configurable fields and accepted types | Purpose |
+| --- | --- | --- | --- | --- |
+| `FGAvailabilityDependency` | yes | — base only | — | Base only; never instance |
+| `FGActorsBuiltDependency` | yes | `/Game/FactoryGame/AvailabilityDependencies/BP_ActorsBuiltDependency.BP_ActorsBuiltDependency_C` | `mActorsBuiltCount: TMap<TSubclassOf<AActor>, int32>`<br />`mType: EActorBuiltDependencyType`<br />`mIsPlayerSpecific: bool` | Requires configured actor/buildable counts |
+| `FGCalendarOpenedDependency` | no | `/Script/FactoryGame.FGCalendarOpenedDependency` | `mFirstTimeOnly: bool` | Requires FICSMAS calendar open |
+| `FGCalendarSlotUnlockedDependency` | no | `/Script/FactoryGame.FGCalendarSlotUnlockedDependency` | `mSlot: int32`<br />`mUnlockType: EUnlockDependencyType`<br />`mUnlockedItemClassesRequirement: EItemUnlockRequirement`<br />`mUnlockedItemClasses: TArray<TSubclassOf<UFGItemDescriptor>>` | Requires calendar slot/item state |
+| `FGConsumablesConsumedDependency` | yes | — | `mConsumablesConsumedCount: TMap<TSubclassOf<UFGConsumableDescriptor>, int32>` | Requires counts of consumed items |
+| `FGCreaturesKilledDependency` | yes | — | `mCreaturesKilledCount: TMap<TSubclassOf<AFGCreature>, int32>` | Requires creature kill counts |
+| `FGCurrentOnboardingStepDependency` | yes | `/Game/FactoryGame/AvailabilityDependencies/BP_CurrentOnboardingStepDependency.BP_CurrentOnboardingStepDependency_C` | `mOnboardingStep: TObjectPtr<UFGOnboardingStep>` | Requires current onboarding step |
+| `FGEventDisabledDependency` | no | `/Script/FactoryGame.FGEventDisabledDependency` | `mEvents: TArray<EEvents>` | Requires selected seasonal events disabled |
+| `FGGameCompletedDependency` | yes | `/Game/FactoryGame/AvailabilityDependencies/BP_GameCompletedDependency.BP_GameCompletedDependency_C` | — | Requires game completion |
+| `FGGamePhaseReachedDependency` | yes | `/Game/FactoryGame/AvailabilityDependencies/BP_GamePhaseReachedDependency.BP_GamePhaseReachedDependency_C` | `mGamePhase: TEnumAsByte<EGamePhase>`<br />`mOnlyAllowInSelectedPhase: bool` | Requires or pins game phase |
+| `FGItemFailedToSinkDependency` | yes | `/Game/FactoryGame/AvailabilityDependencies/BP_ItemFailedToSinkDependency.BP_ItemFailedToSinkDependency_C` | `mItemsFailedToSink: TArray<TSubclassOf<UFGItemDescriptor>>` | Requires configured item to fail AWESOME Sink |
+| `FGItemPickedUpDependency` | yes | `/Game/FactoryGame/AvailabilityDependencies/BP_ItemPickedUpDependency.BP_ItemPickedUpDependency_C` | `mItems: TMap<TSubclassOf<UFGItemDescriptor>, int32>`<br />`mRequireAllItemsToBePickedUp: bool` | Requires item pickup counts |
+| `FGItemSinkDependency` | no | `/Script/FactoryGame.FGItemSinkDependency` | `mItemClasses: TArray<TSubclassOf<UFGItemDescriptor>>` | Requires configured items to be sunk |
+| `FGItemsManuallyCraftedDependency` | yes | — | `mItemsManuallyCraftedCount: TMap<TSubclassOf<UFGItemDescriptor>, int32>` | Requires manual-craft counts |
+| `FGLockSpaceElevatorShipmentDependency` | yes | `/Game/FactoryGame/AvailabilityDependencies/BP_LockSpaceElevatorShipmentDependency.BP_LockSpaceElevatorShipmentDependency_C` | `mGamePhase: TEnumAsByte<EGamePhase>` | Locks Space Elevator shipment for phase |
+| `FGMessageInterruptedDependency` | yes | `/Game/FactoryGame/AvailabilityDependencies/BP_MessageInterruptedDependency.BP_MessageInterruptedDependency_C` | — | Requires narrative message interruption state |
+| `FGMessageNotPlayedDependency` | yes | `/Game/FactoryGame/AvailabilityDependencies/BP_MessageNotPlayedDependency.BP_MessageNotPlayedDependency_C` | inherited `mMessages: TArray<TObjectPtr<UFGMessage>>`<br />inherited `mRequireAllMessagesToBePlayed: bool` | Inverse of message-played requirement |
+| `FGMessagePlayedDependency` | yes | `/Game/FactoryGame/AvailabilityDependencies/BP_MessagePlayedDependency.BP_MessagePlayedDependency_C` | `mMessages: TArray<TObjectPtr<UFGMessage>>`<br />`mRequireAllMessagesToBePlayed: bool` | Requires ADA messages played |
+| `FGPersonalElevatorDependency` | no | `/Script/FactoryGame.FGPersonalElevatorDependency` | `mEvents: uint8` bitmask (`EElevatorDependencyEvent`)<br />`mMinimumRequiredTravelTime: float` | Requires Personal Elevator interaction/travel |
+| `FGProximityToItemDependency` | yes | — | `mItemClass: TSubclassOf<UFGItemDescriptor>`<br />`mItemAsResourceNode: bool` | Requires player proximity to item/resource |
+| `FGRandomChanceDependency` | yes | `/Game/FactoryGame/AvailabilityDependencies/BP_RandomChanceDependency.BP_RandomChanceDependency_C` | `mRandomChance: float` (`0..1`) | Random probability gate |
+| `FGRecipeCategoryBuiltDependency` | no | `/Script/FactoryGame.FGRecipeCategoryBuiltDependency` | `mCategories: TArray<TSubclassOf<UFGBuildCategory>>` | Requires build from recipe categories |
+| `FGRecipeUnlockedDependency` | yes | — | `mRecipes: TArray<TSubclassOf<UFGRecipe>>`<br />`mRequireAllRecipesToBeUnlocked: bool` | Requires recipe unlock state |
+| `FGResearchTreeProgressionDependency` | yes | `/Game/FactoryGame/AvailabilityDependencies/BP_ResearchTreeProgressionDependency.BP_ResearchTreeProgressionDependency_C` | `mResearchTrees: TMap<TSubclassOf<UFGResearchTree>, TEnumAsByte<EResearchTreeStatus>>`<br />`mRequireAllTreesToBeMatched: bool` | Requires research-tree status |
+| `FGSameDirNotPlayedDependency` | yes | — | `mTimeInterval: float` | Narrative same-directory cooldown gate |
+| `FGSchematicNotPurchasedDependency` | yes | `/Game/FactoryGame/AvailabilityDependencies/BP_SchematicNotPurchasedDependency.BP_SchematicNotPurchasedDependency_C` | inherited `mSchematics: TArray<TSubclassOf<UFGSchematic>>`<br />inherited `mRequireAllSchematicsToBePurchased: bool` | Requires schematic not purchased |
+| `FGSchematicPurchasedDependency` | yes | `/Game/FactoryGame/AvailabilityDependencies/BP_SchematicPurchasedDependency.BP_SchematicPurchasedDependency_C` | `mSchematics: TArray<TSubclassOf<UFGSchematic>>`<br />`mRequireAllSchematicsToBePurchased: bool` | Requires schematic purchase |
+| `FGSchematicSpammedDependency` | yes | `/Game/FactoryGame/AvailabilityDependencies/BP_SchematicSpammedDependency.BP_SchematicSpammedDependency_C` | `mSchematicType: ESchematicType`<br />`mTimeInterval: float` (seconds)<br />`mRequiredPurchaseCount: int32` | Requires repeated schematic purchases in interval |
+| `FGSchematicTypeDependency` | yes | `/Game/FactoryGame/AvailabilityDependencies/BP_SchematicTypeDependency.BP_SchematicTypeDependency_C` | `mSchematicType: ESchematicType`<br />`mShouldCategoryMatch: bool`<br />`mShouldSubCategoriesMatch: bool`<br />`mSchematicCategory: TSubclassOf<UFGSchematicCategory>`<br />`mSchematicSubcategories: TArray<TSubclassOf<UFGSchematicCategory>>` | Requires schematic type/category progress |
+| `FGSpaceElevatorFullyBuiltDependency` | yes | `/Game/FactoryGame/AvailabilityDependencies/BP_SpaceElevatorFullyBuiltDependency.BP_SpaceElevatorFullyBuiltDependency_C` | — | Requires Space Elevator fully built |
+| `FGTakeDamageDependency` | no | `/Script/FactoryGame.FGTakeDamageDependency` | `mDamageInteraction: ETakeDamagePlayerInteraction`<br />`mDamageTypes: TArray<TSubclassOf<UDamageType>>`<br />`mActorClassContextFilter: TArray<TSubclassOf<AActor>>`<br />`mOnlyKillingBlow: bool` | Requires configured damage interaction |
+| `FGToiletFlushDependency` | no | `/Script/FactoryGame.FGToiletFlushDependency` | `mFlushedItemClass: TArray<TSubclassOf<UFGItemDescriptor>>` | Requires configured items flushed |
+| `FGWeatherReactionSeenDependency` | no | `/Script/FactoryGame.FGWeatherReactionSeenDependency` | `mWeatherReactionClass: TSubclassOf<AFGWeatherReaction>` | Requires weather reaction observed |
+
+`properties[].path` uses exact reflected member name. `TSubclassOf<T>` accepts Unreal class path;
+`TObjectPtr<T>` accepts object asset path or `null`; `TArray<T>` accepts YAML sequence;
+`TMap<TKey, TValue>` accepts YAML mapping with keys and values matching declared generic types.
+`TEnumAsByte<E>` accepts same enum token as `E`. C++ access (`protected`/`private`) does not change
+property path because KDataForge writes through Unreal reflection.
+
+### Enum and bitmask values
+
+| Type | Accepted tokens / values |
+| --- | --- |
+| `EActorBuiltDependencyType` | `ABT_Built`, `ABT_BuiltTotal`, `ABT_DismantledTotal` |
+| `EUnlockDependencyType` | `Any`, `Random` |
+| `EItemUnlockRequirement` | `Any`, `All` |
+| `EEvents` | `EV_None`, `EV_Christmas`, `EV_Birthday`, `EV_CSSBirthday`, `EV_FirstOfApril` |
+| `EGamePhase` | `EGP_EarlyGame`, `EGP_MidGame`, `EGP_LateGame`, `EGP_EndGame`, `EGP_FoodCourt`, `EGP_Victory`, `EGP_NA` |
+| `EElevatorDependencyEvent` bitmask stored in `mEvents` | integer `0..3`: `None=0`, `BeginMove=1`, `EndMove=2`; combine flags numerically |
+| `EResearchTreeStatus` | `ERTS_Locked`, `ERTS_Unlocked`, `ERTS_StartedResearch`, `ERTS_FinishedAllResearch` |
+| `ESchematicType` | `EST_Custom`, `EST_Cheat`, `EST_Tutorial`, `EST_Milestone`, `EST_Alternate`, `EST_Story`, `EST_MAM`, `EST_ResourceSink`, `EST_HardDrive`, `EST_Prototype`, `EST_Customization` |
+| `ETakeDamagePlayerInteraction` | `Any`, `PlayerWasDamaged`, `PlayerDealtDamage` |
+
+No loaded mod added native `FGAvailabilityDependency` subclasses during this scan. Catalog still
+accepts known Blueprint class paths and linter warns on unknown paths instead of failing validation.
+
+## Regenerate inventory
+
+Run `Mods/GameFeatures/KDataForge/Tools/scan_instanced_class_catalog.py` inside Unreal Python. It
+combines Asset Registry's transitive derived-class set and Blueprint `ParentClass` tags with native
+header metadata, then writes same JSON snapshot KDataForge Linter bundles.
+
+## Research and delivery-task examples
+
+```yaml
+type: research
+research:
+  - id: MyTree
+    unlockDependencies:
+      - class: /Script/FactoryGame.FGItemPickedUpDependency
+        properties:
+          - path: mItems
+            value:
+              /Game/FactoryGame/Resource/RawResources/SAM/Desc_SAM.Desc_SAM_C: 1
+    visibilityDependencies:
+      - class: /Script/FactoryGame.FGGamePhaseReachedDependency
+        properties:
+          - path: mGamePhase
+            value: EGP_EarlyGame
+---
+type: dataasset
+conditions: { hasMod: KAPI }
+assets:
+  - id: MyDeliveryTask
+    class: /Script/KAPI.KAPIDeliveryTask
+    dependencies:
+      - class: /Script/FactoryGame.FGSchematicPurchasedDependency
+        properties:
+          - path: mSchematics
+            value: [Schematic_MyPrerequisite]
+```
+
+Related: [Schematics](/kdataforge/features/schematics),
+[Research Trees](/kdataforge/features/research-trees), and
+[Delivery Task Trees](/kdataforge/examples/delivery-task).

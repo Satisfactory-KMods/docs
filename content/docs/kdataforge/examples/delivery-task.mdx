@@ -295,11 +295,34 @@ assets:
 
 Five nodes, four edges: `Root` has no parent (the tree's entry point), `Above`/`Right` each depend
 on `Root` alone, `AboveAndLeft` depends on **both** `Above` and `Right` at once (the multi-flag
-case), and `UnlockSuperIngot` depends on `AboveAndLeft`. `mTaskDependencies` is the one field left
-unset everywhere: it's an Instanced `TArray<TObjectPtr<UFGAvailabilityDependency>>`, and KDataForge
-only builds new instanced subobjects inline through a schematic's `dependencies:` or a research
-document's `addNodes:`, not through a generic `dataasset` `properties:` op-list — left unset here
-rather than faked.
+case), and `UnlockSuperIngot` depends on `AboveAndLeft`.
+
+## Instanced dependencies and unlocks
+
+Delivery-task data assets accept dedicated `dependencies:` and `unlocks:` lists alongside
+`properties:`. They append to `mTaskDependencies` and `mUnlocks`; generic property ops cannot
+construct these instanced subobjects.
+
+```yaml
+assets:
+  - id: DeliveryTask_AboveAndLeft
+    class: /Script/KAPI.KAPIDeliveryTask
+    dependencies:
+      - class: /Script/FactoryGame.FGSchematicPurchasedDependency
+        properties:
+          - path: mSchematics
+            value: [Schematic_MyPrerequisite]
+    unlocks:
+      - class: /Script/FactoryGame.FGUnlockGiveItem
+        properties:
+          - path: mItemsToGive
+            value:
+              - { ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C, Amount: 25 }
+```
+
+Known native paths automatically remap to Blueprint implementations; exact Blueprint paths remain
+valid. See [Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes) and
+[Availability Dependency Classes](/kdataforge/reference/availability-dependency-classes).
 
 ## How completing a task unlocks more of the tree
 

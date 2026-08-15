@@ -57,6 +57,33 @@ research:
 `register: true` (default) queues it into SML's `UModContentRegistry` per-world before the freeze,
 same mechanism as recipes and schematics.
 
+## Gating tree unlock and visibility
+
+Research entries accept two instanced `FGAvailabilityDependency` lists:
+
+- `unlockDependencies:` appends to `mUnlockDependencies`;
+- `visibilityDependencies:` appends to `mVisibilityDependencies`.
+
+```yaml
+type: research
+research:
+  - id: MyContentLineTree
+    unlockDependencies:
+      - class: /Script/FactoryGame.FGSchematicPurchasedDependency
+        properties:
+          - path: mSchematics
+            value: [Schematic_MyPrerequisite]
+    visibilityDependencies:
+      - class: /Game/FactoryGame/AvailabilityDependencies/BP_GamePhaseReachedDependency.BP_GamePhaseReachedDependency_C
+        properties:
+          - path: mGamePhase
+            value: EGP_EarlyGame
+```
+
+Native and Blueprint paths both work. Known native classes automatically remap to concrete
+Blueprint implementations. Full inventory:
+[Availability Dependency Classes](/kdataforge/reference/availability-dependency-classes).
+
 > ⚠️ **A schematic does not "point at" a tree.** Unlike `mProducedIn`/`mProduct` on a recipe, there
 > is no field on `UFGSchematic` that associates it with a research tree. The relationship works
 > the other way around: the tree's `mNodes` array visually places schematics inside it.

@@ -1,6 +1,6 @@
 ---
 title: Base-Game Unlock Classes
-description: Every base-game FGUnlock class, with concrete examples, settable properties, and caveats.
+description: Every base-game FGUnlock class, with paths, exact field types, accepted values, nested structs, examples, and caveats.
 sidebar:
   order: 6
 ---
@@ -14,12 +14,62 @@ game ships, so you don't have to go spelunking through engine headers to find th
 classes installed mods add on top, see
 [Mod Unlock Classes](/kdataforge/reference/mod-unlock-classes).
 
-> ℹ️ Several of these classes are tagged `abstract` in their C++ declaration. That only blocks
-> instantiating the _base_ class from a Blueprint asset picker in the editor. It does not stop
-> `NewObject` at runtime, which is exactly how KDataForge (and the base game's own Blueprint
-> schematics) create every unlock instance. If a class below isn't literally instantiable for some
-> other reason, `/kdf report` will show the failed patch; nothing here is guesswork, every property
-> name comes straight from the FactoryGame headers.
+> ℹ️ Native `/Script/FactoryGame.FGUnlock…` paths with shipped Blueprint variants are accepted.
+> KDataForge remaps them to concrete generated classes; exact Blueprint paths remain accepted.
+> Linter reports native mapped form as warning `class.native-remapped`, never error. Abstract
+> classes with no Blueprint variant cannot be instanced. Every property name below comes from
+> FactoryGame reflection data.
+
+## Complete class/path matrix
+
+Unreal Asset Registry scan found **26 native classes** and **22 shipped Blueprint variants** in
+`FGUnlock` hierarchy. Native paths in mapped rows resolve to same Blueprint automatically.
+
+| Native class | Abstract | Blueprint variant / use this path | Configurable fields and accepted types |
+| --- | --- | --- | --- |
+| `FGUnlock` | yes | — base only; never instance | — |
+| `FGUnlockArmEquipmentSlot` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockArmEquipmentSlot.BP_UnlockArmEquipmentSlot_C` | `mNumArmEquipmentSlotsToUnlock: int32` |
+| `FGUnlockBlueprints` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockBlueprints.BP_UnlockBlueprints_C` | inherited `mRecipes: TArray<TSubclassOf<UFGRecipe>>` |
+| `FGUnlockBuildEfficiency` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockBuildEfficiency.BP_UnlockBuildEfficiency_C` | — |
+| `FGUnlockBuildOverclock` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockBuildOverclock.BP_UnlockBuildOverclock_C` | — |
+| `FGUnlockBuildProductionBoost` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockBuildProductionBoost.BP_UnlockBuildProductionBoost_C` | — |
+| `FGUnlockCentralStorageItemLimit` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockCentralStorageItemLimit.BP_UnlockCentralStorageItemLimit_C` | `mItemStackLimitIncrease: int32` |
+| `FGUnlockCentralStorageUploadSlots` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockCentralStorageUploadSlots.BP_UnlockCentralStorageUploadSlots_C` | `mNumSlotsToUnlock: int32` |
+| `FGUnlockCentralStorageUploadSpeed` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockCentralStorageUploadSpeed.BP_UnlockCentralStorageUploadSpeed_C` | `mUploadSpeedPercentageDecrease: float` (`Percent`) |
+| `FGUnlockCheckmark` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockCheckmark.BP_UnlockCheckmark_C` | inherited `mUnlockName: FText`<br />`mUnlockDescription: FText`<br />`mUnlockIconBig: TObjectPtr<UTexture2D>`<br />`mUnlockIconSmall: TObjectPtr<UTexture2D>`<br />`mUnlockIconCategory: TObjectPtr<UTexture2D>` |
+| `FGUnlockCircuitDaisyChaining` | no | `/Game/FactoryGame/Unlocks/BP_UnlockCircuitDaisyChaining.BP_UnlockCircuitDaisyChaining_C` | — |
+| `FGUnlockCustomization` | no | `/Script/FactoryGame.FGUnlockCustomization` | `mCustomizationUnlocks: TArray<TSubclassOf<UFGPlayerCustomizationDesc>>` |
+| `FGUnlockCustomizer` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockCustomizer.BP_UnlockCustomizer_C` | — |
+| `FGUnlockEmote` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockEmote.BP_UnlockEmote_C` | `mEmotes: TArray<TSubclassOf<UFGEmote>>` |
+| `FGUnlockGiveItem` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockGiveItem.BP_UnlockGiveItem_C` | `mItemsToGive: TArray<FItemAmount>` |
+| `FGUnlockInfoOnly` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockInfoOnly.BP_UnlockInfoOnly_C` | `mUnlockName: FText`<br />`mUnlockDescription: FText`<br />`mUnlockIconBig: TObjectPtr<UTexture2D>`<br />`mUnlockIconSmall: TObjectPtr<UTexture2D>`<br />`mUnlockIconCategory: TObjectPtr<UTexture2D>` |
+| `FGUnlockInventorySlot` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockInventorySlot.BP_UnlockInventorySlot_C` | `mNumInventorySlotsToUnlock: int32` |
+| `FGUnlockItemDescriptor` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockItemDescriptor.BP_UnlockItemDescriptor_C` | `mItemDescriptors: TArray<TSubclassOf<UFGItemDescriptor>>` |
+| `FGUnlockMap` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockMap.BP_UnlockMap_C` | — |
+| `FGUnlockRecipe` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C` | `mRecipes: TArray<TSubclassOf<UFGRecipe>>` |
+| `FGUnlockSAMIntensity` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockSAMIntensity.BP_UnlockSAMIntensity_C` | `mSAMIntensity: int32` |
+| `FGUnlockScannableObject` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockScannableObject.BP_UnlockScannableObject_C` | `mScannableObjects: TArray<FScannableObjectData>` |
+| `FGUnlockScannableResource` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockScannableResource.BP_UnlockScannableResource_C` | `mResourcePairsToAddToScanner: TArray<FScannableResourcePair>`<br />legacy `mResourcesToAddToScanner: TArray<TSubclassOf<UFGResourceDescriptor>>` |
+| `FGUnlockSchematic` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockSchematic.BP_UnlockSchematic_C` | `mSchematics: TArray<TSubclassOf<UFGSchematic>>` |
+| `FGUnlockTape` | no | `/Script/FactoryGame.FGUnlockTape` | `mTapeUnlocks: TArray<TSubclassOf<UFGTapeData>>` |
+| `FGUnlockVisualizationMode` | yes | — provide concrete mod subclass | `mVisualizationModes: TArray<TSubclassOf<UFGVisualizationModeDescriptor>>` |
+
+`properties[].path` uses field name exactly. `TSubclassOf<T>` accepts Unreal class path;
+`TObjectPtr<T>` accepts object asset path or `null`; `TArray<T>` accepts YAML sequence; reflected
+struct accepts YAML mapping. C++ access (`protected`/`private`) does not change KDataForge property
+path because application uses Unreal reflection. Fields marked transient are not configuration
+contract and are omitted.
+
+### Struct value shapes
+
+| Struct field | Accepted type |
+| --- | --- |
+| `FItemAmount.ItemClass` | `TSubclassOf<UFGItemDescriptor>` |
+| `FItemAmount.Amount` | `int32` (non-negative) |
+| `FScannableObjectData.ItemDescriptor` | `TSubclassOf<UFGItemDescriptor>` |
+| `FScannableObjectData.ActorsAllowedToScan` | `TArray<TSubclassOf<UObject>>` |
+| `FScannableResourcePair.ResourceDescriptor` | `TSubclassOf<UFGResourceDescriptor>` |
+| `FScannableResourcePair.ResourceNodeType` | `EResourceNodeType`: `Node`, `FrackingSatellite`, `FrackingCore`, `Geyser`, or `Deposit` |
 
 ## Recipes & schematics
 
@@ -62,6 +112,7 @@ unlocks:
 | `FGUnlockInventorySlot`    | `mNumInventorySlotsToUnlock: int32`    | Adds inventory slots                                                                                                                                            |
 | `FGUnlockArmEquipmentSlot` | `mNumArmEquipmentSlotsToUnlock: int32` | Adds arm-equipment slots (extra equipped tool)                                                                                                                  |
 | `FGUnlockGiveItem`         | `mItemsToGive: TArray<FItemAmount>`    | A container of items other systems read; it doesn't hand out items on its own. Use `FGUnlockRecipe`/direct inventory grants for an actual give-on-purchase effect |
+| `FGUnlockItemDescriptor`  | `mItemDescriptors: TArray<TSubclassOf<UFGItemDescriptor>>` | Makes descriptors available to item-selection UIs such as Smart/Programmable Splitters |
 
 ## Central Storage
 
@@ -172,6 +223,7 @@ unlocks:
 | `FGUnlockSAMIntensity` | `mSAMIntensity: int32`                                                                     | Sets the intensity of SAM-node effects (e.g. VO)                                           |
 | `FGUnlockInfoOnly`     | `mUnlockName`/`mUnlockDescription: FText`, `mUnlockIconBig`/`Small`/`Category: UTexture2D` | Pure UI entry in the unlock list, grants no gameplay effect on its own                    |
 | `FGUnlockCheckmark`    | _(inherits `FGUnlockInfoOnly`'s fields)_                                                   | Same as `FGUnlockInfoOnly`, plus tracks a per-player "seen/unlocked" checkmark in the save |
+| `FGUnlockTape`         | `mTapeUnlocks: TArray<TSubclassOf<UFGTapeData>>`                                           | Unlocks audio tapes in tape-player content                                               |
 
 These classes plug into [schematic instanced unlocks](/kdataforge/features/schematics#instanced-unlocks-the-normal-way-to-wire-up-a-recipe).
 Use [Type: unlock](/kdataforge/features/unlocks) to reuse one preconfigured unlock
