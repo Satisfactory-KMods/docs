@@ -1,13 +1,20 @@
 ---
 title: Mod Unlock Classes
-description: Every mod FGUnlock subclass, with abstract state, Blueprint path, exact field types, accepted values, and nested structs.
+description: Every mod FGUnlock subclass, with abstract state, Blueprint path, exact field types, accepted values, nested structs, examples, and caveats.
 sidebar:
   order: 7
 ---
 
 KDataForge uses mod unlocks in schematic and delivery-task `unlocks:` lists exactly like base-game
-classes. Known native paths with Blueprint variants automatically remap; exact Blueprint paths also
-work. Catalog reflects mods loaded during Unreal scan.
+classes. The mechanism is fully generic (resolve `class:`, `NewObject` it onto the schematic's CDO,
+apply `properties:`, append to `mUnlocks`), so mod-provided classes need no special handling. Known
+native paths with Blueprint variants automatically remap; exact Blueprint paths also work. Catalog
+reflects mods loaded during Unreal scan.
+
+Use these in a schematic's
+[instanced unlocks list](/kdataforge/features/schematics#instanced-unlocks-the-normal-way-to-wire-up-a-recipe)
+or in a standalone [type: unlock](/kdataforge/features/unlocks) document. For base-game classes see
+[Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes).
 
 :::caution
 These classes exist only when provider mod is installed. Gate optional integrations with a
@@ -17,22 +24,22 @@ reported by `/kdf report` and skipped.
 
 ## Complete class/path matrix
 
-| Native class | Module | Abstract | Blueprint variant / concrete path | Configurable fields and accepted types |
-| --- | --- | --- | --- | --- |
-| `KLGiveItemToAllPlayerUnlock` | KLib | no | `/KLib/Unlocks/BP_GiveToPlayersUnlock.BP_GiveToPlayersUnlock_C` | `bCanRepeat: bool`<br />`mAmounts: TArray<FItemAmount>` |
-| `KLNetworkLevelUnlock` | KLib | no | `/Script/KLib.KLNetworkLevelUnlock` | — |
-| `KLUnlockExtractorScanner` | KLib | no | `/Script/KLib.KLUnlockExtractorScanner` | inherited `mResourcesToAddToScanner: TArray<TSubclassOf<UFGResourceDescriptor>>` (legacy)<br />inherited `mResourcePairsToAddToScanner: TArray<FScannableResourcePair>` |
-| `KLUnlockMaxRepeatPurchases` | KLib | no | `/KLib/Unlocks/BP_GiveChallangeUnlock.BP_GiveChallangeUnlock_C` | inherited `bCanRepeat: bool`<br />inherited `mAmounts: TArray<FItemAmount>`<br />`mMaxPurchaseCount: int32`<br />`mCostMultiplierCurve: TObjectPtr<UCurveFloat>`<br />`mRewardMultiplierCurve: TObjectPtr<UCurveFloat>`<br />`mRewardItemsByLevel: TArray<FKLRepeatPurchaseRewardLevel>` |
-| `UKLUnlockCleanerItem` | KLib | no | `/KLib/Unlocks/BP_CleanerUnlock.BP_CleanerUnlock_C` | `mItemDescriptor: TSubclassOf<UFGItemDescriptor>` |
-| `KPCLDeliveryTaskInventorySlotUnlock` | KPrivateCodeLib | no | `/KPrivateCodeLib/Unlocks/BP_DeliverInventorySlotUnlock.BP_DeliverInventorySlotUnlock_C` | `mNumInventorySlotsToUnlock: int32` (min 1) |
-| `KPCLDeliveryTaskQueueSlotUnlock` | KPrivateCodeLib | no | `/Script/KPrivateCodeLib.KPCLDeliveryTaskQueueSlotUnlock` | `mAmount: int32` (min 1) |
-| `KPCLDeliveryTaskSlotUnlockBase` | KPrivateCodeLib | yes | — base only | — |
-| `KPCLDeliveryTaskUnlock` | KPrivateCodeLib | no | `/KPrivateCodeLib/Unlocks/BP_DeliveryTaskUnlock.BP_DeliveryTaskUnlock_C` | — |
-| `KPCLFaxitCapacityUnlock` | KPrivateCodeLib | no | `/KPrivateCodeLib/Unlocks/BP_FaxitCapaUnlock.BP_FaxitCapaUnlock_C` | `mCapacityType: EKPCLFaxitCapacityType`<br />`mAmount: int32` (min 1) |
-| `KPCLFaxitFeatureUnlock` | KPrivateCodeLib | no | `/KPrivateCodeLib/Unlocks/BP_FaxitFeatureUnlock.BP_FaxitFeatureUnlock_C` | `mFeature: EKPCLFaxitFeature` |
-| `KPCLFaxitSpeedUnlock` | KPrivateCodeLib | no | `/KPrivateCodeLib/Unlocks/BP_FaxitSpeedUnlock.BP_FaxitSpeedUnlock_C` | `mAmount: int32` (min 1)<br />`bIsFluid: bool` |
-| `KPCLFaxitUnlockBase` | KPrivateCodeLib | yes | — base only | — |
-| — | AB_FluidExtras | no | `/AB_FluidExtras/Exhausts/Func/ABUnlock_UnsafeExhaust.ABUnlock_UnsafeExhaust_C` (Blueprint-only; parent `FGUnlock`) | Blueprint-defined reflected variables; no native field contract |
+| Native class                          | Module          | Abstract | Blueprint variant / concrete path                                                                                   | Configurable fields and accepted types                                                                                                                                                                                                                                                   |
+| ------------------------------------- | --------------- | -------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `KLGiveItemToAllPlayerUnlock`         | KLib            | no       | `/KLib/Unlocks/BP_GiveToPlayersUnlock.BP_GiveToPlayersUnlock_C`                                                     | `bCanRepeat: bool`<br />`mAmounts: TArray<FItemAmount>`                                                                                                                                                                                                                                  |
+| `KLNetworkLevelUnlock`                | KLib            | no       | `/Script/KLib.KLNetworkLevelUnlock`                                                                                 | —                                                                                                                                                                                                                                                                                        |
+| `KLUnlockExtractorScanner`            | KLib            | no       | `/Script/KLib.KLUnlockExtractorScanner`                                                                             | inherited `mResourcesToAddToScanner: TArray<TSubclassOf<UFGResourceDescriptor>>` (legacy)<br />inherited `mResourcePairsToAddToScanner: TArray<FScannableResourcePair>`                                                                                                                  |
+| `KLUnlockMaxRepeatPurchases`          | KLib            | no       | `/KLib/Unlocks/BP_GiveChallangeUnlock.BP_GiveChallangeUnlock_C`                                                     | inherited `bCanRepeat: bool`<br />inherited `mAmounts: TArray<FItemAmount>`<br />`mMaxPurchaseCount: int32`<br />`mCostMultiplierCurve: TObjectPtr<UCurveFloat>`<br />`mRewardMultiplierCurve: TObjectPtr<UCurveFloat>`<br />`mRewardItemsByLevel: TArray<FKLRepeatPurchaseRewardLevel>` |
+| `UKLUnlockCleanerItem`                | KLib            | no       | `/KLib/Unlocks/BP_CleanerUnlock.BP_CleanerUnlock_C`                                                                 | `mItemDescriptor: TSubclassOf<UFGItemDescriptor>`                                                                                                                                                                                                                                        |
+| `KPCLDeliveryTaskInventorySlotUnlock` | KPrivateCodeLib | no       | `/KPrivateCodeLib/Unlocks/BP_DeliverInventorySlotUnlock.BP_DeliverInventorySlotUnlock_C`                            | `mNumInventorySlotsToUnlock: int32` (min 1)                                                                                                                                                                                                                                              |
+| `KPCLDeliveryTaskQueueSlotUnlock`     | KPrivateCodeLib | no       | `/Script/KPrivateCodeLib.KPCLDeliveryTaskQueueSlotUnlock`                                                           | `mAmount: int32` (min 1)                                                                                                                                                                                                                                                                 |
+| `KPCLDeliveryTaskSlotUnlockBase`      | KPrivateCodeLib | yes      | — base only                                                                                                         | —                                                                                                                                                                                                                                                                                        |
+| `KPCLDeliveryTaskUnlock`              | KPrivateCodeLib | no       | `/KPrivateCodeLib/Unlocks/BP_DeliveryTaskUnlock.BP_DeliveryTaskUnlock_C`                                            | —                                                                                                                                                                                                                                                                                        |
+| `KPCLFaxitCapacityUnlock`             | KPrivateCodeLib | no       | `/KPrivateCodeLib/Unlocks/BP_FaxitCapaUnlock.BP_FaxitCapaUnlock_C`                                                  | `mCapacityType: EKPCLFaxitCapacityType`<br />`mAmount: int32` (min 1)                                                                                                                                                                                                                    |
+| `KPCLFaxitFeatureUnlock`              | KPrivateCodeLib | no       | `/KPrivateCodeLib/Unlocks/BP_FaxitFeatureUnlock.BP_FaxitFeatureUnlock_C`                                            | `mFeature: EKPCLFaxitFeature`                                                                                                                                                                                                                                                            |
+| `KPCLFaxitSpeedUnlock`                | KPrivateCodeLib | no       | `/KPrivateCodeLib/Unlocks/BP_FaxitSpeedUnlock.BP_FaxitSpeedUnlock_C`                                                | `mAmount: int32` (min 1)<br />`bIsFluid: bool`                                                                                                                                                                                                                                           |
+| `KPCLFaxitUnlockBase`                 | KPrivateCodeLib | yes      | — base only                                                                                                         | —                                                                                                                                                                                                                                                                                        |
+| —                                     | AB_FluidExtras  | no       | `/AB_FluidExtras/Exhausts/Func/ABUnlock_UnsafeExhaust.ABUnlock_UnsafeExhaust_C` (Blueprint-only; parent `FGUnlock`) | Blueprint-defined reflected variables; no native field contract                                                                                                                                                                                                                          |
 
 Use Blueprint generated-class path where listed because it carries mod-configured defaults.
 Concrete classes without Blueprint use native `/Script/<Module>.<Class>` path.
@@ -43,54 +50,93 @@ YAML encoding follows [base-game types](/kdataforge/reference/base-game-unlock-c
 
 ## KLib fields
 
-| Class | Fields and accepted types | Purpose |
-| --- | --- | --- |
-| `KLGiveItemToAllPlayerUnlock` | `mAmounts: TArray<FItemAmount>`, `bCanRepeat: bool` | Gives listed items to every player |
-| `KLUnlockMaxRepeatPurchases` | `mMaxPurchaseCount: int32`, `mCostMultiplierCurve: TObjectPtr<UCurveFloat>`, `mRewardMultiplierCurve: TObjectPtr<UCurveFloat>`, `mRewardItemsByLevel: TArray<FKLRepeatPurchaseRewardLevel>`, inherited `mAmounts: TArray<FItemAmount>` and `bCanRepeat: bool` | Level-dependent repeat purchases and rewards |
-| `UKLUnlockCleanerItem` | `mItemDescriptor: TSubclassOf<UFGItemDescriptor>` | Info-only cleaner item entry |
-| `KLNetworkLevelUnlock` | — | Deprecated Faxit tier recompute hook |
-| `KLUnlockExtractorScanner` | inherited `mResourcesToAddToScanner: TArray<TSubclassOf<UFGResourceDescriptor>>` (legacy), `mResourcePairsToAddToScanner: TArray<FScannableResourcePair>` | Deprecated; use `FGUnlockScannableResource` |
+```yaml
+unlocks:
+  - class: /KLib/Unlocks/BP_GiveToPlayersUnlock.BP_GiveToPlayersUnlock_C
+    properties:
+      - path: mAmounts
+        value:
+          - ItemClass: /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot_C
+            Amount: 10
+```
+
+| Class                         | Fields and accepted types                                                                                                                                                                                                                                     | Purpose                                                                                                                       |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `KLGiveItemToAllPlayerUnlock` | `mAmounts: TArray<FItemAmount>`, `bCanRepeat: bool`                                                                                                                                                                                                           | Gives listed items to every player                                                                                            |
+| `KLUnlockMaxRepeatPurchases`  | `mMaxPurchaseCount: int32`, `mCostMultiplierCurve: TObjectPtr<UCurveFloat>`, `mRewardMultiplierCurve: TObjectPtr<UCurveFloat>`, `mRewardItemsByLevel: TArray<FKLRepeatPurchaseRewardLevel>`, inherited `mAmounts: TArray<FItemAmount>` and `bCanRepeat: bool` | Level-dependent repeat purchases and rewards, deposited once into Trading Post storage (overflow spawns in a crate beside it) |
+| `UKLUnlockCleanerItem`        | `mItemDescriptor: TSubclassOf<UFGItemDescriptor>`                                                                                                                                                                                                             | Info-only cleaner item entry; extends `FGUnlockInfoOnly`, so it grants nothing by itself                                      |
+| `KLNetworkLevelUnlock`        | —                                                                                                                                                                                                                                                             | Deprecated Faxit tier recompute hook                                                                                          |
+| `KLUnlockExtractorScanner`    | inherited `mResourcesToAddToScanner: TArray<TSubclassOf<UFGResourceDescriptor>>` (legacy), `mResourcePairsToAddToScanner: TArray<FScannableResourcePair>`                                                                                                     | Deprecated; use `FGUnlockScannableResource`                                                                                   |
 
 `KLUnlockMaxRepeatPurchases.mMaxPurchaseCount <= 0` means unlimited. Cost/reward curve X is number
-of completed purchases, so X=0 controls first purchase.
+of completed purchases, so X=0 controls first purchase and X=1 the second. A null curve property
+uses multiplier 1, leaving the configured value unchanged. Full worked pack:
+[Repeat-Purchase Schematic (KLIB)](/kdataforge/examples/repeat-purchase-schematic).
 
 ### Mod struct value shapes
 
-| Struct field | Accepted type | Constraint / meaning |
-| --- | --- | --- |
-| `FKLRepeatPurchaseRewardLevel.mPurchaseLevel` | `int32` | Minimum 1. First purchase is level 1; highest configured level not above current purchase wins. |
-| `FKLRepeatPurchaseRewardLevel.mItemsToGive` | `TArray<FItemAmount>` | Reward items for this level. See [base struct shapes](/kdataforge/reference/base-game-unlock-classes#struct-value-shapes). |
-| `FKLRepeatPurchaseRewardLevel.bOverrideCosts` | `bool` | When true, replaces normal costs with `mCosts`. |
-| `FKLRepeatPurchaseRewardLevel.mCosts` | `TArray<FItemAmount>` | Replacement costs when `bOverrideCosts` is true. |
-| `FKLRepeatPurchaseRewardLevel.mAdditionalCosts` | `TArray<FItemAmount>` | Costs added only at this exact level. |
+| Struct field                                    | Accepted type         | Constraint / meaning                                                                                                       |
+| ----------------------------------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `FKLRepeatPurchaseRewardLevel.mPurchaseLevel`   | `int32`               | Minimum 1. First purchase is level 1; highest configured level not above current purchase wins.                            |
+| `FKLRepeatPurchaseRewardLevel.mItemsToGive`     | `TArray<FItemAmount>` | Reward items for this level. See [base struct shapes](/kdataforge/reference/base-game-unlock-classes#struct-value-shapes). |
+| `FKLRepeatPurchaseRewardLevel.bOverrideCosts`   | `bool`                | When true, replaces normal costs with `mCosts`.                                                                            |
+| `FKLRepeatPurchaseRewardLevel.mCosts`           | `TArray<FItemAmount>` | Replacement costs when `bOverrideCosts` is true.                                                                           |
+| `FKLRepeatPurchaseRewardLevel.mAdditionalCosts` | `TArray<FItemAmount>` | Costs added only at this exact level.                                                                                      |
+
+`mItemsToGive` replaces the complete reward list from its level onward. `bOverrideCosts: true`
+replaces the complete raw cost list from that level onward; `mAdditionalCosts` applies only when
+`mPurchaseLevel` matches the current purchase exactly and does not carry forward. Both cost lists
+are raw values, combined before `mCostMultiplierCurve` is applied.
 
 Runtime-only `mCached*` and `bHasCached*` members are transient caches, not KDataForge configuration
 fields, so they are intentionally excluded.
 
+### Deprecated KLib unlocks
+
+`KLNetworkLevelUnlock` carries no data of its own and only forces a Faxit tier recompute; use the
+`KPCLFaxit*Unlock` classes below instead. `KLUnlockExtractorScanner` is superseded by the base-game
+`FGUnlockScannableResource`. Both still exist because shipped schematic assets instance them, so do
+not use either in a new pack.
+
 ## KPrivateCodeLib fields
 
-| Class | Fields and accepted types | Purpose |
-| --- | --- | --- |
-| `KPCLDeliveryTaskUnlock` | — | Enables delivery-task research and manual delivery |
-| `KPCLDeliveryTaskInventorySlotUnlock` | `mNumInventorySlotsToUnlock: int32` (min 1) | Adds shared manual-input slots |
-| `KPCLDeliveryTaskQueueSlotUnlock` | `mAmount: int32` (min 1) | Raises queued-task limit |
-| `KPCLFaxitCapacityUnlock` | `mCapacityType: EKPCLFaxitCapacityType`, `mAmount: int32` (min 1) | Raises machine-network, network, or drive capacity |
-| `KPCLFaxitFeatureUnlock` | `mFeature: EKPCLFaxitFeature` | Enables RemoteAccess, Sink, or Depot |
-| `KPCLFaxitSpeedUnlock` | `mAmount: int32` (min 1), `bIsFluid: bool` | Raises solid/fluid transfer rate |
-| `KPCLDeliveryTaskSlotUnlockBase` | — | Abstract delivery-slot base; never instance directly |
-| `KPCLFaxitUnlockBase` | — | Abstract Faxit base; never instance directly |
+```yaml
+unlocks:
+  - class: /KPrivateCodeLib/Unlocks/BP_FaxitCapaUnlock.BP_FaxitCapaUnlock_C
+    properties:
+      - path: mCapacityType
+        value: Drive
+      - path: mAmount
+        value: 1
+  - class: /KPrivateCodeLib/Unlocks/BP_FaxitSpeedUnlock.BP_FaxitSpeedUnlock_C
+    properties:
+      - path: mAmount
+        value: 15000 # fluid units per minute, 1000 units = 1 m³
+      - path: bIsFluid
+        value: true
+```
 
-Slot/capacity amounts clamp to minimum 1. Faxit speed uses items/min for solids and fluid units/min
-for fluids (1000 units = 1 m³). Faxit unlock values accumulate: purchase recomputes from base values
-and reapplies every purchased unlock.
+| Class                                 | Fields and accepted types                                         | Purpose                                                            |
+| ------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `KPCLDeliveryTaskUnlock`              | —                                                                 | Enables delivery tasks, the research queue, and manual delivery    |
+| `KPCLDeliveryTaskInventorySlotUnlock` | `mNumInventorySlotsToUnlock: int32` (min 1)                       | Adds slots to the shared delivery-task manual-input inventory      |
+| `KPCLDeliveryTaskQueueSlotUnlock`     | `mAmount: int32` (min 1)                                          | Raises how many delivery tasks queue at once (limit starts at one) |
+| `KPCLFaxitCapacityUnlock`             | `mCapacityType: EKPCLFaxitCapacityType`, `mAmount: int32` (min 1) | Raises machine-network, network, or drive capacity                 |
+| `KPCLFaxitFeatureUnlock`              | `mFeature: EKPCLFaxitFeature`                                     | Enables RemoteAccess, Sink, or Depot                               |
+| `KPCLFaxitSpeedUnlock`                | `mAmount: int32` (min 1, default 15), `bIsFluid: bool`            | Raises solid/fluid transfer rate                                   |
+| `KPCLDeliveryTaskSlotUnlockBase`      | —                                                                 | Abstract delivery-slot base; never instance directly               |
+| `KPCLFaxitUnlockBase`                 | —                                                                 | Abstract Faxit base; never instance directly                       |
 
-| Enum type | Accepted YAML values |
-| --- | --- |
-| `EKPCLFaxitCapacityType` | `MachineNetwork`, `Network`, `Drive` |
-| `EKPCLFaxitFeature` | `RemoteAccess`, `Sink`, `Depot` |
+Slot/capacity amounts clamp to minimum 1. Faxit speed uses items/min for solids (`mAmount: 15` adds
+15 items/min) and fluid units/min for fluids (1000 units = 1 m³, so `mAmount: 15000` adds 15 m³/min).
+Faxit unlock values accumulate: every purchase recomputes from base values and reapplies each
+purchased unlock, so there are no tiers and no curves — two capacity unlocks of 1 give the same
+result as one unlock of 2.
 
-AB_FluidExtras' Blueprint-only unsafe-exhaust unlock exposes only variables its Blueprint graph
-publishes to reflection; no native field contract exists.
+| Enum type                | Accepted YAML values                 | Meaning                                                    |
+| ------------------------ | ------------------------------------ | ---------------------------------------------------------- |
+| `EKPCLFaxitCapacityType` | `MachineNetwork`, `Network`, `Drive` | Machine-network limit, network building limit, drive slots |
+| `EKPCLFaxitFeature`      | `RemoteAccess`, `Sink`, `Depot`      | Faxit feature gate enabled by the unlock                   |
 
 See [Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes) for FactoryGame
 classes and [Availability Dependency Classes](/kdataforge/reference/availability-dependency-classes)
