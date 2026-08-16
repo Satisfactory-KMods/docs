@@ -15,8 +15,10 @@ optional-integration pack.
 ## The core idea
 
 `conditions:` is a top-level key accepted by **every** document type, including `cdo`, `item`,
-`dataasset`, `schematic`, and more. All listed keys are **AND-combined**: every one has to pass for
-the document to apply at all.
+`dataasset`, `schematic`, and more. It accepts one condition object or an array of condition
+objects. Keys in an object are **AND-combined**. An object's optional `ifNotMatch: true` field
+negates that object's combined result. Top-level `conditionBehaivor: AND|OR` combines array objects
+and defaults to `AND`.
 
 ```yaml
 type: cdo
@@ -27,9 +29,9 @@ patches:
     # ...
 ```
 
-If any condition fails, `KDFConditionEvaluator::Evaluate` returns false for that document. The
-document is dropped **before** its handler ever runs, so no `properties:`, no `patches:`, nothing
-inside it is touched. The loader records a single **Info**-severity diagnostic
+If the combined condition result fails, `KDFConditionEvaluator::Evaluate` returns false for that
+document. The document is dropped **before** its handler ever runs, so no `properties:`, no
+`patches:`, nothing inside it is touched. The loader records a single **Info**-severity diagnostic
 (`Skipped by conditions: <reason>`) and moves on to the next document.
 
 Nothing else in the pack, or in any other pack, is affected. This is the entire mechanism behind
@@ -40,16 +42,25 @@ whole document on a condition that's false when it isn't.
 
 ```yaml
 conditions:
-  hasMod: KAPI                              # scalar — one mod, any version
+  hasMod: KAPI # scalar — one mod, any version
+---
 
 conditions:
-  hasMod: [KAPI, RefinedPower]              # sequence — ALL must be loaded
+  hasMod:
+    - KAPI
+    - RefinedPower
+    # sequence — ALL must be loaded
+---
 
 conditions:
-  hasMod: RefinedPower@>=4.0.0              # inline version pin, one mod reference
+  hasMod: RefinedPower@>=4.0.0 # inline version pin, one mod reference
+---
 
 conditions:
-  hasMod: [KAPI, "RefinedPower@>=4.0.0"]    # mix plain refs and pinned refs in one sequence
+  hasMod:
+    - KAPI
+    - "RefinedPower@>=4.0.0"
+    # mix plain refs and pinned refs in one sequence
 ```
 
 Straight from the evaluator: a scalar value becomes a one-element list, and a sequence becomes a
@@ -62,6 +73,89 @@ that mod's actual loaded version. No `@` means the mod just needs to be loaded, 
 
 `hasMod` calls `UModLoadingLibrary::GetLoadedModInfo(ModReference, …)`. The reference has to match
 the mod's actual plugin reference or id exactly, case-sensitive, not a display name.
+
+## Requiring mods while excluding another mod or version
+
+Use a condition array to separate positive requirements from negated requirements:
+
+```yaml
+conditions:
+  - hasMod:
+      - KAPI
+      - KLib
+  - hasMod: IncompatibleMod
+    ifNotMatch: true
+```
+
+This applies only when KAPI and KLib are both loaded and `IncompatibleMod` is absent. The two
+objects are AND-combined by default. `ifNotMatch` defaults to `false` and negates only the object
+where it is written.
+
+Add an inline range to exclude only matching versions:
+
+```yaml
+conditions:
+  - hasMod:
+      - KAPI
+      - KLib
+  - hasMod: 'OptionalIntegration@^2.0.0'
+    ifNotMatch: true
+```
+
+The inverted object passes when `OptionalIntegration` is absent or when its loaded version does not
+match `^2.0.0`. It fails only when a matching 2.x version is loaded. The explicit map form works
+too:
+
+```yaml
+conditions:
+  - modVersion:
+      OptionalIntegration: '^2.0.0'
+    ifNotMatch: true
+```
+
+`ifNotMatch` negates the entire object's AND result. For example, this passes unless **both** mods
+are loaded:
+
+```yaml
+conditions:
+  - hasMod:
+      - ModA
+      - ModB
+    ifNotMatch: true
+```
+
+To require that neither ModA nor ModB is loaded, use two independently inverted objects instead.
+Unknown keys, malformed value types, invalid ranges, and a non-boolean `ifNotMatch` remain
+configuration errors; inversion never turns them into a match.
+
+## Choosing AND or OR across condition objects
+
+`conditionBehaivor` sits beside `conditions:` and accepts `AND` or `OR` case-insensitively. It
+defaults to `AND`, preserving packs written before this option existed. Correctly spelled
+`conditionBehavior` is also accepted as an alias.
+
+```yaml
+conditionBehaivor: OR
+conditions:
+  - hasMod: RefinedPower
+  - hasMod: FicsitFarming
+```
+
+This document applies when either mod is loaded. With `AND`, both would be required. KDataForge
+evaluates each object's internal keys, applies its `ifNotMatch`, then combines final object results.
+That makes mixed positive/negative alternatives possible:
+
+```yaml
+conditionBehaivor: OR
+conditions:
+  - hasMod: RefinedPower
+  - hasMod: LegacyPowerBridge
+    ifNotMatch: true
+```
+
+This applies when RefinedPower is loaded **or** LegacyPowerBridge is absent. Invalid behavior values,
+unknown keys, malformed objects, and invalid ranges always fail closed; a matching OR branch cannot
+hide them. An empty condition array passes under `AND` and fails under `OR`.
 
 ## `modVersion:` vs `hasMod`: what's actually different
 
@@ -119,7 +213,7 @@ publish.
 The reason `hasClass` exists alongside `hasMod` is what happens when the check **fails silently
 vs. loudly**. A `cdo` document whose `target:` (or `allAssetsOfClass:`) points at a class that
 doesn't resolve produces an **Error** diagnostic: the class was expected to be there and wasn't.
-Wrap the same patch in `conditions: { hasClass: ... }` and a missing class instead produces the
+Wrap the same patch in a `conditions:` block with `hasClass:` and a missing class instead produces the
 quiet Info-level "skipped by conditions" message, and nothing else happens.
 
 That's the whole value of `hasClass` for optional integration: it turns "this class doesn't exist"
@@ -177,7 +271,8 @@ full chain. Nothing about it depends on any other mod.
 ```yaml
 # file: super-ingot-cleaner.dataasset.yml
 type: dataasset
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 assets:
   - id: CleanerItem_SuperIngot
     class: /Script/KAPI.KAPICleanerItemDescription
@@ -186,10 +281,8 @@ assets:
         value: 6.0
       - path: mInFluid
         value:
-          {
-            ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C,
-            Amount: 500,
-          }
+          ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
+          Amount: 500
 ```
 
 This is the standard shape for KAPI-integrated content. See

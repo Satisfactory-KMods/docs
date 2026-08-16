@@ -23,7 +23,8 @@ schematics:
       - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
         properties:
           - path: mRecipes
-            value: [/KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MyNewRecipe]
+            value:
+              - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MyNewRecipe
 ```
 
 - `class:` (instead of `id:`) tells KDataForge "don't generate a class, resolve this **existing**
@@ -54,7 +55,8 @@ schematics:
       - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
         properties:
           - path: mRecipes
-            value: [/KDataForge/Gen/MyPack.Gen_MyPack_Recipe_PureSuperIngot]
+            value:
+              - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_PureSuperIngot
 ```
 
 ## Unlocking something other than a recipe

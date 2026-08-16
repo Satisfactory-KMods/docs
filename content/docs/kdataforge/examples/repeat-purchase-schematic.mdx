@@ -1,7 +1,8 @@
 ---
 title: Repeat-Purchase Schematic (KLIB)
 description: A complete UKLUnlockMaxRepeatPurchases pack with generated cost and reward curves.
-sidebar: { order: 6 }
+sidebar:
+  order: 6
 ---
 
 ## Full example: Repeat-Purchase Schematic
@@ -20,7 +21,8 @@ is loaded. `ref` also determines generated curve object paths:
 ref: RepeatRewards
 name: Repeatable Rewards
 version: 1.0.0
-conditions: { hasMod: KLib }
+conditions:
+  hasMod: KLib
 ```
 
 Create cost and reward multiplier curves in one Assets-stage document. Curve X is the number of
@@ -33,14 +35,20 @@ curveType: float
 curves:
   - id: RepeatPurchaseCost
     keys:
-      - { time: 0, value: 1 }
-      - { time: 1, value: 2 }
-      - { time: 2, value: 3 }
+      - time: 0
+        value: 1
+      - time: 1
+        value: 2
+      - time: 2
+        value: 3
   - id: RepeatPurchaseReward
     keys:
-      - { time: 0, value: 1 }
-      - { time: 1, value: 2 }
-      - { time: 2, value: 3 }
+      - time: 0
+        value: 1
+      - time: 1
+        value: 2
+      - time: 2
+        value: 3
 ```
 
 Reference both generated curves from one `UKLUnlockMaxRepeatPurchases` instance:

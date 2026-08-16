@@ -51,13 +51,14 @@ starting point. It's what the worked scenario below uses for both mods.
 
 Say you want two independent tweaks. KAPI's modular miners should produce fluid a bit faster, and
 every RefinedR&D boiler (RefinedPower's, FicsitFarming's, or anyone else's built on RefinedRDApi)
-should cook faster too. Neither mod is a dependency of your pack. `conditions: { hasMod: ... }`
+should cook faster too. Neither mod is a dependency of your pack. A `conditions:` block with `hasMod:`
 gates each document so it's a clean skip, not a hard error, if that mod isn't loaded.
 
 ```yaml
 # file: kapi-miner-fluid-tuning.cdo.yml
 type: cdo
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPIModularMinerDescription
     properties:
@@ -69,7 +70,8 @@ patches:
 ```yaml
 # file: refinedrd-boiler-tuning.cdo.yml
 type: cdo
-conditions: { hasMod: RefinedRDApi }
+conditions:
+  hasMod: RefinedRDApi
 patches:
   - allAssetsOfClass: /Script/RefinedRDApi.RRDABoilerDataAsset
     properties:

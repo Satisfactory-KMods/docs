@@ -1,7 +1,8 @@
 ---
 title: Operations
 description: What each of the 22 property operations does, which property kinds support it, and one working example apiece.
-sidebar: { order: 3 }
+sidebar:
+  order: 3
 ---
 
 Every entry in a `type: cdo` patch's `properties:` list names a target `path` and an operation
@@ -26,6 +27,20 @@ left implicit. On `mDisplayName` (an `FString`), setting a value simply replaces
 ```yaml
 - path: mDisplayName
   value: 'Reinforced Iron Ingot' # op: set is implied
+```
+
+### Bitmask operations
+
+`set` accepts one flag name or a sequence of flag names. KDataForge resolves and ORs names from the
+property's `BitmaskEnum`. Named forms are Shipping-safe. Raw numeric masks remain accepted.
+
+```yaml
+- path: mParentTask
+  value: Above
+- path: mParentTask
+  value:
+    - Above
+    - Left
 ```
 
 ## add / subtract: numeric
@@ -94,7 +109,7 @@ keys and pins the current value inside that range in one step:
   max: 999
 ```
 
-## append: array / set / map / string / tag container
+## append: array / set / map / string / tag container / bitmask
 
 `append` adds to the end of a container, or concatenates onto a string. It behaves differently
 depending on the target property's kind.
@@ -114,11 +129,20 @@ key/value pairs into the existing map:
   value: ' (rebalanced)'
 - path: mGameplayTags # tag container: adds tags
   op: append
-  value: [MyPack.Rebalanced]
+  value:
+    - MyPack.Rebalanced
 - path: mSomeMap # map: merges entries
   op: append
-  value: { Iron: 10 }
+  value:
+    Iron: 10
+- path: mParentTask # bitmask: OR-adds flags
+  op: append
+  value:
+    - Above
+    - Left
 ```
+
+For bitmasks, `append` ORs named flags into current mask. It does not accept raw integer masks.
 
 :::note
 String operations on `FText` properties (like `mDisplayName` when it is a localized text field)
@@ -128,11 +152,12 @@ updates. See [Localization](/kdataforge/features/localization) if you need the
 result to stay localizable instead.
 :::
 
-## prepend: array / string (tag containers: same as append)
+## prepend: array / string (tag containers and bitmasks: same as append)
 
 `prepend` mirrors `append`, but it adds at the front instead of the end for arrays, and inserts
 before the existing text for strings. Tag containers treat it identically to `append`, since a tag
-container has no ordering. Maps do not support `prepend` at all: only `append` merges into a map.
+container has no ordering. Bitmasks also treat it like `append` and OR-add named flags. Maps do not
+support `prepend` at all: only `append` merges into a map.
 
 ```yaml
 - path: mDisplayName
@@ -151,33 +176,32 @@ clamping to the array's bounds:
   op: insert
   index: 1
   value:
-    {
-      ItemClass: /Game/FactoryGame/Resource/RawResources/OreCopper/Desc_OreCopper.Desc_OreCopper_C,
-      Amount: 1,
-    }
+    ItemClass: /Game/FactoryGame/Resource/RawResources/OreCopper/Desc_OreCopper.Desc_OreCopper_C
+    Amount: 1
 ```
 
-## remove: array (by value) / set (by value) / map (by key) / tag container
+## remove: array (by value) / set (by value) / map (by key) / tag container / bitmask
 
 `remove` deletes by content rather than by position. On arrays and sets, it deletes every element
 that matches `value` exactly. An array remove that matches nothing fails, rather than silently
 doing nothing. On maps, `value` is the _key_ to delete, and on tag containers, `value` is the tag
-(or list of tags) to remove:
+(or list of tags) to remove. On bitmasks, it clears every named bit with AND-NOT:
 
 ```yaml
 - path: mIngredients # removes every element equal to the value
   op: remove
   value:
-    {
-      ItemClass: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C,
-      Amount: 1,
-    }
+    ItemClass: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
+    Amount: 1
 - path: mSomeMap # map: value is the key
   op: remove
   value: Iron
 - path: mGameplayTags
   op: remove
   value: KMods.WikiExclude
+- path: mParentTask # bitmask: clears named bits
+  op: remove
+  value: Left
 ```
 
 ## remove_at: array
@@ -191,13 +215,16 @@ right tool when you know the slot but not, or don't want to spell out, the exact
   index: 1
 ```
 
-## clear: array / set / map / string / tag container
+## clear: array / set / map / string / tag container / bitmask
 
 `clear` empties a container-shaped property entirely: arrays, sets, maps, and tag containers all
-lose every element. Strings are reset to empty, rather than to their class-default text:
+lose every element. Strings are reset to empty, rather than to their class-default text. On a
+metadata-recognized bitmask, `clear` writes `0`:
 
 ```yaml
 - path: mSubCategories
+  op: clear
+- path: mParentTask # bitmask: sets mask to 0
   op: clear
 ```
 
@@ -224,10 +251,8 @@ the array's length unchanged:
   op: replace
   index: 0
   value:
-    {
-      ItemClass: /Game/FactoryGame/Resource/Parts/SteelIngot/Desc_SteelIngot.Desc_SteelIngot_C,
-      Amount: 2,
-    }
+    ItemClass: /Game/FactoryGame/Resource/Parts/SteelIngot/Desc_SteelIngot.Desc_SteelIngot_C
+    Amount: 2
 ```
 
 ## duplicate: array (copies element to the end)

@@ -1,7 +1,8 @@
 ---
 title: 'Type: unlock'
 description: Generating a standalone, reusable FGUnlock subclass from YAML, and why most people actually want the schematic-level unlocks list instead.
-sidebar: { order: 12 }
+sidebar:
+  order: 12
 ---
 
 This document type sits in the `Items` stage at priority `40`, after generic `class` (`50`) and
@@ -50,7 +51,9 @@ instance. Reference it from a schematic exactly like any other unlock class:
 type: schematic
 schematics:
   - id: Schematic_UsesStarterKit
-    properties: [...]
+    properties:
+      - path: mDisplayName
+        value: Starter Kit Schematic
     unlocks:
       - class: /KDataForge/Gen/MyPack.Gen_MyPack_MyStarterKitUnlock
 ```

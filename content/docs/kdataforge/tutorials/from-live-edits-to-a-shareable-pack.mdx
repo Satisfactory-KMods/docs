@@ -149,7 +149,7 @@ current value, not just the duration. That's usually more than you want to ship.
 
 ## Troubleshooting
 
-- **Exported file has `properties: []` or almost nothing under Diff mode.** Diff only includes
+- **Exported file has an empty `properties:` list or almost nothing under Diff mode.** Diff only includes
   properties that were actually written this session on **that specific object**. Browsing or
   inspecting a value without committing an edit never creates a snapshot, so it never shows up.
   Double-check you selected the same object you edited, and that you actually committed a value,

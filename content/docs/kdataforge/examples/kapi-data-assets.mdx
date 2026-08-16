@@ -1,7 +1,8 @@
 ---
 title: Adding KAPI Data Assets
 description: 'Real, copy-pasteable "type: dataasset" examples for every KAPI PrimaryDataAsset type — air collector, cleaner, modular miner, slug breeding, extractor/resource allow-lists, and delivery-task tree nodes.'
-sidebar: { order: 7 }
+sidebar:
+  order: 7
 ---
 
 This page is worked `type: dataasset` examples, creating brand-new instances, for every KAPI data
@@ -25,7 +26,8 @@ defaults.
 ```yaml
 # file: air-collector-toxic-air.dataasset.yml
 type: dataasset
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 assets:
   - id: AirCollector_ToxicAirNode
     class: /Script/KAPI.KAPIAirCollectorData
@@ -37,7 +39,11 @@ assets:
       - path: bCheckNodes
         value: true
       - path: mTraceChannel
-        value: [ObjectTypeQuery1, ObjectTypeQuery2, ObjectTypeQuery9, ObjectTypeQuery6]
+        value:
+          - ObjectTypeQuery1
+          - ObjectTypeQuery2
+          - ObjectTypeQuery9
+          - ObjectTypeQuery6
       - path: mItemClass
         value: /KLib/Assets/Ressources/Raw/Gas/Desc_ToxicAir.Desc_ToxicAir_C
       - path: mProductionTime
@@ -57,7 +63,8 @@ A `dataasset` document targeting `KAPICleanerItemDescription` creates a brand-ne
 ```yaml
 # file: filtrator-wastewater.dataasset.yml
 type: dataasset
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 assets:
   - id: CleanerItem_WasteWater
     class: /Script/KAPI.KAPICleanerItemDescription
@@ -68,28 +75,20 @@ assets:
         value: 6
       - path: mInFluid
         value:
-          {
-            ItemClass: /KLib/Assets/Ressources/Raw/Fluids/Desc_Wastewater.Desc_Wastewater_C,
-            Amount: 6000,
-          }
+          ItemClass: /KLib/Assets/Ressources/Raw/Fluids/Desc_Wastewater.Desc_Wastewater_C
+          Amount: 6000
       - path: mOutFluid
         value:
-          {
-            ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C,
-            Amount: 4000,
-          }
+          ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
+          Amount: 4000
       - path: mBypassProducts
         value:
-          - {
-              mProduceItem: /KLib/Assets/Parts/Production/Crushed/Desc_CrushedZinc.Desc_CrushedZinc_C,
-              mProductionTime: 12,
-              mProduceAmount: 6,
-            }
-          - {
-              mProduceItem: /KLib/Assets/Parts/Production/Crushed/Desc_CrushedCaterium.Desc_CrushedCaterium_C,
-              mProductionTime: 12,
-              mProduceAmount: 6,
-            }
+          - mProduceItem: /KLib/Assets/Parts/Production/Crushed/Desc_CrushedZinc.Desc_CrushedZinc_C
+            mProductionTime: 12
+            mProduceAmount: 6
+          - mProduceItem: /KLib/Assets/Parts/Production/Crushed/Desc_CrushedCaterium.Desc_CrushedCaterium_C
+            mProductionTime: 12
+            mProduceAmount: 6
 ```
 
 ## UKAPIModularMinerDescription: modular miner ore entries
@@ -99,7 +98,8 @@ Full [property reference](/satisfactory-plus/kapi/modular-miner/). Each `UKAPIMo
 ```yaml
 # file: modular-miner-cryolite.dataasset.yml
 type: dataasset
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 assets:
   - id: MM_Cryolite
     class: /Script/KAPI.KAPIModularMinerDescription
@@ -138,7 +138,8 @@ readability.
 ```yaml
 # file: kapi-slug-red.dataasset.yml
 type: dataasset
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 assets:
   - id: RedSlugBreeder
     class: /Script/KAPI.KAPISugHatchingData
@@ -148,7 +149,11 @@ assets:
       - path: mEgg
         value: /KLib/Assets/Buildings/SlugHatching/Desc/Eggs/EggDesc_Red.EggDesc_Red_C
       - path: mEggColor
-        value: { R: 1, G: 1, B: 1, A: 1 }
+        value:
+          R: 1
+          G: 1
+          B: 1
+          A: 1
       - path: mSlugTier
         value: -1
       - path: mHatchDuration
@@ -161,20 +166,16 @@ assets:
         value: false
       - path: mPossibleSlugs
         value:
-          - {
-              mSlug: /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Red.SlugDesc_Red_C,
-              mProductionCount: 1,
-              mProbability: 100,
-              mFixedChanceMultiplier: 0.1,
-              bShouldUseFixedChance: true,
-            }
-          - {
-              mSlug: /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Orange.SlugDesc_Orange_C,
-              mProductionCount: 1,
-              mProbability: 0.38,
-              mFixedChanceMultiplier: 1,
-              bShouldUseFixedChance: true,
-            }
+          - mSlug: /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Red.SlugDesc_Red_C
+            mProductionCount: 1
+            mProbability: 100
+            mFixedChanceMultiplier: 0.1
+            bShouldUseFixedChance: true
+          - mSlug: /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Orange.SlugDesc_Orange_C
+            mProductionCount: 1
+            mProbability: 0.38
+            mFixedChanceMultiplier: 1
+            bShouldUseFixedChance: true
       - path: mProductionCountEggs
         value: 1
       - path: mBreedingTime
@@ -220,7 +221,8 @@ will recognize it as extractable:
 ```yaml
 # file: my-extractor-allowlist.dataasset.yml
 type: dataasset
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 assets:
   - id: MyModExtractorAllowList
     class: /Script/KAPI.KAPIExtractorAllowList
@@ -231,10 +233,7 @@ assets:
       - path: mAllowedResources
         value:
           - /Game/YourMod/Resource/Desc_YourResource.Desc_YourResource_C
-      - path: mDisallowExtractors
-        value: []
-      - path: mDisallowResources
-        value: []
+      # mDisallowExtractors and mDisallowResources omitted — no exclusions.
       - path: mPriority
         value: 0
 ```
@@ -246,17 +245,17 @@ overridden for this class (see the priority note on the reference page).
 
 `UKAPIDeliveryTask` places one node on a 2D coordinate grid and links it to a parent node (or
 several, at once) via `mParentTask` — a **bitmask** property (`EKAPIDeliveryTaskParent`:
-`Above`/`Left`/`Right`/`Bottom`). Like `UKAPIExtractorAllowList` above, there's no shipped instance
-to read real values from — this feature isn't part of Satisfactory Plus, it only needs **`KAPI` +
-`KPrivateCodeLib`** — so the example below is illustrative.
+`Above`/`Left`/`Right`/`Bottom`/`AboveLeft`/`AboveRight`/`BelowLeft`/`BelowRight`). Like
+`UKAPIExtractorAllowList` above, there's no shipped instance to read real values from — this
+feature isn't part of Satisfactory Plus, it only needs **`KAPI` + `KPrivateCodeLib`** — so the
+example below is illustrative.
 
-The interesting part is `mParentTask` accepting **more than one flag at once**. A plain
-`meta=(Bitmask, BitmaskEnum=...)` `int32` never gets a runtime `Enum` linked to it by Unreal Header
-Tool, so KDataForge resolves flag names directly against the enum's declared bits: write a YAML
-sequence (`[Above, Left]`, recommended) or a `|`-joined string (`"Above|Left"`); a raw pre-computed
-integer (`3`) still works too. `bRequireAllParents` then switches between AND (`true`, every listed
-parent required) and OR (`false`, any one is enough) semantics — see [Value
-Forms](/kdataforge/reference/yaml-schema/#value-forms-by-property-type) for the full grammar.
+The interesting part is `mParentTask` accepting **more than one flag at once**. Use one scalar name
+for one parent or a YAML sequence for several; KDataForge resolves and ORs names automatically.
+Scalar names, sequences, and `|`-joined strings (`"Above|Left"`) are Shipping-safe. Raw integer
+masks such as `3` remain accepted. `bRequireAllParents` then switches between AND (`true`, every
+flagged parent required) and OR (`false`, any one is enough) semantics — see
+[Value Forms](/kdataforge/reference/yaml-schema/#value-forms-by-property-type) for the full grammar.
 
 Every flag on `mParentTask` must resolve to a real sibling node at the matching coordinate offset
 (`Above` → the node directly above, `Left` → directly left, etc.) or the node is rejected at load
@@ -265,25 +264,30 @@ time, so a small tree needs coordinates laid out to match:
 ```yaml
 # file: showcase-delivery-task.dataasset.yml
 type: dataasset
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 assets:
   - id: DeliveryTask_Root
     class: /Script/KAPI.KAPIDeliveryTask
     properties:
       - path: mCoordinate
-        value: { X: 0, Y: 0 }
+        value:
+          X: 0
+          Y: 0
       - path: mName
-        value: { source: "Root Task" }
+        value: "Root Task"
 
   - id: DeliveryTask_Child_Above
     class: /Script/KAPI.KAPIDeliveryTask
     properties:
       - path: mCoordinate
-        value: { X: 0, Y: 1 }
+        value:
+          X: 0
+          Y: 1
       - path: mName
-        value: { source: "Single-Parent Child" }
-      - path: mParentTask # single flag — still a sequence, just one entry
-        value: [Above]
+        value: "Single-Parent Child"
+      - path: mParentTask
+        value: Above
       - path: bRequireAllParents
         value: true
 
@@ -291,11 +295,13 @@ assets:
     class: /Script/KAPI.KAPIDeliveryTask
     properties:
       - path: mCoordinate
-        value: { X: 1, Y: 0 }
+        value:
+          X: 1
+          Y: 0
       - path: mName
-        value: { source: "Sibling Child" }
+        value: "Sibling Child"
       - path: mParentTask
-        value: [Left] # Left -> {0,0}: points back at the root
+        value: Left # points back at (0, 0): the root
       - path: bRequireAllParents
         value: true
 
@@ -303,11 +309,15 @@ assets:
     class: /Script/KAPI.KAPIDeliveryTask
     properties:
       - path: mCoordinate
-        value: { X: 1, Y: 1 }
+        value:
+          X: 1
+          Y: 1
       - path: mName
-        value: { source: "Two-Parent Child" }
+        value: "Two-Parent Child"
       - path: mParentTask # multiple flags set in parallel
-        value: [Above, Left] # Above -> {1,0}, Left -> {0,1}: both must exist in the tree
+        value:
+          - Above # points to (1, 0)
+          - Left # points to (0, 1); both nodes must exist in the tree
       - path: bRequireAllParents
         value: true # AND: both parents must be completed
 ```
@@ -316,26 +326,30 @@ A one-time task (`bIsEndless: false`, the default) can also force-unlock a schem
 rewards on completion, via `mSchematics`/`mRewards`/`mCosts`:
 
 ```yaml
-  - id: DeliveryTask_UnlockSuperIngot
-    class: /Script/KAPI.KAPIDeliveryTask
-    properties:
-      - path: mCoordinate
-        value: { X: 1, Y: 2 }
-      - path: mName
-        value: { source: "Unlock: Pure Super Ingot" }
-      - path: mParentTask
-        value: [Above]
-      - path: bRequireAllParents
-        value: true
-      - path: mSchematics # force-unlocked on completion
-        value:
-          - /Game/YourMod/Schematics/Schematic_PureSuperIngot.Schematic_PureSuperIngot_C
-      - path: mRewards
-        value:
-          - { ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C, Amount: 500 }
-      - path: mCosts
-        value:
-          - { ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C, Amount: 100 }
+- id: DeliveryTask_UnlockSuperIngot
+  class: /Script/KAPI.KAPIDeliveryTask
+  properties:
+    - path: mCoordinate
+      value:
+        X: 1
+        Y: 2
+    - path: mName
+      value: "Unlock: Pure Super Ingot"
+    - path: mParentTask
+      value: Above
+    - path: bRequireAllParents
+      value: true
+    - path: mSchematics # force-unlocked on completion
+      value:
+        - /Game/YourMod/Schematics/Schematic_PureSuperIngot.Schematic_PureSuperIngot_C
+    - path: mRewards
+      value:
+        - ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+          Amount: 500
+    - path: mCosts
+      value:
+        - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C
+          Amount: 100
 ```
 
 The full property set (including the Endless-only fields `mPoolElements`/`mTaskRewards`/`mMaxTasks`/

@@ -1,7 +1,8 @@
 ---
 title: 'Type: class'
 description: Generating classes of any kind from YAML, any parent (C++ or Blueprint), optional content registration via registerAs, and where the preset types stop and this escape hatch begins.
-sidebar: { order: 17 }
+sidebar:
+  order: 17
 ---
 
 This type runs first in the `Items` stage at priority `50`, ahead of `unlock`, `item`, `resource`,
@@ -19,10 +20,13 @@ debug: true # optional — log every applied op (see Getting Started → Debuggi
 classes:
   - id: MyCustomThing
     parent: /Script/FactoryGame.FGEquipmentDescriptor # ANY class: native C++ or /Game/...Thing_C
-    registerAs:
-      recipe # OPTIONAL: recipe | schematic | research — queues SML content
+    registerAs: recipe
+      # OPTIONAL: recipe | schematic | research — queues SML content
       # registration for kinds that need it; omit for everything else
-    properties: [...] # cdo-style op entries applied to the new class's CDO
+    properties:
+      - path: mDisplayName
+        value: My Equipment
+      # cdo-style op entries applied to the new class's CDO
 ```
 
 Everything that holds for the preset generation types holds here too:
@@ -41,7 +45,10 @@ classes:
     parent: /Script/FactoryGame.FGEquipmentDescriptor
     properties:
       - path: mDisplayName
-        value: { key: MyGadget_Name, ns: MyPack, source: Portable Gadget }
+        value:
+          key: MyGadget_Name
+          ns: MyPack
+          source: Portable Gadget
       - path: mStackSize
         value: SS_ONE # equipment is conventionally non-stacking
       - path: mEquipmentClass
@@ -62,7 +69,10 @@ classes:
     parent: /Script/FactoryGame.FGItemCategory
     properties:
       - path: mDisplayName
-        value: { key: Cat_MyPackParts_Name, ns: MyPack, source: MyPack Parts }
+        value:
+          key: Cat_MyPackParts_Name
+          ns: MyPack
+          source: MyPack Parts
       - path: mMenuPriority
         value: 999
 ```
@@ -87,7 +97,8 @@ Any loaded mod's classes work as parents. Gate the document so it is skipped cle
 ```yaml
 # file: ff-crop.class.yml
 type: class
-conditions: { hasMod: FicsitFarming }
+conditions:
+  hasMod: FicsitFarming
 classes:
   - id: Desc_MyCustomCrop
     parent: /Game/FicsitFarming/Descriptors/Crops/Desc_Berry.Desc_Berry_C # Blueprint parent

@@ -59,12 +59,14 @@ patches:
     properties:
       - path: mGameplayTags
         op: append
-        value: [MyOverhaul.Rebalanced]
+        value:
+          - MyOverhaul.Rebalanced
   - target: /Game/FactoryGame/Recipes/Constructor/Recipe_IronRod.Recipe_IronRod_C
     properties:
       - path: mGameplayTags
         op: append
-        value: [MyOverhaul.Rebalanced]
+        value:
+          - MyOverhaul.Rebalanced
 ```
 
 ```yaml
@@ -75,12 +77,14 @@ patches:
     properties:
       - path: mGameplayTags
         op: append
-        value: [MyOverhaul.Rebalanced]
+        value:
+          - MyOverhaul.Rebalanced
   - target: /Game/FactoryGame/Recipes/Constructor/Recipe_Screw.Recipe_Screw_C
     properties:
       - path: mGameplayTags
         op: append
-        value: [MyOverhaul.Rebalanced]
+        value:
+          - MyOverhaul.Rebalanced
 ```
 
 That's two files and four recipes, with no coordination between them beyond both existing. This is
@@ -102,7 +106,8 @@ recipes:
       - path: mDisplayName
         value: My Thing
       - path: mGameplayTags
-        value: [MyOverhaul.Rebalanced]
+        value:
+          - MyOverhaul.Rebalanced
       # … mIngredients, mProduct, mManufactoringDuration, mProducedIn …
 ```
 
@@ -169,8 +174,8 @@ worked `matchTag` example against them in
 | You're fine gating the whole document behind `hasMod: KAPI`                                                            | You don't want a KAPI dependency at all                                      |
 
 The two aren't mutually exclusive. A single `matchTag:` list can include both, for example
-`matchTag: [KMods.AlternateRecipe, MyOverhaul.Rebalanced]`, remembering that's an AND: "alternates
-that are ALSO mine." Native tags always require `conditions: { hasMod: KAPI }` on the document,
+`matchTag:` with block-sequence entries `KMods.AlternateRecipe` and `MyOverhaul.Rebalanced`, remembering that's an AND: "alternates
+that are ALSO mine." Native tags always require a `conditions:` block with `hasMod: KAPI` on the document,
 since they don't exist without KAPI loaded. Your own tags never need any `hasMod` gate.
 
 ## Troubleshooting
@@ -193,7 +198,7 @@ since they don't exist without KAPI loaded. Your own tags never need any `hasMod
   and patched when that class is created, but this is a narrow lazy-resolution mechanism, not
   general cross-stage ordering. Inline properties are the predictable solution.
 - **A `KMods.*` tag "doesn't exist", or the whole document silently skips.** You forgot
-  `conditions: { hasMod: KAPI }`. Without KAPI loaded, KAPI's own tags never register, so
+  a `conditions:` block with `hasMod: KAPI`. Without KAPI loaded, KAPI's own tags never register, so
   `matchTag: KMods.AlternateRecipe` fails with "unknown gameplay tag." If you _did_ gate the
   document, a missing KAPI install just skips it quietly, an Info diagnostic in `/kdf report`, not
   an error, rather than breaking your pack.

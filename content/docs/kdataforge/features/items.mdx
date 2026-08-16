@@ -1,7 +1,8 @@
 ---
 title: 'Type: item'
 description: Generating new item classes from YAML, covering parent/required-base rules, generated class identity, and property defaults.
-sidebar: { order: 9 }
+sidebar:
+  order: 9
 ---
 
 The `item` document type runs in the `Items` stage at priority `30`, after `class` (`50`) and
@@ -31,9 +32,13 @@ type: item
 items:
   - id: MySuperIngot # required, stable id
     parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C # optional
-    properties: # ordinary cdo-style ops
+    properties:
+      # ordinary cdo-style ops
       - path: mDisplayName
-        value: { key: MySuperIngot_Name, ns: MyPack, source: Super Ingot }
+        value:
+          key: MySuperIngot_Name
+          ns: MyPack
+          source: Super Ingot
       - path: mDescription
         value: A far superior ingot.
       - path: mStackSize

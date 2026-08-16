@@ -1,7 +1,8 @@
 ---
 title: End-to-End Pack
 description: One real pack that combines an item, recipe, schematic, sink points, translation, a dynamic data asset, and RRDA editing, plus how to rename an id safely.
-sidebar: { order: 5 }
+sidebar:
+  order: 5
 ---
 
 The individual type pages ([Items](/kdataforge/features/items), [Resources](/kdataforge/features/resources),
@@ -58,7 +59,7 @@ version: 1.0.0
 
 An `item` document generates a brand-new `ItemDescriptor` subclass and sets its CDO properties in
 one step. `super-ingot.item.yml` parents a new item off the vanilla iron ingot and configures three
-things on it. It gets a localized display name using the `{ key, ns, source }` form rather than a
+things on it. It gets a localized display name using block `key`, `ns`, and `source` fields rather than a
 plain string, so the German translation below can target it. It also gets a description, and an
 `SS_HUGE` stack size, which is an `EStackSize` enum value rather than a plain count:
 
@@ -70,7 +71,10 @@ items:
     parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
     properties:
       - path: mDisplayName
-        value: { key: MySuperIngot_Name, ns: MyPack, source: Super Ingot }
+        value:
+          key: MySuperIngot_Name
+          ns: MyPack
+          source: Super Ingot
       - path: mDescription
         value: A far superior ingot.
       - path: mStackSize
@@ -96,13 +100,12 @@ recipes:
         value: Super Ingot
       - path: mIngredients
         value:
-          - {
-              ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C,
-              Amount: 2,
-            }
+          - ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+            Amount: 2
       - path: mProduct
         value:
-          - { ItemClass: /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot, Amount: 1 }
+          - ItemClass: /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot
+            Amount: 1
       - path: mManufactoringDuration
         value: 4.0
       - path: mProducedIn
@@ -133,15 +136,14 @@ schematics:
         value: 60
       - path: mCost
         value:
-          - {
-              ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C,
-              Amount: 50,
-            }
+          - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C
+            Amount: 50
     unlocks:
       - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
         properties:
           - path: mRecipes
-            value: [/KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot]
+            value:
+              - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot
 ```
 
 `register: true`, which is the default, registers this schematic. From there, SML's
@@ -177,23 +179,27 @@ namespace: MyPack
 culture: de # prefix-matched: also applies for de-DE
 entries:
   MySuperIngot_Name: 'Superbarren'
-  KeyWithSource: { source: 'Super Ingot Smelting', text: 'Superbarren-Verhüttung' } # override by source text
+  KeyWithSource:
+    source: 'Super Ingot Smelting'
+    text: 'Superbarren-Verhüttung'
+    # override by source text
 ```
 
-The item's `mDisplayName` used the localized `FText` form (`{ key: MySuperIngot_Name, ns: MyPack, ... }`),
+The item's `mDisplayName` used localized `FText` fields (`key: MySuperIngot_Name`, `ns: MyPack`, and `source:`),
 so the simple key entry above translates it directly. This one _is_ loaded at session start: you can
 iterate on translations without restarting.
 
 ## Dynamic data asset: KAPI cleaner item
 
 A `dataasset` document creates a brand-new `UPrimaryDataAsset` instance (not a class) of any KAPI
-subclass and announces it to the asset registry. `conditions: { hasMod: KAPI }` gates the whole
+subclass and announces it to the asset registry. A `conditions:` block with `hasMod: KAPI` gates the whole
 document so it cleanly skips if KAPI isn't installed, rather than erroring:
 
 ```yaml
 # file: cleaner.dataasset.yml
 type: dataasset
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 assets:
   - id: CleanerItem_MyFluid
     class: /Script/KAPI.KAPICleanerItemDescription # any UPrimaryDataAsset subclass
@@ -202,10 +208,8 @@ assets:
         value: 4.0
       - path: mInFluid
         value:
-          {
-            ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C,
-            Amount: 1000,
-          }
+          ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
+          Amount: 1000
 ```
 
 This creates a real PrimaryDataAsset instance and announces it to the asset registry. KDataForge
@@ -218,12 +222,13 @@ asset type it applies to.
 Existing data-asset **instances** from other mods are edited with a plain `cdo` document too, using
 `allAssetsOfClass:` to hit every instance of a class at once. This patch halves the cook time of
 every RefinedR&D boiler, whether it is RefinedPower's, FicsitFarming's, or anyone else's built on
-RefinedRDApi. It is gated the same way, behind `conditions: { hasMod: ... }`:
+RefinedRDApi. It is gated the same way, behind a `conditions:` block with `hasMod:`:
 
 ```yaml
 # file: faster-boilers.cdo.yml
 type: cdo
-conditions: { hasMod: RefinedRDApi }
+conditions:
+  hasMod: RefinedRDApi
 patches:
   - allAssetsOfClass: /Script/RefinedRDApi.RRDABoilerDataAsset
     properties:

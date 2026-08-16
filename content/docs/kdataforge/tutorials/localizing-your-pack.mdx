@@ -14,12 +14,12 @@ restart-based workflow that makes translator iteration painless.
 
 ## The two entry forms
 
-Every entry under `entries:` is either a **scalar** or a `{ source, text }` **map**, and
+Every entry under `entries:` is either a **scalar** or a block map with `source` and `text` fields, and
 `UKDFLocalizationHandler` treats them very differently.
 
 The scalar form, `Key: "some text"`, registers a brand-new `(namespace, key)` pair. It sets both
 the source and the displayed text to the same string, and you use it for new text nobody has
-already registered. The map form, `Key: { source: "...", text: "..." }`, overrides an **existing**
+already registered. The map form, `Key:` with nested `source:` and `text:` fields, overrides an **existing**
 `(namespace, key)` pair instead. Here `text:` is what displays, while `source:` must match the
 target's current source string, and you use it for retexting something that already exists.
 
@@ -102,7 +102,9 @@ type: localization
 namespace: KDFSample
 culture: de
 entries:
-  SuperIngot_Name: { source: 'Super Ingot', text: 'Ur-Superbarren' }
+  SuperIngot_Name:
+    source: 'Super Ingot'
+    text: 'Ur-Superbarren'
 ```
 
 **Overriding vanilla or another mod's text is the same mechanism. You just don't get to pick the
@@ -111,7 +113,7 @@ find them:
 
 - **Use `/kdf editor`** (works in a normal running game, not just the UE editor). Browse to the
   target object (a vanilla schematic, another mod's item, anything KDataForge can resolve) and
-  use **Export**. If `mDisplayName` exports as `{ key: ..., ns: ..., source: ... }`, that map _is_
+  use **Export**. If `mDisplayName` exports as a map containing `key`, `ns`, and `source`, that map _is_
   the real address. Copy it verbatim, keep `key`/`ns`/`source` identical, and only change `text:`.
 - **Or read the source mod's own localization files directly.** Most KMods ship
   `Content/Localization/<Mod>/*.archive`/`.manifest` alongside the plugin, which is a faster way to
@@ -127,7 +129,10 @@ Worked example: a schematic whose author (you, an earlier pack version, or anoth
 ```yaml
 # somewhere upstream — the schematic's own properties:
 - path: mDisplayName
-  value: { key: Schematic_SuperIngot_Name, ns: MyPack, source: 'Super Ingot Production' }
+  value:
+    key: Schematic_SuperIngot_Name
+    ns: MyPack
+    source: 'Super Ingot Production'
 ```
 
 ```yaml
@@ -137,7 +142,8 @@ namespace: MyPack
 culture: fr
 entries:
   Schematic_SuperIngot_Name:
-    { source: 'Super Ingot Production', text: 'Production de Super Lingot' }
+    source: 'Super Ingot Production'
+    text: 'Production de Super Lingot'
 ```
 
 `namespace: MyPack` + `Schematic_SuperIngot_Name` has to match the schematic's declaration
@@ -179,7 +185,7 @@ does not match current language <Y>` when this happens. Omitting `culture:` enti
 - **Overriding a recipe's display name does nothing.** Check `mDisplayNameOverride` on that
   recipe: if it's `false`, the UI ignores `mDisplayName` entirely and shows the first product's
   item name.
-- **Export shows a plain string, not `{ key, ns, source }`.** The target text is culture-invariant,
+- **Export shows a plain string, not a map containing `key`, `ns`, and `source`.** The target text is culture-invariant,
   so no localization override will ever reach it. Change it with a `cdo` patch on the property
   instead (this affects every language, not one).
 - **Trying to `cdo`-patch a schematic/recipe/item you generated yourself, to convert its

@@ -1,7 +1,8 @@
 ---
 title: 'Type: research'
 description: Generating new M.A.M. research trees from YAML, registering existing ones, and how this fits alongside schematics and recipes.
-sidebar: { order: 15 }
+sidebar:
+  order: 15
 ---
 
 This entry type runs at the `Research` stage, after `Schematics`. It does not support
@@ -72,7 +73,8 @@ research:
       - class: /Script/FactoryGame.FGSchematicPurchasedDependency
         properties:
           - path: mSchematics
-            value: [Schematic_MyPrerequisite]
+            value:
+              - Schematic_MyPrerequisite
     visibilityDependencies:
       - class: /Game/FactoryGame/AvailabilityDependencies/BP_GamePhaseReachedDependency.BP_GamePhaseReachedDependency_C
         properties:
@@ -106,11 +108,14 @@ research:
     autoPath: true
     addNodes:
       - schematic: Schematic_MyExtension
-        coordinate: { X: 4, Y: 2 }
+        coordinate:
+          X: 4
+          Y: 2
         parents:
           - schematic: Schematic_ExistingParent
         nodesToUnhide:
-          - { X: 5, Y: 2 }
+          - X: 5
+            Y: 2
 ```
 
 For a concrete base-game example, this adds the Pure Super Ingot schematic after the Mycelia Gas
@@ -124,21 +129,23 @@ research:
     autoPath: true
     addNodes:
       - schematic: Schematic_PureSuperIngot
-        coordinate: { X: 4, Y: 6 }
+        coordinate:
+          X: 4
+          Y: 6
         parents:
           - schematic: /Game/FactoryGame/Schematics/Research/Mycelia_RS/Research_Mycelia_GasMask.Research_Mycelia_GasMask_C
 ```
 
 With `autoPath: true`, KDataForge turns every resolved `parents:` edge from `addNodes:` into a
 matching straight road on the parent. For custom or bent roads, use `autoPath: false` with
-`childrenAndRoads:`; a parent can provide one `{ key, points }` map or a sequence of them for
+`childrenAndRoads:`; a parent can provide one block map with `key` and `points` fields or a sequence of them for
 multiple children. Set `class:` on a node only when a custom `UFGResearchTreeNode` subclass is
 required. Its ordinary `properties:` list remains available, but convenience fields that the
 subclass does not expose are
 reported and skipped rather than failing the whole document.
 
 To remove a node, select it by schematic class with tree-entry-level `removeNodes:`. It accepts a
-scalar class reference or `{ schematic: ... }`. KDataForge applies removals before `addNodes:`
+scalar class reference or a block map with `schematic:`. KDataForge applies removals before `addNodes:`
 additions in the same tree entry, then removes the node and all surviving `Parents`,
 `NodesToUnhide`, `UnhiddenBy`, and `ChildrenAndRoads` references to its coordinate. `addNodes:` then
 appends replacements or unrelated new nodes. `autoPath: true` applies to those additions and writes
@@ -152,7 +159,9 @@ research:
       - Schematic_ObsoleteExtension
     addNodes:
       - schematic: Schematic_NewExtension
-        coordinate: { X: 6, Y: 3 }
+        coordinate:
+          X: 6
+          Y: 3
         parents:
           - schematic: Schematic_ExistingParent
 ```

@@ -81,7 +81,8 @@ one, since they're about the file as a whole, not one YAML node.
 
 ## Step 3: did conditions pass?
 
-A `conditions:` block (`gameVersion`, `hasMod`, `modVersion`, `hasClass`, see
+A `conditions:` object or array (`gameVersion`, `hasMod`, `modVersion`, `hasClass`, per-object
+`ifNotMatch`, and top-level `conditionBehaivor: AND|OR`, see
 [Conditions & Packs → Conditions](/kdataforge/features/conditions-and-packs#conditions-gating-whether-a-document-applies-at-all))
 is evaluated once per document, before validation or apply. A failing condition produces exactly
 one diagnostic:
@@ -106,9 +107,10 @@ The only reliable way to catch this today is to **temporarily delete or comment 
 `conditions:` block and restart the session.** If your document suddenly counts toward "document(s)
 applied" (or your op's debug line from [Step 5](#step-5-did-the-specific-op-apply) appears) with the
 block removed, the condition was the culprit. Put the block back and check it against
-[Conditions & Packs](/kdataforge/features/conditions-and-packs) for exact key names,
-mod ref spelling, and version-range syntax (`gameVersion`/`hasMod`/`modVersion` all use SML semver
-ranges).
+[Conditions & Packs](/kdataforge/features/conditions-and-packs) for exact key names, mod ref
+spelling, version-range syntax (`gameVersion`/`hasMod`/`modVersion` all use SML semver ranges), and
+array grouping (`ifNotMatch` negates only its containing object), and `conditionBehaivor` spelling/
+value (`AND` is default; `conditionBehavior` is accepted as an alias).
 
 ## Step 4: did the document validate?
 

@@ -1,7 +1,8 @@
 ---
 title: Property Types
 description: One working example for every supported property datatype, and the gotchas specific to each.
-sidebar: { order: 2 }
+sidebar:
+  order: 2
 ---
 
 Every `properties:` entry inside a `type: cdo` patch (see [Patching](/kdataforge/features/patching-cdo))
@@ -73,6 +74,42 @@ garbage at every use site that reads `mStackSize`. Always use the value name unl
 know the ordinal you want.
 :::
 
+## bitmask (`int32`/`uint8` with `BitmaskEnum` metadata)
+
+Bitmask properties store several enum flags in one integer. Use a scalar for one flag and a YAML
+sequence for several flags:
+
+```yaml
+- path: mParentTask
+  value: Above
+- path: mParentTask
+  value:
+    - Above
+    - Left
+```
+
+KDataForge also accepts an inline sequence, a `|`-joined string, or a raw pre-computed integer
+mask. All named forms are Shipping-safe. Names are preferred because they remain readable:
+
+```yaml
+- path: mParentTask
+  value:
+    - Above
+    - Left
+- path: mParentTask
+  value: "Above|Left"
+- path: mParentTask
+  value: 3 # Above (1) | Left (2)
+```
+
+:::caution
+Named forms require an enum whose declared values are masks
+(`UseEnumValuesAsMaskValuesInEditor=true`), as `EKAPIDeliveryTaskParent` uses. Bit-index-style enums
+need a complete numeric mask. See [Operations](/kdataforge/features/operations#bitmask-operations)
+for mutation ops and [Delivery Task Trees](/kdataforge/examples/delivery-task) for every
+`EKAPIDeliveryTaskParent` bit.
+:::
+
 ## FString
 
 Plain reflected strings take a quoted scalar as-is, no escaping beyond normal YAML quoting rules:
@@ -107,7 +144,8 @@ below or route it through [Localization](/kdataforge/features/localization):
 ## FText: localized (key/namespace/source)
 
 Passing a map instead of a scalar creates a properly keyed, localizable `FText` instead of an
-invariant literal. The `key` field is required, while `ns` and `source` are optional. This uses the
+invariant literal. The `key` field is required, while `ns` and `source` are optional. A map containing
+only `source` is invalid; use a scalar for culture-invariant text. This uses the
 same runtime-safe construction path the localization system relies on:
 
 ```yaml
@@ -182,7 +220,11 @@ name. Each value is recursively converted through this same codec for that membe
 
 ```yaml
 - path: mFluidColor
-  value: { R: 255, G: 100, B: 0, A: 255 }
+  value:
+    R: 255
+    G: 100
+    B: 0
+    A: 255
 ```
 
 ## Struct: positional sequence form (members in declaration order)
@@ -192,7 +234,11 @@ terse, well-known structs, like a color or vector, where the member order never 
 
 ```yaml
 - path: mScannerLightColor
-  value: [1.0, 0.5, 0.0, 1.0]
+  value:
+    - 1.0
+    - 0.5
+    - 0.0
+    - 1.0
 ```
 
 ## Nested structs (any depth)

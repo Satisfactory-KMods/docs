@@ -13,7 +13,7 @@ explicit lists:
 - research `visibilityDependencies:` → `UFGResearchTree::mVisibilityDependencies`;
 - KAPI delivery-task `dependencies:` → `UKAPIDeliveryTask::mTaskDependencies`.
 
-Each entry uses `{ class:, properties: }`. Known native paths with Blueprint children automatically
+Each entry uses a block map containing `class:` and `properties:`. Known native paths with Blueprint children automatically
 remap to concrete generated classes; exact Blueprint paths remain valid. Linter emits warning
 `class.native-remapped` for mapped native form. Abstract classes without Blueprint variants cannot
 be instanced.
@@ -23,7 +23,8 @@ dependencies:
   - class: /Script/FactoryGame.FGSchematicPurchasedDependency
     properties:
       - path: mSchematics
-        value: [/Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C]
+        value:
+          - /Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C
       - path: mRequireAllSchematicsToBePurchased
         value: true
 ```
@@ -69,7 +70,7 @@ Unreal Asset Registry scan found **33 native classes** and **17 shipped Blueprin
 | `FGToiletFlushDependency` | no | `/Script/FactoryGame.FGToiletFlushDependency` | `mFlushedItemClass: TArray<TSubclassOf<UFGItemDescriptor>>` | Requires configured items flushed |
 | `FGWeatherReactionSeenDependency` | no | `/Script/FactoryGame.FGWeatherReactionSeenDependency` | `mWeatherReactionClass: TSubclassOf<AFGWeatherReaction>` | Requires weather reaction observed |
 
-`properties[].path` uses exact reflected member name. `TSubclassOf<T>` accepts Unreal class path;
+Each `properties` entry's `path` uses exact reflected member name. `TSubclassOf<T>` accepts Unreal class path;
 `TObjectPtr<T>` accepts object asset path or `null`; `TArray<T>` accepts YAML sequence;
 `TMap<TKey, TValue>` accepts YAML mapping with keys and values matching declared generic types.
 `TEnumAsByte<E>` accepts same enum token as `E`. C++ access (`protected`/`private`) does not change
@@ -84,7 +85,7 @@ property path because KDataForge writes through Unreal reflection.
 | `EItemUnlockRequirement` | `Any`, `All` |
 | `EEvents` | `EV_None`, `EV_Christmas`, `EV_Birthday`, `EV_CSSBirthday`, `EV_FirstOfApril` |
 | `EGamePhase` | `EGP_EarlyGame`, `EGP_MidGame`, `EGP_LateGame`, `EGP_EndGame`, `EGP_FoodCourt`, `EGP_Victory`, `EGP_NA` |
-| `EElevatorDependencyEvent` bitmask stored in `mEvents` | integer `0..3`: `None=0`, `BeginMove=1`, `EndMove=2`; combine flags numerically |
+| `EElevatorDependencyEvent` bitmask stored in `mEvents` | `BeginMove`, `EndMove`, or a block sequence containing both; raw integer masks `0..3` also work (`None=0`, `BeginMove=1`, `EndMove=2`) |
 | `EResearchTreeStatus` | `ERTS_Locked`, `ERTS_Unlocked`, `ERTS_StartedResearch`, `ERTS_FinishedAllResearch` |
 | `ESchematicType` | `EST_Custom`, `EST_Cheat`, `EST_Tutorial`, `EST_Milestone`, `EST_Alternate`, `EST_Story`, `EST_MAM`, `EST_ResourceSink`, `EST_HardDrive`, `EST_Prototype`, `EST_Customization` |
 | `ETakeDamagePlayerInteraction` | `Any`, `PlayerWasDamaged`, `PlayerDealtDamage` |
@@ -117,7 +118,8 @@ research:
             value: EGP_EarlyGame
 ---
 type: dataasset
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 assets:
   - id: MyDeliveryTask
     class: /Script/KAPI.KAPIDeliveryTask
@@ -125,7 +127,8 @@ assets:
       - class: /Script/FactoryGame.FGSchematicPurchasedDependency
         properties:
           - path: mSchematics
-            value: [Schematic_MyPrerequisite]
+            value:
+              - Schematic_MyPrerequisite
 ```
 
 Related: [Schematics](/kdataforge/features/schematics),

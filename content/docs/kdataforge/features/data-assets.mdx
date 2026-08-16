@@ -1,7 +1,8 @@
 ---
 title: Data Assets
 description: Editing every KAPI PrimaryDataAsset type, creating new instances with type dataasset, loading 2D images with type asset, and RefinedR&D (RRDA) mod integration.
-sidebar: { order: 18 }
+sidebar:
+  order: 18
 ---
 
 Most of the reference pages nearby cover generated **classes** such as buildings, recipes, and
@@ -70,7 +71,8 @@ across every modular miner resource at once is a single `allAssetsOfClass` patch
 
 ```yaml
 type: cdo
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPIModularMinerDescription
     properties:
@@ -94,7 +96,8 @@ numeric ops, including through the nested path:
 
 ```yaml
 type: cdo
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPICleanerItemDescription
     properties:
@@ -119,7 +122,8 @@ step instead of chaining `min`/`max`:
 
 ```yaml
 type: cdo
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPIAirCollectorData
     properties:
@@ -145,7 +149,8 @@ one recipe":
 
 ```yaml
 type: cdo
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPIManufacturerModifications
     properties:
@@ -168,7 +173,8 @@ hatch chance are the two levers most packs touch first:
 
 ```yaml
 type: cdo
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPISugHatchingData
     properties:
@@ -196,7 +202,8 @@ the relevant list instead of replacing it wholesale:
 
 ```yaml
 type: cdo
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPIExtractorAllowList
     properties:
@@ -217,7 +224,8 @@ guarantee as `mResourceClass` and `mInFluid.ItemClass` above:
 
 ```yaml
 type: cdo
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPTooltipWidgetInjector
     properties:
@@ -249,7 +257,8 @@ meant for:
 
 ```yaml
 type: cdo
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 patches:
   - matchTag: KMods.Cheat # hide all cheat-tagged KAPI content
     ofClass: /Script/KAPI.KAPIDataAssetBase
@@ -274,7 +283,8 @@ instance up on its next scan:
 ```yaml
 # file: cleaner.dataasset.yml
 type: dataasset
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 assets:
   - id: CleanerItem_MyFluid
     class: /Script/KAPI.KAPICleanerItemDescription # any UDataAsset subclass
@@ -283,10 +293,8 @@ assets:
         value: 4.0
       - path: mInFluid
         value:
-          {
-            ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C,
-            Amount: 1000,
-          }
+          ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
+          Amount: 1000
 ```
 
 `dataasset` runs in the **Assets** stage, the second stage in the pipeline, right after `GameTags`
@@ -385,7 +393,8 @@ all the gating a pack needs. There's no RRDA API dependency to add:
 ```yaml
 # file: faster-boilers.cdo.yml
 type: cdo
-conditions: { hasMod: RefinedRDApi }
+conditions:
+  hasMod: RefinedRDApi
 patches:
   - allAssetsOfClass: /Script/RefinedRDApi.RRDABoilerDataAsset
     properties:

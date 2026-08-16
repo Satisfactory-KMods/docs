@@ -1,7 +1,8 @@
 ---
 title: Targeting
 description: Every way to select patch targets, including class CDOs, asset instances, all assets of a class, tag matching, subclasses, and spawned actors.
-sidebar: { order: 4 }
+sidebar:
+  order: 4
 ---
 
 Every `type: cdo` patch needs at least one target selector. The current validator accepts multiple
@@ -70,7 +71,8 @@ object directly. Instances have **no** `_C` suffix: they are objects, not classe
 
 ```yaml
 type: cdo
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 patches:
   - target: /KLib/Assets/MinerDescriptions/DA_MinerDesc_Iron.DA_MinerDesc_Iron
     properties:
@@ -109,7 +111,8 @@ for data-asset families:
 
 ```yaml
 type: cdo
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPICleanerItemDescription
     properties:
@@ -127,9 +130,10 @@ matches data-asset instances (default `true`):
 
 ```yaml
 type: cdo
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 patches:
-  - matchTag: KMods.AlternateRecipe # scalar — or a sequence: [KMods.AlternateRecipe, MyPack.Buffed]
+- matchTag: KMods.AlternateRecipe # scalar; use a block sequence for multiple tags
     ofClass: /Script/FactoryGame.FGRecipe # required scope
     tagProperty: mGameplayTags # optional explicit tag container property
     matchAssets: true # also match data-asset instances (default true)

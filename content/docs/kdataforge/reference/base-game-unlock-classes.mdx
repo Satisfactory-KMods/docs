@@ -54,7 +54,7 @@ Unreal Asset Registry scan found **26 native classes** and **22 shipped Blueprin
 | `FGUnlockTape` | no | `/Script/FactoryGame.FGUnlockTape` | `mTapeUnlocks: TArray<TSubclassOf<UFGTapeData>>` |
 | `FGUnlockVisualizationMode` | yes | — provide concrete mod subclass | `mVisualizationModes: TArray<TSubclassOf<UFGVisualizationModeDescriptor>>` |
 
-`properties[].path` uses field name exactly. `TSubclassOf<T>` accepts Unreal class path;
+Each `properties` entry's `path` uses field name exactly. `TSubclassOf<T>` accepts Unreal class path;
 `TObjectPtr<T>` accepts object asset path or `null`; `TArray<T>` accepts YAML sequence; reflected
 struct accepts YAML mapping. C++ access (`protected`/`private`) does not change KDataForge property
 path because application uses Unreal reflection. Fields marked transient are not configuration
@@ -78,11 +78,14 @@ unlocks:
   - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
     properties:
       - path: mRecipes
-        value: [/KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot]
+        value:
+          - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot
   - class: /Game/FactoryGame/Unlocks/BP_UnlockSchematic.BP_UnlockSchematic_C # unlocks OTHER schematics directly —
-    properties: # bypasses MAM/HUB purchase entirely
+    properties:
+      # bypasses MAM/HUB purchase entirely
       - path: mSchematics
-        value: [/Game/FactoryGame/Schematics/Progression/Schematic_2-3.Schematic_2-3_C]
+        value:
+          - /Game/FactoryGame/Schematics/Progression/Schematic_2-3.Schematic_2-3_C
 ```
 
 The current game build ships no Blueprint variant for FGUnlockVisualizationMode; use a mod-provided concrete subclass for that abstract native type.
@@ -151,9 +154,7 @@ unlocks:
           - ResourceDescriptor: /Game/FactoryGame/Resource/RawResources/Bauxite/Desc_OreBauxite.Desc_OreBauxite_C
             ResourceNodeType: Node # Node | FrackingSatellite | FrackingCore | Geyser | Deposit
   - class: /Game/FactoryGame/Unlocks/BP_UnlockScannableObject.BP_UnlockScannableObject_C
-    properties:
-      - path: mScannableObjects
-        value: [] # FScannableObjectData entries — world-object scan targets (crates, POIs, …)
+    # Add mScannableObjects entries for world-object scan targets such as crates or POIs.
 ```
 
 | Class                       | Key property                                                                                               | What it does                                                   |
@@ -167,13 +168,12 @@ unlocks:
 ```yaml
 unlocks:
   - class: /Script/FactoryGame.FGUnlockCustomization
-    properties:
-      - path: mCustomizationUnlocks
-        value: [] # TSubclassOf<UFGPlayerCustomizationDesc> entries — outfits/skins
+    # Add mCustomizationUnlocks entries for outfits or skins.
   - class: /Game/FactoryGame/Unlocks/BP_UnlockEmote.BP_UnlockEmote_C
     properties:
       - path: mEmotes
-        value: [/Game/FactoryGame/Emotes/Wave/Emote_Wave.Emote_Wave_C]
+        value:
+          - /Game/FactoryGame/Emotes/Wave/Emote_Wave.Emote_Wave_C
 ```
 
 | Class                       | Key property                                                               | What it does                                                        |

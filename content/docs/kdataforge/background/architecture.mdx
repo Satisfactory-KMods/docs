@@ -18,33 +18,7 @@ name `data-editor`, and any directory containing `pack.yml`. Roots may nest, and
 assigned only to its deepest enclosing root. An implicit pack ref and name come from the detected
 root's parent directory, so an explicit stable `ref` is recommended.
 
-```
- <your-mod>/DataForge/**/*.yml
-        │  scan (FKDFPackScanner, pruned recursive walk)
-        ▼
- pack.yml manifests → FKDFPack          *.yml → parallel parse (ryml, worker threads)
-        │                                        │
-        ▼                                        ▼
- dependency topology / ready tie-breaks  FKDFNode document trees (engine-side model)
-        │                                        │
-        └────────────────┬───────────────────────┘
-                         ▼
-              UKDFSubsystem (GameInstance)
-              ├── condition evaluation (gameVersion / hasMod / modVersion / hasClass)
-              ├── root-type detection (`type:` key or `<name>.<type>.yml`)
-              ├── handler registry (root type → IKDFDataEditorHandler, priority-sorted)
-              ▼
-     Stage pipeline (fixed EKDFStage order — never reordered by handlers):
-     GameTags → Assets → Localization → CDOChanges → Items → Recipes → Buildings
-     → Schematics → Research → Unlocks → SubsystemMods → RuntimePatches → Validation
-                         │
-                         ▼
-     FKDFOpEngine + FKDFValueCodec + FKDFPropertyResolver (reflection engine)
-     ├── vanilla snapshots for CDO/editor writes     (FKDFVanillaCache)
-     ├── op application on CDOs / data assets / matched objects
-     ├── patch records (FKDFPatchRecord: report and editor history)
-     └── actor patch registration → UKDFActorPatchSubsystem (per world)
-```
+![KDataForge runtime architecture from pack discovery through staged reflection operations and per-world actor patches](../../../assets/kdataforge/architecture.svg)
 
 ## Lifecycle Integration (SML)
 
@@ -91,7 +65,7 @@ object-typed members is also supported, which is what makes `mSomeComponent.Prop
 subobjects reachable.
 
 **Conversion** (`FKDFValueCodec`) supports bool, all numerics, enums (typed and byte-based),
-FString/FName/FText (with the `{key, ns, source}` localized form), object/class references (hard
+FString/FName/FText (with localized `key`, `ns`, and `source` fields), object/class references (hard
 and soft), structs (native text form, map form, positional sequence form), arrays, sets, and maps,
 with everything else falling back to a generic text-based conversion path. This fallback is what
 makes "every reflectable type" honest, without needing hundreds of hand-written cases.

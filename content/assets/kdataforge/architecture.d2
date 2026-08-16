@@ -1,0 +1,60 @@
+# Render with D2 v0.7.1:
+# d2 --layout elk --theme 8 --dark-theme 200 --pad 32 architecture.d2 architecture.svg
+
+direction: down
+
+pack_files: "<your-mod>/DataForge/**/*.yml" {
+  shape: document
+}
+
+scanner: "FKDFPackScanner\npruned recursive scan" {
+  shape: hexagon
+}
+
+pack_plan: "pack.yml → FKDFPack\ndependency topology\npriority/ref tie-breaks" {
+  shape: diamond
+}
+
+node_model: "*.yml → parallel ryml parse\nFKDFNode document trees" {
+  shape: stored_data
+}
+
+subsystem: "UKDFSubsystem (GameInstance)\nRunInitialLoad\nconditions → root-type detection → priority-sorted handler" {
+  shape: rectangle
+}
+
+stages: "Fixed EKDFStage pipeline\nGameTags → Assets → Localization → CDOChanges\n→ Items → Recipes → Buildings → Schematics\n→ Research → Unlocks → SubsystemMods\n→ RuntimePatches → Validation" {
+  shape: queue
+}
+
+reflection: "Reflection engine\nFKDFOpEngine + FKDFValueCodec\n+ FKDFPropertyResolver" {
+  shape: rectangle
+}
+
+snapshots: "FKDFVanillaCache\nfirst-write snapshots" {
+  shape: cylinder
+}
+
+objects: "CDOs, data assets,\ngenerated content, matched objects" {
+  shape: stored_data
+}
+
+records: "FKDFPatchRecord\nreport and editor history" {
+  shape: document
+}
+
+actor_patches: "UKDFActorPatchSubsystem (per world)\nregistered patches → existing actors at begin play\n+ each newly spawned actor" {
+  shape: rectangle
+}
+
+pack_files -> scanner: scan
+scanner -> pack_plan
+scanner -> node_model
+pack_plan -> subsystem
+node_model -> subsystem
+subsystem -> stages
+stages -> reflection
+reflection -> snapshots
+reflection -> objects
+reflection -> records
+reflection -> actor_patches: runtime patches

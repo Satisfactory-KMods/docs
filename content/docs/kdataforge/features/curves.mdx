@@ -1,7 +1,8 @@
 ---
 title: 'Float and Vector Curves'
 description: Create and edit UCurveFloat and UCurveVector assets with keys, interpolation, tangents, defaults, and extrapolation.
-sidebar: { order: 19 }
+sidebar:
+  order: 19
 ---
 
 `type: curve` creates or edits Unreal curve assets during the `Assets` stage. Set
@@ -61,12 +62,21 @@ type: curve
 curveType: vector
 curves:
   - id: CameraOffset
-    defaultValue: { X: 0, Y: 0, Z: 0 }
+    defaultValue:
+      X: 0
+      Y: 0
+      Z: 0
     keys:
       - time: 0
-        value: { X: 0, Y: 0, Z: 0 }
+        value:
+          X: 0
+          Y: 0
+          Z: 0
       - time: 1
-        value: [100, 0, 50]
+        value:
+          - 100
+          - 0
+          - 50
         interpMode: cubic
         tangentMode: auto
 ```
@@ -76,12 +86,15 @@ curves:
 ```yaml
 type: curve
 curveType: float
-conditions: { hasMod: SomeMod }
+conditions:
+  hasMod: SomeMod
 curves:
   - target: /SomeMod/Curves/Curve_ProductionRate.Curve_ProductionRate
     keys:
-      - { time: 0, value: 1 }
-      - { time: 60, value: 2 }
+      - time: 0
+        value: 1
+      - time: 60
+        value: 2
 ```
 
 `target:` must resolve to class selected by `curveType`. A float document cannot edit a

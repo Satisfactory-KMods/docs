@@ -1,7 +1,8 @@
 ---
 title: 'Type: schematic'
 description: Generating new schematics/milestones, registering existing ones, the instanced unlocks list that's the normal way to hook up a recipe, and gating a schematic on prerequisites.
-sidebar: { order: 14 }
+sidebar:
+  order: 14
 ---
 
 A `type: schematic` document generates new schematic classes (milestones, MAM research, alt
@@ -42,15 +43,14 @@ schematics:
         value: 60
       - path: mCost
         value:
-          - {
-              ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C,
-              Amount: 50,
-            }
+          - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C
+            Amount: 50
     unlocks:
       - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
         properties:
           - path: mRecipes
-            value: [/KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot]
+            value:
+              - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot
 ```
 
 `register: true` (the default) queues this into SML's `UModContentRegistry` per-world before the
@@ -72,7 +72,8 @@ unlocks:
   - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C # any concrete FGUnlock subclass
     properties:
       - path: mRecipes
-        value: [/KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot]
+        value:
+          - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot
   - class: /Script/FactoryGame.FGUnlockInventorySlot
     properties:
       - path: mNumInventorySlotsToUnlock
@@ -109,8 +110,10 @@ unlock does:
 schematics:
   - id: Schematic_Convenience
     recipes:
-      [Recipe_MySuperIngot, /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C]
-    schematics: [/Game/FactoryGame/Schematics/Progression/Schematic_2-3.Schematic_2-3_C]
+      - Recipe_MySuperIngot
+      - /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    schematics:
+      - /Game/FactoryGame/Schematics/Progression/Schematic_2-3.Schematic_2-3_C
     handSlots: 1
     inventorySlots: 3
     scannableResources:
@@ -155,12 +158,15 @@ schematic's CDO, appended to `mSchematicDependencies`:
 type: schematic
 schematics:
   - id: Schematic_AdvancedSuperIngot
-    properties: [...]
+    properties:
+      - path: mDisplayName
+        value: Advanced Super Ingot
     dependencies:
       - class: /Script/FactoryGame.FGSchematicPurchasedDependency
         properties:
           - path: mSchematics
-            value: [/KDataForge/Gen/MyPack.Gen_MyPack_Schematic_MySuperIngot]
+            value:
+              - /KDataForge/Gen/MyPack.Gen_MyPack_Schematic_MySuperIngot
           - path: mRequireAllSchematicsToBePurchased
             value: true
 ```

@@ -1,7 +1,8 @@
 ---
 title: Conditions & Packs
 description: 'Every condition form for gating whether a document applies, pack manifest options, id redirects, and include: ordering between files in the same pack.'
-sidebar: { order: 5 }
+sidebar:
+  order: 5
 ---
 
 Two mechanisms sit above the individual document types covered elsewhere in this section. The
@@ -13,10 +14,11 @@ way no matter which document `type:` (`cdo`, `item`, `gametag`, …) they're att
 ## Conditions: gating whether a document applies at all
 
 A `conditions:` block lets a document skip itself when the environment doesn't match: a required
-mod isn't loaded, the game version is too old, or a class from another mod doesn't exist. All keys
-inside it are AND-combined, and ranges use SML's semver syntax (`>=`, `^`, `~`, exact versions,
-`||` unions). The example below exercises every supported key, including both the scalar and
-sequence forms of `hasMod`/`hasClass`:
+mod isn't loaded, the game version is too old, or a class from another mod doesn't exist. It accepts
+one object or an array of objects. Keys inside each object are AND-combined; `conditionBehaivor`
+selects `AND` or `OR` across objects and defaults to `AND`. Ranges use SML's semver syntax (`>=`,
+`^`, `~`, exact versions, `||` unions). The example below exercises every supported key, including
+both the scalar and sequence forms of `hasMod`/`hasClass`:
 
 ```yaml
 type: cdo
@@ -43,6 +45,46 @@ patches:
         value: 1.5
 ```
 
+The map form above remains the compact form for ordinary positive conditions. Use an array of
+condition objects when some requirements must match and another must **not** match:
+
+```yaml
+conditionBehaivor: AND # optional; AND is the default
+conditions:
+  - hasMod:
+      - KAPI
+      - KLib
+      # both mods must be loaded
+  - hasMod: IncompatibleMod # this object must NOT match
+    ifNotMatch: true
+  - hasMod: 'OptionalIntegration@^2.0.0' # reject only matching 2.x versions
+    ifNotMatch: true
+```
+
+Keys inside each object are AND-combined, then `ifNotMatch: true` negates that object's combined
+result. `conditionBehaivor` combines the resulting objects and accepts `AND` or `OR`
+(case-insensitive); it defaults to `AND`. Correctly spelled `conditionBehavior` is accepted as an
+alias. Therefore, the example applies only when KAPI and KLib are loaded, `IncompatibleMod` is
+absent, and `OptionalIntegration` is either absent or outside `^2.0.0`.
+
+Inversion applies to the whole object, not each list entry. To reject several mods independently,
+put each `hasMod` check in its own object with `ifNotMatch: true`. Invalid keys, value types, or
+version ranges are configuration errors and are never converted into matches by inversion.
+
+Use `OR` when any one condition object may enable the document:
+
+```yaml
+conditionBehaivor: OR
+conditions:
+  - hasMod: RefinedPower
+  - hasMod: FicsitFarming
+```
+
+This applies when RefinedPower, FicsitFarming, or both are loaded. `ifNotMatch` still runs per object
+before OR combines the results. Invalid behavior values or malformed condition objects always fail
+closed, even when another OR object matches. With an empty condition array, `AND` passes and `OR`
+does not.
+
 Failing conditions skip the document with an `Info`-severity diagnostic. However, `/kdf report`
 filters `Info` diagnostics out of its printed output entirely, so a condition skip is currently
 **not** visible there. The only signal is a lower-than-expected "document(s) applied" count. See
@@ -62,6 +104,7 @@ name: My Overhaul Pack
 version: 2.1.0
 priority: 200 # higher than default (100) → applies earlier in every stage
 enabled: true
+conditionBehaivor: AND # optional; controls condition-object aggregation
 dependencies:
   - KDFSample # packs that must load before this one
 conditions: # same grammar/evaluator as a document's conditions: — see above
@@ -76,12 +119,12 @@ tie-break, followed by `ref` ascending. `priority` defaults to 100.
 
 ## pack.yml conditions: gating a whole pack
 
-`pack.yml` accepts the exact same `conditions:` block and evaluator as a document: every key from
-[Conditions: gating whether a document applies at all](#conditions-gating-whether-a-document-applies-at-all)
-above (`gameVersion`, `hasMod`, `modVersion`, `hasClass`) works here unchanged. It's evaluated
-**once, before any file in the pack is even read**, a failing pack is skipped entirely with a
-single `Info`-severity diagnostic naming the pack, instead of every document in it failing its own
-copy of the same condition:
+`pack.yml` accepts the exact same `conditions:` map-or-array and evaluator as a document. Every key
+from [Conditions: gating whether a document applies at all](#conditions-gating-whether-a-document-applies-at-all)
+above (`gameVersion`, `hasMod`, `modVersion`, `hasClass`) plus condition arrays, `ifNotMatch`, and
+`conditionBehaivor` works here unchanged. It's evaluated **once, before any file in the pack is even
+read**. A failing pack is skipped entirely with a single `Info`-severity diagnostic naming the pack,
+instead of every document in it failing its own copy of the same condition:
 
 ```yaml
 # file: pack.yml
@@ -89,12 +132,16 @@ ref: MyRefinedPowerAddon
 name: My RefinedPower Addon
 version: 1.0.0
 conditions:
-  hasMod: RefinedPower@>=4.0.0 # the whole pack only loads when RefinedPower 4.0+ is present
+  - hasMod: RefinedPower@>=4.0.0
+  - hasMod: LegacyRefinedPowerBridge
+    ifNotMatch: true
 ```
 
-Use this for "this whole pack is a compat/addon layer for mod X" instead of repeating
-`conditions: { hasMod: X }` at the top of every document. A document can still carry its own
-`conditions:` on top of the pack's; both are AND-combined.
+This whole pack loads only when RefinedPower 4.0+ is present and `LegacyRefinedPowerBridge` is not
+loaded. Use pack conditions for "this whole pack is a compat/addon layer for mod X" instead of
+repeating a `conditions:` block with `hasMod: X` at the top of every document. A document can still carry its
+own `conditions:` on top of the pack's. Pack and document gates must both pass; each gate uses its
+own `conditionBehaivor` value.
 
 ## redirects: renaming generated-content ids
 

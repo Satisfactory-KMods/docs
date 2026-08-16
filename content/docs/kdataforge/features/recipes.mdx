@@ -1,7 +1,8 @@
 ---
 title: 'Type: recipe'
 description: Generating new recipes from YAML, registering existing recipe classes, and how registration into SML's content registry actually happens.
-sidebar: { order: 13 }
+sidebar:
+  order: 13
 ---
 
 The `recipe` type runs in the `Recipes` stage, which comes after the whole `Items` stage. That
@@ -33,13 +34,12 @@ recipes:
         value: Super Ingot
       - path: mIngredients
         value:
-          - {
-              ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C,
-              Amount: 2,
-            }
+          - ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+            Amount: 2
       - path: mProduct
         value:
-          - { ItemClass: /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot, Amount: 1 }
+          - ItemClass: /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot
+            Amount: 1
       - path: mManufactoringDuration
         value: 4.0
       - path: mProducedIn
@@ -78,7 +78,9 @@ type: recipe
 recipes:
   - id: Recipe_MySuperIngot
     register: true # default — omit unless you specifically want to skip registration
-    properties: [...]
+    properties:
+      - path: mManufacturingDuration
+        value: 4
 ```
 
 `register: true` is the default, so the recipe is queued unless you set it to `false` explicitly.

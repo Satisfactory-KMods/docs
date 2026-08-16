@@ -1,7 +1,8 @@
 ---
 title: 'Type: gametag'
 description: Registering new gameplay tags at runtime, syntax, implementation, and ordering guarantees.
-sidebar: { order: 7 }
+sidebar:
+  order: 7
 ---
 
 A `gametag` document runs in the `GameTags` stage, which always runs **first**, before every
@@ -58,7 +59,8 @@ patches:
     properties:
       - path: mGameplayTags
         op: append
-        value: [MyOverhaul.Machines.Tier2]
+        value:
+          - MyOverhaul.Machines.Tier2
 ```
 
 Then a second `cdo` document can select everything carrying that tag and patch it in bulk:
@@ -92,7 +94,9 @@ the container entirely, and the default `set` op replaces the whole container:
 ```yaml
 - path: mGameplayTags # append — add tags (sequence or scalar)
   op: append
-  value: [MyOverhaul.Simple, KMods.WikiExclude]
+  value:
+    - MyOverhaul.Simple
+    - KMods.WikiExclude
 - path: mGameplayTags # remove — take one tag out
   op: remove
   value: KMods.WikiExclude

@@ -1,11 +1,12 @@
 ---
 title: 'Type: localization'
 description: Runtime text entries per namespace and culture, overriding existing texts by source string, and culture matching.
-sidebar: { order: 8 }
+sidebar:
+  order: 8
 ---
 
 The `Localization` stage runs after `GameTags`/`Assets` and before `CDOChanges`. Its entries key is
-`entries`, a map from key to either a scalar or a `{ source, text }` object.
+`entries`, a map from key to either a scalar or a block map with `source` and `text` fields.
 
 ## Simple key entries: new text
 
@@ -22,7 +23,7 @@ entries:
   MySuperIngot_Desc: 'Ein weit überlegener Barren.'
 ```
 
-## `{ source, text }`: overriding an EXISTING text
+## `source` + `text` map: overriding an EXISTING text
 
 The map form overrides a text that **already exists** (vanilla or modded) by its original source
 string:
@@ -32,8 +33,12 @@ type: localization
 namespace: MyPack
 culture: de
 entries:
-  IronIngot_Renamed: { source: 'Iron Ingot', text: 'Eisenbarren (überarbeitet)' }
-  SchematicOverride: { source: 'Super Ingot Smelting', text: 'Superbarren-Verhüttung' }
+  IronIngot_Renamed:
+    source: 'Iron Ingot'
+    text: 'Eisenbarren (überarbeitet)'
+  SchematicOverride:
+    source: 'Super Ingot Smelting'
+    text: 'Superbarren-Verhüttung'
 ```
 
 > ⚠️ **Source-hash matching.** UE identifies a localized text by its namespace/key plus a hash of

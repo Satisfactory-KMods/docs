@@ -1,7 +1,8 @@
 ---
 title: 'Type: resource and Resource Nodes'
 description: Generate resource descriptors, understand world Resource Nodes, unlock scanner visibility, and work within the limits of KDataForge actor patches.
-sidebar: { order: 10 }
+sidebar:
+  order: 10
 ---
 
 The `resource` type runs in the `Items` stage at priority `25`, after `item` (`30`) and before
@@ -40,7 +41,11 @@ resources:
       - path: mForm
         value: RF_LIQUID
       - path: mFluidColor
-        value: { R: 40, G: 200, B: 255, A: 255 }
+        value:
+          R: 40
+          G: 200
+          B: 255
+          A: 255
 ```
 
 Parenting from `Desc_Water` inherits its fluid-oriented defaults. The generated class has the
@@ -88,7 +93,8 @@ For a custom mod where every desired node has its own actor class, a class-scope
 
 ```yaml
 type: cdo
-conditions: { hasMod: YourNodeMod }
+conditions:
+  hasMod: YourNodeMod
 patches:
   - target: /YourNodeMod/World/BP_MyOreNode.BP_MyOreNode_C
     applyToSpawnedActors: true

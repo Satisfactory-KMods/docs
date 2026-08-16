@@ -1,7 +1,8 @@
 ---
 title: Balancing
 description: Editing examples for base-game balance, recipes, items, resources, equipment, consumables, schematics, research, categories, belts, and bulk tag edits.
-sidebar: { order: 2 }
+sidebar:
+  order: 2
 ---
 
 Everything below works through `type: cdo` documents. Every reflected property of every
@@ -43,10 +44,8 @@ patches:
       - path: mProduct
         op: append
         value:
-          {
-            ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C,
-            Amount: 1,
-          }
+          ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C
+          Amount: 1
       - path: mProducedIn
         op: append
         value: /Game/FactoryGame/Buildable/Factory/ManufacturerMk1/Build_ManufacturerMk1.Build_ManufacturerMk1_C
@@ -107,7 +106,11 @@ patches:
   - target: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
     properties:
       - path: mFluidColor
-        value: { R: 20, G: 120, B: 255, A: 255 }
+        value:
+          R: 20
+          G: 120
+          B: 255
+          A: 255
       - path: mForm
         value: RF_LIQUID
 ```
@@ -277,7 +280,10 @@ patches:
   - target: /Game/FactoryGame/Buildable/Vehicle/Train/Locomotive/BP_Locomotive.BP_Locomotive_C
     properties:
       - path: mPowerConsumption
-        value: { Min: 5, Max: 80 } # MW, vanilla is roughly { Min: 15, Max: 110 }
+        value:
+          Min: 5
+          Max: 80
+          # MW; vanilla is roughly Min 15 and Max 110
 ```
 
 There's no separate top-level "max speed" stat on the locomotive to patch, speed on a given track
@@ -346,7 +352,8 @@ Without KAPI, the tag does not exist and the document is skipped with an Info di
 
 ```yaml
 type: cdo
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 patches:
   - matchTag: KMods.AlternateRecipe
     ofClass: /Script/FactoryGame.FGRecipe

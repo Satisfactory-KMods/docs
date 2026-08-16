@@ -36,18 +36,25 @@ version: 1.2.0 # semver, informational + used by conflict reports
 priority: 100 # higher applies earlier within each stage (default 100)
 enabled: true # false disables the whole pack (default true)
 debug: false # true logs every applied op from every document in this pack (see Debug Logging)
-dependencies: # pack refs that must load before this pack
+dependencies:
+  # pack refs that must load before this pack
   - SomeOtherPack
-redirects: # id renames for generated content (see Content Creation)
+redirects:
+  # id renames for generated content (see Content Creation)
   OldId: NewId # old save class paths resolve to the renamed class (FCoreRedirects)
-conditions: { hasMod: [KAPI, KLib] } # optional — same grammar as a document's `conditions:` (see
+conditions:
+  hasMod:
+    - KAPI
+    - KLib
+  # optional — same grammar as a document's `conditions:` (see
+
 #                                       Conditions); gates every document in the pack (AND)
 ```
 
 `conditions:` on the manifest is evaluated once, before any file in the pack is even read, a
 failing pack is skipped entirely with one Info diagnostic, instead of every document failing its
 own copy of the same condition. Use it for "this whole pack is a compat layer for mod X" instead of
-repeating `conditions: { hasMod: X }` at the top of every document.
+repeating a `conditions:` block with `hasMod: X` at the top of every document.
 
 `dependencies:` are topological constraints. Missing or self-referential dependencies reject the
 pack, and invalidity propagates to transitive dependants. Dependency cycles are rejected. Among
@@ -65,9 +72,13 @@ Every document is a YAML map with a root type:
 ```yaml
 type: cdo # required (or use the `<name>.<type>.yml` filename convention)
 debug: true # optional — log every applied op from this document (see Debug Logging)
-conditions: { ... } # optional — see Conditions
-include: # optional — same-pack files that must apply BEFORE this one
+conditions:
+  ? ...
+  # optional — see Conditions
+include:
+  # optional — same-pack files that must apply BEFORE this one
   - base-values.cdo.yml
+
 # … type-specific content
 ```
 
@@ -251,13 +262,13 @@ to accepted YAML form:
 | `int32`, `int64`, `uint*`, `uint8` | integer scalar                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `float`, `double`                  | number scalar                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | enum                               | value name (`RF_SOLID`, `EResourceForm::RF_SOLID`) or numeric value (must be a valid ordinal, rejected otherwise)                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| bitmask (`int32`/etc. with `meta=(Bitmask, BitmaskEnum=...)`) | YAML sequence of flag names (`[Above, Left]`, recommended) or a `\|`-joined string (`"Above\|Left"`); both OR the named flags together and reject unknown names or bits outside the enum's declared mask. A raw pre-computed integer (`3`) is still accepted for backward compatibility. Export always emits the name sequence. `Append`/`Remove`/`Clear` ops are supported (OR-add / AND-NOT / zero the mask) |
+| bitmask (`int32`/etc. with `meta=(Bitmask, BitmaskEnum=...)`) | one flag name (`Above`), a block YAML sequence with one flag per item (recommended for multiple flags), or an `"Above\|Left"` string; all named forms are Shipping-safe and names are OR-ed against actual-mask enums (`UseEnumValuesAsMaskValuesInEditor=true`). Raw pre-computed integers (`3`) remain accepted; bit-index enums require integer masks. Export emits a name sequence. `Append`/`Prepend` OR-add flags, `Remove` clears named bits, and `Clear` writes zero |
 | `FString`, `FName`                 | string scalar                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| `FText`                            | string scalar (culture-invariant) **or** map `{ key, ns, source }` (localized)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `FText`                            | string scalar (culture-invariant) **or** block map with `key`, `ns`, and `source` fields (localized); `key` is mandatory in map form, so a `source`-only map is invalid                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | object reference                   | full object path; a bare **generated-content id** (e.g. `SuperIngotIcon` for a `dataasset`/`asset` entry, see [Generated Content Short Ids](#generated-content-short-ids)); `""`/`none` → null                                                                                                                                                                                                                                                                                                                                                                                           |
 | class reference                    | class path (`/Script/Module.Class` or `/Game/....Asset_C`; `_C` auto-retried), or a bare **generated-content id** (e.g. `MySuperIngot` for an `item`/`resource`/`building`/`class`/... entry, see [Generated Content Short Ids](#generated-content-short-ids)), or, as a last resort, a **bare class name** (`Desc_Water`) resolved by name against every class currently loaded in memory; ambiguous bare-name forms log an error (`LogKDataForge`, listing every match) and use the first match (sorted by full class path), so prefer full paths in published packs when it matters |
 | `TSoftObjectPtr` / `TSoftClassPtr` | path string (not loaded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| struct                             | native text form (`"(X=1,Y=2,Z=3)"`), map form (`{X: 1, Y: 2, Z: 3}`), or positional sequence (`[1, 2, 3]`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| struct                             | native text form (`"(X=1,Y=2,Z=3)"`), block map with named fields, or block positional sequence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `FGameplayTag`                     | tag name string                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `FGameplayTagContainer`            | sequence of tag names                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `TArray`                           | sequence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -361,7 +372,9 @@ type: recipe
 recipes:
   - id: Recipe_MySuperIngot
     register: true # default — omit unless you want registration off
-    properties: [...]
+    properties:
+      - path: mManufacturingDuration
+        value: 4
 ```
 
 - `register: true` (default) queues the class for per-world registration into SML's
@@ -391,15 +404,19 @@ research:
     autoPath: true
     addNodes:
       - schematic: Schematic_First
-        coordinate: { X: 0, Y: 0 }
+        coordinate:
+          X: 0
+          Y: 0
       - schematic: Schematic_Second
-        coordinate: { X: 2, Y: 0 }
+        coordinate:
+          X: 2
+          Y: 0
         parents:
           - schematic: Schematic_First
 ```
 
 - `schematic:` accepts a generated short id or a full `UFGSchematic` class path.
-- `coordinate:` is `{ X: <number>, Y: <number> }`. Supply it for a node that participates in graph
+- `coordinate:` is a block map with numeric `X:` and `Y:` fields. Supply it for a node that participates in graph
   relationships or roads.
 - `parents:`, `nodesToUnhide:`, and `unhiddenBy:` are optional. Each reference may name another
   node's `schematic:` or a literal coordinate. References may point forward or backward within the
@@ -412,25 +429,39 @@ research:
   and is skipped rather than failing the whole document.
 
 A custom road uses a child coordinate and every point along the path. `childrenAndRoads:` can be one
-`{ key, points }` map or a sequence of them when a node has multiple children:
+a block map with `key` and `points` fields, or a sequence of those maps when a node has multiple children:
 
 ```yaml
 addNodes:
   - schematic: Schematic_First
-    coordinate: { X: 0, Y: 0 }
+    coordinate:
+      X: 0
+      Y: 0
     childrenAndRoads:
-      - key: { X: 2, Y: 0 }
+      - key:
+          X: 2
+          Y: 0
         points:
-          - { X: 0, Y: 0 }
-          - { X: 0, Y: 1 }
-          - { X: 2, Y: 1 }
-          - { X: 2, Y: 0 }
-      - key: { X: 0, Y: 2 }
-        points: [{ X: 0, Y: 0 }, { X: 0, Y: 2 }]
+          - X: 0
+            Y: 0
+          - X: 0
+            Y: 1
+          - X: 2
+            Y: 1
+          - X: 2
+            Y: 0
+      - key:
+          X: 0
+          Y: 2
+        points:
+          - X: 0
+            Y: 0
+          - X: 0
+            Y: 2
 ```
 
 Use tree-entry-level `removeNodes:` to remove nodes by schematic class or short id. Each selector
-may be a scalar (`Schematic_Obsolete`) or a map (`{ schematic: Schematic_Obsolete }`). KDataForge
+may be a scalar (`Schematic_Obsolete`) or a block map with `schematic: Schematic_Obsolete`. KDataForge
 performs all removals before appending the same entry's `addNodes:` list and removes every surviving
 `Parents`, `NodesToUnhide`, `UnhiddenBy`, and `ChildrenAndRoads` reference to each removed
 coordinate. The same entry may remove one node and add another; `autoPath:` applies to additions:
@@ -440,10 +471,13 @@ research:
   - class: /Game/FactoryGame/Schematics/Research/Mycelia_RS/ResearchTree_Mycelia.ResearchTree_Mycelia_C
     register: false
     autoPath: true
-    removeNodes: [Schematic_Obsolete]
+    removeNodes:
+      - Schematic_Obsolete
     addNodes:
       - schematic: Schematic_Replacement
-        coordinate: { X: 3, Y: 1 }
+        coordinate:
+          X: 3
+          Y: 1
         parents:
           - schematic: Schematic_ExistingParent
 ```
@@ -456,7 +490,7 @@ coordinate. `nodes:` remains a legacy alias. If both keys exist,
 ### Instanced Dependencies on Research Trees
 
 Research entries accept `unlockDependencies:` and `visibilityDependencies:`. Both use the
-`{ class:, properties: }` instanced `FGAvailabilityDependency` shape; they append to
+block maps containing `class:` and `properties:` in the instanced `FGAvailabilityDependency` shape; they append to
 `mUnlockDependencies` and `mVisibilityDependencies`, respectively.
 
 ```yaml
@@ -466,7 +500,8 @@ research:
       - class: /Script/FactoryGame.FGSchematicPurchasedDependency
         properties:
           - path: mSchematics
-            value: [Schematic_MyPrerequisite]
+            value:
+              - Schematic_MyPrerequisite
     visibilityDependencies:
       - class: /Script/FactoryGame.FGGamePhaseReachedDependency
         properties:
@@ -485,12 +520,15 @@ ships, not just `FGUnlockRecipe`; see the
 type: schematic
 schematics:
   - id: Schematic_MySuperIngot
-    properties: [...]
+    properties:
+      - path: mDisplayName
+        value: My Super Ingot
     unlocks:
       - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
         properties:
           - path: mRecipes
-            value: [/KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot]
+            value:
+              - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot
 ```
 
 Known native FactoryGame/KMods class paths automatically remap to their Blueprint implementation.
@@ -501,7 +539,7 @@ abstract classes without concrete variants cannot be instanced.
 
 In addition to generic `unlocks:`, schematic entries accept `recipes:` (sequence of `UFGRecipe`
 classes), `schematics:` (sequence of `UFGSchematic` classes), positive-integer `handSlots:` and
-`inventorySlots:`, and `scannableResources:` (sequence of `{ resource:, nodeType: }`, with
+`inventorySlots:`, and `scannableResources:` (sequence of block maps containing `resource:` and `nodeType:`, with
 `nodeType: Node` by default). Each shortcut creates the corresponding normal `FGUnlock` instance;
 class references resolve exactly like every other generated, vanilla, or mod class reference.
 
@@ -515,12 +553,15 @@ Schematic entries also accept a `dependencies:` list (the same instanced-object 
 type: schematic
 schematics:
   - id: Schematic_AdvancedSuperIngot
-    properties: [...]
+    properties:
+      - path: mDisplayName
+        value: Advanced Super Ingot
     dependencies:
       - class: /Script/FactoryGame.FGSchematicPurchasedDependency
         properties:
           - path: mSchematics
-            value: [/KDataForge/Gen/MyPack.Gen_MyPack_Schematic_MySuperIngot]
+            value:
+              - /KDataForge/Gen/MyPack.Gen_MyPack_Schematic_MySuperIngot
           - path: mRequireAllSchematicsToBePurchased
             value: true
 ```
@@ -547,7 +588,10 @@ classes:
     parent: /Script/FactoryGame.FGEquipmentDescriptor # ANY class: native C++ or /Game/...Thing_C
     registerAs: recipe # OPTIONAL: recipe | schematic | research — queues SML content
     #                    registration for kinds that need it; omit for everything else
-    properties: [...] # cdo-style op entries applied to the new class's CDO
+    properties:
+      - path: mDisplayName
+        value: My Equipment
+      # cdo-style op entries applied to the new class's CDO
 ```
 
 - **Same save-stable identity as the preset kinds**: `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>`.
@@ -595,7 +639,8 @@ registry so scanning subsystems find them.
 
 ```yaml
 type: dataasset
-conditions: { hasMod: KAPI }
+conditions:
+  hasMod: KAPI
 assets:
   - id: CleanerItem_MyFluid
     class: /Script/KAPI.KAPICleanerItemDescription # any UPrimaryDataAsset subclass
@@ -604,10 +649,8 @@ assets:
         value: 4.0
       - path: mInFluid
         value:
-          {
-            ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C,
-            Amount: 1000,
-          }
+          ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
+          Amount: 1000
 ```
 
 After the initial load, KDataForge automatically triggers consumer rescans
@@ -638,13 +681,13 @@ curveType: float # float | vector
 curves:
   - id: DamageFalloff # exactly one of id or target
     # target: /Game/Curves/Curve_Damage.Curve_Damage
-    defaultValue: 0 # vector: { X: 0, Y: 0, Z: 0 }
+      defaultValue: 0 # vector defaults use X/Y/Z fields in a block mapping
     preInfinityExtrap: constant
     postInfinityExtrap: linear
     isEventCurve: false # float only
     keys:
       - time: 0
-        value: 1 # vector: { X: 1, Y: 2, Z: 3 } or [1, 2, 3]
+        value: 1 # vectors also accept block X/Y/Z fields or block sequence items
         interpMode: cubic # constant | linear | cubic
         tangentMode: auto # auto | smartAuto | user | break
         tangentWeightMode: none # none | arrive | leave | both
@@ -689,12 +732,15 @@ namespace: MyPack
 culture: de # optional; prefix-matched against current language; omit = all
 entries:
   SimpleKey: 'Übersetzter Text'
-  KeyWithSource: { source: 'Original English', text: 'Deutscher Text' } # override existing texts
+  KeyWithSource:
+    source: 'Original English'
+    text: 'Deutscher Text'
+    # override existing texts
 ```
 
 - `culture:` is prefix-matched against the current language (`de` matches `de-DE`). Omitting it
   applies the entries for every language.
-- The scalar form sets the text for `namespace`/key. The `{ source, text }` map form overrides
+- The scalar form sets the text for `namespace`/key. A block map with `source` and `text` fields overrides
   **existing** texts by their original source string.
 - Localization documents apply during GameInstance initialization. Restart the session after edits.
 
@@ -719,7 +765,8 @@ Walkthrough (where the log file lives, reading the lines):
 
 ## Conditions
 
-All listed conditions must pass (AND). Failing documents are skipped with an Info diagnostic.
+Condition objects use AND by default; `conditionBehaivor: OR` opts into alternatives. A failing
+combined result skips the document with an Info diagnostic.
 
 ```yaml
 conditions:
@@ -727,12 +774,49 @@ conditions:
   #                             (SML convention) — gate on the game's build changelist, e.g. the
   #                             CL from the game's main menu / `>=491125.0.0` for the SML baseline
   hasMod: KAPI # scalar…
-  # hasMod: [KAPI, "RefinedPower@>=4.0.0"]   # …or sequence; `Ref@<range>` pins a version
+  # hasMod may instead use a block sequence; `Ref@<range>` pins a version
   modVersion: # explicit map form for version constraints
     SML: '>=3.12.0'
   hasClass: /Script/FactoryGame.FGBuildableFrackingActivator
-  # hasClass: [/Game/A.A_C, /Game/B.B_C]     # sequence form
+  # hasClass may instead use a block sequence
 ```
+
+`conditions:` may also be an array of condition objects. Within each object, condition keys are
+AND-combined first; `ifNotMatch: true` then negates that object. Top-level `conditionBehaivor`
+combines the object results using `AND` or `OR` (case-insensitive) and defaults to `AND`. Correctly
+spelled `conditionBehavior` is accepted as an alias. `ifNotMatch` defaults to `false`.
+
+```yaml
+conditionBehaivor: AND # optional; default
+conditions:
+  - hasMod:
+      - KAPI
+      - KLib
+      # require both
+  - hasMod: IncompatibleMod # require this mod to be absent
+    ifNotMatch: true
+  - modVersion:
+      # reject this version range if mod is loaded
+      OptionalIntegration: '^2.0.0'
+    ifNotMatch: true
+```
+
+An inverted `hasMod: Mod@<range>` object matches when the mod is absent or its loaded version does
+not satisfy `<range>`. Inversion never hides malformed condition keys, types, or version ranges.
+Because inversion applies to the entire object, use separate inverted objects when excluding
+multiple mods independently.
+
+```yaml
+conditionBehaivor: OR
+conditions:
+  - hasMod: RefinedPower
+  - hasMod: FicsitFarming
+```
+
+`OR` passes when at least one object matches; `AND` requires every object. Each object is evaluated
+and optionally inverted before aggregation. Invalid behavior values or malformed condition objects
+fail closed even if another OR branch matches. An empty array passes under `AND` and fails under
+`OR`.
 
 Version ranges use SML's semver syntax: `>=1.2.3`, `^3.12.0`, `~1.2.0`, exact `1.2.3`, unions with
 `||`.
