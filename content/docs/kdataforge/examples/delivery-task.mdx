@@ -38,6 +38,20 @@ or the node is rejected at load time. Use one flag name for one parent and a YAM
 multiple parents. KDataForge resolves and ORs names automatically. Scalar names, sequences, and
 `|`-joined strings (`"Above|Left"`) are Shipping-safe. Raw integer masks such as `3` remain accepted.
 
+`mRequiredParentCompletions` defaults to `1` and raises the completed-run threshold for every
+marked parent. This is useful behind an endless parent:
+
+```yaml
+- path: mParentTask
+  value: Bottom
+- path: mRequiredParentCompletions
+  value: 10
+```
+
+Values below `1` are rejected. A queued parent can satisfy default one-run topology so its child can
+be placed later in same queue. Thresholds above `1` count completed runs only; queued repeats do not
+unlock or pre-queue child.
+
 ## Supporting assets
 
 The tree below sets **every** applicable property on every node, including the icon, ADA message,
@@ -380,6 +394,9 @@ A node becomes available once its `mParentTask` requirement is satisfied:
   (AND). `DeliveryTask_AboveAndLeft` above needs both `Above` and `Right` done.
 - **`bRequireAllParents: false`** — **any one** flagged parent completing is enough (OR). Useful
   for a node reachable from more than one earlier branch, whichever the player finishes first.
+- **`mRequiredParentCompletions: 1`** (the default) — completion count each marked parent must
+  reach. Raise it for branches behind repeatable tasks; AND/OR semantics then compare parents
+  against same threshold.
 - **`mTaskDependencies`** (an availability-dependency list, checked via `AreTaskDependenciesMet`)
   adds further gating on top of the parent-tree check itself — a schematic purchase, a research
   unlock, whatever the dependency subclass checks. Parent completion and `mTaskDependencies` are

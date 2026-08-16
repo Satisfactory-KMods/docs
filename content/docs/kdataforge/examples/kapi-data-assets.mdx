@@ -254,7 +254,10 @@ The interesting part is `mParentTask` accepting **more than one flag at once**. 
 for one parent or a YAML sequence for several; KDataForge resolves and ORs names automatically.
 Scalar names, sequences, and `|`-joined strings (`"Above|Left"`) are Shipping-safe. Raw integer
 masks such as `3` remain accepted. `bRequireAllParents` then switches between AND (`true`, every
-flagged parent required) and OR (`false`, any one is enough) semantics — see
+flagged parent required; default) and OR (`false`, any one is enough) semantics.
+`mRequiredParentCompletions` defaults to `1` and requires that many completed runs from each marked
+parent. Values above `1` are intended for branches behind endless tasks and count completed runs,
+not queued repeats. See
 [Value Forms](/kdataforge/reference/yaml-schema/#value-forms-by-property-type) for the full grammar.
 
 Every flag on `mParentTask` must resolve to a real sibling node at the matching coordinate offset
