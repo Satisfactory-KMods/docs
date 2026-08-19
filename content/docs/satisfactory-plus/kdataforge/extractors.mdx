@@ -17,12 +17,26 @@ For adding Extractors or Remove Extractors to Satisfactory Plus, you need to cre
 | `mDisallowExtractors` | `TArray<TSubclassOf<AFGBuildableResourceExtractorBase>>` | The list of extractor classes that are disallowed.                                                |
 | `mAllowedResources`   | `TArray<TSubclassOf<UFGResourceDescriptor>>`             | The list of resource classes that are allowed.                                                    |
 | `mDisallowResources`  | `TArray<TSubclassOf<UFGResourceDescriptor>>`             | The list of resource classes that are disallowed.                                                 |
-| `mPriority`           | `int32`                                                  | The priority of this DataAsset. Higher priority means it will override lower priority DataAssets. |
+| `mPriority`           | `int32`                                                  | Sort rank of this DataAsset. See _How the lists are resolved_ below for what it actually does.    |
+
+## How the lists are resolved
+
+All `KAPIExtractorAllowList` assets in the game are collected, sorted by `mPriority` (highest
+first, ties broken by asset path), and then applied one after another. Each asset adds its
+`mAllowed*` entries to the running set and removes its `mDisallow*` entries from it.
+
+Because the lists are applied in sequence, **the last asset to touch an entry decides it** — with
+the sort above that is the lowest-priority asset. `mPriority` defaults to `-MAX_int32`, so an asset
+that never sets it is applied last and wins over one that does.
+
+:::caution
+This is the opposite of how `mPriority` resolves duplicates everywhere else in KAPI (miner and
+filtrator assets keep the highest-priority entry and discard the rest). Do not rely on the current
+ordering for conflict resolution between mods.
+:::
 
 ## Notes
 
-- There is a priority system for the DataAssets. If a other mod disallows an extractor or resource, it will be disallowed even if Satisfactory Plus allows it. This is to prevent conflicts between mods.
-  - These priorities can be managed by the `mPriority` property in the DataAsset. The higher the priority, the more weight it has. The default priority is 0.
 - Creating a new `UFGResourceDescriptor` for a brand-new resource type is out of KAPI's scope `mAllowedResources`/`mDisallowResources` only reference existing resource descriptor classes.
 
 See [Adding KAPI Data Assets](/kdataforge/examples/kapi-data-assets/) for every KAPI type's

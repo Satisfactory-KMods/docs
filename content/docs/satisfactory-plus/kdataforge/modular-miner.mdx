@@ -38,5 +38,26 @@ waste-producer module class respectively) for entries that feed fluid or waste-p
 see the property reference for their map-key/value shapes. A resource entry that doesn't use either
 module type, like this one, works fine without them. `mScannerTier` is unused and left out entirely.
 
+## Gating an ore behind a module
+
+`mNeededModules` is what makes a module mandatory, and it is checked at runtime by
+`AKLMMBuildableMiner::HasAllNeededModules` — the miner will not produce until every listed
+attachment is installed. The mining head above is listed for every ore, so it is the one entry that
+does not gate anything.
+
+Adding the fluid attachment turns the ore into a fluid-gated one:
+
+```yaml
+      - path: mNeededModules
+        value:
+          - /KAPI/Attachments/ModularMiner/Attachment_MM_MiningHead.Attachment_MM_MiningHead_C
+          - /KAPI/Attachments/ModularMiner/Attachment_MM_FluidModule.Attachment_MM_FluidModule_C
+```
+
+Listing fluids in `mFluidInfo` on its own does **not** do this — those fluids stay optional speed
+boosts, the way Coal accepts water. Only the `mNeededModules` entry makes the fluid module
+required, and it also removes the ore's plain "extract \<ore\>" entry from the wiki export, leaving
+only the per-fluid recipes.
+
 See [Adding KAPI Data Assets](/kdataforge/examples/kapi-data-assets/) for every KAPI type's
 `type: dataasset` example in one place.
