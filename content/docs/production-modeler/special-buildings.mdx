@@ -16,9 +16,14 @@ heater both become required roles on one node. You cannot place half an assembly
 Coolers and turbines stand alone.
 
 The material flow is complete. The electricity is not: a turbine only spins, and
-the generator attached to it derives its output from an RPM curve that the data
-export does not contain. A turbine node therefore says that its power is not
-modelled instead of quietly reporting zero.
+the generator attached to it turns that speed into power through a curve. The
+game data ships none of the three things that calculation needs. The curve
+arrives as a bare list of samples with nothing saying what they are measured
+against, and outside the medium voltage generator every sample is zero. The
+generator's own ceiling and top speed sit on a record the export leaves out
+entirely. The last factor is a setting players can change in their session, and
+the export names it without ever giving its value. A turbine node therefore says
+that its power is not modelled instead of quietly reporting zero.
 
 ## Slug Hatchery and Terrarium
 
@@ -30,11 +35,20 @@ scales it, so inside the range the exported rates apply unchanged.
 Without modules a hatchery sits at 25 degrees and 0.5 humidity, which is where a
 new node starts.
 
+A hatchery in game also checks the time of day before it hatches, and the modeler
+does not. The value that says which part of the day a slug wants comes out of the
+export as a number that is not one of the states the game defines, so there is
+nothing to check against. Read a hatchery rate as the rate while it is awake. A
+terrarium is unaffected, because breeding never looks at the clock.
+
 :::caution[Expected value is a lower bound]
-Some slug outcomes raise their own chance after every failed cycle. The exported
-chance is only the starting probability, so an expected value computed from it
-understates what you actually get. The modeler flags exactly which outputs this
-affects rather than presenting a number that looks precise.
+Some slug outcomes raise their own chance after every failed cycle, so the chance
+the game data lists is only where that outcome starts. A yellow slug listed at
+5.6 percent is really worth about 20 percent over a long run. The modeler knows
+how that works out, but the game data currently states these chances at a
+precision that makes the exact answer too long to write down, so it keeps the
+starting chance and understates them. It flags exactly which outputs this affects
+rather than presenting a number that looks precise.
 :::
 
 ## Farming plots
@@ -70,9 +84,26 @@ resource.
 
 These follow the world rather than a fuel, so they have no input to size them.
 Instead the node carries a count, and the summary shows the range the export
-describes: a solar panel between its night and day output, a wind turbine
-between nothing and its ceiling.
+describes.
 
-There is no long run average. A solar panel's day and night mix is not exported,
-and wind power scales an unexported height curve by the current wind. The modeler
-reports the bounds and says that the average is unknown.
+A solar panel is exact at both ends. The game hands the exported night value and
+the exported day value straight to the power grid, so the modeler can state both.
+What it cannot state is the long run average, because the length of a day is not
+part of the export.
+
+A wind turbine is not modelled at all. Its output is capped against its exported
+maximum multiplied by a session setting that players can change and that the
+export does not contain, so any ceiling the modeler printed would be wrong. It
+says the value is unknown instead. Two turbines standing close together also stop
+producing entirely, which is a placement rule the modeler has no way to see.
+
+## Building limits
+
+Some buildings may only exist a limited number of times in a save. Where the data
+says so, the machines section of the summary adds how many the model uses against
+that limit and how many are left, and it marks the row in words once the model
+goes past it.
+
+The solve is not blocked. The modeler has no view of your world or your save, so
+it can tell you that a model would need more of a building than the game allows,
+but it will not decide for you that the model is wrong.

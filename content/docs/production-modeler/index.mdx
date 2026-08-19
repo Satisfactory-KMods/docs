@@ -37,6 +37,13 @@ Search by recipe name, by input, or by output, and toggle those three fields
 individually. Typing several words matches all of them; if that finds nothing,
 the palette falls back to matching any of them and says so.
 
+Above the results you can also narrow the list without typing. Pick one or more
+mods to see only their recipes, pick a machine tier, pick the progression tier
+that unlocks a recipe, and switch the alternate control to see only alternate
+recipes or none of them. Nothing is selected by default, so the palette still
+starts with everything the data set contains. The ten special nodes ignore these
+controls, because a sink or a storage belongs to no mod and no tier.
+
 The palette opens with the search field ready, so you can type straight away.
 The arrow keys move through the results and Enter places the highlighted one,
 and the mouse does the same thing if you prefer it.
@@ -78,5 +85,5 @@ from what it can reach.
 
 Where the game data does not describe something completely, the modeler says so
 instead of inventing a number. A turbine moves its steam correctly, but the
-electricity a generator makes from it depends on a curve the data export does
-not contain, so the modeler reports that rather than showing zero.
+electricity a generator makes from it depends on values the game data never
+ships, so the modeler reports that rather than showing zero.
