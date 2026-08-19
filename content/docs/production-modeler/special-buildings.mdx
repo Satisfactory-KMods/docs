@@ -53,8 +53,11 @@ pillars it scans and how many other collectors sit nearby, and the rate follows:
 the scan count times the yield per hit, clamped to the record's own minimum and
 maximum, divided by the crowding penalty, rounded down to steps of 500.
 
-An unscanned collector still produces the minimum. The height based variant is
-not modelled, because its multiplier depends on where the building stands.
+An unscanned collector still produces the minimum.
+
+One variant works from build height instead of scanning. There you enter how
+high the collector stands, and its base output scales from once to five times
+across the range the buildable allows.
 
 ## Modular Miner
 
