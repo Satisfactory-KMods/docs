@@ -17,15 +17,14 @@ If this is your first time here, [Getting Started](/kdataforge/getting-started) 
 
 Every individual document type (`item`, `recipe`, `schematic`, `cdo`, and the rest) also has its own dedicated page under Features. The full YAML grammar lives in [Reference](/kdataforge/reference).
 
-## The eight examples
+## The seven examples
 
 Two pages below are **patch-only** collections with many small `type: cdo` examples. Two are
 **build-a-whole-thing** packs that chain several document types into finished content. The fifth is
 a focused complete pack for a Repeat-Purchase Schematic (KLIB) with generated curves. The sixth is a
 per-type creation gallery of `type: dataasset` examples, one for each KAPI data asset type, the same
 spirit as Balancing but for generating new instances instead of patching existing ones. The seventh
-is a single build-a-whole-thing tree for one KAPI type, `UKAPIDeliveryTask`. The eighth is Faxit
-Reborn, a complete installable 254-task progression pack.
+is a single build-a-whole-thing tree for one KAPI type, `UKAPIDeliveryTask`.
 
 - [Balancing](/kdataforge/examples/balancing) covers rebalancing base-game content that already exists: recipes, items, resources, equipment, consumables, radioactivity, belt speed, schematics, milestones, research trees, vehicles, trains, creatures, categories, and bulk tag-matched edits across many targets at once. All of it works through `type: cdo` patches against existing classes, and nothing is generated.
 - [Power & Machines](/kdataforge/examples/power-and-machines) covers the buildable-tuning half of patching: power consumption, manufacturing speed, generator output, extractor cycle time, pipeline flow limits, power storage capacity, drone station logistics, and runtime actor patches that also affect already-placed buildings.
@@ -34,10 +33,9 @@ Reborn, a complete installable 254-task progression pack.
 - [Repeat-Purchase Schematic (KLIB)](/kdataforge/examples/repeat-purchase-schematic) is a complete `UKLUnlockMaxRepeatPurchases` pack with generated cost and reward curves, level-specific overrides, a result table, and the runtime semantics behind each purchase.
 - [Adding KAPI Data Assets](/kdataforge/examples/kapi-data-assets) covers `type: dataasset` creation for every KAPI PrimaryDataAsset type: air collector, cleaner, modular miner, slug breeding, and extractor/resource allow-lists.
 - [Delivery Task Trees](/kdataforge/examples/delivery-task) builds one complete `UKAPIDeliveryTask` tree from scratch: five nodes (including negative coordinates), a multi-flag `mParentTask`, repeated-parent thresholds, the full Endless field set, and a schematic force-unlock example.
-- [Faxit Reborn Reference Pack](/kdataforge/examples/faxit-reborn) documents the installable 254-task Faxit progression pack, including Nexus XI-XX, queue and Depot speed upgrades, phase-gated recycling, hazardous logistics, repeatable alien-artifact endpoints, and coupon-scaled inventory/Dimensional Depot upgrade chains.
 
 For a normative catalog of every base-game `FGUnlock` subclass, including its settable properties
 and caveats, use [Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes).
 
-All eight assume a pack living at `<your-mod>/DataForge/`, the canonical author root used
+All seven assume a pack living at `<your-mod>/DataForge/`, the canonical author root used
 throughout these docs.
