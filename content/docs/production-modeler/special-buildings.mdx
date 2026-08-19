@@ -1,0 +1,75 @@
+---
+title: Special buildings
+description: How Satisfactory Plus buildings that break the usual recipe shape are modelled.
+sidebar:
+  order: 3
+---
+
+Most buildings are an ordinary recipe: fixed inputs, fixed outputs, one machine.
+Satisfactory Plus adds several that are not, and each one is modelled from what
+the game data actually says.
+
+## Refined Power
+
+A boiler record names every building that has to cooperate, so a boiler and its
+heater both become required roles on one node. You cannot place half an assembly.
+Coolers and turbines stand alone.
+
+The material flow is complete. The electricity is not: a turbine only spins, and
+the generator attached to it derives its output from an RPM curve that the data
+export does not contain. A turbine node therefore says that its power is not
+modelled instead of quietly reporting zero.
+
+## Slug Hatchery and Terrarium
+
+Both produce only while they are comfortable. Temperature and humidity have to
+sit inside the ranges of the slug you are hatching or breeding, and outside them
+the building makes nothing at all. The environment gates production, it never
+scales it, so inside the range the exported rates apply unchanged.
+
+Without modules a hatchery sits at 25 degrees and 0.5 humidity, which is where a
+new node starts.
+
+:::caution[Expected value is a lower bound]
+Some slug outcomes raise their own chance after every failed cycle. The exported
+chance is only the starting probability, so an expected value computed from it
+understates what you actually get. The modeler flags exactly which outputs this
+affects rather than presenting a number that looks precise.
+:::
+
+## Farming plots
+
+A plot offers one slot per module type: harvester, irrigation and greenhouse. A
+recipe that requires a slot will not solve without it.
+
+Only the greenhouse changes the rate. It runs the plot at 1.5 times its
+potential, which speeds up the whole cycle, so a greenhouse plot consumes half
+again as much seed and water as well as producing half again as much crop.
+
+## Air Collector
+
+An Air Collector produces from what it can reach. You set how many nodes or
+pillars it scans and how many other collectors sit nearby, and the rate follows:
+the scan count times the yield per hit, clamped to the record's own minimum and
+maximum, divided by the crowding penalty, rounded down to steps of 500.
+
+An unscanned collector still produces the minimum. The height based variant is
+not modelled, because its multiplier depends on where the building stands.
+
+## Modular Miner
+
+A modular miner is assembled from a head, optional boosters, and a waste or
+fluid module. Which combinations are allowed, what they cost in power, and how
+they change the extraction rate all come from the miner description for that
+resource.
+
+## Solar panels and wind turbines
+
+These follow the world rather than a fuel, so they have no input to size them.
+Instead the node carries a count, and the summary shows the range the export
+describes: a solar panel between its night and day output, a wind turbine
+between nothing and its ceiling.
+
+There is no long run average. A solar panel's day and night mix is not exported,
+and wind power scales an unexported height curve by the current wind. The modeler
+reports the bounds and says that the average is unknown.

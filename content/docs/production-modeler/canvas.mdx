@@ -1,0 +1,52 @@
+---
+title: Canvas
+description: Placing nodes, wiring ports and keeping a large model readable.
+sidebar:
+  order: 2
+---
+
+The canvas is where the model lives. Pan with the left mouse button, zoom with
+the wheel around the cursor, and drag with the right button to pull a selection
+box. Shift or Control adds to a selection instead of replacing it.
+
+## Connections
+
+Drag from a port to a compatible port to connect them. A port can carry several
+connections, and their order matters: when a split has to prioritize, the solver
+follows the order you see. Reorder them from the inspector.
+
+Drop a connection on empty space and the palette opens filtered to that port, so
+the node you pick arrives already wired.
+
+Each port can carry a limit. Depending on the solver mode that limit is either an
+exact equality or an upper bound.
+
+## Waypoints
+
+A connection can be routed through as many waypoints as you like. Double click a
+connection to add one, double right click a waypoint to remove it, and double
+right click a connection to delete it. Waypoints follow when you move both ends
+of a connection together.
+
+Three path styles are available: curves, direct lines, and orthogonal routing.
+
+## Grids
+
+Two grids exist and they are separate. The building grid snaps nodes, the
+connection grid snaps waypoints, and each has its own X and Y spacing. Both can
+be applied to everything, to the current outpost, or to the current selection.
+
+## Outposts and blueprints
+
+An outpost holds part of a model. Enter it to work inside, and press Escape to
+come back out. Each one keeps its own pan and zoom, so returning to an outpost
+puts you back where you left. Select All only takes the outpost you are in.
+
+A blueprint scales its contents by a count, which is how you model the same
+sub factory many times over without drawing it many times over.
+
+## Aligning a port
+
+A port with a connection can be aligned to it. The node moves vertically until
+the port sits on the same line as the port it feeds, and the horizontal layout
+you built stays untouched. With several connections the first one wins.

@@ -1,0 +1,76 @@
+---
+title: Production Modeler
+description: Draw a factory the way you build it and let the numbers follow.
+sidebar:
+  order: 1
+---
+
+The Production Modeler is a drawing board for factories. You place the buildings
+you want, connect them the way the belts run, and the modeler works out the
+rates. Nothing is chosen for you.
+
+:::caution[Alpha]
+The modeler is still in alpha. Models you save are kept, but the catalog behind
+them changes as the game data does, and features are still landing.
+:::
+
+## Modeler or Planner
+
+The [Production Planner](/production-planner/) answers a different question. You
+tell it what you want per minute, it picks recipes and buildings and hands you a
+finished plan.
+
+The modeler starts from the other end. You already know roughly what you want to
+build, and you want to see whether it adds up. Nothing is auto-selected, every
+node is yours, and the solver only fills in the numbers that follow from what
+you placed.
+
+Pick the planner when you want a plan. Pick the modeler when you want to model
+something you have in mind, including layouts the planner would never generate.
+
+## Your first model
+
+Open the modeler and create a model. The canvas starts empty.
+
+Double click empty space to open the palette, or right click for the same menu.
+Search by recipe name, by input, or by output, and toggle those three fields
+individually. Typing several words matches all of them; if that finds nothing,
+the palette falls back to matching any of them and says so.
+
+Pick an entry and it lands where you clicked. Drag from a port and drop on empty
+space to open the palette already filtered to what fits that port, then the new
+node arrives connected.
+
+## Reading a node
+
+Every node shows what it makes and how much. A recipe node carries its clock,
+its production slots, an optional limit, and a machine choice where the game
+offers one. Values are exact fractions internally, so a chain of thirds stays a
+third instead of drifting into decimals. The formatted number is what you see,
+the exact value sits in the tooltip.
+
+A node that cannot solve is marked, and the marker says why. You do not have to
+hunt through a global list to find out which node broke.
+
+## What the solver does
+
+Four modes decide how much the solver is allowed to conclude. None leaves every
+value blank while you arrange things. Manual solves the exact equalities you
+entered. Basic adds limits and maximizes what flows. Full also honours the order
+of your connections when a split has to prioritize.
+
+The solver runs on its own after a change, and a long run can be stopped. Values
+it cannot determine stay unknown rather than being guessed.
+
+## Special buildings
+
+Satisfactory Plus buildings that do not behave like an ordinary recipe get their
+own treatment. Refined Power boilers require both their boiler and their heater,
+a Slug Hatchery only produces inside its comfortable temperature and humidity, a
+farming plot runs faster with a greenhouse module, and an Air Collector produces
+from what it can reach.
+
+Where the game data does not describe something completely, the modeler says so
+instead of inventing a number. A turbine moves its steam correctly, but the
+electricity a generator makes from it depends on a curve the data export does
+not contain, so the modeler reports that rather than showing zero.

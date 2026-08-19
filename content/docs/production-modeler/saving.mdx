@@ -1,0 +1,48 @@
+---
+title: Saving and sharing
+description: Drafts, snapshots, sharing, and moving models in and out.
+sidebar:
+  order: 4
+---
+
+Work is kept as you go. A local draft is written while you edit, and a signed in
+account also keeps the model in the cloud with a revision number.
+
+## Conflicts and recovery
+
+If the same model was changed somewhere else, the modeler does not silently
+overwrite anything. It shows your version, the version you started from, and the
+remote version, and you decide.
+
+After an interrupted session the modeler offers what it recovered on the next
+visit rather than dropping it.
+
+## Snapshots
+
+A snapshot is a named point you can come back to. Restore one and it becomes a
+new revision of the model, so restoring never destroys what you had.
+
+## Sharing
+
+Publishing a model creates a read only link. Anyone with it can look at the
+shared revision and clone it into their own account, and their clone is
+independent of yours.
+
+## Import and export
+
+Models can be exported and imported as `.sfmd`, the desktop Satisfactory Modeler
+format. An import previews what it found before anything is created, including
+whatever it could not represent, so a file is never partially applied without
+saying so.
+
+Where a model cannot be expressed in the legacy format, the modeler exports its
+own versioned format instead of dropping detail quietly.
+
+## Catalog versions
+
+Every model records the catalog it was built against. When the game data behind
+the modeler is updated, existing models stay on their own catalog until you
+migrate them, and the migration is previewed first.
+
+The versions in play are listed in the help dialog, which also copies them for a
+bug report.
