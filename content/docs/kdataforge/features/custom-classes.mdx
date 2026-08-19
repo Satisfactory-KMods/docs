@@ -16,12 +16,12 @@ The preset types (`item`, `resource`, `building`, `unlock`, `recipe`, `schematic
 
 ```yaml
 type: class
-debug: true # optional — log every applied op (see Getting Started → Debugging)
+debug: true # optional log every applied op (see Getting Started → Debugging)
 classes:
   - id: MyCustomThing
     parent: /Script/FactoryGame.FGEquipmentDescriptor # ANY class: native C++ or /Game/...Thing_C
     registerAs: recipe
-      # OPTIONAL: recipe | schematic | research — queues SML content
+      # OPTIONAL: recipe | schematic | research queues SML content
       # registration for kinds that need it; omit for everything else
     properties:
       - path: mDisplayName

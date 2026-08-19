@@ -1,6 +1,6 @@
 ---
 title: Adding KAPI Data Assets
-description: 'Real, copy-pasteable "type: dataasset" examples for every KAPI PrimaryDataAsset type — air collector, cleaner, modular miner, slug breeding, extractor/resource allow-lists, and delivery-task tree nodes.'
+description: 'Real, copy-pasteable "type: dataasset" examples for every KAPI PrimaryDataAsset type air collector, cleaner, modular miner, slug breeding, extractor/resource allow-lists, and delivery-task tree nodes.'
 sidebar:
   order: 7
 ---
@@ -14,7 +14,7 @@ of that type exists to read from.
 
 ## UKAPIAirCollectorData: air collector production
 
-Each Air Collector resource is its own `UKAPIAirCollectorData` instance — the DataAsset registers a
+Each Air Collector resource is its own `UKAPIAirCollectorData` instance the DataAsset registers a
 new gas/resource the Air Collector can extract, it does not patch an existing one. See the
 [full property reference](/satisfactory-plus/kapi/air-collector/) for every field; the example
 below mirrors Satisfactory Plus's own shipped "Air Collector extract Toxic Air via Resource Nodes"
@@ -205,12 +205,12 @@ assets:
 
 ## UKAPIExtractorAllowList: Registering new Extractors and Resources
 
-Unlike the other examples on this page, no shipped instance of this asset exists to read from — the
+Unlike the other examples on this page, no shipped instance of this asset exists to read from the
 wiki data export has zero `UKAPIExtractorAllowList` entries. SF+ ships its own default allow-list
 as an existing default asset that mods normally `type: cdo` patch instead (see
 [Data Assets](/kdataforge/features/data-assets)); creating a brand new instance from scratch, as
 below, is mainly useful for a self-contained mod that wants its own allow-list rather than editing
-SF+'s. The values below are illustrative — adjust the class paths to your own mod's classes. See
+SF+'s. The values below are illustrative adjust the class paths to your own mod's classes. See
 [Extractors → Properties](/satisfactory-plus/kapi/extractors/) for the full property reference.
 
 This is the same "hooking up a new resource type" scenario described on that reference page: a new
@@ -233,7 +233,7 @@ assets:
       - path: mAllowedResources
         value:
           - /Game/YourMod/Resource/Desc_YourResource.Desc_YourResource_C
-      # mDisallowExtractors and mDisallowResources omitted — no exclusions.
+      # mDisallowExtractors and mDisallowResources omitted no exclusions.
       - path: mPriority
         value: 0
 ```
@@ -244,10 +244,10 @@ overridden for this class (see the priority note on the reference page).
 ## `UKAPIDeliveryTask`: research-tree / delivery-task nodes
 
 `UKAPIDeliveryTask` places one node on a 2D coordinate grid and links it to a parent node (or
-several, at once) via `mParentTask` — a **bitmask** property (`EKAPIDeliveryTaskParent`:
+several, at once) via `mParentTask` a **bitmask** property (`EKAPIDeliveryTaskParent`:
 `Above`/`Left`/`Right`/`Bottom`/`AboveLeft`/`AboveRight`/`BelowLeft`/`BelowRight`). Like
-`UKAPIExtractorAllowList` above, there's no shipped instance to read real values from — this
-feature isn't part of Satisfactory Plus, it only needs **`KAPI` + `KPrivateCodeLib`** — so the
+`UKAPIExtractorAllowList` above, there's no shipped instance to read real values from this
+feature isn't part of Satisfactory Plus, it only needs **`KAPI` + `KPrivateCodeLib`** so the
 example below is illustrative.
 
 The interesting part is `mParentTask` accepting **more than one flag at once**. Use one scalar name

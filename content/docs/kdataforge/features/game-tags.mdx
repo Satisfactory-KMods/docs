@@ -18,7 +18,7 @@ bare string or as a map with an optional `comment:` for documentation purposes:
 # file: tags.gametag.yml
 type: gametag
 tags:
-  - tag: MyOverhaul.Machines.Tier2 # map form — with an optional comment
+  - tag: MyOverhaul.Machines.Tier2 # map form with an optional comment
     comment: Marker for tier-2 machine rebalancing
   - MyOverhaul.Simple # scalar shorthand, no comment
 ```
@@ -52,7 +52,7 @@ in the same pack. No `include:` is needed for the gametag file itself. First, pu
 content:
 
 ```yaml
-# file: tag-recipes.cdo.yml — put the tag ON some content
+# file: tag-recipes.cdo.yml put the tag ON some content
 type: cdo
 patches:
   - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
@@ -66,10 +66,10 @@ patches:
 Then a second `cdo` document can select everything carrying that tag and patch it in bulk:
 
 ```yaml
-# file: buff-tagged.cdo.yml — match everything carrying the tag
+# file: buff-tagged.cdo.yml match everything carrying the tag
 type: cdo
 include:
-  - tag-recipes.cdo.yml # both files are in the CDOChanges stage — order them explicitly
+  - tag-recipes.cdo.yml # both files are in the CDOChanges stage order them explicitly
 patches:
   - matchTag: MyOverhaul.Machines.Tier2
     ofClass: /Script/FactoryGame.FGRecipe
@@ -92,17 +92,17 @@ adds tags without disturbing existing ones. `remove` takes a single tag back out
 the container entirely, and the default `set` op replaces the whole container:
 
 ```yaml
-- path: mGameplayTags # append — add tags (sequence or scalar)
+- path: mGameplayTags # append add tags (sequence or scalar)
   op: append
   value:
     - MyOverhaul.Simple
     - KMods.WikiExclude
-- path: mGameplayTags # remove — take one tag out
+- path: mGameplayTags # remove take one tag out
   op: remove
   value: KMods.WikiExclude
-- path: mGameplayTags # clear — empty the container
+- path: mGameplayTags # clear empty the container
   op: clear
-- path: mGameplayTags # set (default) — replace ALL tags
+- path: mGameplayTags # set (default) replace ALL tags
   value:
     - MyOverhaul.Machines.Tier2
 ```

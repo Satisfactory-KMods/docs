@@ -58,7 +58,7 @@ written, and `ApplyDocument` does the actual work. Only `ApplyDocument` is manda
 UMyRecipeHandler::UMyRecipeHandler()
 {
 	mRootType = TEXT("recipe");          // matches `type: recipe` documents
-	mStage = EKDFStage::Recipes;         // fixed stage — never reordered by priority
+	mStage = EKDFStage::Recipes;         // fixed stage never reordered by priority
 	mPriority = 0;                       // tie-break within (stage, root type); higher runs earlier
 }
 
@@ -85,7 +85,7 @@ bool UMyRecipeHandler::ApplyDocument(const FKDFNode& Document, FKDFApplyContext&
 		}
 		if (Context.bDryRun)
 		{
-			continue;                    // resolve/validate only — no writes
+			continue;                    // resolve/validate only no writes
 		}
 		// … create/modify the recipe class, write properties via FKDFOpEngine/FKDFValueCodec …
 		++Context.mAppliedOpCount;

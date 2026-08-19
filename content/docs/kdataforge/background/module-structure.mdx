@@ -81,9 +81,9 @@ This module exists for one reason: to keep exceptions from leaking anywhere else
 
 ```
 Source/KDataForgeYaml/
-├── Public/   KDFYamlParser.h              (façade — the only entry point)
+├── Public/   KDFYamlParser.h              (façade the only entry point)
 ├── Private/  KDFYamlParser.cpp            (ryml + a deterministic hand-written emitter)
-└── ThirdParty/ryml/rapidyaml.hpp          (v0.15.2 amalgamation — vendored, never edited)
+└── ThirdParty/ryml/rapidyaml.hpp          (v0.15.2 amalgamation vendored, never edited)
 ```
 
 `bEnableExceptions = true` is set only in this module's `.Build.cs`. The reasoning is spelled out

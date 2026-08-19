@@ -27,32 +27,32 @@ Unreal Asset Registry scan found **26 native classes** and **22 shipped Blueprin
 
 | Native class | Abstract | Blueprint variant / use this path | Configurable fields and accepted types |
 | --- | --- | --- | --- |
-| `FGUnlock` | yes | — base only; never instance | — |
+| `FGUnlock` | yes | base only; never instance | |
 | `FGUnlockArmEquipmentSlot` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockArmEquipmentSlot.BP_UnlockArmEquipmentSlot_C` | `mNumArmEquipmentSlotsToUnlock: int32` |
 | `FGUnlockBlueprints` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockBlueprints.BP_UnlockBlueprints_C` | inherited `mRecipes: TArray<TSubclassOf<UFGRecipe>>` |
-| `FGUnlockBuildEfficiency` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockBuildEfficiency.BP_UnlockBuildEfficiency_C` | — |
-| `FGUnlockBuildOverclock` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockBuildOverclock.BP_UnlockBuildOverclock_C` | — |
-| `FGUnlockBuildProductionBoost` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockBuildProductionBoost.BP_UnlockBuildProductionBoost_C` | — |
+| `FGUnlockBuildEfficiency` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockBuildEfficiency.BP_UnlockBuildEfficiency_C` | |
+| `FGUnlockBuildOverclock` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockBuildOverclock.BP_UnlockBuildOverclock_C` | |
+| `FGUnlockBuildProductionBoost` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockBuildProductionBoost.BP_UnlockBuildProductionBoost_C` | |
 | `FGUnlockCentralStorageItemLimit` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockCentralStorageItemLimit.BP_UnlockCentralStorageItemLimit_C` | `mItemStackLimitIncrease: int32` |
 | `FGUnlockCentralStorageUploadSlots` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockCentralStorageUploadSlots.BP_UnlockCentralStorageUploadSlots_C` | `mNumSlotsToUnlock: int32` |
 | `FGUnlockCentralStorageUploadSpeed` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockCentralStorageUploadSpeed.BP_UnlockCentralStorageUploadSpeed_C` | `mUploadSpeedPercentageDecrease: float` (`Percent`) |
 | `FGUnlockCheckmark` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockCheckmark.BP_UnlockCheckmark_C` | inherited `mUnlockName: FText`<br />`mUnlockDescription: FText`<br />`mUnlockIconBig: TObjectPtr<UTexture2D>`<br />`mUnlockIconSmall: TObjectPtr<UTexture2D>`<br />`mUnlockIconCategory: TObjectPtr<UTexture2D>` |
-| `FGUnlockCircuitDaisyChaining` | no | `/Game/FactoryGame/Unlocks/BP_UnlockCircuitDaisyChaining.BP_UnlockCircuitDaisyChaining_C` | — |
+| `FGUnlockCircuitDaisyChaining` | no | `/Game/FactoryGame/Unlocks/BP_UnlockCircuitDaisyChaining.BP_UnlockCircuitDaisyChaining_C` | |
 | `FGUnlockCustomization` | no | `/Script/FactoryGame.FGUnlockCustomization` | `mCustomizationUnlocks: TArray<TSubclassOf<UFGPlayerCustomizationDesc>>` |
-| `FGUnlockCustomizer` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockCustomizer.BP_UnlockCustomizer_C` | — |
+| `FGUnlockCustomizer` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockCustomizer.BP_UnlockCustomizer_C` | |
 | `FGUnlockEmote` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockEmote.BP_UnlockEmote_C` | `mEmotes: TArray<TSubclassOf<UFGEmote>>` |
 | `FGUnlockGiveItem` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockGiveItem.BP_UnlockGiveItem_C` | `mItemsToGive: TArray<FItemAmount>` |
 | `FGUnlockInfoOnly` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockInfoOnly.BP_UnlockInfoOnly_C` | `mUnlockName: FText`<br />`mUnlockDescription: FText`<br />`mUnlockIconBig: TObjectPtr<UTexture2D>`<br />`mUnlockIconSmall: TObjectPtr<UTexture2D>`<br />`mUnlockIconCategory: TObjectPtr<UTexture2D>` |
 | `FGUnlockInventorySlot` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockInventorySlot.BP_UnlockInventorySlot_C` | `mNumInventorySlotsToUnlock: int32` |
 | `FGUnlockItemDescriptor` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockItemDescriptor.BP_UnlockItemDescriptor_C` | `mItemDescriptors: TArray<TSubclassOf<UFGItemDescriptor>>` |
-| `FGUnlockMap` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockMap.BP_UnlockMap_C` | — |
+| `FGUnlockMap` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockMap.BP_UnlockMap_C` | |
 | `FGUnlockRecipe` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C` | `mRecipes: TArray<TSubclassOf<UFGRecipe>>` |
 | `FGUnlockSAMIntensity` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockSAMIntensity.BP_UnlockSAMIntensity_C` | `mSAMIntensity: int32` |
 | `FGUnlockScannableObject` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockScannableObject.BP_UnlockScannableObject_C` | `mScannableObjects: TArray<FScannableObjectData>` |
 | `FGUnlockScannableResource` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockScannableResource.BP_UnlockScannableResource_C` | `mResourcePairsToAddToScanner: TArray<FScannableResourcePair>`<br />legacy `mResourcesToAddToScanner: TArray<TSubclassOf<UFGResourceDescriptor>>` |
 | `FGUnlockSchematic` | yes | `/Game/FactoryGame/Unlocks/BP_UnlockSchematic.BP_UnlockSchematic_C` | `mSchematics: TArray<TSubclassOf<UFGSchematic>>` |
 | `FGUnlockTape` | no | `/Script/FactoryGame.FGUnlockTape` | `mTapeUnlocks: TArray<TSubclassOf<UFGTapeData>>` |
-| `FGUnlockVisualizationMode` | yes | — provide concrete mod subclass | `mVisualizationModes: TArray<TSubclassOf<UFGVisualizationModeDescriptor>>` |
+| `FGUnlockVisualizationMode` | yes | provide concrete mod subclass | `mVisualizationModes: TArray<TSubclassOf<UFGVisualizationModeDescriptor>>` |
 
 Each `properties` entry's `path` uses field name exactly. `TSubclassOf<T>` accepts Unreal class path;
 `TObjectPtr<T>` accepts object asset path or `null`; `TArray<T>` accepts YAML sequence; reflected
@@ -215,7 +215,7 @@ unlocks:
       - path: mUnlockName
         value: 'A cosmetic note'
       - path: mUnlockDescription
-        value: 'Shown in the unlock UI — grants nothing by itself.'
+        value: 'Shown in the unlock UI grants nothing by itself.'
 ```
 
 | Class                  | Key property                                                                               | What it does                                                                               |

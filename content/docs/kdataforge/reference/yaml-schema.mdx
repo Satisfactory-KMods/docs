@@ -30,7 +30,7 @@ from the detected root's parent directory. Prefer an explicit stable `ref`; movi
 otherwise change its implicit identity.
 
 ```yaml
-ref: MyBalancePack # stable pack reference (save-persistence contract) — required if present
+ref: MyBalancePack # stable pack reference (save-persistence contract) required if present
 name: My Balance Pack # display name (default: ref)
 version: 1.2.0 # semver, informational + used by conflict reports
 priority: 100 # higher applies earlier within each stage (default 100)
@@ -46,7 +46,7 @@ conditions:
   hasMod:
     - KAPI
     - KLib
-  # optional — same grammar as a document's `conditions:` (see
+  # optional same grammar as a document's `conditions:` (see
 
 #                                       Conditions); gates every document in the pack (AND)
 ```
@@ -71,12 +71,12 @@ Every document is a YAML map with a root type:
 
 ```yaml
 type: cdo # required (or use the `<name>.<type>.yml` filename convention)
-debug: true # optional — log every applied op from this document (see Debug Logging)
+debug: true # optional log every applied op from this document (see Debug Logging)
 conditions:
   ? ...
-  # optional — see Conditions
+  # optional see Conditions
 include:
-  # optional — same-pack files that must apply BEFORE this one
+  # optional same-pack files that must apply BEFORE this one
   - base-values.cdo.yml
 
 # … type-specific content
@@ -302,14 +302,14 @@ the plural list key and the default parent differ:
 
 ```yaml
 type: item # or resource / building / recipe / schematic / research / unlock
-items: # plural key per type — see table below
-  - id: MySuperIngot # required — stable id, the save-persistence contract
+items: # plural key per type see table below
+  - id: MySuperIngot # required stable id, the save-persistence contract
     parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C # optional
     properties: # identical op entries to cdo patches, applied to the new class's CDO
       - path: mDisplayName
         value: Super Ingot
       - path: mStackSize
-        value: SS_HUGE # EStackSize enum, not a plain integer — see Special-cased properties
+        value: SS_HUGE # EStackSize enum, not a plain integer see Special-cased properties
 ```
 
 | Type        | Plural key   | Default `parent`                                                   |
@@ -346,7 +346,7 @@ path. Both forms always work; use whichever reads better:
 type: item
 items:
   - id: PureSuperIngot
-    parent: SuperIngot # short id — same as /KDataForge/Gen/MyPack.Gen_MyPack_SuperIngot
+    parent: SuperIngot # short id same as /KDataForge/Gen/MyPack.Gen_MyPack_SuperIngot
 ```
 
 - **Resolution order**: the id is looked up in the current document's own pack first (the common
@@ -371,7 +371,7 @@ items:
 type: recipe
 recipes:
   - id: Recipe_MySuperIngot
-    register: true # default — omit unless you want registration off
+    register: true # default omit unless you want registration off
     properties:
       - path: mManufacturingDuration
         value: 4
@@ -586,7 +586,7 @@ debug: true # optional (see Debug Logging)
 classes:
   - id: MyCustomThing
     parent: /Script/FactoryGame.FGEquipmentDescriptor # ANY class: native C++ or /Game/...Thing_C
-    registerAs: recipe # OPTIONAL: recipe | schematic | research — queues SML content
+    registerAs: recipe # OPTIONAL: recipe | schematic | research queues SML content
     #                    registration for kinds that need it; omit for everything else
     properties:
       - path: mDisplayName
@@ -771,7 +771,7 @@ combined result skips the document with an Info diagnostic.
 ```yaml
 conditions:
   gameVersion: '>=416000.0.0' # semver range vs the game version, reported as <changelist>.0.0
-  #                             (SML convention) — gate on the game's build changelist, e.g. the
+  #                             (SML convention) gate on the game's build changelist, e.g. the
   #                             CL from the game's main menu / `>=491125.0.0` for the SML baseline
   hasMod: KAPI # scalar…
   # hasMod may instead use a block sequence; `Ref@<range>` pins a version

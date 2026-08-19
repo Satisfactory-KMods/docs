@@ -42,14 +42,14 @@ whole document on a condition that's false when it isn't.
 
 ```yaml
 conditions:
-  hasMod: KAPI # scalar — one mod, any version
+  hasMod: KAPI # scalar one mod, any version
 ---
 
 conditions:
   hasMod:
     - KAPI
     - RefinedPower
-    # sequence — ALL must be loaded
+    # sequence ALL must be loaded
 ---
 
 conditions:
@@ -194,10 +194,10 @@ own `Plugins:` dependency list. SML refuses to load your mod if a _real_ depende
 
 ```yaml
 conditions:
-  hasClass: /Script/FactoryGame.FGBuildableFrackingActivator     # scalar — one class
+  hasClass: /Script/FactoryGame.FGBuildableFrackingActivator     # scalar one class
 
 conditions:
-  hasClass:                                                       # sequence — ALL must exist
+  hasClass:                                                       # sequence ALL must exist
     - /Script/RefinedPower.RPWindTurbine
     - /Game/FicsitFarming/Buildable/FarmPlot/Build_FarmPlot.Build_FarmPlot_C
 ```
@@ -252,7 +252,7 @@ missing.
 ### (a) The base item: always applies, no conditions
 
 ```yaml
-# file: super-ingot.item.yml (excerpt — no conditions: key at all)
+# file: super-ingot.item.yml (excerpt no conditions: key at all)
 type: item
 items:
   - id: SuperIngot

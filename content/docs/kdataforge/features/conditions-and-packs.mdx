@@ -26,7 +26,7 @@ conditions:
   gameVersion: '>=1.0.0' # semver range vs FactoryGame version
 
   hasMod: KAPI # single mod (loaded check)
-  # hasMod:                                    # sequence — ALL must be loaded
+  # hasMod:                                    # sequence ALL must be loaded
   #   - KAPI
   #   - RefinedPower@>=4.0.0                   # inline version constraint
 
@@ -35,7 +35,7 @@ conditions:
     KAPI: '>=2026.0.0'
 
   hasClass: /Script/FactoryGame.FGBuildableFrackingActivator
-  # hasClass:                                  # sequence — ALL must exist
+  # hasClass:                                  # sequence ALL must exist
   #   - /Game/FicsitFarming/Buildable/FarmPlot/Build_FarmPlot.Build_FarmPlot_C
 patches:
   - target: /Script/FactoryGame.FGBuildableFrackingActivator
@@ -99,7 +99,7 @@ group of documents a stable identity across saves, a load-order priority relativ
 and dependency ordering. The fields below are read directly by the pack scanner:
 
 ```yaml
-ref: MyOverhaul # stable ref — the save-persistence and conflict-report contract
+ref: MyOverhaul # stable ref the save-persistence and conflict-report contract
 name: My Overhaul Pack
 version: 2.1.0
 priority: 200 # higher than default (100) → applies earlier in every stage
@@ -107,7 +107,7 @@ enabled: true
 conditionBehaivor: AND # optional; controls condition-object aggregation
 dependencies:
   - KDFSample # packs that must load before this one
-conditions: # same grammar/evaluator as a document's conditions: — see above
+conditions: # same grammar/evaluator as a document's conditions: see above
   hasMod: RefinedPower@>=4.0.0
 ```
 

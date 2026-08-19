@@ -23,7 +23,7 @@ Unlike KAPI itself, KDataForge does **not** link against KAPI at build time:
 - Instead, `KDFSubsystem.cpp` resolves KAPI's subsystem **by string path through Unreal reflection**, only if it's actually present:
 
 ```cpp
-// KAPI is optional — resolve and invoke via reflection so no link dependency exists.
+// KAPI is optional resolve and invoke via reflection so no link dependency exists.
 if (UClass* KAPIClass = FindObject<UClass>(nullptr, TEXT("/Script/KAPI.KAPIDataAssetSubsystem")))
 {
     if (UGameInstanceSubsystem* KAPISubsystem = GameInstance->GetSubsystemBase(KAPIClass))
