@@ -80,6 +80,15 @@ fluid module. Which combinations are allowed, what they cost in power, and how
 they change the extraction rate all come from the miner description for that
 resource.
 
+## Dimensional Depot
+
+The game data carries the depot's upgrade percentages but not the rate those
+percentages are measured against, so there is no upload speed to put on a node
+and no tier to choose. A depot is calculated without an upload limit and says so
+on the node rather than refusing to calculate the part of the model it sits in.
+If you know your own upload rate, set it as a limit on the depot's port and the
+model keeps to it.
+
 ## Solar panels and wind turbines
 
 These follow the world rather than a fuel, so they have no input to size them.
