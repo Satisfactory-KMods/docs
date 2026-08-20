@@ -9,6 +9,23 @@ The canvas is where the model lives. Pan with the left mouse button, zoom with
 the wheel around the cursor, and drag with the right button to pull a selection
 box. Shift or Control adds to a selection instead of replacing it.
 
+A selected node is outlined, and every connection running into or out of it
+lights up with it. Select several nodes and the whole set lights up together, so
+a path through a large model can be followed without clicking each connection.
+A broken connection keeps its own colour, because that matters more than the
+path it belongs to.
+
+## The panel beside the canvas
+
+The right hand panel carries three tabs. The summary totals the model, the
+inspector edits whatever is selected, and messages lists everything the solver
+had to say. Click a node and the panel switches to the inspector on its own, so
+a selection and its settings are never more than one click apart.
+
+Messages name the node they are about rather than an internal identifier, and
+clicking one selects that node on the canvas. Only a solve that runs long
+enough to be worth stopping still interrupts the canvas itself.
+
 ## Connections
 
 Drag from a port to a compatible port to connect them. A port can carry several
@@ -32,7 +49,10 @@ Three path styles are available: curves, direct lines, and orthogonal routing.
 
 ## Grids
 
-Two grids exist and they are separate. The building grid snaps nodes, the
+The canvas sits on the same background grid as the rest of the site. It is
+decoration, not a snap target.
+
+Two working grids exist on top of it and they are separate. The building grid snaps nodes, the
 connection grid snaps waypoints, and each has its own X and Y spacing. Both can
 be applied to everything, to the current outpost, or to the current selection.
 

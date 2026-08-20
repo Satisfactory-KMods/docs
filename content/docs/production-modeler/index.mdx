@@ -56,11 +56,22 @@ Press the question mark key or F1 at any time for the full list of shortcuts.
 
 ## Reading a node
 
-Every node shows what it makes and how much. A recipe node carries its clock,
-its production slots, an optional limit, and a machine choice where the game
-offers one. Values are exact fractions internally, so a chain of thirds stays a
-third instead of drifting into decimals. The formatted number is what you see,
-the exact value sits in the tooltip.
+A node stays compact: its name, its result, and one row per port. Inputs sit on
+the left, outputs on the right, and every row names the part it carries and how
+much of it moves. Nothing floats over anything else, so a node stays readable
+however many ports it has.
+
+The chevron in the header opens the node. That is where the clock, the
+production slots, an optional limit and the machine choice live, and everything
+there is also available in the inspector while the node stays closed.
+
+Solids are counted in items per minute, fluids and gases in cubic metres per
+minute. That is the unit the game shows you, so a pipe carrying 300 m³ reads as
+300 and not as 300000.
+
+Values are exact fractions internally, so a chain of thirds stays a third
+instead of drifting into decimals. The formatted number is what you see, the
+exact value sits in the tooltip.
 
 A node that cannot solve is marked, and the marker says why. You do not have to
 hunt through a global list to find out which node broke.
