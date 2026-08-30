@@ -54,6 +54,17 @@ directly. Both are unusual enough about _when_ they take effect to deserve their
   per namespace and culture, source-hash matching for overrides, and culture prefix-matching
   rules.
 
+## World and startup control
+
+Two root types affect world content without generating a class. Both must run from matching packs
+on every multiplayer process.
+
+- [Resources and Resource Nodes](/kdataforge/features/resources#removing-resource-nodes-type-resourcenode):
+  `type: resourcenode` removes matching world nodes by effective resource descriptor and optional
+  node type, with explicit save-persistence and occupied-node safeguards.
+- [Sublevels](/kdataforge/features/sublevels): `type: sublevel` blocks selected
+  RefinedRDLib or KBFL sublevel descriptor assets before their levels stream in.
+
 ## Content creation
 
 These seven types generate a brand-new class at runtime, or, for the last three, register an
@@ -65,8 +76,8 @@ generated-class identity.
   the parent/required-base rules, and the generated-class identity every other content-creation
   type shares.
 - [Resources and Resource Nodes](/kdataforge/features/resources): generating
-  `FGResourceDescriptor` classes, patching node actor classes, scanner unlocks, and the limits on
-  selecting or placing world nodes.
+  `FGResourceDescriptor` classes, patching node actor classes, scanner unlocks, and removing
+  matching world nodes with `type: resourcenode`.
 - [Buildings](/kdataforge/features/buildings): generating new
   building/buildable-descriptor classes, what a generated building actually is, and the hard
   limit on genuinely new meshes or components.

@@ -67,6 +67,42 @@ recipes:
 `properties:` still works in this mode if you want to tweak the existing class's CDO at the same
 time you register it.
 
+## Removing recipes
+
+A `type: recipe` document can also declare a top-level `remove:` sequence. Each entry is a bare
+class reference: a full Unreal class path, a bare loaded class name, or a generated content id from
+this or another loaded KDataForge pack. Removal-only documents are valid, and `remove:` can also be
+mixed with normal `recipes:` entries in the same document:
+
+```yaml
+type: recipe
+remove:
+  - /Game/FactoryGame/Recipes/Constructor/Recipe_IronPlate.Recipe_IronPlate_C
+  - Recipe_IronPlateReinforced_C
+  - Recipe_MyGeneratedRecipe
+```
+
+`remove:` names the exact recipe class to suppress; it does not remove subclasses. If a generated id
+is ambiguous across packs, KDataForge logs the same ambiguity diagnostic used for other short-id
+class references. Removals are applied after queued registrations, so an explicit `remove:` wins
+over a `register:` for the same class.
+
+Recipe removal is the one content removal kind that writes back into the save. SML has no
+`RemoveRecipe` API, and the authoritative list is the save-backed recipe manager list. KDataForge
+therefore blocks future recipe grants with native hooks and sweeps recipes restored from an
+existing save during world initialization. Uninstalling the pack self-heals on the next load because
+purchased schematics re-apply their recipe unlocks without the removal hook.
+
+Packaged runtime builds install both singular and batch recipe-add prevention hooks. Unreal Editor
+PIE still runs the initialization sweep, but those native hooks are compiled out there; a recipe
+granted again later in the same PIE session can therefore reappear. Verify prevention behavior in a
+packaged game session.
+
+Removal never revokes schematic purchases. If a schematic was already purchased, that purchase stays
+in the save; only the named recipe is kept out of the available recipe list while the pack is
+installed. To hide the unlock source as well, pair this with
+[schematic `remove:`](/kdataforge/features/schematics#removing-schematics).
+
 ## `register:` and auto-propagation
 
 Every recipe entry, generated or register-only, accepts a `register:` flag. It decides whether the
@@ -79,7 +115,7 @@ recipes:
   - id: Recipe_MySuperIngot
     register: true # default omit unless you specifically want to skip registration
     properties:
-      - path: mManufacturingDuration
+      - path: mManufactoringDuration
         value: 4
 ```
 

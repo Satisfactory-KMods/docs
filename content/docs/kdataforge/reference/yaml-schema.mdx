@@ -82,6 +82,10 @@ include:
 # … type-specific content
 ```
 
+`priority:` belongs to `pack.yml`, not individual documents. A document-level value is ignored by
+runtime and rejected by current standalone schemas. Within one pack, include dependencies apply
+first and remaining documents use deterministic relative-file order.
+
 Root type detection order: `type:` key → filename convention (`iron.recipe.yml` → `recipe`).
 Unknown types warn once and are skipped (they may belong to a handler from another mod or a later
 phase).
@@ -138,6 +142,7 @@ examples:
 | `curve`              | Assets           | [Float and Vector Curves](/kdataforge/features/curves)    |
 | `localization`       | Localization     | [Localization](/kdataforge/features/localization)         |
 | `cdo`                | CDOChanges       | [Patching (type: cdo)](/kdataforge/features/patching-cdo) |
+| `sublevel`           | CDOChanges       | [Sublevels](/kdataforge/features/sublevels)                |
 | `item`               | Items            | [Items](/kdataforge/features/items)                       |
 | `resource`           | Items            | [Resources](/kdataforge/features/resources)               |
 | `building`           | Items            | [Buildings](/kdataforge/features/buildings)               |
@@ -147,6 +152,7 @@ examples:
 | `schematic`          | Schematics       | [Schematics](/kdataforge/features/schematics)             |
 | `research` / `mam`   | Research         | [Research Trees](/kdataforge/features/research-trees)     |
 | `sinkpoints`         | SubsystemMods    | [Sink Points](/kdataforge/features/sinkpoints)            |
+| `resourcenode`       | SubsystemMods    | [Resources](/kdataforge/features/resources#removing-resource-nodes-type-resourcenode) |
 | custom (third-party) | handler-declared | registered via `RegisterHandler`, no page, it's yours                   |
 
 > All class **generation** types (`item`, `resource`, `building`, `unlock`, and the generic
@@ -157,22 +163,22 @@ examples:
 ## Property Patches (`type: cdo`)
 
 A `cdo` document patches properties on something that **already exists**: a class's default
-object, a live `PrimaryDataAsset` instance, or every asset matching a class/tag scan. It does not
-generate new content. Exactly one target selector picks what gets patched, and one or more
+object, a live `UObject` such as a `UDataAsset` instance, or every asset matching a class/tag scan. It does not
+generate new content. One or more target selectors pick what gets patched, and one or more
 `properties:` ops describe the write:
 
 ```yaml
 type: cdo
 patches:
-  - # ---- exactly one target selector is required ----
+  - # ---- one or more target selectors are required; matches accumulate ----
     target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
     #   class path  → patches the class default object
-    #   object path → patches that object directly (PrimaryDataAsset instances etc.)
+    #   object path → patches that object directly (`UDataAsset` instances etc.)
     #   a sequence of either → every entry resolved and patched independently
-    # OR:
+    # AND/OR:
     allAssetsOfClass: /Script/KAPI.KAPIDataAssetBase
     #   every asset of that class (and subclasses) found in the asset registry
-    # OR:
+    # AND/OR:
     matchTag: KMods.AlternateRecipe # scalar or sequence (all must match)
     ofClass: /Script/FactoryGame.FGRecipe # required scope for matchTag
     tagProperty: mGameplayTags # optional explicit tag container property
@@ -181,6 +187,7 @@ patches:
     # ---- modifiers ----
     applyToSubclasses: false # class targets: also patch every derived class CDO
     applyToSpawnedActors: false # actor classes: re-apply ops to every spawning instance
+    deferOneGameTick: false # wait until one game tick after BeginPlay before resolving/applying
 
     # ---- the ops ----
     properties:
@@ -188,6 +195,27 @@ patches:
         op: multiply # see Operations (default: set)
         value: 0.5
 ```
+
+## Sublevel Blocking (`type: sublevel`)
+
+A `sublevel` document blocks RefinedRDLib or KBFL sublevel descriptor assets during the
+`CDOChanges` stage. `block:` must be a non-empty sequence. Each entry is an exact asset object path,
+or a map with `target:` (scalar or sequence) and/or `allAssetsOfClass:`:
+
+```yaml
+type: sublevel
+block:
+  - /SomeMod/World/DA_OptionalSublevel.DA_OptionalSublevel
+  - target:
+      - /AnotherMod/World/DA_Nodes_A.DA_Nodes_A
+      - /AnotherMod/World/DA_Nodes_B.DA_Nodes_B
+  - allAssetsOfClass: /Script/RefinedRDLib.RRDLSublevelAsset
+```
+
+Exact paths use direct object loading. Bulk class scans include derived classes but depend on the
+Asset Registry being populated. Other asset families warn and must be patched through `type: cdo`.
+The provider mods are optional soft integrations. Full behavior and diagnostics:
+[Sublevels](/kdataforge/features/sublevels).
 
 ## Property Paths
 
@@ -218,12 +246,12 @@ names never appear in YAML.
 | `set` (default)                                       | everything                                                    | `value`                                                             |
 | `add`, `subtract`, `multiply`, `divide`, `min`, `max` | numeric                                                       | `value`                                                             |
 | `clamp`                                               | numeric                                                       | `min`, `max`                                                        |
-| `append`                                              | array, set, map, string/name/text, tag container              | `value` (scalar or sequence)                                        |
-| `prepend`                                             | array, set, string/name/text, tag container                   | `value` (scalar or sequence)                                        |
+| `append`                                              | array, set, map, string/name/text, tag container, bitmask     | `value` (map for map; scalar or sequence otherwise)                 |
+| `prepend`                                             | array, set, string/name/text, tag container, bitmask          | `value` (scalar or sequence)                                        |
 | `insert`                                              | array                                                         | `index`, `value`                                                    |
-| `remove`                                              | array (by value), set (by value), map (by key), tag container | `value`                                                             |
+| `remove`                                              | array (by value), set (by value), map (by key), tag container, bitmask | `value`                                                     |
 | `remove_at`                                           | array                                                         | `index`                                                             |
-| `clear`                                               | array, set, map, string/name/text, tag container              | none                                                                |
+| `clear`                                               | array, set, map, string/name/text, tag container, bitmask     | none                                                                |
 | `swap`                                                | array                                                         | `index`, `with`                                                     |
 | `replace`                                             | array                                                         | `index`, `value`                                                    |
 | `duplicate`                                           | array                                                         | `index`                                                             |
@@ -237,7 +265,7 @@ Unsupported op×type combinations are **diagnostics at load time**, never silent
 
 A few properties need more than a plain reflected write. KDataForge handles them automatically:
 
-- **`FGameplayTagContainer`**: accepts `set`/`append`/`remove`/`clear` with plain tag names
+- **`FGameplayTagContainer`**: accepts `set`/`append`/`prepend`/`remove`/`clear` with plain tag names
   (no native-struct text form needed).
 - **`mStackSize`** (any `FGItemDescriptor`-derived target): this is an **`EStackSize` enum**
   (`SS_ONE`/`SS_SMALL`/`SS_MEDIUM`/`SS_BIG`/`SS_HUGE`/`SS_FLUID`), not a plain integer. Set it with
@@ -373,9 +401,42 @@ recipes:
   - id: Recipe_MySuperIngot
     register: true # default omit unless you want registration off
     properties:
-      - path: mManufacturingDuration
+      - path: mManufactoringDuration
         value: 4
 ```
+
+### Removing registered content (`recipe`, `schematic`, `research`)
+
+These three document types also accept a document-level `remove:` sequence. It may be the whole
+document or appear beside the normal entries list. Every entry must be a bare class reference; map
+entries are invalid. Full paths and generated-content short ids resolve:
+
+```yaml
+type: schematic
+remove:
+  - /Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C
+  - Schematic_ObsoleteFromAnotherPack
+
+# Optional: registration/generation entries can coexist. Explicit removal runs after registration.
+schematics:
+  - id: Schematic_Replacement
+```
+
+- Only `recipe`, `schematic`, and `research` (including `type: mam`) support this key. `item`,
+  `resource`, `building`, `unlock`, and `class` do not have a live registry-removal path.
+- Matching is by exact class. Removing a parent does not remove its subclasses.
+- Schematic and research-tree removal is save-clean and reverses on the next session after the pack
+  is removed. Existing purchase/unlock state is not revoked.
+- Recipe removal prevents future adds and sweeps recipes restored from the server save. The
+  available-recipe list is saved, but it self-heals on a later load without the pack when purchased
+  schematics reapply their unlocks.
+- Removing a schematic does not remove recipes it already granted. Pair schematic and recipe
+  removal rules when the content itself must become unavailable.
+
+See [Recipes](/kdataforge/features/recipes#removing-recipes),
+[Schematics](/kdataforge/features/schematics#removing-schematics), and
+[Research Trees](/kdataforge/features/research-trees#removing-research-trees) for kind-specific
+examples and multiplayer boundaries.
 
 - `register: true` (default) queues the class for per-world registration into SML's
   `UModContentRegistry`, **before the registry freezes at world begin play**. Auto-propagation
@@ -631,11 +692,12 @@ assets:
 Icon usage example (item `mSmallIcon` / `mPersistentBigIcon`):
 [Data Assets → 2D image assets](/kdataforge/features/data-assets#2d-image-assets-type-asset).
 
-## Dynamic PrimaryDataAsset Instances (`type: dataasset`)
+## Dynamic DataAsset Instances (`type: dataasset`)
 
-Creates real `UPrimaryDataAsset` **instances** (not classes) at runtime, using package
+Creates real `UDataAsset` **instances** (not classes) at runtime, using package
 `/KDataForge/GenAssets/<PackRef>` and name `Gen_<PackRef>_<Id>`. It announces them to the asset
-registry so scanning subsystems find them.
+registry so scanning subsystems can find them. `UPrimaryDataAsset` subclasses are the common
+consumer-facing case, but the runtime validator accepts any `UDataAsset` subclass.
 
 ```yaml
 type: dataasset
@@ -643,7 +705,7 @@ conditions:
   hasMod: KAPI
 assets:
   - id: CleanerItem_MyFluid
-    class: /Script/KAPI.KAPICleanerItemDescription # any UPrimaryDataAsset subclass
+    class: /Script/KAPI.KAPICleanerItemDescription # any UDataAsset subclass
     properties:
       - path: mProductionTime
         value: 4.0
@@ -661,7 +723,7 @@ when data assets were **modified or added**:
   dependency needed. It covers RefinedPower / FicsitFarming boiler/cooler/heater/turbine/generator/dirt
   data assets.
 
-Existing PrimaryDataAssets (KAPI's, RRDA's, any mod's) are already **editable** via `cdo` documents
+Existing data assets (KAPI's, RRDA's, any mod's) are already **editable** via `cdo` documents
 (`target:` object path, `allAssetsOfClass:`, `matchTag:`). The `dataasset` type is only for
 creating new instances.
 
@@ -719,6 +781,36 @@ entries:
 ```
 
 **Not live-reloadable** (registry freeze): sinkpoint changes need a session restart.
+
+## Resource Node Removal (`type: resourcenode`)
+
+A `resourcenode` document requires a non-empty `remove:` sequence. A scalar is shorthand for a map
+with only `resource:`. Valid entries still apply when another entry reports an error:
+
+```yaml
+type: resourcenode
+remove:
+  - /Game/FactoryGame/Resource/RawResources/Uranium/Desc_OreUranium.Desc_OreUranium_C
+  - resource: MyGeneratedResource
+    nodeTypes: [Node, FrackingCore]
+    allowOccupied: false
+    removeFromScanner: true
+```
+
+- `resource:` must resolve to a `UFGResourceDescriptor` class. Generated-content short ids work.
+- `nodeTypes:` is optional. Omitted or empty means all types; accepted values are `Node`,
+  `FrackingSatellite`, `FrackingCore`, `Geyser`, and `Deposit`, with or without the
+  `EResourceNodeType::` prefix.
+- `allowOccupied:` defaults to `false`. The default skips and warns about node groups used by an
+  extractor. `true` can invalidate an extractor's node reference.
+- `removeFromScanner:` defaults to `true`. It also strips vanilla scanner pairs and matching KAPI
+  allow-list data, then refreshes scanner/radar caches.
+
+:::danger
+Vanilla can persist level-placed node destruction in the save. Deleting the YAML does not reliably
+restore those actors. Back up the save and read the full persistence and deferred-pass limitations
+under [Resources and Resource Nodes](/kdataforge/features/resources#removing-resource-nodes-type-resourcenode).
+:::
 
 ## Runtime Text Entries (`type: localization`)
 

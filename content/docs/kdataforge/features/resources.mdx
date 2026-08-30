@@ -1,6 +1,6 @@
 ---
 title: 'Type: resource and Resource Nodes'
-description: Generate resource descriptors, understand world Resource Nodes, unlock scanner visibility, and work within the limits of KDataForge actor patches.
+description: Generate resource descriptors, remove matching world Resource Nodes, unlock scanner visibility, and patch node actor classes.
 sidebar:
   order: 10
 ---
@@ -13,15 +13,17 @@ session after changing them.
 
 The similar names hide four separate systems:
 
-| Concept                    | FactoryGame type                     | What KDataForge does                                                   |
-| -------------------------- | ------------------------------------ | ---------------------------------------------------------------------- |
-| Resource definition        | `UFGResourceDescriptor`              | `type: resource` generates a new descriptor class                      |
-| Resource Node in the world | `AFGResourceNodeBase` and subclasses | A `cdo` actor patch can modify a node class and all matching instances |
-| Scanner visibility         | `UFGUnlockScannableResource`         | A schematic `unlocks:` entry registers descriptor and node-type pairs  |
-| AWESOME Sink value         | `AFGResourceSinkSubsystem` data      | `type: sinkpoints` sets item scores and has no node-placement behavior |
+| Concept                      | FactoryGame type                     | What KDataForge does                                                     |
+| ---------------------------- | ------------------------------------ | ------------------------------------------------------------------------ |
+| Resource definition          | `UFGResourceDescriptor`              | `type: resource` generates a new descriptor class                        |
+| Resource Node removal        | `AFGResourceNodeBase` and subclasses | `type: resourcenode` destroys matches by descriptor and optional node type |
+| Resource Node property patch | `AFGResourceNodeBase` and subclasses | A `cdo` actor patch modifies a node class and all matching instances      |
+| Scanner visibility           | `UFGUnlockScannableResource`         | A schematic `unlocks:` entry registers descriptor and node-type pairs    |
+| AWESOME Sink value           | `AFGResourceSinkSubsystem` data      | `type: sinkpoints` sets item scores and has no node-placement behavior   |
 
 `type: resource` does not spawn, place, move, or remove Resource Node actors. A generated
 descriptor becomes mineable only when a map or another mod assigns it to a compatible node.
+Removal is a separate, destructive capability under `type: resourcenode`.
 
 ## Generate a resource descriptor
 
@@ -73,21 +75,84 @@ tags remain available through the same `properties:` grammar.
 liquid descriptor does not create a pipe-compatible producer or a world node. KDataForge validates
 the enum and property types, but it cannot validate the rest of your gameplay chain.
 
-## What Resource Node editing can and cannot do
+## Removing Resource Nodes (`type: resourcenode`)
+
+`resourcenode` runs in the `SubsystemMods` stage, after generated resource descriptors exist. Its
+`remove:` sequence registers world-purge rules. A scalar entry removes every node whose effective
+resource descriptor matches. A map adds filters and safety controls:
+
+```yaml
+type: resourcenode
+remove:
+  # Scalar shorthand: all node types, occupied nodes protected, scanner entries removed.
+  - /Game/FactoryGame/Resource/RawResources/Uranium/Desc_OreUranium.Desc_OreUranium_C
+
+  - resource: MyCustomOre # generated-content short ids work
+    nodeTypes:
+      - Node
+      - Deposit
+    allowOccupied: false
+    removeFromScanner: true
+```
+
+| Field               | Default | Meaning                                                                 |
+| ------------------- | ------- | ----------------------------------------------------------------------- |
+| `resource`          | required | `UFGResourceDescriptor` class path or generated-content short id       |
+| `nodeTypes`         | all     | Sequence of `Node`, `FrackingSatellite`, `FrackingCore`, `Geyser`, or `Deposit` |
+| `allowOccupied`     | `false` | When false, skips a node group used by an extractor                     |
+| `removeFromScanner` | `true`  | Also removes scanner pairs and matching KAPI extractor allow-list data  |
+
+Qualified node-type names such as `EResourceNodeType::Geyser` also work. An omitted or empty
+`nodeTypes` sequence matches every type. Matching uses each node's **effective** resource class,
+including a runtime resource override; it is exact by descriptor class and does not match
+descriptor subclasses implicitly. There is no filter for transform, purity, amount, or level name.
+
+Purge rules run before world `BeginPlay`, for later actor spawns and streamed levels, and once more
+on the next tick to catch nodes retargeted by the vanilla randomizer or KBFL. Destruction is
+server-authoritative. Clients remove the separate local mesh actor and rebuild scanner clusters;
+radar-tower resource caches are rebuilt on the server. Removing a fracking core also removes its
+satellites so no satellite keeps a dead core reference.
+
+With `allowOccupied: false`, KDataForge checks the whole fracking group and skips it when an
+extractor is attached. `allowOccupied: true` overrides that protection and can leave the extractor
+holding an invalid node reference. Use it only after removing affected extractors.
+
+When `removeFromScanner` is true, KDataForge removes every vanilla scanner pair for the descriptor,
+updates KAPI allow/deny data when KAPI is installed, and reapplies the exclusion after schematic
+purchases repopulate unlock data. Set it to false only when a scanner entry with no matching node is
+intentional.
+
+:::danger
+Resource Node destruction can outlive the pack. Vanilla saves a destruction tombstone for each
+level-placed node, so deleting this YAML or uninstalling the pack does **not** reliably restore the
+node. SatisfactoryPlus strips most such tombstones, but resource deposits remain protected and can
+stay destroyed. Back up the save before testing. Treat `resourcenode` as a world migration, not a
+reversible balance patch.
+:::
+
+:::caution
+Current source cannot remove raw pointers already cached by `AFGResourceNodeManager`. A node first
+matched only in the deferred post-`BeginPlay` pass, such as one retargeted by a randomizer or KBFL,
+can leave a dangling manager entry for the rest of that session. Test these integrations in a real
+world and on a dedicated server before shipping.
+:::
+
+## Patching Resource Node actor classes (`type: cdo`)
 
 The built-in `cdo` handler selects classes, standalone asset objects, asset families, or gameplay
-tags. Runtime actor patches then match actors by class. There is no selector for actor transform,
-current resource, purity, node type, or level-instance name.
+tags. Runtime actor patches then match actors by class. Unlike `resourcenode`, property patches have
+no selector for actor transform, current resource, purity, node type, or level-instance name.
 
-| Goal                                                     | Current support                                                |
-| -------------------------------------------------------- | -------------------------------------------------------------- |
-| Patch the CDO of one custom Resource Node actor class    | Yes, with `type: cdo`                                          |
-| Apply properties to every instance of that class         | Yes, with `applyToSpawnedActors: true`                         |
-| Include every derived node class                         | Yes, with `applyToSubclasses: true`; this is very broad        |
-| Patch one pre-placed node by map location or object path | No; world actors do not exist during initial target resolution |
-| Select nodes by descriptor, purity, amount, or node type | No; actor patches only filter by class                         |
-| Place, move, clone, or remove world nodes                | No                                                             |
-| Create or wire fracking cores and satellites             | No                                                             |
+| Goal                                                     | Current support                                                        |
+| -------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Patch the CDO of one custom Resource Node actor class    | Yes, with `type: cdo`                                                  |
+| Apply properties to every instance of that class         | Yes, with `applyToSpawnedActors: true`                                 |
+| Include every derived node class                         | Yes, with `applyToSubclasses: true`; this is very broad                |
+| Patch one pre-placed node by map location or object path | No; world actors do not exist during initial target resolution         |
+| Select nodes by descriptor for property writes           | No; descriptor selection is available only for `resourcenode` removal |
+| Place, move, or clone world nodes                        | No                                                                     |
+| Remove nodes by descriptor and optional node type        | Yes, with `type: resourcenode`                                         |
+| Create or wire fracking cores and satellites             | No                                                                     |
 
 For a custom mod where every desired node has its own actor class, a class-scoped patch is useful:
 
@@ -129,7 +194,7 @@ cached, or initialized during `BeginPlay`. Prefer stable configuration fields on
 custom node class, then test descriptor, purity, and amount changes on a server and across save/load.
 :::
 
-## Scanner visibility does not create nodes
+## Scanner visibility and removal
 
 Use an instanced `FGUnlockScannableResource` on a schematic to add a descriptor and node-type pair
 to the scanner:
@@ -150,7 +215,10 @@ schematics:
 `ResourceNodeType` accepts `Node`, `FrackingSatellite`, `FrackingCore`, `Geyser`, or `Deposit`.
 This only makes matching existing nodes scannable. It does not place them. See
 [Schematics](/kdataforge/features/schematics#unlocking-resource-scanner-visibility)
-and the [Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes#scanning--world-interaction).
+and the [Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes).
+
+This unlock is additive. To remove a descriptor from scanner data while purging its nodes, keep
+`removeFromScanner: true` on the corresponding `type: resourcenode` rule.
 
 ## Advanced Resource Node visual metadata
 
@@ -171,6 +239,13 @@ against the Resource Node Manager in the target game build.
   `ResourceNodeType`, and make sure matching nodes exist.
 - **An actor patch changed too many nodes:** Narrow `target:` to a dedicated custom node class and
   keep `applyToSubclasses: false`.
+- **A removed node did not come back after deleting the pack:** Vanilla persisted its destruction.
+  Restore a backup or use a purpose-built save repair workflow; KDataForge cannot recreate the
+  original level actor from YAML.
+- **An occupied node was skipped:** Remove its extractor first. Avoid `allowOccupied: true` unless
+  invalidating the extractor's saved node reference is intentional.
+- **The scanner still lists a removed resource:** Use `removeFromScanner: true` and confirm the same
+  pack is installed on every process. Purchased schematic unlocks are filtered again at runtime.
 - **Descriptor or purity changed but visuals or extraction did not:** The game may already have
   initialized or cached related state. Direct reflection does not invoke setters or notifications.
 - **Sink points did not help:** [Sink Points](/kdataforge/features/sinkpoints) only

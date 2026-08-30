@@ -32,8 +32,11 @@ and apply pass. This runs before any world or save loads, so CDO edits and gener
 before anything references them. The full pass runs only once per GameInstance. During
 POST_INITIALIZATION, the load report is logged.
 
-`UKDFWorldModule` runs per world. It registers the `/kdf` chat command and queues content
-registration into `UModContentRegistry` before that registry freezes at world begin play.
+`UKDFWorldModule` runs per world. It registers the `/kdf` chat command. During world
+INITIALIZATION, after save deserialization and before actor `BeginPlay`, it drains queued content
+registration, applies schematic/research registry removals, then asks `UKDFContentRemoveSubsystem`
+to sweep save-restored recipes. Registration runs first, so an explicit removal wins when both name
+the same class.
 
 SML guarantees all modules receive CONSTRUCTION before any receives INITIALIZATION, which makes the
 third-party handler registration window safe.
@@ -42,7 +45,7 @@ third-party handler registration window safe.
 
 | Component                 | Type                    | Responsibility                                                                                          |
 | ---------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `UKDFSubsystem`           | GameInstanceSubsystem   | Owner of everything: loader, handler registry, class cache, vanilla cache, patch records, actor patches |
+| `UKDFSubsystem`           | GameInstanceSubsystem   | Owns loader, handler registry, class/object caches, patch records, registrations, removals, and world rules |
 | `FKDFPackScanner`         | static                  | Filesystem discovery (pruned recursive walk, `pack.yml` manifests)                                      |
 | `FKDFYamlParser`          | static (KDataForgeYaml) | ryml façade, the only YAML entry point; thread-safe parse, deterministic hand-written emitter           |
 | `FKDFConditionEvaluator`  | static                  | Document `conditions:` evaluation                                                                       |
@@ -50,10 +53,21 @@ third-party handler registration window safe.
 | `FKDFValueCodec`          | static                  | Bidirectional YAML ↔ FProperty conversion                                                               |
 | `FKDFOpEngine`            | static                  | The 22 property operations with per-kind capability matrix                                              |
 | `FKDFVanillaCache`        | member of subsystem     | First-write snapshots for editor diff, undo, and changes-only export                                    |
+| `FKDFDynamicContentRegistry` | member of subsystem  | Creates deterministic generated classes/assets and reconstructs missing generated classes as tombstones |
 | `UKDFCdoHandler`          | handler (`cdo`)         | CDOs, data-asset instances, `allAssetsOfClass`, tag matcher, actor patches                               |
+| `UKDFSublevelHandler`     | handler (`sublevel`)    | Blocks RefinedRDLib/KBFL sublevel descriptor assets during `CDOChanges`                                 |
+| `UKDFContentClassHandler` | handler base            | Generates item/resource/building/unlock/recipe/schematic/research classes; queues registration/removal  |
+| `UKDFAssetHandler`        | handler (`asset`)       | Decodes pack-relative 2D images into transient texture assets                                            |
+| `UKDFDataAssetHandler`    | handler (`dataasset`)   | Creates `UDataAsset` instances, applies instanced lists, and requests optional consumer rescans          |
 | `UKDFCurveHandler`        | handler (`curve`)       | Creates or edits `UCurveFloat` and `UCurveVector` assets during the Assets stage                         |
 | `UKDFGameTagHandler`      | handler (`gametag`)     | Runtime gameplay tag registration                                                                        |
+| `UKDFLocalizationHandler` | handler (`localization`)| Runtime namespace/culture text registration                                                               |
+| `UKDFSinkPointsHandler`   | handler (`sinkpoints`)  | Queues per-world AWESOME Sink table values                                                                |
+| `UKDFResourceNodeHandler` | handler (`resourcenode`)| Registers descriptor/node-type purge rules for live worlds                                               |
 | `UKDFActorPatchSubsystem` | WorldSubsystem          | Applies actor patches at world begin play + every spawn                                                  |
+| `UKDFContentRemoveSubsystem` | WorldSubsystem       | Orchestrates recipe sweeps and exposes per-world removal queries/counts                                  |
+| `UKDFResourceNodeSubsystem` | WorldSubsystem        | Purges matching nodes, local mesh actors, scanner data, and radar/scanner caches                         |
+| `FKDFRecipeRemoval`       | static/native hooks     | Blocks future recipe adds and removes recipes restored from server save data                             |
 | `AKDFChatCommand`         | chat command             | `/kdf report`, `/kdf editor`, `/kdf debug on\|off`                                                       |
 
 ## The Reflection Engine
@@ -72,7 +86,7 @@ makes "every reflectable type" honest, without needing hundreds of hand-written 
 
 **Operations** (`FKDFOpEngine`) validate each op against the leaf property kind before applying it:
 `multiply` on an FString produces a diagnostic, not a silent no-op. `FGameplayTagContainer` is
-special-cased so tag containers accept append/remove/clear/set with plain tag names. The full list
+special-cased so tag containers accept append/prepend/remove/clear/set with plain tag names. The full list
 of the 22 supported operations, their signatures, and which property kinds accept each one is
 covered in [Operations](/kdataforge/features/operations). The property kinds
 themselves, and how a `mIngredients[0].Amount`-style path resolves, are covered in
@@ -100,6 +114,24 @@ The `cdo` document type, its `properties:`/`applyToSpawnedActors`/`applyToSubcla
 the CDO/data-asset/tag-matcher targeting model are covered in full in
 [Patching (type: cdo)](/kdataforge/features/patching-cdo) and
 [Targeting](/kdataforge/features/targeting).
+
+## Per-world Registration and Removal
+
+GameInstance handlers cannot mutate world managers because no gameplay world exists during the
+initial YAML pass. They retain deterministic requests instead:
+
+- recipe, schematic, and research entries queue SML content registration;
+- document-level `remove:` on those same types queues exact-class removal rules;
+- `sinkpoints` queues Sink table writes;
+- `resourcenode` queues descriptor/node-type purge rules;
+- `cdo` with `applyToSpawnedActors` queues actor-class patch rules.
+
+`UKDFWorldModule` drains registrations before removals during world INITIALIZATION. SML directly
+removes schematic and research classes. Recipes need `FKDFRecipeRemoval`: process-wide hooks block
+future singular and batch adds, while the per-world sweep removes recipes already restored from the
+server save before `AFGRecipeManager::BeginPlay` builds derived caches. Resource Node purges use a
+separate four-point schedule because level actors, streamed levels, spawns, and late descriptor
+retargeting become visible at different times.
 
 ## Savegame Persistence Strategy
 
@@ -131,6 +163,21 @@ class paths resolve to the renamed class.
 
 Per-save state is held by `AKDFStateSubsystem : AModSubsystem` with SaveGame properties that store
 the applied-pack history: pack ref, version, and timestamp per entry.
+
+Removal features have separate persistence rules:
+
+- schematic and research-tree registry removals write nothing to the save and reverse next session
+  after the pack is removed, but do not revoke purchases or research progress;
+- recipe removal mutates the saved available-recipe list, then self-heals on a later load without
+  the pack when purchased schematics reapply unlocks;
+- `resourcenode` destroys world actors, and vanilla can persist those destruction tombstones even
+  after the pack is removed. It is a potentially irreversible world migration.
+
+See [Recipes](/kdataforge/features/recipes#removing-recipes),
+[Schematics](/kdataforge/features/schematics#removing-schematics),
+[Research Trees](/kdataforge/features/research-trees#removing-research-trees), and
+[Resources](/kdataforge/features/resources#removing-resource-nodes-type-resourcenode) before using
+those paths.
 
 See [Recipes](/kdataforge/features/recipes),
 [Schematics](/kdataforge/features/schematics), and

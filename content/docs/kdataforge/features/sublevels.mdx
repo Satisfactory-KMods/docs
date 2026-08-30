@@ -1,0 +1,80 @@
+---
+title: 'Type: sublevel'
+description: Block RefinedRDLib or KBFL sublevel assets before they stream into a game world.
+sidebar:
+  order: 20
+---
+
+Use `type: sublevel` when another mod declares optional world sublevels through RefinedRDLib or
+KBFL and a compatibility pack must stop selected sublevels from loading. The document runs in the
+`CDOChanges` stage during session initialization. It changes the provider's data assets in memory;
+it does not unload a level that has already streamed in. Restart the session after changing it.
+
+This handler is deliberately narrow. It supports these two asset families:
+
+| Provider       | Asset class                                  | Blocking action                                      |
+| -------------- | -------------------------------------------- | ---------------------------------------------------- |
+| RefinedRDLib   | `/Script/RefinedRDLib.RRDLSublevelAsset`     | Makes the asset's map selector match no normal map   |
+| KBFL           | `/Script/KBFL.KBFLSubLevelSpawning`          | Clears its sublevel list and disables the asset      |
+
+Use an ordinary [`type: cdo`](/kdataforge/features/patching-cdo) document for any other asset
+class.
+
+## Block explicit assets
+
+`block:` must be a non-empty sequence. A scalar entry is an exact asset object path. Map entries
+accept `target:` as either one path or a sequence of paths:
+
+```yaml
+type: sublevel
+block:
+  - /SomeMod/World/DA_OptionalSublevel.DA_OptionalSublevel
+  - target:
+      - /AnotherMod/World/DA_Nodes_A.DA_Nodes_A
+      - /AnotherMod/World/DA_Nodes_B.DA_Nodes_B
+```
+
+Exact targets use direct object loading, so they still work when the Asset Registry is not fully
+populated during early startup. A path that does not resolve produces a warning: the owning mod may
+be absent, or the object path may be wrong.
+
+## Block every asset of a provider class
+
+Use `allAssetsOfClass:` for a bulk compatibility rule:
+
+```yaml
+type: sublevel
+conditions:
+  hasMod: RefinedRDLib
+block:
+  - allAssetsOfClass: /Script/RefinedRDLib.RRDLSublevelAsset
+```
+
+The scan includes derived asset classes. A map may combine `target:` and `allAssetsOfClass:`; all
+matches accumulate. The provider is an optional dependency: an unresolved bulk class produces an
+Info diagnostic instead of a hard dependency failure.
+
+:::note
+Bulk discovery depends on the Asset Registry. If an installed provider class resolves but the scan
+finds no assets during early startup, KDataForge reports that condition. List exact `target:` paths
+instead when the assets must always be blocked.
+:::
+
+## Boundaries
+
+- `sublevel` blocks only RefinedRDLib and KBFL descriptor assets. It does not target arbitrary Unreal
+  streaming levels, persistent-map content, world-partition cells, or already loaded levels.
+- Missing or invalid entries do not discard valid entries in the same document. Each target reports
+  its own diagnostic.
+- Changes are in-memory and session-scoped. Removing the YAML restores normal provider behavior on
+  the next session; no save data or source asset is rewritten.
+- Every multiplayer process loads its own sublevels. Install the same pack on server and clients.
+
+## Troubleshooting
+
+- **Nothing was blocked:** use the asset object's path, not the generated class path. Check
+  `/kdf report` for an unresolved target or an empty Asset Registry scan.
+- **Target is rejected as the wrong kind:** only `RRDLSublevelAsset` and `KBFLSubLevelSpawning`
+  instances are supported. Patch other asset types with `type: cdo`.
+- **Level was already present:** KDataForge loads once during GameInstance initialization. Restart
+  instead of expecting an in-session unload.

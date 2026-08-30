@@ -97,7 +97,11 @@ accepts known Blueprint class paths and linter warns on unknown paths instead of
 
 Run `Mods/GameFeatures/KDataForge/Tools/scan_instanced_class_catalog.py` inside Unreal Python. It
 combines Asset Registry's transitive derived-class set and Blueprint `ParentClass` tags with native
-header metadata, then writes same JSON snapshot KDataForge Linter bundles.
+header metadata, then writes `Saved/KDataForge/instanced-class-catalog.json` by default. Set
+`KDF_CLASS_CATALOG_OUTPUT` to write a temp comparison file instead. The bundled
+`KDataForge-Linter/src/kdataforge_linter/catalogs/instanced_classes.json` snapshot already matches
+the current Unreal scan, so it does not need regeneration unless classes or Blueprint variants
+change.
 
 ## Research and delivery-task examples
 

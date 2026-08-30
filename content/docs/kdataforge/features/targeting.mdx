@@ -133,7 +133,7 @@ type: cdo
 conditions:
   hasMod: KAPI
 patches:
-- matchTag: KMods.AlternateRecipe # scalar; use a block sequence for multiple tags
+  - matchTag: KMods.AlternateRecipe # scalar; use a block sequence for multiple tags
     ofClass: /Script/FactoryGame.FGRecipe # required scope
     tagProperty: mGameplayTags # optional explicit tag container property
     matchAssets: true # also match data-asset instances (default true)
@@ -191,7 +191,7 @@ or preserve a value changed by a player or save.
 
 Resource Nodes are an important consequence of class-only actor matching. KDataForge cannot select
 one placed node by location, descriptor, purity, amount, or node type. See
-[Resources and Resource Nodes](/kdataforge/features/resources#what-resource-node-editing-can-and-cannot-do).
+[Resources and Resource Nodes](/kdataforge/features/resources).
 
 ## Choosing a selector
 

@@ -16,8 +16,7 @@ a stable public contract and internals that can change release to release.
 KDataForge ships as one Unreal plugin split into four separate C++ modules rather than one.
 Fewer DLL boundaries generally mean fewer allocator and export headaches, so this split is
 deliberate, not incidental. Each boundary exists to isolate something specific: a public API
-surface, an exception-throwing dependency, or a build target that dedicated servers shouldn't have
-to link.
+surface, an exception-throwing dependency, or the in-game editor's UI dependencies.
 
 ## Why the split exists
 
@@ -32,9 +31,10 @@ Three concerns drive where a module boundary sits:
 - **Exception containment.** The vendored YAML parser (rapidyaml) reports errors by throwing, but
   the rest of the codebase doesn't build with C++ exceptions enabled. Rather than flip on exceptions
   plugin-wide, only the module that wraps the parser does.
-- **Dedicated-server leanness.** The in-game editor pulls in Slate/UMG/AppFramework, none of which a
-  headless dedicated server has any use for. Keeping it a separate module means a dedicated-server
-  build simply doesn't link that code.
+- **UI dependency isolation.** The in-game editor pulls in `InputCore`, `UMG`, `Slate`,
+  `SlateCore`, and `AppFramework`. Keeping it in `KDataForgeEditorUI` stops those dependencies from
+  leaking into the loader/reflection runtime, even though the module itself is still declared as a
+  Runtime module.
 
 ## The four modules
 
@@ -44,14 +44,13 @@ derive against it, while registration also links the main `KDataForge` module. `
 the YAML backend, wrapping rapidyaml behind a façade,
 and it's the only module with exceptions enabled. `KDataForge` is the main runtime, holding the
 loader, the reflection engine, the subsystems, the built-in handlers, the chat command, and
-networking. `KDataForgeEditorUI` is the in-game editor UI, built with Slate, and is kept out of the
-dedicated-server link graph.
+networking. `KDataForgeEditorUI` is the in-game editor UI, built with Slate, and its Build.cs
+currently declares the UI dependency set unconditionally.
 
 That's a deliberate naming trap worth calling out. "EditorUI" refers to an **in-game** editor
 window rendered with hand-built Slate while the game is running, not to Unreal Editor-only code.
 Nothing in that module is gated behind `WITH_EDITOR`, and none of its dependencies are editor-only
-modules. It has to build and link cleanly into Shipping and dedicated-server targets, just like the
-other three.
+modules. It has to build and link cleanly anywhere the plugin loads it.
 
 ### `KDataForgeApi` the public contract
 
@@ -104,12 +103,15 @@ folder level, not via further module splits:
 Source/KDataForge/{Public,Private}/
 ├── Reflection/       KDFPropertyPath · KDFValueCodec · KDFOpEngine · KDFVanillaCache · KDFPatchUtil
 ├── Loader/           KDFPackScanner · KDFConditionEvaluator · KDFLoaderTypes
-├── Content/           KDFDynamicContent (class/asset generation, manifest, tombstones)
-├── Subsystems/        KDFSubsystem · KDFActorPatchSubsystem · KDFStateSubsystem
+├── Content/           KDFDynamicContent (class/asset generation, manifest, tombstones) ·
+│                       KDFRecipeRemoval
+├── Subsystems/        KDFSubsystem · KDFActorPatchSubsystem · KDFStateSubsystem ·
+│                       KDFContentRemoveSubsystem · KDFResourceNodeSubsystem
 ├── Handlers/          KDFCdoHandler · KDFAssetHandler · KDFCurveHandler · KDFGameTagHandler ·
 │                       KDFContentClassHandler family (Class/Item/Resource/Building/Recipe/
 │                       Schematic/Research/Unlock) · KDFDataAssetHandler ·
-│                       KDFSinkPointsHandler · KDFLocalizationHandler
+│                       KDFSinkPointsHandler · KDFLocalizationHandler · KDFSublevelHandler ·
+│                       KDFResourceNodeHandler
 ├── Commands/           KDFChatCommand
 ├── Module/             KDFGameInstanceModule · KDFWorldModule (SML root modules)
 ├── Net/                 KDFRemoteCallObject (host-gated RPC scaffold)
@@ -134,7 +136,7 @@ image files into runtime `UTexture2D` assets through `KDFAssetHandler`.
 
 ### `KDataForgeEditorUI` the in-game editor
 
-Kept as its own module purely so a dedicated server never has to link Slate, UMG, or AppFramework:
+Kept as its own module so Slate, UMG, and AppFramework stay isolated from the main runtime module:
 
 ```
 Source/KDataForgeEditorUI/

@@ -35,7 +35,7 @@ reported by `/kdf report` and skipped.
 | `KPCLDeliveryTaskQueueSlotUnlock`     | KPrivateCodeLib | no       | `/Script/KPrivateCodeLib.KPCLDeliveryTaskQueueSlotUnlock`                                                           | `mAmount: int32` (min 1)                                                                                                                                                                                                                                                                 |
 | `KPCLDeliveryTaskSlotUnlockBase`      | KPrivateCodeLib | yes      | base only                                                                                                         |                                                                                                                                                                                                                                                                                        |
 | `KPCLDeliveryTaskUnlock`              | KPrivateCodeLib | no       | `/KPrivateCodeLib/Unlocks/BP_DeliveryTaskUnlock.BP_DeliveryTaskUnlock_C`                                            |                                                                                                                                                                                                                                                                                        |
-| `KPCLFaxitCapacityUnlock`             | KPrivateCodeLib | no       | `/KPrivateCodeLib/Unlocks/BP_FaxitCapaUnlock.BP_FaxitCapaUnlock_C`                                                  | `mCapacityType: EKPCLFaxitCapacityType`<br />`mAmount: int32` (min 1)                                                                                                                                                                                                                    |
+| `KPCLFaxitCapacityUnlock`             | KPrivateCodeLib | no       | `/KPrivateCodeLib/Unlocks/BP_FaxitCapaUnlock.BP_FaxitCapaUnlock_C`                                                  | `mCapacityType: EKPCLFaxitCapacityType`<br />`mAmount: int32` (min 1)<br />`bUseCapacityTypeDefaultAmount: bool`                                                                                                                                                                        |
 | `KPCLFaxitFeatureUnlock`              | KPrivateCodeLib | no       | `/KPrivateCodeLib/Unlocks/BP_FaxitFeatureUnlock.BP_FaxitFeatureUnlock_C`                                            | `mFeature: EKPCLFaxitFeature`                                                                                                                                                                                                                                                            |
 | `KPCLFaxitSpeedUnlock`                | KPrivateCodeLib | no       | `/KPrivateCodeLib/Unlocks/BP_FaxitSpeedUnlock.BP_FaxitSpeedUnlock_C`                                                | `mAmount: int32` (min 1)<br />`bIsFluid: bool`                                                                                                                                                                                                                                           |
 | `KPCLFaxitUnlockBase`                 | KPrivateCodeLib | yes      | base only                                                                                                         |                                                                                                                                                                                                                                                                                        |
@@ -56,7 +56,7 @@ unlocks:
     properties:
       - path: mAmounts
         value:
-          - ItemClass: /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot_C
+          - ItemClass: /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot
             Amount: 10
 ```
 
@@ -121,22 +121,25 @@ unlocks:
 | `KPCLDeliveryTaskUnlock`              |                                                                 | Enables delivery tasks, the research queue, and manual delivery    |
 | `KPCLDeliveryTaskInventorySlotUnlock` | `mNumInventorySlotsToUnlock: int32` (min 1)                       | Adds slots to the shared delivery-task manual-input inventory      |
 | `KPCLDeliveryTaskQueueSlotUnlock`     | `mAmount: int32` (min 1)                                          | Raises how many delivery tasks queue at once (limit starts at one) |
-| `KPCLFaxitCapacityUnlock`             | `mCapacityType: EKPCLFaxitCapacityType`, `mAmount: int32` (min 1) | Raises machine-network, network, or drive capacity                 |
+| `KPCLFaxitCapacityUnlock`             | `mCapacityType: EKPCLFaxitCapacityType`, `mAmount: int32` (min 1), `bUseCapacityTypeDefaultAmount: bool` | Raises machine-network, network, drive, or network-building buffer inventory capacity |
 | `KPCLFaxitFeatureUnlock`              | `mFeature: EKPCLFaxitFeature`                                     | Enables RemoteAccess, Sink, or Depot                               |
 | `KPCLFaxitSpeedUnlock`                | `mAmount: int32` (min 1, default 15), `bIsFluid: bool`            | Raises solid/fluid transfer rate                                   |
 | `KPCLDeliveryTaskSlotUnlockBase`      |                                                                 | Abstract delivery-slot base; never instance directly               |
 | `KPCLFaxitUnlockBase`                 |                                                                 | Abstract Faxit base; never instance directly                       |
 
-Slot/capacity amounts clamp to minimum 1. Faxit speed uses items/min for solids (`mAmount: 15` adds
-15 items/min) and fluid units/min for fluids (1000 units = 1 m³, so `mAmount: 15000` adds 15 m³/min).
+Slot/capacity amounts clamp to minimum 1. `BufferInventory` capacity uses an authored default
+helper: when `bUseCapacityTypeDefaultAmount` is true and raw `mAmount` is 1, the effective amount is
+3 buffer slots; writing a custom `mAmount` disables that default in editor-authored assets. Faxit
+speed uses items/min for solids (`mAmount: 15` adds 15 items/min) and fluid units/min for fluids
+(1000 units = 1 m³, so `mAmount: 15000` adds 15 m³/min).
 Faxit unlock values accumulate: every purchase recomputes from base values and reapplies each
 purchased unlock, so there are no tiers and no curves two capacity unlocks of 1 give the same
 result as one unlock of 2.
 
-| Enum type                | Accepted YAML values                 | Meaning                                                    |
-| ------------------------ | ------------------------------------ | ---------------------------------------------------------- |
-| `EKPCLFaxitCapacityType` | `MachineNetwork`, `Network`, `Drive` | Machine-network limit, network building limit, drive slots |
-| `EKPCLFaxitFeature`      | `RemoteAccess`, `Sink`, `Depot`      | Faxit feature gate enabled by the unlock                   |
+| Enum type                | Accepted YAML values                                    | Meaning                                                                 |
+| ------------------------ | ------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `EKPCLFaxitCapacityType` | `MachineNetwork`, `Network`, `Drive`, `BufferInventory` | Machine-network limit, network building limit, drive slots, buffer slots |
+| `EKPCLFaxitFeature`      | `RemoteAccess`, `Sink`, `Depot`                         | Faxit feature gate enabled by the unlock                                |
 
 See [Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes) for FactoryGame
 classes and [Availability Dependency Classes](/kdataforge/reference/availability-dependency-classes)

@@ -102,15 +102,51 @@ with the editor can also use these stable, additive entry points:
 
 | API                                                       | Purpose                                                                   |
 | ----------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `GetDynamicContent().GetOrCreateClass / GetOrCreateAsset` | Create save-stable generated classes or `PrimaryDataAsset` instances      |
+| `GetDynamicContent().GetOrCreateClass / GetOrCreateAsset` | Create save-stable generated classes or `UDataAsset` instances            |
 | `QueueContentRegistration / QueueSinkTableRegistration`   | Queue per-world SML content registration before the freeze                |
+| `RegisterActorPatch / GetActorPatches / ClearActorPatches` | Manage spawn-time `FKDFActorPatch` rules consumed by `UKDFActorPatchSubsystem` |
+| `RegisterNodePurge / GetNodePurges / ClearNodePurges`     | Manage `FKDFNodePurge` rules consumed by `UKDFResourceNodeSubsystem`       |
+| `RegisterContentRemoval / GetContentRemovals / ClearContentRemovals` | Manage exact-class `FKDFContentRemoval` rules for recipe, schematic, and research content |
 | `MarkDataAssetsChanged`                                   | Request optional KAPI or RefinedRDApi consumer rescans after initial load |
 | `ApplyEditorOp / RestorePropertyText`                     | Apply editor writes and restore canonical property text for undo          |
 | `ExportObjectToYaml`                                      | Export an object to full or changes-only `cdo` YAML                       |
 | `OnToggleEditorRequested()`                               | Multicast hook used by the in-game editor UI                              |
 | `FKDFPatchUtil::ApplyOpsToObject`                         | Apply a parsed `properties:` sequence with pipeline semantics             |
+| `UKDFContentRemoveSubsystem`                              | Apply recipe cleanup for one world and query exact removal rules/counts    |
 
-Everything else in the main module remains internal.
+### Runtime rule lifecycle
+
+The three `Register*` rule families above are retained on `UKDFSubsystem` for the GameInstance.
+Registering a rule with the same target class and source file replaces the previous rule. Clearing
+a rule array only stops later consumers; it does not undo actor writes, restore destroyed resource
+nodes, or put removed content back into an already-initialized manager.
+
+- `RegisterActorPatch` is normally driven by `applyToSpawnedActors: true`. At world begin play,
+  `UKDFActorPatchSubsystem` applies matching rules to existing actors; its spawn delegate handles
+  later actors. A rule registered after that initial sweep affects future spawns. Call
+  `ApplyPatchesToActor` explicitly when a late integration also needs an existing actor updated.
+- `RegisterNodePurge` is normally driven by `type: resourcenode`. World initialization, actor-spawn,
+  streamed-level, and deferred sweeps consume the rules. There is no public on-demand whole-world
+  sweep, and destroyed level nodes can already have persistent vanilla save tombstones.
+- `RegisterContentRemoval` is normally driven by document-level `remove:`. Schematic and research
+  filtering happens while `RegisterQueuedContentForWorld` drains the SML registry before its freeze.
+  Recipe rules are different: native add hooks prevent later grants, and
+  `UKDFContentRemoveSubsystem::ApplyWorldRemovals` can re-run its idempotent save-restored-recipe
+  sweep when the rule set grows. Calling it late does not retroactively remove a schematic or
+  research tree from a registry that already initialized.
+
+`UKDFContentRemoveSubsystem::Get(WorldContext)` exists only for Game and PIE worlds. Its
+`IsRecipeRemoved` and `IsContentRemoved` queries use exact class identity, not ancestry.
+`GetAppliedRemovalCount` reports resolvable rules seen by the last application pass, not the number
+of manager entries changed. `WereRemovalsApplied` becomes true after the first non-empty application
+pass and clearing the GameInstance rule list does not reset that per-world history flag.
+
+`FKDFRecipeRemoval` exposes lower-level `HasAnyRemovalRules`, `IsRecipeRemoved`, and the server-only
+`SweepSaveRestoredRecipes` helper. Normal integrations should use `UKDFContentRemoveSubsystem` so
+world timing and reporting stay centralized. Native recipe-add prevention is compiled for packaged
+runtime builds, not Unreal Editor PIE; PIE still exercises the initialization sweep.
+
+Treat unlisted implementation details in the main module as internal.
 
 ## Versioning
 

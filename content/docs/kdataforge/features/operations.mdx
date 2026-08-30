@@ -115,8 +115,8 @@ keys and pins the current value inside that range in one step:
 depending on the target property's kind.
 
 For arrays and sets, `value` can be a single item or a sequence to add several items at once. For
-strings, it concatenates text. For tag containers, it adds tags, and for maps it merges the given
-key/value pairs into the existing map:
+strings, it concatenates text. For tag containers, it adds tags. For maps, `value` must be a map,
+and KDataForge merges those key/value pairs into the existing map:
 
 ```yaml
 - path: mIngredients # array: adds element(s) at the end
@@ -143,6 +143,19 @@ key/value pairs into the existing map:
 ```
 
 For bitmasks, `append` ORs named flags into current mask. It does not accept raw integer masks.
+For instanced `UObject` arrays, an appended value can be a `{ class, properties }` map; KDataForge
+constructs the new subobject before inserting it into the array:
+
+```yaml
+- path: mUnlocks
+  op: append
+  value:
+    class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
+    properties:
+      - path: mRecipes
+        value:
+          - Recipe_MyGeneratedRecipe
+```
 
 :::note
 String operations on `FText` properties (like `mDisplayName` when it is a localized text field)
@@ -152,12 +165,13 @@ updates. See [Localization](/kdataforge/features/localization) if you need the
 result to stay localizable instead.
 :::
 
-## prepend: array / string (tag containers and bitmasks: same as append)
+## prepend: array / set / string (tag containers and bitmasks: same as append)
 
 `prepend` mirrors `append`, but it adds at the front instead of the end for arrays, and inserts
 before the existing text for strings. Tag containers treat it identically to `append`, since a tag
-container has no ordering. Bitmasks also treat it like `append` and OR-add named flags. Maps do not
-support `prepend` at all: only `append` merges into a map.
+container has no ordering. Sets also treat it like `append`, because sets have no ordering.
+Bitmasks also treat it like `append` and OR-add named flags. Maps do not support `prepend` at all:
+only `append` merges into a map.
 
 ```yaml
 - path: mDisplayName
@@ -169,7 +183,8 @@ support `prepend` at all: only `append` merges into a map.
 
 `insert` places one or more elements at a specific `index` inside an array, rather than always at
 the end, and shifts later elements back. An out-of-range index fails with an error, instead of
-clamping to the array's bounds:
+clamping to the array's bounds. Instanced `UObject` array entries may use the same `{ class,
+properties }` map accepted by `set`, `append`, and `prepend`:
 
 ```yaml
 - path: mIngredients

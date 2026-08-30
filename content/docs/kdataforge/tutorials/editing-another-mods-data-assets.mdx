@@ -1,6 +1,6 @@
 ---
 title: "Editing Another Mod's Data Assets"
-description: Rebalancing existing KAPI or RefinedR&D PrimaryDataAsset instances without creating a new one and without a hard dependency on the mod that owns them.
+description: Rebalancing existing KAPI or RefinedR&D data asset instances without creating a new one and without a hard dependency on the mod that owns them.
 sidebar:
   order: 10
 ---
@@ -13,12 +13,11 @@ involved.
 
 ## The mental model: it's the same `cdo` patch you already know
 
-`UPrimaryDataAsset` **instances** are objects sitting in memory just like a recipe or schematic CDO.
-This includes KAPI's miner descriptions, cleaner recipes, and air collector configs, as well as
-RefinedR&D boiler, heater, and turbine tuning, and anything else scanned by those mods' subsystems.
-KDataForge edits them with the exact same `type: cdo` document, the same `properties:` op grammar,
-and the same `target:`/`allAssetsOfClass:`/`matchTag:` selectors used everywhere else in this
-framework. There's no "data asset patch" document.
+`UDataAsset` **instances** are objects sitting in memory just like a recipe or schematic CDO. KAPI
+and many RefinedR&D assets derive from `UPrimaryDataAsset`, which matters for consumer discovery,
+but KDataForge edits both primary and plain data assets with the exact same `type: cdo` document,
+the same `properties:` op grammar, and the same `target:`/`allAssetsOfClass:`/`matchTag:` selectors
+used everywhere else in this framework. There's no "data asset patch" document.
 
 `type: dataasset` is a **different, narrower** tool. It only **creates a brand-new instance**
 (package `/KDataForge/GenAssets/<PackRef>`, announced to the asset registry). Once that instance
@@ -99,7 +98,7 @@ class references are skipped cleanly when their owner is absent.
 A handful of properties on KAPI assets are load-bearing enough that the game **intentionally
 crashes** if you null them out. Examples include `mResourceClass` on miner descriptions,
 `mInFluid.ItemClass` on cleaner items, and `mWidgetClass` on tooltip injectors. This tutorial won't
-repeat the full list; see [Data Assets → key-field warning](/kdataforge/features/data-assets#fkdfrandomdata-note--key-field-warning)
+repeat the full list; see [Data Assets → key-field warning](/kdataforge/features/data-assets#fkdfrandomdata-note-key-field-warning)
 before you write a `set` op against any of these.
 
 If your goal is "turn this instance off," use `mIsDisabled: true` instead. Every KAPI asset has it,

@@ -210,11 +210,45 @@ tweak like this, a plain `cdo` patch with `target:` works identically and doesn'
 Using `class:` here is only meaningful when you also want SML registration semantics applied, which
 a vanilla schematic that's already registered doesn't need.)
 
+## Removing schematics
+
+A `type: schematic` document accepts a top-level `remove:` sequence. Each entry is a bare class
+reference: a full Unreal class path, a bare loaded class name, or a generated content id from this
+or another loaded KDataForge pack. Removal-only documents are valid, and `remove:` can also be mixed
+with normal `schematics:` entries:
+
+```yaml
+type: schematic
+remove:
+  - /Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C
+  - Schematic_MyGeneratedMilestone
+
+schematics:
+  - id: Schematic_ReplacementMilestone
+    properties:
+      - path: mDisplayName
+        value: Replacement Milestone
+```
+
+`remove:` names the exact schematic class to remove; it does not remove subclasses. If a generated
+id is ambiguous across packs, KDataForge logs the same ambiguity diagnostic used for other short-id
+class references. Removals run after registrations, so an explicit `remove:` wins over a
+`register:` for the same class.
+
+Schematic removal is save-clean. KDataForge removes the class from SML's content registry before
+the schematic manager builds its per-session list, so uninstalling the pack brings the schematic
+back on the next load.
+
+Removal does not revoke purchases. An already-purchased schematic stays in the save and keeps
+re-applying its unlocks on load, including recipes it granted. To actually take away craftable
+content, pair schematic removal with
+[recipe `remove:`](/kdataforge/features/recipes#removing-recipes).
+
 ## Troubleshooting
 
 - **The schematic shows up but the recipe never unlocks**: check that the `unlocks:` entry's
   `class:` actually resolves (`/kdf report` will show a failed patch if it doesn't) and that
-  `mRecipes` points at the exact generated class path, `_C` suffix included.
+  `mRecipes` points at the exact generated class path, with no `_C` suffix.
 - **Two mods both try to unlock the same recipe**: that's fine. `FGUnlockRecipe` instances are
   additive, and duplicate unlocks of an already-unlocked recipe are a no-op in the base game.
 - **Want to unlock a recipe from a schematic you didn't generate** (vanilla, another mod's, or your

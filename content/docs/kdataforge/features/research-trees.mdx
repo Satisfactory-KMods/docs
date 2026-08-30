@@ -172,6 +172,35 @@ coordinate. Removal still happens first, so duplicate nodes and stale roads are 
 `nodes:` remains a legacy alias. When both keys are present, `addNodes:` wins and KDataForge warns
 that `nodes:` was ignored. `autoPath:` works with `addNodes:` and legacy `nodes:`.
 
+## Removing research trees
+
+A `type: research` document accepts a top-level `remove:` sequence. `type: mam` is an alias for
+`research`, so it accepts the same removal grammar. Each entry is a bare class reference: a full
+Unreal class path, a bare loaded class name, or a generated content id from this or another loaded
+KDataForge pack. Removal-only documents are valid, and `remove:` can also be mixed with normal
+`research:` entries:
+
+```yaml
+type: research
+remove:
+  - /Game/FactoryGame/Schematics/Research/BPD_ResearchTree_Caterium.BPD_ResearchTree_Caterium_C
+  - MyGeneratedResearchTree
+```
+
+`remove:` names the exact research-tree class to remove; it does not remove subclasses. If a
+generated id is ambiguous across packs, KDataForge logs the same ambiguity diagnostic used for
+other short-id class references. Removals run after registrations, so an explicit `remove:` wins
+over a `register:` for the same class.
+
+Research-tree removal is save-clean. KDataForge removes the class from SML's content registry
+before the M.A.M. builds its per-session tree list, so uninstalling the pack brings the tree back
+on the next load.
+
+Removal does not revoke progress. Already-unlocked or completed research state stays in the save,
+and any unlocks already granted by that progress stay granted. This only removes the tree from the
+current available research-tree list while the pack is installed. To remove recipes granted through
+that progression, also use [recipe `remove:`](/kdataforge/features/recipes#removing-recipes).
+
 ## Troubleshooting
 
 - **New tree doesn't appear in the M.A.M. menu**: confirm registration succeeded

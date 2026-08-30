@@ -24,10 +24,10 @@ KDF.ApplyToAssets
 KDF.ApplyToAssets /Game/FactoryGame/Recipes
 ```
 
-It only touches [`type: cdo`](/kdataforge/features/patching-cdo) documents. It uses
-the same reflection pipeline (`FKDFOpEngine::ApplyOp`) that resolves `target`/`properties` at
-runtime, just pointed at editor objects instead of live game instances. Other document types
-(`item`, `recipe`, `asset`, …) are runtime concepts, and this command skips them entirely.
+It only touches documents that explicitly set
+[`type: cdo`](/kdataforge/features/patching-cdo). It uses the same property-path parser and
+reflection operation engine (`FKDFOpEngine::ApplyOp`) as runtime, pointed at editor objects. Other
+document types (`item`, `recipe`, `asset`, …) are runtime concepts, and this command skips them.
 
 For each `cdo` patch, the optional `PathFilter` restricts application to targets whose path
 **starts with** the filter. For example, `/Game/FactoryGame/Recipes` applies only recipe patches
@@ -40,13 +40,25 @@ outer package, so the standard editor save flow (Save All or source-control chec
 changes. Your YAML pack has effectively become a set of permanent asset edits. Afterwards, a
 summary line is logged with the number of ops applied, assets touched, and packages marked dirty.
 
+:::caution
+This command is a narrow importer, not the runtime document dispatcher. It reads explicit
+`target:` paths and `properties:` only. It does not expand `allAssetsOfClass` or `matchTag`, and it
+does not reproduce `applyToSubclasses`, `applyToSpawnedActors`, or `deferOneGameTick`. Document
+conditions and `include:` ordering are also not evaluated here. Write editor-import patches with
+explicit targets and review the dirty packages before saving.
+:::
+
 ## In-game editor property categories
 
-The in-game `/kdf editor` groups reflected fields by their Unreal `Category` metadata. Categories are collapsed by default so large CDOs remain navigable. Reflected fields without `CPF_Edit` are placed in a separate **Non-UPROPERTY / Internal** category. They remain available for inspection and editing through the same reflection operation pipeline.
+The in-game `/kdf editor` groups reflected fields by their Unreal `Category` metadata. Categories
+are collapsed by default so large CDOs remain navigable. Reflected fields without `CPF_Edit` are
+placed in a separate **Non-UPROPERTY / Internal** category. Despite that UI label, they are still
+reflected `FProperty` fields; they simply lack the normal edit flag or category metadata. They
+remain available for inspection and editing through the same reflection operation pipeline.
 
 CDO exports include these non-edit reflected fields as well.
 
-## Deferring a CDO patch
+## Runtime-only defer flag
 
 Set `deferOneGameTick: true` on a `type: cdo` patch when the base game initializes the target during startup and the patch must run after that initialization:
 
@@ -61,20 +73,24 @@ patches:
 ```
 
 KDataForge waits for the matching world to enter `BeginPlay`, then applies the patch on the following game tick. The flag is deliberately a one-tick startup delay, not a general timer.
+`KDF.ApplyToAssets` ignores this flag and applies explicit targets immediately.
 
 ## When to use which pipeline
 
-Both pipelines share the same op engine and property-path resolution. A patch that works at
-runtime will behave identically when applied through the editor command. The only difference is
-where the result ends up:
+Both pipelines share the same operation engine and property-path resolution. Target discovery,
+conditions, timing, and runtime modifiers differ as described above:
 
 |                 | Runtime (players, packs)                                                                  | Editor (`KDF.ApplyToAssets`)                                 |
 | ----------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | Changes live in | YAML, re-applied every session                                                            | The assets themselves, after saving                          |
-| Reversible      | Always (delete the YAML)                                                                  | Via source control / not saving                              |
+| Reversible      | Usually on next session. `resourcenode` destruction can persist in saves; recipe removal self-heals on a later load without the pack | Via source control / not saving                              |
 | Audience        | Players, pack authors                                                                     | Mod developers cooking their own content                     |
-| Document types  | All (`item`, `recipe`, `asset`, `cdo`, …)                                                 | `cdo` only                                                   |
-| Debug logging   | `debug:` / `KDF.Debug` ([Debugging](/kdataforge/getting-started#debugging)) | Same, global debug logging covers editor-originated ops too |
+| Document types  | All (`item`, `recipe`, `asset`, `cdo`, …)                                                 | Explicitly typed `cdo` with explicit `target:` only          |
+| Diagnostics     | `debug:` / `KDF.Debug` plus `/kdf report`                                               | Command warnings and one summary log; no runtime patch report |
+
+See [Resource Node removal](/kdataforge/features/resources#removing-resource-nodes-type-resourcenode)
+before treating runtime YAML as reversible. Vanilla can retain destruction tombstones after that
+pack is removed.
 
 ## Still open
 

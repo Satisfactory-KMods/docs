@@ -21,11 +21,12 @@ for the selected object, so the resulting file stays small: just what you actual
 Because untouched properties are simply absent, there's no risk. They keep tracking vanilla, or
 whatever other patches already apply to them.
 
-Export Full includes every `EditDefaultsOnly`/`BlueprintReadWrite`-editable property on the class
-(anything not deprecated, transient, or editor-only), so the file is large: the entire editable
-surface of the class, frozen at its current value. The risk is that any vanilla default you never
-meant to touch gets written into your pack at today's value. If the base game changes that default
-later, your pack silently overrides the update.
+Export Full includes every reflected property on the class that is not deprecated, transient, or
+editor-only. This is broader than the normal Unreal "editable" surface: fields without
+`EditDefaultsOnly`/`EditAnywhere` can still be exported if they are reflected `FProperty` members.
+The file is large: the reflected surface of the class, frozen at its current value. The risk is that
+any vanilla default you never meant to touch gets written into your pack at today's value. If the
+base game changes that default later, your pack silently overrides the update.
 
 Use **Export Diff** almost always. The "diff" here really means "session-changed," not
 "changed-vs-file-on-disk". A property counts as changed the moment any op, whether a live edit or
@@ -143,9 +144,10 @@ into a real pack before relying on it long-term.
    file instead of a session-only edit, applied through the identical `type: cdo` pipeline as
    before.
 
-If you'd clicked **Export Full** instead, the file would list every editable property of the
-recipe class: ingredients, product, produced-in, display name, everything, each frozen at its
-current value, not just the duration. That's usually more than you want to ship.
+If you'd clicked **Export Full** instead, the file would list every reflected, non-deprecated,
+non-transient, non-editor-only property of the recipe class: ingredients, product, produced-in,
+display name, and possibly internal reflected fields too. Each value is frozen at its current value,
+not just the duration. That's usually more than you want to ship.
 
 ## Troubleshooting
 
@@ -168,6 +170,10 @@ current value, not just the duration. That's usually more than you want to ship.
   directory must already exist. Move the finished YAML into `<your-mod>/DataForge/` before shipping.
 - **New item/recipe/schematic from Create still isn't there.** Create only writes a draft. Move it
   into a real pack and restart the session. The SML content registry freezes at world begin play.
+- **Export Full includes fields from `Non-UPROPERTY / Internal`.** The current UI label is
+  misleading. Those rows are still reflected `FProperty` members; they only lack Unreal's normal
+  edit flag or category metadata. Export Full may include them unless they are deprecated,
+  transient, or editor-only.
 
 [Getting Started](/kdataforge/getting-started) covers pack roots, `/kdf report`,
 session restarts, and the same debug format used for editor-originated operations. The separate

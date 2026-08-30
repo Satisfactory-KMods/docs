@@ -1,17 +1,40 @@
 ---
 title: 'Adding a Recipe to an Existing Schematic'
-description: Unlocking a new or existing recipe from a schematic you didn't generate (vanilla, another mod's, or your own from an earlier pack), and why a plain cdo patch can't do this.
+description: Unlocking a new or existing recipe from a schematic you didn't generate (vanilla, another mod's, or your own from an earlier pack), with either a direct cdo append or the schematic class shortcut.
 sidebar:
   order: 4
 ---
 
 Maybe you already have a schematic. It could be vanilla, from another mod, or one you generated in an earlier
-version of your own pack. Either way, you just want it to **also** unlock a recipe. This is one of the
-most common requests. The natural first instinct is a `cdo` patch that `append`s to `mUnlocks`, but that
-doesn't work: `cdo` array ops resolve elements as object references by path, and can't construct a brand
-new unlock instance out of thin air. Use `type: schematic` with `class:` instead, the two line fix below.
+version of your own pack. Either way, you just want it to **also** unlock a recipe. Use a direct `cdo`
+append when you want the smallest possible patch, or use `type: schematic` with `class:` when you
+prefer the same unlock syntax used for generated schematics.
 
-## The fix: `type: schematic` with `class:` (not `cdo`)
+## Direct fix: `type: cdo` append to `mUnlocks`
+
+`mUnlocks` is an instanced `UObject` array. For `append`, `prepend`, `insert`, or `set`, KDataForge
+can construct each new entry from a `class:` plus nested `properties:` block before adding it to the
+array.
+
+```yaml
+# file: append-extra-recipe.cdo.yml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Schematics/Progression/Schematic_1-2.Schematic_1-2_C
+    properties:
+      - path: mUnlocks
+        op: append
+        value:
+          class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
+          properties:
+            - path: mRecipes
+              value:
+                - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MyNewRecipe
+```
+
+Use a sequence under `value:` if you want to append several unlock objects in one operation.
+
+## Schematic shortcut: `type: schematic` with `class:`
 
 ```yaml
 # file: unlock-extra-recipe.schematic.yml
@@ -30,7 +53,7 @@ schematics:
 - `class:` (instead of `id:`) tells KDataForge "don't generate a class, resolve this **existing**
   one". See [Type: recipe → register-only mode](/kdataforge/features/recipes) for the general
   `id:`/`class:` duality, since schematics work the same way.
-- `unlocks:` still applies, **even in register-only mode**. The schematic content-creation handler
+- `unlocks:` applies **even in register-only mode**. The schematic content-creation handler
   runs `properties:` and `unlocks:` against whatever CDO it resolved, whether that CDO came from
   generating a new class or from resolving an existing one. This is the one detail that makes the
   whole pattern work.

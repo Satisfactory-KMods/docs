@@ -177,15 +177,18 @@ Class references also take a path, but the codec tries several forms in order be
 1. The path as given.
 2. The path with a `_C` suffix appended (Blueprint class paths are frequently written without it).
 3. The asset-path-to-object-path expansion.
-4. For a bare name with no `/` or `.` at all, a search across every currently loaded class by short
-   name (see [Targeting](/kdataforge/features/targeting) for the same shortcut
-   applied to `target:`).
+4. For a bare name with no `/` or `.` at all, a generated-content id from the current pack first,
+   then from every loaded pack.
+5. If no generated class matches, a search across every currently loaded class by short name (see
+   [Targeting](/kdataforge/features/targeting) for the same shortcut applied to `target:`).
 
 ```yaml
 - path: mOverriddenCategory
   value: /Game/FactoryGame/Resource/ItemCategories/Cat_Ingots.Cat_Ingots_C # BP class (`_C` auto-retried)
 - path: mClassToScanFor
   value: /Script/FactoryGame.FGBuildableResourceExtractor # native class
+- path: mProducedIn
+  value: Recipe_MyGeneratedRecipe # generated-content id from this pack, if present
 - path: mFluidClass
   value: Desc_Water # bare-name shortcut for Desc_Water.Desc_Water_C see Targeting
 ```
@@ -274,7 +277,8 @@ there before, rather than merging into it:
 
 Arrays whose elements are instanced `UObject` references also use a sequence, but each element can
 define a new instance with `class:` and nested `properties:`. KDataForge creates the instance as a
-subobject of the patched target. This still uses `set`, so the array is replaced rather than merged:
+subobject of the patched target. With the default `set` op, the array is replaced rather than
+merged:
 
 ```yaml
 - path: mSchematicDependencies
@@ -291,6 +295,20 @@ subobject of the patched target. This still uses `set`, so the array is replaced
 The `class:` must be a concrete subclass accepted by the array. For example, `mUnlocks` accepts
 `FGUnlock` subclasses and `mSchematicDependencies` accepts `FGAvailabilityDependency` subclasses.
 Nested entries use the same property paths and operations as top-level patch entries.
+
+The same instanced-object entry shape also works with array `append`, `prepend`, and `insert` when
+you want to add entries without replacing the whole array:
+
+```yaml
+- path: mUnlocks
+  op: append
+  value:
+    class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
+    properties:
+      - path: mRecipes
+        value:
+          - Recipe_MyGeneratedRecipe
+```
 
 ## Array element access (index paths)
 
@@ -343,7 +361,7 @@ dotted scalar just like any other native-text struct:
 
 A tag container takes a sequence of tags. As with arrays, the default `set` operation replaces the
 whole container rather than adding to it. See [Operations](/kdataforge/features/operations)
-for the `add`/`remove` variants that mutate a container instead, and
+for the `append`/`prepend`/`remove`/`clear` variants that mutate a container instead, and
 [Game Tags](/kdataforge/features/game-tags) for registering your own tags before you
 reference them:
 

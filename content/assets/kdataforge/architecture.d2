@@ -27,6 +27,10 @@ stages: "Fixed EKDFStage pipeline\nGameTags → Assets → Localization → CDOC
   shape: queue
 }
 
+handlers: "Built-in + third-party handlers\ncdo/sublevel, generated content, assets/curves,\nlocalization, sinkpoints, resourcenode" {
+  shape: rectangle
+}
+
 reflection: "Reflection engine\nFKDFOpEngine + FKDFValueCodec\n+ FKDFPropertyResolver" {
   shape: rectangle
 }
@@ -39,11 +43,23 @@ objects: "CDOs, data assets,\ngenerated content, matched objects" {
   shape: stored_data
 }
 
+content_requests: "Per-world requests\ncontent registrations + exact-class removals\nsink tables" {
+  shape: document
+}
+
+world_module: "UKDFWorldModule + UKDFContentRemoveSubsystem\nregistration → schematic/research filtering\n→ save-restored recipe sweep (before BeginPlay)" {
+  shape: rectangle
+}
+
 records: "FKDFPatchRecord\nreport and editor history" {
   shape: document
 }
 
 actor_patches: "UKDFActorPatchSubsystem (per world)\nregistered patches → existing actors at begin play\n+ each newly spawned actor" {
+  shape: rectangle
+}
+
+node_purges: "UKDFResourceNodeSubsystem (per world)\ndescriptor/node-type rules → node destruction\n+ mesh/scanner/radar cleanup" {
   shape: rectangle
 }
 
@@ -53,8 +69,15 @@ scanner -> node_model
 pack_plan -> subsystem
 node_model -> subsystem
 subsystem -> stages
-stages -> reflection
+stages -> handlers
+handlers -> reflection: property writes
+handlers -> content_requests: queue
+content_requests -> world_module: world initialization
 reflection -> snapshots
 reflection -> objects
 reflection -> records
-reflection -> actor_patches: runtime patches
+handlers -> actor_patches: actor patch rules
+handlers -> node_purges: node purge rules
+world_module -> objects: registry/recipe state
+actor_patches -> objects: instance writes
+node_purges -> objects: world removal

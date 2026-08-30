@@ -1,6 +1,6 @@
 ---
 title: Adding KAPI Data Assets
-description: 'Real, copy-pasteable "type: dataasset" examples for every KAPI PrimaryDataAsset type air collector, cleaner, modular miner, slug breeding, extractor/resource allow-lists, and delivery-task tree nodes.'
+description: 'Real, copy-pasteable "type: dataasset" examples for every KAPI data asset type air collector, cleaner, modular miner, slug breeding, extractor/resource allow-lists, and delivery-task tree nodes.'
 sidebar:
   order: 7
 ---
@@ -16,7 +16,7 @@ of that type exists to read from.
 
 Each Air Collector resource is its own `UKAPIAirCollectorData` instance the DataAsset registers a
 new gas/resource the Air Collector can extract, it does not patch an existing one. See the
-[full property reference](/satisfactory-plus/kapi/air-collector/) for every field; the example
+[full property reference](/satisfactory-plus/kdataforge/air-collector/) for every field; the example
 below mirrors Satisfactory Plus's own shipped "Air Collector extract Toxic Air via Resource Nodes"
 asset. Note `bUseHightBasesdProduction` selects one of two mutually exclusive production models —
 here it's `false`, so `mMaxHit`/`mProductionPerHit` are the active fields and
@@ -58,7 +58,7 @@ assets:
 
 ## `UKAPICleanerItemDescription`: Filtrator (Cleaner) recipes
 
-A `dataasset` document targeting `KAPICleanerItemDescription` creates a brand-new Filtrator recipe: which input fluid it consumes, what it outputs, and any bonus items produced alongside the main conversion. See the [full property reference](/satisfactory-plus/kapi/filtrator/) for every field, including `FKAPICleanerInfo`. The example below reproduces Satisfactory Plus's own "Filtrator filter Wastewater" recipe: 6000 wastewater in, 4000 clean water out over 6 seconds, plus two bypass products (crushed zinc and crushed caterium) that come out independent of the main fluid conversion. `mCleanerItemInfo` is left out entirely here, it's optional, and this real recipe ships with no extra cleaner item required (`mCleanerItemInfo.mProduceItem` is `None` in the shipped asset).
+A `dataasset` document targeting `KAPICleanerItemDescription` creates a brand-new Filtrator recipe: which input fluid it consumes, what it outputs, and any bonus items produced alongside the main conversion. See the [full property reference](/satisfactory-plus/kdataforge/filtrator/) for every field, including `FKAPICleanerInfo`. The example below reproduces Satisfactory Plus's own "Filtrator filter Wastewater" recipe: 6000 wastewater in, 4000 clean water out over 6 seconds, plus two bypass products (crushed zinc and crushed caterium) that come out independent of the main fluid conversion. `mCleanerItemInfo` is left out entirely here, it's optional, and this real recipe ships with no extra cleaner item required (`mCleanerItemInfo.mProduceItem` is `None` in the shipped asset).
 
 ```yaml
 # file: filtrator-wastewater.dataasset.yml
@@ -93,7 +93,7 @@ assets:
 
 ## UKAPIModularMinerDescription: modular miner ore entries
 
-Full [property reference](/satisfactory-plus/kapi/modular-miner/). Each `UKAPIModularMinerDescription` instance registers one raw-resource entry the KAPI modular miner can extract, its rarity/found flavor text, node screenshot, which attachment modules are required or blocked, and the minimum drill tier needed. The example below mirrors a real shipped Cryolite raw-ore entry:
+Full [property reference](/satisfactory-plus/kdataforge/modular-miner/). Each `UKAPIModularMinerDescription` instance registers one raw-resource entry the KAPI modular miner can extract, its rarity/found flavor text, node screenshot, which attachment modules are required or blocked, and the minimum drill tier needed. The example below mirrors a real shipped Cryolite raw-ore entry:
 
 ```yaml
 # file: modular-miner-cryolite.dataasset.yml
@@ -129,7 +129,7 @@ assets:
 ## UKAPISugHatchingData: slug breeding & incubation
 
 Defines a slug species end to end: what it hatches from, how the incubator raises it, and its
-breeding-cycle behavior. See the [full property reference](/satisfactory-plus/kapi/slug-breeding/)
+breeding-cycle behavior. See the [full property reference](/satisfactory-plus/kdataforge/slug-breeding/)
 for every field, including the fluid-incubator properties (`mTankTier`, `mFluidConsume`,
 `mFluidClass`, `mFluidConsumeTime`) left out below since `bRequireFluid` is `false` here. The
 example reproduces the shipped Red Slug breeder, trimmed to two `mPossibleSlugs` entries for
@@ -211,7 +211,7 @@ as an existing default asset that mods normally `type: cdo` patch instead (see
 [Data Assets](/kdataforge/features/data-assets)); creating a brand new instance from scratch, as
 below, is mainly useful for a self-contained mod that wants its own allow-list rather than editing
 SF+'s. The values below are illustrative adjust the class paths to your own mod's classes. See
-[Extractors → Properties](/satisfactory-plus/kapi/extractors/) for the full property reference.
+[Extractors → Properties](/satisfactory-plus/kdataforge/extractors/) for the full property reference.
 
 This is the same "hooking up a new resource type" scenario described on that reference page: a new
 custom extractor building needs to go in `mAllowedExtractors` before SF+ will treat it as a valid
@@ -258,7 +258,7 @@ flagged parent required; default) and OR (`false`, any one is enough) semantics.
 `mRequiredParentCompletions` defaults to `1` and requires that many completed runs from each marked
 parent. Values above `1` are intended for branches behind endless tasks and count completed runs,
 not queued repeats. See
-[Value Forms](/kdataforge/reference/yaml-schema/#value-forms-by-property-type) for the full grammar.
+[Value Forms](/kdataforge/reference/yaml-schema#value-forms-by-property-type) for the full grammar.
 
 Every flag on `mParentTask` must resolve to a real sibling node at the matching coordinate offset
 (`Above` → the node directly above, `Left` → directly left, etc.) or the node is rejected at load
@@ -357,4 +357,4 @@ rewards on completion, via `mSchematics`/`mRewards`/`mCosts`:
 
 The full property set (including the Endless-only fields `mPoolElements`/`mTaskRewards`/`mMaxTasks`/
 `mAmountMultiplierCurve`/`mAbsolutMaxItemAmount`) is demonstrated in [KDataForge's own reference
-sample pack](/kdataforge/getting-started/), `showcase-delivery-task.dataasset.yml`.
+sample pack](/kdataforge/getting-started), `showcase-delivery-task.dataasset.yml`.

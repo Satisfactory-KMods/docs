@@ -6,34 +6,46 @@ sidebar:
 ---
 
 Standalone [KDataForge Linter](https://github.com/Satisfactory-KMods/KDataForge-Linter) validates
-packs with bundled schemas:
+packs with bundled schemas. Its CLI uses a `lint` subcommand plus a path:
 
 ```text
 kdataforge-linter lint DataForge
 kdataforge-linter lint DataForge --format github
 kdataforge-linter lint DataForge --format json
+kdataforge-linter lint DataForge --allow-unknown-types
 ```
+
+Useful options include `--schema-dir <dir>` for extra schemas, `--allow-schema-override` when a
+custom schema intentionally replaces a bundled one, `--allow-unknown-types` for handler types that
+the linter does not know yet, `--warnings-as-errors`, and `--format text|json|github`.
 
 It also checks instanced `FGUnlock` and `FGAvailabilityDependency` references in schematics,
 research trees, and delivery-task data assets. Native classes with known Blueprint implementations,
 abstract classes without Blueprint variants, wrong-family references, and unknown class paths emit
-warnings only. These warnings never turn an otherwise valid pack into exit code `1`.
+warnings only. They do not turn an otherwise valid pack into exit code `1` unless you enable
+`--warnings-as-errors`.
 
 [Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes),
 [Mod Unlock Classes](/kdataforge/reference/mod-unlock-classes), and
 [Availability Dependency Classes](/kdataforge/reference/availability-dependency-classes) document
 bundled inventory.
 
-## KPatchwork policy linter
+## KPatchwork policy schemas
 
-[KPatchwork repository](https://github.com/Satisfactory-KMods/KPatchwork) also includes a static
-[KDataForge pack linter](https://github.com/Satisfactory-KMods/KPatchwork/blob/main/Lint/lint_packs.py).
-Run it after writing or changing a pack to catch malformed YAML and common schema mistakes without
-starting Satisfactory.
+[KPatchwork repository](https://github.com/Satisfactory-KMods/KPatchwork) runs this same
+`kdataforge-linter` executable, pinned through its `pyproject.toml` and `uv.lock`. Repository-local
+schemas under `ci/schemas` override selected bundled schemas with KPatchwork policy, such as its
+required player-facing pack description.
 
 The linter is also the validation step used by KPatchwork's pull-request CI. It reports every issue
 it finds in one run: warnings are printed but do not fail the command, while errors produce exit
 code `1`.
+
+Run KPatchwork's exact CI-equivalent command from its repository root:
+
+```bash
+uv run --locked kdataforge-linter lint DataForge --schema-dir ci/schemas --allow-schema-override --format github
+```
 
 ## Get the linter
 
@@ -50,8 +62,8 @@ environment from the repository's lockfile, so you do not need to install PyYAML
 
 ## Choose the correct root
 
-The `--root` argument is the directory the linter searches recursively for `pack.yml` files and
-YAML documents. It expects every manifest to be at least one directory below that root.
+The positional `<path>` after `lint` is the directory searched recursively for `pack.yml` files and
+YAML documents. Every manifest must be at least one directory below that path.
 
 For the standard standalone layout from [Getting Started](/kdataforge/getting-started),
 pass `<your-mod>`, not its `DataForge` child:
@@ -63,15 +75,16 @@ pass `<your-mod>`, not its `DataForge` child:
     faster-smelting.cdo.yml
 ```
 
-From the cloned KPatchwork directory, replace the placeholder with the absolute path to your mod:
+From the cloned KPatchwork directory, its pinned executable can also lint an external mod without
+the repository policy override:
 
 ```bash
-uv run --locked Lint/lint_packs.py --root "<your-mod>"
+uv run --locked kdataforge-linter lint "<your-mod>"
 ```
 
 For a repository containing several nested packs, pass their common container instead:
 
-| Pack layout                                       | `--root` value         |
+| Pack layout                                       | `<path>` value         |
 | --------------------------------------------------- | ------------------------- |
 | `<your-mod>/DataForge/pack.yml`                   | `<your-mod>`           |
 | `<your-mod>/DataForge/<pack-name>/pack.yml`       | `<your-mod>/DataForge` |
@@ -81,12 +94,18 @@ The linter examines every `.yml` and `.yaml` below the selected root. Choose the
 still leaves at least one directory between the root and each `pack.yml`; otherwise unrelated YAML
 files may be reported as being outside a pack.
 
-## KPatchwork's `contributer` requirement
+## KPatchwork policy fields
 
 :::caution
-The linter requires a `contributer` field spelled exactly this way. This is KPatchwork repository
-ownership metadata, not a required KDataForge runtime manifest field. A standalone pack can be
-valid at runtime and still fail this policy check when the field is absent.
+KPatchwork's policy linter requires a `contributer` field spelled exactly this way. This is
+repository ownership metadata, not a required KDataForge runtime manifest field. A standalone pack
+can be valid at runtime and still fail this policy check when the field is absent.
+
+The current standalone KDataForge Linter schema also validates `contributer`, so it may report the
+same field. Treat that as current linter policy, not runtime grammar.
+
+Standalone schemas accept an optional string `description` in `pack.yml`. KPatchwork's override
+requires it because CI uses the text on its generated mod page. KDataForge runtime ignores it.
 :::
 
 When preparing a pack for KPatchwork, add your GitHub login or a non-empty list of co-maintainers:
@@ -95,6 +114,7 @@ When preparing a pack for KPatchwork, add your GitHub login or a non-empty list 
 ref: MyTweaks
 name: My Tweaks
 version: 1.0.0
+description: Explains player-facing compatibility changes supplied by this pack.
 contributer:
   - your-github-login
 ```
@@ -102,7 +122,7 @@ contributer:
 KPatchwork CI uses this value for ownership checks as well as linting. Changing the field in that
 repository requires maintainer approval.
 
-## What the linter checks
+## What current standalone linter checks
 
 The current linter checks:
 
@@ -114,12 +134,31 @@ The current linter checks:
 - inline instances and generated IDs, including duplicate IDs within a pack;
 - generated classes, unlocks, items, resources, buildings, recipes, schematics, and research-tree
   mutations;
+- top-level `remove:` for recipe/schematic/research documents, including remove-only documents;
+- `sublevel` blocking documents and `resourcenode` removal documents;
 - float/vector curve keys, modes, finite values, and duplicate key times;
 - included files, image assets, data assets, localization entries, game tags, and sink-point entries;
 - symlinks, YAML outside a pack, and files that escape the selected root or pack directory.
 
-Unknown condition keys and custom document root types are warnings. Structural problems, invalid
-values, missing files, and duplicate identities are errors.
+Unknown condition keys are warnings. Unknown document root types are warnings only when you pass
+`--allow-unknown-types`; otherwise the standalone linter reports them as errors because no schema
+was available. Structural problems, invalid values, missing files, and duplicate identities are
+errors.
+
+## Version notes
+
+Use a current standalone KDataForge Linter build when using newer runtime handlers. Current bundled
+schemas cover `type: sublevel`, `type: resourcenode`, and top-level `remove:` on `type: recipe`,
+`type: schematic`, and `type: research`, including remove-only documents.
+
+Older linter releases may report those documents as unknown root types or reject `remove:` as an
+unexpected field. In that case, update the linter before treating the diagnostic as authoritative.
+After linting, still verify in game with `/kdf report`; static schemas cannot prove runtime class
+resolution or another mod's installed content.
+
+KPatchwork may pin an older standalone release until its lockfile is updated. Its `ci/schemas`
+directory overrides only repository-policy schemas; it does not add every newer runtime handler.
+Use a current standalone build when checking new KDataForge grammar outside KPatchwork CI.
 
 ## Read the result
 
@@ -137,10 +176,10 @@ error: /path/to/pack.yml: version '1.0' is not semver-like
 error: /path/to/faster-smelting.cdo.yml: cdo.patches[0] requires properties
 ```
 
-The linter has no automatic-fix mode. Its only option besides help is `--root`:
+The linter has no automatic-fix mode. Show current CLI options with:
 
 ```bash
-uv run --locked Lint/lint_packs.py --help
+uv run --locked kdataforge-linter lint --help
 ```
 
 ## What static linting cannot prove

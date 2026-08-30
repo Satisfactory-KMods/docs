@@ -1,14 +1,15 @@
 ---
 title: Data Assets
-description: Editing every KAPI PrimaryDataAsset type, creating new instances with type dataasset, loading 2D images with type asset, and RefinedR&D (RRDA) mod integration.
+description: Editing KAPI data asset types, creating new UDataAsset instances with type dataasset, loading 2D images with type asset, and RefinedR&D (RRDA) mod integration.
 sidebar:
   order: 18
 ---
 
 Most of the reference pages nearby cover generated **classes** such as buildings, recipes, and
-schematics. Data assets are different: they are PrimaryDataAsset **instances**, meaning objects
-rather than classes. A huge amount of gameplay tuning for KAPI and the RefinedR&D mods lives inside
-these instances instead of inside a CDO.
+schematics. Data assets are different: they are `UDataAsset` **instances**, meaning objects rather
+than classes. KDataForge accepts any `UDataAsset` subclass for `type: dataasset`. KAPI and many
+RefinedR&D assets are `UPrimaryDataAsset` subclasses, so consumer subsystems can discover them
+through the asset registry and rescan them after KDataForge creates or edits instances.
 
 KDataForge can both **edit** existing instances, using plain `cdo` documents just like any other
 object, and **create** brand-new ones with `type: dataasset`. Use `dataasset` when a mod needs a
@@ -66,7 +67,7 @@ Each instance describes one resource variant that a KAPI modular miner can extra
 class it targets, what item it actually produces, which drill and scanner tiers and which modules
 are required or excluded, and its fluid coolant/byproduct behavior. The `mResourceClass` field is
 the asset's identity. Never `set` it to `none`, since KAPI hard-crashes on a null resource class
-(see the [key-field warning](#fkdfrandomdata-note--key-field-warning) below). Retuning throughput
+(see the [key-field warning](#fkdfrandomdata-note-key-field-warning) below). Retuning throughput
 across every modular miner resource at once is a single `allAssetsOfClass` patch:
 
 ```yaml
@@ -275,10 +276,11 @@ exact tag list.
 
 Editing only gets you so far. Sometimes a pack genuinely needs a **new** data asset instance that
 doesn't exist yet, such as a new modular miner resource, a new cleaner recipe, or a new slug
-pairing. A `dataasset` document creates a real instance at runtime in package
+pairing. A `dataasset` document creates a real `UDataAsset` instance at runtime in package
 `/KDataForge/GenAssets/<PackRef>` under a save-stable name `Gen_<PackRef>_<Id>`, and announces it to
-the asset registry. Any subsystem that scans the registry for assets of its type picks the new
-instance up on its next scan:
+the asset registry. Primary-asset behavior still belongs to the chosen class; if the class derives
+from `UPrimaryDataAsset`, consumers that scan the registry for that asset type can pick the new
+instance up on their next scan:
 
 ```yaml
 # file: cleaner.dataasset.yml
@@ -305,9 +307,9 @@ The same example appears inside the end-to-end pack in
 [End-to-End Pack](/kdataforge/examples/end-to-end-pack). There it sits next to the item/recipe/schematic files it
 belongs with.
 
-Remember: `dataasset` is only for **creating** new instances. Existing PrimaryDataAssets (KAPI's,
-RRDA's, any mod's) are already editable via the `cdo` selectors shown above. There's no need to
-"recreate" one just to change a value on it.
+Remember: `dataasset` is only for **creating** new instances. Existing data assets, whether
+`UPrimaryDataAsset` or plain `UDataAsset`, are already editable via the `cdo` selectors shown
+above. There's no need to "recreate" one just to change a value on it.
 
 ## 2D image assets: `type: asset`
 
