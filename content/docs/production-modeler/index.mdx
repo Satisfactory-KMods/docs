@@ -67,8 +67,8 @@ much of it moves. Nothing floats over anything else, so a node stays readable
 however many ports it has.
 
 The chevron in the header opens the node. That is where the clock, the
-production slots, an optional limit and the machine choice live, and everything
-there is also available in the inspector while the node stays closed.
+Somersloops, an optional limit and the machine choice live, and everything there
+is also available in the inspector while the node stays closed.
 
 Solids are counted in items per minute, fluids and gases in cubic metres per
 minute, and every value says so. That is the unit the game shows you, so a pipe
@@ -86,6 +86,40 @@ supplies it and no amount of solving will change that.
 
 A node that cannot solve is marked, and the marker says why. You do not have to
 hunt through a global list to find out which node broke.
+
+## Clock and Somersloops
+
+Two things change what a node produces, and they do not work the same way.
+
+The clock scales the whole recipe. It reads as a multiplier, so 1 is the rated
+speed and 2 is twice it. A machine at 2 eats twice as much and makes twice as
+much. Power does not simply follow along: it is raised to the exponent the
+building carries, which is why overclocking costs far more than it yields.
+
+The range belongs to the building, not to the modeler. Most factory buildings
+run from 0.01 up to 2.5. Some stop earlier, and a building the game gives a
+fixed speed says so instead of offering a control that cannot do anything. The
+step buttons move in single percentage points.
+
+Extractors clock the same way. A miner run faster yields more ore and draws the
+power for it, inside whatever range its own building allows.
+
+Somersloops are the other half, and they multiply the output alone. What the
+machine consumes does not move. That is the whole point of them, and it is why
+they are not just another clock.
+
+How much one Somersloop is worth depends on how many slots the building has. A
+Constructor has a single slot, so one Somersloop doubles its output. An
+Assembler has two, so one reaches 150 percent and both are needed to double it.
+A Manufacturer has four, each worth a quarter. Filling every slot always lands
+on double, whatever the building. Power climbs steeply here too, so doubling the
+output of a machine costs a great deal more than doubling the machine.
+
+Not every building takes Somersloops. Those that do not say so rather than
+accepting a number that would change nothing.
+
+Both settings sit on the opened node and in the inspector, so you can reach them
+wherever you happen to be working.
 
 ## What the solver does
 
