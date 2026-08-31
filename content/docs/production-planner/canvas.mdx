@@ -69,6 +69,16 @@ combinations, always use whole buildings at 100% clock. Every building consumes
 and produces its full listed rates. Extra output appears as surplus, while the
 planner increases upstream production to supply every full building.
 
+A building carries its own ceiling as well, and the planner never passes it.
+Turning overclocking on raises the bar the planner is allowed to aim for, it
+does not hand every building 250%. A Filtrator the game caps at 100% keeps
+running at 100%, and the planner adds a second one instead of clocking the first
+one higher.
+
+Where the catalog states no ceiling at all, the planner stays at 100%. Planning
+around headroom that may not exist costs you a factory that cannot be built,
+which is worse than planning one building too many.
+
 ## Acting on unused output
 
 Right-click an output row that isn't fully routed anywhere (produced but with
