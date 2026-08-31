@@ -67,7 +67,7 @@ Each instance describes one resource variant that a KAPI modular miner can extra
 class it targets, what item it actually produces, which drill and scanner tiers and which modules
 are required or excluded, and its fluid coolant/byproduct behavior. The `mResourceClass` field is
 the asset's identity. Never `set` it to `none`, since KAPI hard-crashes on a null resource class
-(see the [key-field warning](#fkdfrandomdata-note-key-field-warning) below). Retuning throughput
+(see the [key-field warning](#fkdfrandomdata-note--key-field-warning) below). Retuning throughput
 across every modular miner resource at once is a single `allAssetsOfClass` patch:
 
 ```yaml
