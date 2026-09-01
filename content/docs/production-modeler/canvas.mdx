@@ -16,8 +16,20 @@ A broken connection keeps its own colour, because that matters more than the
 path it belongs to.
 
 Right click a node for what you can do with it: open a container, edit it in the
-inspector, duplicate or copy it, disconnect everything, or delete it. Right
-clicking empty canvas is what opens the palette.
+inspector, select the whole chain it belongs to or every node like it, duplicate
+or copy it, disconnect everything, or delete it. Right clicking empty canvas is
+what opens the palette, and so is double clicking it. Double clicking a node
+puts the cursor in its inspector instead, and double clicking a container opens
+it.
+
+Selecting a chain and then arranging it lays it out along its own connections,
+left to right, without moving the block somewhere else on the canvas. Arrange
+sits in the action bar and on the L key. Fitting the view fits the selection
+when there is one, and the whole container when there is not.
+
+The arrow keys move whatever is selected. They step by the building grid while
+it is on, so a nudged node lands where a dragged one would, and Shift covers
+more ground. A whole run of presses is one step in the history.
 
 ## The panel beside the canvas
 
@@ -27,8 +39,16 @@ had to say. Click a node and the panel switches to the inspector on its own, so
 a selection and its settings are never more than one click apart.
 
 Messages name the node they are about rather than an internal identifier, and
-clicking one selects that node on the canvas. Only a solve that runs long
-enough to be worth stopping still interrupts the canvas itself.
+clicking one selects that node on the canvas. The same complaint about forty
+nodes is one row with a count beside it, so a single unfed port cannot bury
+everything else, and the whole list can be copied as text for asking about it.
+Only a solve that runs long enough to be worth stopping still interrupts the
+canvas itself.
+
+The summary totals more than rates. It says which belts or pipes the model
+needs and how full they run, which unlocks it depends on, and which mods it
+draws on, and it can be copied as text the same way. A building whose limit the
+model exceeds is reported among the messages rather than only in a panel row.
 
 ## Connections
 
@@ -39,8 +59,14 @@ follows the order you see. Reorder them from the inspector.
 Drop a connection on empty space and the palette opens filtered to that port, so
 the node you pick arrives already wired.
 
-Each port can carry a limit. Depending on the solver mode that limit is either an
-exact equality or an upper bound.
+Each port can carry a limit, and the inspector says which of the two it is: at
+most that rate, or exactly that rate. A limited port carries a small badge on
+the canvas, so a port pinned to a rate never looks like a free one. A limit
+applies to whatever building carries the port, a Boiler or a Turbine as much as
+a recipe, and a limit on a port nothing carries away sizes the node itself.
+
+A selection copied on the canvas travels through the system clipboard, so it can
+be pasted into another model or another tab.
 
 ## Waypoints
 
@@ -62,8 +88,9 @@ be applied to everything, to the current outpost, or to the current selection.
 
 ## Outposts and blueprints
 
-An outpost holds part of a model. Enter it to work inside, and press Escape to
-come back out. Each one keeps its own pan and zoom, so returning to an outpost
+An outpost holds part of a model. Enter it to work inside, double click it to
+open it, and press Escape to come back out. A closed one says how much it holds,
+so a folder on the canvas does not have to be opened to be read. Each one keeps its own pan and zoom, so returning to an outpost
 puts you back where you left. Select All only takes the outpost you are in.
 
 A blueprint scales its contents by a count, which is how you model the same

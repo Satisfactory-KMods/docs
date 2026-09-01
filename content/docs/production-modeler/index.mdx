@@ -97,9 +97,15 @@ much. Power does not simply follow along: it is raised to the exponent the
 building carries, which is why overclocking costs far more than it yields.
 
 The range belongs to the building, not to the modeler. Most factory buildings
-run from 0.01 up to 2.5. Some stop earlier, and a building the game gives a
-fixed speed says so instead of offering a control that cannot do anything. The
-step buttons move in single percentage points.
+run from 0.01 up to 2.5, which is the ceiling three Power Shards give them. Some
+stop earlier, and a building the game gives a fixed speed says so instead of
+offering a control that cannot do anything. The step buttons move in single
+percentage points, and the presets beside them cover the clocks people set by
+hand. Only the presets a building can actually reach are offered, so a Modular
+Miner is shown nothing above its rated speed.
+
+The summary counts the Power Shards a clock above 1 needs, so a bank running at
+250 percent tells you what it costs in shards as well as in power.
 
 Extractors clock the same way. A miner run faster yields more ore and draws the
 power for it, inside whatever range its own building allows.
@@ -121,6 +127,12 @@ accepting a number that would change nothing.
 Both settings sit on the opened node and in the inspector, so you can reach them
 wherever you happen to be working.
 
+Selecting several machines tunes them together. The inspector then offers one
+clock and one Somersloop control for the whole selection, each clamped to the
+tightest building in it, and the change lands as a single step in the history.
+The power the selection draws is shown beside them, which is the number a bank
+of machines is usually being tuned against.
+
 ## What the solver does
 
 Four modes decide how much the solver is allowed to conclude. None leaves every
@@ -130,6 +142,12 @@ of your connections when a split has to prioritize.
 
 The solver runs on its own after a change, and a long run can be stopped. Values
 it cannot determine stay unknown rather than being guessed.
+
+What a loop returns is used before more of the same material is brought in from
+outside. A boiler that feeds a turbine which hands its water back is filled from
+that returning line first, and an extractor on the same port only covers what is
+left. Wiring the loop is enough; it does not depend on the order of the
+connections.
 
 ## Special buildings
 
