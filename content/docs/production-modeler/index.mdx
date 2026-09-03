@@ -5,9 +5,9 @@ sidebar:
   order: 1
 ---
 
-The Production Modeler is a drawing board for factories. You place the buildings
-you want, connect them the way the belts run, and the modeler works out the
-rates. Nothing is chosen for you.
+The Production Modeler is a drawing board for factories. You can place the
+buildings yourself or generate an editable first chain, connect them the way the
+belts run, and let the modeler work out the rates.
 
 :::caution[Alpha]
 The modeler is still in alpha. Models you save are kept, but the catalog behind
@@ -20,17 +20,31 @@ The modeler starts from what you have in mind. You already know roughly what you
 want to build, and you want to see whether it adds up. Every node is yours, and
 the solver only fills in the numbers that follow from what you placed.
 
-When you would rather start from a target, the palette can plan the chain for
-you. That path is described under [Plan a chain automatically](#plan-a-chain-automatically)
+When you would rather start from a target, choose **Initial automatic plan**
+while creating the model or use **Plan automatically (Exp)** from the palette.
+That path is described under [Plan a chain automatically](#plan-a-chain-automatically)
 and it is experimental: it picks a recipe per step, and the result is a starting
 point you edit like anything else you drew.
 
 ## Plan a chain automatically
 
-Open the palette and choose **Plan automatically (Exp)**. Pick the part you want,
-say how much of it you want per minute, and the modeler builds the chain behind
-it: one node per step, connected, with a miner or an extractor on every raw
-input.
+Choose **Initial automatic plan** on the creation page or open the palette and
+choose **Plan automatically (Exp)**. The wizard has two starts: pick an output
+item and let the modeler choose its first recipe, or pin a starting recipe and
+choose one of its outputs. Set the amount per minute and the modeler builds the
+chain behind it: one node per step, connected, with a miner or extractor on
+every raw input.
+
+The optional first step accepts a Satisfactory `.sav` file. Its unlocked recipe
+paths are matched exactly against the loaded catalog, and the resulting recipe
+and production-machine filters stay with the model. They constrain the wizard,
+later automatic plans, catalog-backed palette entries and machine choices. The
+palette shows when this filter is active and lets you remove it.
+
+Only the matched catalog IDs are saved. The save binary is processed in memory
+and is not stored in the model or browser draft. In the web app it goes to the
+public savegame analyzer; the desktop app parses it locally and can do so
+offline.
 
 Only the first node carries the rate you asked for. Everything behind it is
 sized by the solver, so a clock, a limit or a machine you change afterwards
@@ -59,7 +73,10 @@ opens the modeler with that part already filled in.
 
 ## Your first model
 
-Open the modeler and create a model. The canvas starts empty.
+Open the modeler and choose **Empty model** for an empty canvas, **Initial
+automatic plan** for the wizard, or one of the import actions. Importing a
+savegame creates a model with its unlock filter and any exactly recognized
+resource extractors; it does not guess production recipes from built machines.
 
 Double click empty space to open the palette, or right click for the same menu.
 Search by recipe name, by input, or by output, and toggle those three fields
