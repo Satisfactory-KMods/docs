@@ -1,0 +1,31 @@
+---
+title: Changelog
+description: What's new in the Production Modeler desktop app, release by release.
+sidebar:
+  order: 5
+---
+
+Every desktop release, in short. Newest first.
+
+## 0.1.0 (upcoming)
+
+- **Work offline**: the desktop app includes the Production Modeler, its game
+  catalog, local drafts and recovery, so drawing and calculating a factory does
+  not require a connection.
+- **Same calculations everywhere**: desktop and web use the same exact solver,
+  including machine limits, extractor clocks, Somersloops and power use.
+- **Local and cloud models**: local work is saved durably. Signed-in users can
+  sync it when a connection is available, while conflicts stay visible instead
+  of silently replacing either copy.
+- **Desktop sign-in**: account login opens securely in the system browser and
+  returns to the app. If secure credential storage is unavailable, the app
+  remains usable in local-only mode.
+- **Automatic update checks**: release builds check the matching K-Mods update
+  channel when the app starts. When a newer signed version is available, the
+  app shows what changed and lets you choose when to download and install it.
+- **Safe installs**: an update is installed only after the Installing state is
+  visible. If the app cannot show that state, it leaves the current version in
+  place.
+
+The Linux x86_64, Windows x86_64 and macOS Apple Silicon packages are planned
+for the first release. Intel macOS is not part of 0.1.0.
