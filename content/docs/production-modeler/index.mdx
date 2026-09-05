@@ -99,6 +99,10 @@ recipes or none of them. Nothing is selected by default, so the palette still
 starts with everything the data set contains. The ten special nodes ignore these
 controls, because a sink or a storage belongs to no mod and no tier.
 
+Recipes without a known production rate, such as one-off Space Elevator phase
+recipes, are kept for existing model references but are absent from the palette
+and automatic planning. The modeler does not assign them a made-up cycle time.
+
 The palette is a small panel you can drag out of the way, and it leaves the
 canvas visible and usable underneath. It opens with the search field ready, so
 you can type straight away. Results are a grid of tiles; the arrow keys move
@@ -115,6 +119,11 @@ node arrives connected.
 Press the question mark key or F1 at any time for the full list of shortcuts.
 
 ## Reading a node
+
+Decimal display rounds exact values directly, including very large integers.
+Changing the display precision never changes the calculation. If an exact result
+is too long for the supported number format, the affected connected group shows
+a calculation error. Independent groups still calculate normally.
 
 A node stays compact: its name, its result, and one row per port. Inputs sit on
 the left, outputs on the right, and every row names the part it carries and how

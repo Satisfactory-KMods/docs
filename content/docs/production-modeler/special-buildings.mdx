@@ -15,15 +15,11 @@ A boiler record names every building that has to cooperate, so a boiler and its
 heater both become required roles on one node. You cannot place half an assembly.
 Coolers and turbines stand alone.
 
-The material flow is complete. The electricity is not: a turbine only spins, and
-the generator attached to it turns that speed into power through a curve. The
-game data ships none of the three things that calculation needs. The curve
-arrives as a bare list of samples with nothing saying what they are measured
-against, and outside the medium voltage generator every sample is zero. The
-generator's own ceiling and top speed sit on a record the export leaves out
-entirely. The last factor is a setting players can change in their session, and
-the export names it without ever giving its value. A turbine node therefore says
-that its power is not modelled instead of quietly reporting zero.
+The generator attached to a turbine converts its speed into electricity through
+its power curve. Where the catalog includes the attachment, complete curve and
+maximum output, the modeler uses that profile to calculate power. If a required
+profile is missing or unsupported, the result stays unknown and the node explains
+why. Material flow can still be calculated from the recipe.
 
 ## Slug Hatchery and Terrarium
 
@@ -32,8 +28,11 @@ sit inside the ranges of the slug you are hatching or breeding, and outside them
 the building makes nothing at all. The environment gates production, it never
 scales it, so inside the range the exported rates apply unchanged.
 
-Without modules a hatchery sits at 25 degrees and 0.5 humidity, which is where a
-new node starts.
+Without modules a hatchery sits at 25 degrees and 0.5 humidity. A new node
+starts with values inside the selected slug's comfort ranges. Set these to the
+readings your modules actually maintain. Explicit temperature and humidity
+values stay unchanged when you calculate or reopen a saved model. A value
+outside the comfort range produces an error for that connected group.
 
 A hatchery in game also checks the time of day before it hatches, and the modeler
 does not. The value that says which part of the day a slug wants comes out of the
@@ -71,7 +70,10 @@ An unscanned collector still produces the minimum.
 
 One variant works from build height instead of scanning. There you enter how
 high the collector stands, and its base output scales from once to five times
-across the range the buildable allows.
+across the range the buildable allows. Height is measured in centimetres and
+can include a fractional part. For example, 8,817.5 cm with one nearby collector
+yields 3,500 litres per six-second cycle, or 35 cubic metres per minute, for the
+height-based air profile.
 
 ## Modular Miner
 
@@ -87,12 +89,11 @@ offers.
 
 ## Dimensional Depot
 
-The game data carries the depot's upgrade percentages but not the rate those
-percentages are measured against, so there is no upload speed to put on a node
-and no tier to choose. A depot is calculated without an upload limit and says so
-on the node rather than refusing to calculate the part of the model it sits in.
-If you know your own upload rate, set it as a limit on the depot's port and the
-model keeps to it.
+Choose the upload tier in the inspector when the loaded catalog includes the
+Dimensional Depot. The base tier uploads 15 items per minute. Research tiers
+shorten the time per item, and the selected tier limits the calculated upload
+flow. A port limit can further restrict it. If an imported catalog has no verified
+uploader profile, the inspector reports that the tier selection is unavailable.
 
 ## Solar panels and wind turbines
 
