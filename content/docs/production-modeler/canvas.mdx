@@ -59,11 +59,29 @@ follows the order you see. Reorder them from the inspector.
 Drop a connection on empty space and the palette opens filtered to that port, so
 the node you pick arrives already wired.
 
+For an input, choose Plan automatically to create its supply chain. The wizard
+starts with that part and its required per-minute amount. The chain's final
+producer appears at the point where you dropped the connection, with suppliers
+arranged to its left. Existing nodes, pan and zoom stay where you left them.
+
+Keyboard focus highlights the wire itself. A focused label has its own small
+outline, and broken connections keep their error colour.
+
 Each port can carry a limit, and the inspector says which of the two it is: at
 most that rate, or exactly that rate. A limited port carries a small badge on
 the canvas, so a port pinned to a rate never looks like a free one. A limit
 applies to whatever building carries the port, a Boiler or a Turbine as much as
 a recipe, and a limit on a port nothing carries away sizes the node itself.
+
+Grab a connection's rate label and drag it wherever it is easiest to read. This
+moves only the label, not the wire or its waypoints, and does not recalculate
+the model. Labels move freely even when the connection grid is on. Their
+positions are saved with the model, including desktop saves and `.ksfmd` files.
+
+Double click a label to put it back in the middle of its connection. You can
+undo or redo a move or reset. With the label focused, arrow keys move it by ten
+canvas pixels, Shift plus an arrow moves it by one, and Home resets it. Escape
+cancels a drag. Read-only models keep their labels in the saved positions.
 
 A selection copied on the canvas travels through the system clipboard, so it can
 be pasted into another model or another tab.

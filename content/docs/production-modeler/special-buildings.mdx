@@ -23,16 +23,18 @@ why. Material flow can still be calculated from the recipe.
 
 ## Slug Hatchery and Terrarium
 
-Both produce only while they are comfortable. Temperature and humidity have to
-sit inside the ranges of the slug you are hatching or breeding, and outside them
-the building makes nothing at all. The environment gates production, it never
-scales it, so inside the range the exported rates apply unchanged.
+In game, both produce only while they are comfortable. Temperature and humidity
+have to sit inside the ranges of the slug you are hatching or breeding. The
+modeler plans with the active recipe rates regardless of these readings. Outside
+the comfort ranges it shows a warning, but keeps calculating the production chain.
+Make sure your buildings have suitable conditions in game to achieve those rates.
 
 Without modules a hatchery sits at 25 degrees and 0.5 humidity. A new node
 starts with values inside the selected slug's comfort ranges. Set these to the
 readings your modules actually maintain. Explicit temperature and humidity
-values stay unchanged when you calculate or reopen a saved model. A value
-outside the comfort range produces an error for that connected group.
+values stay unchanged when you calculate or reopen a saved model. Use the
+inspector's **Use comfortable conditions** button if you want to replace them
+with suitable values.
 
 A hatchery in game also checks the time of day before it hatches, and the modeler
 does not. The value that says which part of the day a slug wants comes out of the
