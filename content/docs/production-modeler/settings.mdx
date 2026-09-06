@@ -1,0 +1,82 @@
+---
+title: Settings
+description: What the settings dialog changes, and what belongs to the model rather than to your browser.
+sidebar:
+  order: 4
+---
+
+The settings dialog holds two kinds of setting. Some belong to the model and
+travel with it, so anyone who opens the model calculates the same numbers.
+Others belong to this browser, so the way you like to read a number does not
+change what someone else sees.
+
+Choose a section from the navigation beside the settings, or above them on a
+small screen. Switching sections keeps your draft changes. Save applies them
+together; Cancel discards them and restores any language or theme preview.
+Desktop file and game-data operations take effect immediately instead.
+
+Saving the dialog writes the model out the same way a normal save does. A model
+you are only allowed to read says so at the top and keeps its settings
+unchanged.
+
+## Calculation
+
+The solver mode decides how much the solver is allowed to conclude. A new model
+starts in Full. The modes are described on the
+[start page](/production-modeler/).
+
+Three multipliers sit next to it, and all three belong to the model. The recipe
+input multiplier scales what every recipe consumes, which is how you model a
+session that changed it. Recipes the game data marks as exempt are left alone.
+The power multiplier scales what buildings draw. The Space Elevator multiplier
+scales what the recipes flagged for it deliver.
+
+All three start at one, so an untouched model calculates the plain game rates.
+
+## Connections and grids
+
+The path style draws connections as curves, as direct lines, or as orthogonal
+2D routing. The drag threshold decides how far the pointer has to travel before
+a press counts as a drag rather than a click.
+
+Two working grids exist and they are separate. The building grid snaps nodes,
+the connection grid snaps waypoints, and each has its own horizontal and
+vertical spacing. Turning one on only affects what you move from then on. To
+line up what is already there, apply it: each grid has its own apply action and
+a scope of everything, the current container or the selection. The result says
+how many nodes it moved and how many it skipped.
+
+## Machine defaults
+
+Where the game data groups several buildings that do the same job, you can pick
+which one a new node gets and which capacity it starts with. Applying the
+defaults reaches back into the model with the same scope choice, so an existing
+model can be moved onto a different building without editing every node.
+
+A catalog that has no such groups says so instead of offering an empty control.
+
+## Number formats
+
+Every number on screen is exact underneath, and the format only decides how it
+is shown. You set that per place: the machine count, the connection rate, the
+summary, and each of their tooltips, among others. Each one picks fractions or
+decimals, a number of digits, and whether it rounds to nearest, up or down.
+
+Because a tooltip carries its own format, the usual arrangement is a short
+decimal on the canvas and the exact fraction in the tooltip.
+
+## Saves and recovery
+
+Autosave writes a local recovery draft on an interval you set in minutes, and
+the maximum number of backups bounds how many of those are kept. These belong
+to this browser, not to the model.
+
+What autosave does and does not do is on the
+[saving page](/production-modeler/saving/).
+
+## Appearance
+
+Theme and language are here, and both apply to this browser. Two model settings
+sit with them because they change what the canvas marks rather than what it
+calculates: whether invalid solved values are flagged, and whether a solved port
+value that does not match its connections is flagged.

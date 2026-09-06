@@ -1,0 +1,92 @@
+---
+title: Panels
+description: The summary, the inspector and the messages beside the canvas.
+sidebar:
+  order: 3
+---
+
+The right hand column is one panel with three tabs. The summary totals the
+model, the inspector edits what is selected, and messages lists everything the
+solver had to say. Selecting a single node switches to the inspector and reopens
+the panel if you closed it.
+
+Collapse the panel when you want the whole canvas, and on a pointer device drag
+its inner edge to resize it. On a narrow screen it sits along the bottom edge
+over the canvas instead of beside it.
+
+## Summary
+
+The summary is built from sections. One scope applies to the whole panel, and
+under it you stack as many sections as you want. Each section has its own kind
+and its own filters, so the same model can be read as what it delivers, what it
+costs to build, and what it draws from the grid at the same time.
+
+Add a section with the add control at the top, and remove one from its own
+header. The set of sections, the scope and the panel width are saved with the
+model.
+
+A section only shows values a compatible solve produced. Until then it says so
+rather than showing stale numbers.
+
+### Scope
+
+Six scopes decide which nodes are counted: everything, the current container,
+the current container and below, the selection, the selection and everything
+connected to it, and the selection and below.
+
+### What a section can count
+
+Output is what the model delivers. By default that is only what leaves a port
+without being carried anywhere, which is the surplus you can take out of the
+factory. Its filters add the flows that stay inside: used, sunk, storage and
+depot.
+
+Input is the mirror image. By default it counts the inputs nothing in the model
+supplies, which is what you have to feed in. Its filters add made, mined or
+extracted, and taken from storage.
+
+The two sink point sections value the same flows in AWESOME Sink points a
+minute. Output sink points counts what actually goes into a sink. Input sink
+points says what your inputs would be worth if you sank them instead of using
+them.
+
+Power reports nine figures: average net, minimum made minus maximum used,
+average used, maximum used, minimum and average unboosted production, minimum
+and average boosted production, and the production boost as a percentage.
+
+Overclock totals the Power Shards and the Somersloops the model uses.
+
+Machines counts the buildings, and adds the building limit where the game data
+carries one. Costs lists the parts it takes to build everything in scope.
+
+## Inspector
+
+The inspector edits one node at a time. Select several and it says so rather
+than guessing which one you meant.
+
+Every node has a custom title. Beyond that the inspector shows what the node
+actually has: the machine and its capacity, the clock, the production slots, a
+node count, a limit, and the controls its kind needs. A storage node picks its
+building and its state, a resource source its resource and purity, a modular
+miner its head, boosters and attachment, a generator its fuel, a hatchery its
+temperature and humidity, a FaxIT network its drives, a blueprint its count and
+a Space Elevator its batches.
+
+Ports are edited here too. Add and remove them, move them up and down, give one
+a part and a limit, and align a port to the connection it feeds. A limit is an
+upper bound by default, and a toggle turns it into the exact rate instead. When
+nothing carries a port away, the limit is what sizes the node.
+
+Connections belong to the port they leave. Their order is what the solver
+follows when a split has to prioritize, so reordering them here is how you set
+priority. The same list disconnects a single connection, adds and removes
+waypoints, and pins the belt or pipeline a connection is built from.
+
+## Messages
+
+Messages is everything the solver reported, in one place. Each one names the
+node it is about rather than an internal identifier, and clicking it selects
+that node on the canvas.
+
+A clean solve says so. Only a solve that runs long enough to be worth stopping
+still interrupts the canvas itself, with a banner that can cancel it.

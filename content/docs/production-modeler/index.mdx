@@ -61,6 +61,16 @@ opens the modeler with that part already filled in.
 
 Open the modeler and create a model. The canvas starts empty.
 
+On the home page, each data pack has separate actions. **Activate** selects the
+pack and keeps you on the current page. **Ready to plan** selects it and opens
+the creation wizard. The active badge tells you which pack new models will use.
+
+Use the remove button on an imported pack to remove it from this device or
+browser, then confirm its name in the dialog. Activate another pack first if
+the one you want to remove is active. The included Satisfactory+ pack cannot be
+removed. Existing models are not deleted, but a model bound to a removed pack
+cannot be edited or calculated while its required game data is missing.
+
 Double click empty space to open the palette, or right click for the same menu.
 Search by recipe name, by input, or by output, and toggle those three fields
 individually. Typing several words matches all of them; if that finds nothing,
@@ -76,7 +86,9 @@ controls, because a sink or a storage belongs to no mod and no tier.
 The palette is a small panel you can drag out of the way, and it leaves the
 canvas visible and usable underneath. It opens with the search field ready, so
 you can type straight away. Results are a grid of tiles; the arrow keys move
-through them in both directions and Enter places the highlighted one.
+through them in both directions and Enter places the highlighted one. A second
+view lists the same results one per row with their inputs and outputs spelled
+out, which is the one to use when several recipes share a name.
 
 The filters sit behind their own toggle, which carries a count while any of
 them is on, and every time the palette opens it starts from nothing so a filter
@@ -98,6 +110,10 @@ however many ports it has.
 The chevron in the header opens the node. That is where the clock, the
 Somersloops, an optional limit and the machine choice live, and everything there
 is also available in the inspector while the node stays closed.
+
+A node also says what it draws from the grid, or what it makes for it. Filling
+production slots raises what the building produces and costs more power for it,
+and the summary totals both the power and the slots the model uses.
 
 Solids are counted in items per minute, fluids and gases in cubic metres per
 minute, and every value says so. That is the unit the game shows you, so a pipe
@@ -167,7 +183,9 @@ of machines is usually being tuned against.
 Four modes decide how much the solver is allowed to conclude. None leaves every
 value blank while you arrange things. Manual solves the exact equalities you
 entered. Basic adds limits and maximizes what flows. Full also honours the order
-of your connections when a split has to prioritize.
+of your connections when a split has to prioritize. A new model starts in Full,
+and the mode is a [setting](/production-modeler/settings/) of the model rather
+than of your browser.
 
 The solver runs on its own after a change, and a long run can be stopped. Values
 it cannot determine stay unknown rather than being guessed.
@@ -180,12 +198,19 @@ connections.
 
 ## Special buildings
 
-Beside the recipes the palette carries the nodes that are not recipes: a
-splitter and a merger for routing, an outpost and a blueprint for grouping, and
-the sink, storage, depot and space elevator. Splitter and merger are the same
-free node in two shapes, and you can add further ports to either. Which
-connection is served first is the order of the connections on the port, so there
-is no separate priority node to choose.
+Beside the recipes the palette carries ten nodes that are not recipes: a
+splitter, a merger and a pipeline junction for routing, an outpost and a
+blueprint for grouping, and the sink, the storage container, the fluid buffer,
+the Dimensional Depot and the Space Elevator. Splitter and merger are the same
+free node in two shapes, and you can add further ports to either. A pipeline
+junction is their counterpart on a pipe, and it takes nothing but fluids and
+gases. Which connection is served first is the order of the connections on the
+port, so there is no separate priority node to choose.
+
+Further non recipe nodes come out of the game data rather than from that fixed
+list, so they sit in the searchable results with everything else. Resource
+extractors and modular miners, generators, the multi building assemblies, and
+the FaxIT network are all found by searching for them.
 
 Satisfactory Plus buildings that do not behave like an ordinary recipe get their
 own treatment. Refined Power boilers require both their boiler and their heater,

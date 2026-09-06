@@ -1,0 +1,58 @@
+---
+title: Importing
+description: Starting a model from a savegame, a planner result, or a file.
+sidebar:
+  order: 6
+---
+
+A new model does not have to start empty. The create page offers four ways in:
+an empty model, a file, a Production Planner result, and a savegame. Each one
+shows what it found before anything is created.
+
+## From a savegame
+
+Pick a `.sav` file and the modeler reads it and reports what is inside. The save
+is analysed in memory only. It is never written into a model or into a local
+draft, and nothing about it is kept once you close the dialog.
+
+Satisfactory 1.0 or newer is required, and a save may be at most 256 MiB. A file
+that is not a supported save, or that unpacks far beyond what a save should,
+is refused rather than half read.
+
+The report has three parts. Resource sources are the extractors it found, with
+the resource, the purity and the clock each one runs at. Building types are the
+buildings it counted. Inventory item types are what your containers hold. Each
+row says whether it was matched, left unresolved, ambiguous, or is a kind the
+modeler does not model, and anything it could not resolve is listed separately.
+
+Only exact resource extractor matches can be imported, and importing them
+creates the matching resource source nodes. Buildings are reported and not
+imported, because a save records the building but not the recipe it is set to,
+and the modeler does not guess a recipe. The whole report can be copied if you
+want to work from it by hand.
+
+## From a Production Planner plan
+
+Give the dialog a planner session id, private or public, or select a planner
+JSON file you exported. Preview the conversion first: it says how many
+diagnostics the conversion produced before you create anything.
+
+The conversion is one way. What you get is an independent modeler graph, and
+later changes in the planner are not carried over.
+
+Recipe blocks become recipe nodes with their rates on the ports. The blocks that
+were the plan's edges, its raw inputs, its available items, its outputs and its
+byproducts, become storage nodes, which is what a boundary looks like in a
+model. Anything with no counterpart, such as a note or an error block, is kept
+as an explicit orphan and reported, so nothing is dropped silently.
+
+## From a file
+
+Two file formats open here. A native export is the modeler's own versioned
+format and opens directly. A `.sfmd` file is the desktop Satisfactory Modeler
+format, and it is previewed before anything is created, including whatever it
+could not represent. A file is never partially applied without saying so.
+
+Both are bounded at 5 MiB.
+
+Exporting is described on the [saving page](/production-modeler/saving/).

@@ -2,20 +2,28 @@
 title: Saving and sharing
 description: Drafts, snapshots, sharing, and moving models in and out.
 sidebar:
-  order: 4
+  order: 7
 ---
 
 Work is kept as you go. A local draft is written when the model is saved, either
-by you or by autosave, and a signed in account also keeps the model in the cloud
-with a revision number. A card on the overview says when its draft was last
-written, in the words you would use, with the exact time on hover.
+by you or by autosave. That draft stays in the browser you made it in.
 
-The overview searches both shelves at once by name and reads them in whichever
-order you pick: by name, biggest first, or by what changed last. A model can be
-copied there as well, which is how a variant starts without exporting and
-importing it again. Inside a model, the history button beside the trail switches
-to the models you had open last, so comparing two of them no longer goes through
-the overview.
+A model reaches your account only when you turn cloud saving on for that model.
+Being signed in is not consent on its own, so a model you started stays local
+until you say otherwise. Once a model is in the cloud, every save updates it and
+it carries a revision number.
+
+Your models list says how many models of your allowance you are using, and an
+account that supports the project on Patreon has no limit at all. A cloud model
+can be filed in a folder and given tags, and the list filters on both.
+
+A card on the overview says when its draft was last written, in the words you
+would use, with the exact time on hover. The overview searches both shelves at
+once by name and reads them in whichever order you pick: by name, biggest first,
+or by what changed last. A model can be copied there as well, which is how a
+variant starts without exporting and importing it again. Inside a model, the
+history button beside the trail switches to the models you had open last, so
+comparing two of them no longer goes through the overview.
 
 Saving the settings dialog writes the model out the same way, so a solver mode
 or a grid you change there survives a reload. A model you are only allowed to
@@ -66,13 +74,24 @@ whatever it could not represent, so a file is never partially applied without
 saying so.
 
 Where a model cannot be expressed in the legacy format, the modeler exports its
-own versioned format instead of dropping detail quietly.
+own versioned format instead of dropping detail quietly. That native export is
+the complete graph without any solved results, and it opens again without a
+preview because nothing about it has to be interpreted.
+
+A savegame and a Production Planner result are the other two ways in. Both are
+described on the [importing page](/production-modeler/importing/).
 
 ## Catalog versions
 
 Every model records the catalog it was built against. When the game data behind
 the modeler is updated, existing models stay on their own catalog until you
 migrate them, and the migration is previewed first.
+
+The preview opens in its own view. It lists what changed between the two
+catalogs, and for anything that no longer exists it asks you to choose: a
+replacement, or keeping the node as an explicit orphan. The migration only
+applies once every missing reference has an answer, so nothing is silently
+rewired. A record that changed but still fits needs no decision.
 
 The versions in play are listed in the help dialog, which also copies them for a
 bug report.

@@ -2,7 +2,7 @@
 title: Special buildings
 description: How Satisfactory Plus buildings that break the usual recipe shape are modelled.
 sidebar:
-  order: 3
+  order: 5
 ---
 
 Most buildings are an ordinary recipe: fixed inputs, fixed outputs, one machine.
@@ -121,3 +121,15 @@ goes past it.
 The solve is not blocked. The modeler has no view of your world or your save, so
 it can tell you that a model would need more of a building than the game allows,
 but it will not decide for you that the model is wrong.
+
+## FaxIT Network
+
+A FaxIT network is one node holding the drives you put in it. Each drive comes
+out of the game data with its own power draw, its own limit on how many of that
+drive a network may hold, and how many different items it can keep apart. A
+network without a drive does not solve, and a network asked to hold more
+different items than its drives allow says so.
+
+Only items the data marks as storable in a network can go in. What is modelled
+is the power the drives draw and how many different items they can hold. How
+long the network holds them is not, because a model has no clock.

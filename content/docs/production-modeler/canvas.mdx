@@ -18,9 +18,9 @@ path it belongs to.
 Right click a node for what you can do with it: open a container, edit it in the
 inspector, select the whole chain it belongs to or every node like it, duplicate
 or copy it, disconnect everything, or delete it. Right clicking empty canvas is
-what opens the palette, and so is double clicking it. Double clicking a node
-puts the cursor in its inspector instead, and double clicking a container opens
-it.
+what opens the palette, and so is double clicking it; the middle button pastes
+what you copied. Double clicking a node puts the cursor in its inspector
+instead, and double clicking a container opens it.
 
 Selecting a chain and then arranging it lays it out along its own connections,
 left to right, without moving the block somewhere else on the canvas. Arrange
@@ -29,7 +29,8 @@ when there is one, and the whole container when there is not.
 
 The arrow keys move whatever is selected. They step by the building grid while
 it is on, so a nudged node lands where a dragged one would, and Shift covers
-more ground. A whole run of presses is one step in the history.
+more ground. A whole run of presses is one step in the history. The full list of
+keys and gestures is on the [shortcuts page](/production-modeler/shortcuts/).
 
 ## The panel beside the canvas
 
@@ -50,6 +51,8 @@ needs and how full they run, which unlocks it depends on, and which mods it
 draws on, and it can be copied as text the same way. A building whose limit the
 model exceeds is reported among the messages rather than only in a panel row.
 
+What each tab shows is described on the [panels page](/production-modeler/panels/).
+
 ## Connections
 
 Drag from a port to a compatible port to connect them. A port can carry several
@@ -67,6 +70,13 @@ a recipe, and a limit on a port nothing carries away sizes the node itself.
 
 A selection copied on the canvas travels through the system clipboard, so it can
 be pasted into another model or another tab.
+
+A solved connection carries a small badge saying what it takes to move that
+rate: the smallest belt or pipeline that carries it whole, or, once the flow
+outruns the biggest line the game has, how many of that line it needs. The
+badge changes colour once it is more than one. If you already know which line
+you are building, pin it on the connection in the inspector and the badge
+answers in that line instead.
 
 ## Waypoints
 

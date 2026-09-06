@@ -6,23 +6,28 @@ sidebar:
 ---
 
 The planner is free to use. Supporting kmods on **Patreon** unlocks higher
-limits and pro planning features. The cards below show every bonus, your current
-limits, and if you're a patron your live usage.
+limits and the rest of the planning strategies. The **Patreon Bonuses** page in
+the planner shows the same list with your own current usage.
 
 {/* TODO: this was a live Vue component (ProductionPlannerPatreonFeatureList) in the old Nuxt docs; content transcribed statically below, interactivity not yet ported */}
 
-- **Saved Sessions** The number of production plans you can save and load.
-  Free: 10 sessions. Patreon: 200 sessions.
-- **Recipe Strategy** How the planner selects which recipes to use when calculating chains.
-  Free: Shortest Chain or Balanced. Patreon: Depth, Fewest Resources, Low Power, and Byproduct Reuse.
-- **Sink Byproducts** Automatically routes recipe byproducts to the AWESOME Sink and calculates the points/min generated.
-  Free: Byproduct overview only. Patreon: Full sink calculation with pts/min.
-- **Early Access to Mod Updates** Get early access to new mod features and updates before they are publicly released.
-  Free: Standard release. Patreon: Early access to all updates.
-- **Suggest Consuming Recipe** Right-click an unused output to search for recipes that consume it, or auto-build a whole consumer chain several recipes deep.
-  Free: Not available. Patreon: Suggest & auto-build consumer chains.
-- **Sub Production Lines** Suggested chains that produce a product you pick while reusing the leftovers of your current plan.
-  Free: 10 suggestions, 2 steps deep. Patreon: 50 suggestions, chains up to 6 steps.
+## What a membership changes
+
+- **Saved plans** How many production plans your account can keep.
+  Free: 20 plans. Patreon: unlimited.
+- **Snapshots** How many snapshots one plan can hold.
+  Free: 3 per plan. Patreon: unlimited.
+- **Recipe Strategy** How the planner decides which recipes to use.
+  Free: Shortest Path and Balanced. Patreon: adds Shortest Chain, Fewest
+  Resources, Low Power, and Byproduct Reuse. You can combine up to two either
+  way.
+- **Early access to mod updates** New mod features before they are released
+  publicly.
+
+Everything else in the planner is free, including the AWESOME Sink calculation,
+the byproduct policies, suggesting a consuming recipe, auto-building a consumer
+chain, and the weighted recipe routes described on the
+[plans page](/production-planner/plans).
 
 ## Managing your bonus
 
@@ -32,21 +37,9 @@ planner.
 
 :::tip
 Nothing you've already built is ever at risk. Bonuses only raise limits and
-unlock extra actions plans, sessions and diagrams you made on the free tier
+unlock extra strategies. Plans, snapshots and diagrams you made on the free tier
 stay exactly as they are.
 :::
-
-## Suggest Consuming Recipe
-
-This is one of the pro planning features. Right-click any unused output on
-the canvas and search for a recipe that consumes it, or let the planner
-auto-build a whole consumer chain several recipes deep in one click. Free
-plans can still see that an output is unused, but they can't use this
-shortcut to build a consumer for it.
-
-## Weighted multi-recipe paths
-
-Select up to two recipes for the same item in **Summary → Recipe routes** and set their output weights from 1% to 99%. Changing either value adjusts the other so the shares always total 100%. The planner enforces that mix in its material balance, which can let one route consume a co-product created by the other.
 
 ## Thank you
 
