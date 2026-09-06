@@ -84,6 +84,19 @@ saying so.
 Where a model cannot be expressed in the legacy format, the modeler exports its
 own versioned format instead of dropping detail quietly.
 
+Choose Import Planner data on the model overview to bring over your local plan
+and saved cloud plans. Cloud imports load each complete plan, including its
+nodes and connections. Parallel flows carrying the same material between the
+same ports become one connection with their combined rate. The original Planner
+data stays unchanged.
+
+If an earlier import created an empty cloud model, run Import Planner data again.
+The complete plan becomes a new model without overwriting the empty copy or any
+edits you made to it. Successfully imported revisions are skipped on later runs.
+If the original plan has no nodes, open it in the Planner, calculate and save it,
+then retry. An empty or unreadable source is reported as a failed import instead
+of being saved as an empty model.
+
 ## Catalog versions
 
 Every model records the catalog it was built against. When the game data behind
