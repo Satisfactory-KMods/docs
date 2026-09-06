@@ -63,14 +63,24 @@ your copy is migrated when you edit it.
 
 ## Game data profiles
 
+Game-data imports and profiles are available only in the desktop app. The browser
+uses managed SF+ data and links to the desktop download.
+
 The desktop app starts with one SF+ profile. While that profile is unchanged,
 it uses current SF+ data from the web when you are online and the copy bundled
 with the app when you are offline.
 
 The model overview opens with your game data collection. Choose **Ready to plan**
 on Satisfactory+ to start with the included data, or **Import .kdata** on Vanilla
-or Your modpack to choose a file made by KModelerExporter in your game. Those two
+or Your modpack to choose a file made by [KModelerExporter](https://ficsit.app/mod/KModelerExporter)
+in your game. Those two
 cards are import shortcuts; they do not include another game's recipes.
+
+To generate your game data, install KModelerExporter with the mods you want to
+use, then load a save. Open the in-game chat and run `/modeler-generate`. The
+export is saved as `FactoryGame/KMods/ModelerExport/ProductionModeler.kdata`
+inside your Satisfactory installation folder. Import that file in the desktop
+app. Run the command again and import a new export after changing your modpack.
 
 The import shows the selected file and the number of items, buildings and recipes
 after checking it. Give the profile a name and create it. Your previous profiles
@@ -79,10 +89,9 @@ and becomes active. You can also drag a `.kdata` file onto the overview or edito
 Unsaved editor changes must be handled before activating new game data.
 
 You can keep separate, switchable profiles for Vanilla and each modpack in the
-browser and desktop app. The new-model page shows the active game data and lets
-you change it before creating a model. Browser imports stay in that browser's
-local storage; keep the `.kdata` file as a backup. Desktop profiles also retain
-their exported images. Imported profiles are not replaced with web data.
+desktop app. The new-model page shows the active game data and lets you change
+it before creating a model. Keep the `.kdata` file as a backup. Desktop profiles
+also retain their exported images. Imported profiles are not replaced with web data.
 
 To replace a profile, expand **Replace an existing profile instead** in the import
 preview, check the named target and confirm. This also lets you override SF+ locally.
