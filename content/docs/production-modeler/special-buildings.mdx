@@ -1,135 +1,183 @@
 ---
 title: Special buildings
-description: How Satisfactory Plus buildings that break the usual recipe shape are modelled.
+description: Special nodes, building controls, rates and limits.
 sidebar:
   order: 5
 ---
 
-Most buildings are an ordinary recipe: fixed inputs, fixed outputs, one machine.
-Satisfactory Plus adds several that are not, and each one is modelled from what
-the game data actually says.
+The palette offers routing, storage, extractors, generators and special
+assemblies. Available buildings and settings depend on your model's game data.
+
+- **Open palette:** double-click or right-click empty canvas. **A** or **Insert**
+  opens it near the view centre. There is no **+ Add** toolbar button.
+- **Add and connect:** drag a port connection into empty space, then choose a
+  compatible node.
+- **Find an entry:** search names, inputs or outputs. Switch between grid and
+  detailed list. Recipe filters cover mods, tiers, progression and alternates.
+  Search and filters reset when the palette reopens.
+
+| Special node | Purpose |
+| --- | --- |
+| **Outpost / Blueprint** | Group nodes behind boundary ports. Double-click to enter. Not individual game buildings. |
+| **Splitter** | One solid part. Starts with one input and three outputs. |
+| **Merger** | Combine the same solid part. Starts with three inputs and one output. |
+| **Pipeline Junction** | One liquid or gas. Starts with two inputs and two outputs. No solids. |
+| **AWESOME Sink** | Consume sinkable solids and report points per minute. No fluids or unsinkable items. |
+| **Storage / Fluid Buffer** | Store solids or fluids. Choose the building and state in the inspector. |
+| **Dimensional Depot** | Upload eligible solids with an optional upload-tier ceiling. |
+| **Space Elevator** | Delivery endpoint. Phase costs and rates are unavailable, so delivery calculation is unsupported. |
+
+Splitters, mergers and junctions carry **one part per node**. Add or remove ports
+in the inspector. Splitting does not create different products; merging cannot
+mix Iron and Copper Ingots. In **Full** mode, connection order sets priority on
+a shared port. Older priority nodes still work but are no longer palette entries.
+
+**Storage states:**
+
+- **Partially full** (default): incoming and outgoing rates may differ.
+- **Empty:** blocks outgoing flow.
+- **Full:** blocks incoming flow.
+- **Input equals output:** balances each part's incoming and outgoing rates.
+
+Storage does not simulate filling time or stock depletion.
+
+**Extractors:** set resource, available purity, node count and clock in the
+inspector. Automatic calculation may grow an unfixed count to meet demand.
+**Keep this count fixed** prevents growth. In automatic modes this is a capacity
+ceiling, not a fixed output rate. Clock bounds depend on the building.
+
+**Fuel generators:** choose fuel and clock. Supply the required fuel and
+supplemental resources; handle any waste ports. Only supported generator
+profiles appear in the palette.
 
 ## Refined Power
 
-A boiler record names every building that has to cooperate, so a boiler and its
-heater both become required roles on one node. You cannot place half an assembly.
-Coolers and turbines stand alone.
-
-The material flow is complete. The electricity is not: a turbine only spins, and
-the generator attached to it turns that speed into power through a curve. The
-game data ships none of the three things that calculation needs. The curve
-arrives as a bare list of samples with nothing saying what they are measured
-against, and outside the medium voltage generator every sample is zero. The
-generator's own ceiling and top speed sit on a record the export leaves out
-entirely. The last factor is a setting players can change in their session, and
-the export names it without ever giving its value. A turbine node therefore says
-that its power is not modelled instead of quietly reporting zero.
+- **Boiler:** includes its required heater on the same assembly node. Neither
+  role can be omitted. Coolers have separate assemblies.
+- **Turbine:** select a compatible **Generator** role when available. Power uses
+  that generator's curve and ceiling at the turbine's maximum running RPM.
+- **Assumptions:** steady running, session power multiplier of 1. Startup and
+  shutdown are not simulated.
+- **Missing power data:** shows a warning, not a reliable zero-power result.
+  Material flow can still calculate when RPM, generator curve or ceiling data
+  is missing.
 
 ## Slug Hatchery and Terrarium
 
-Both produce only while they are comfortable. Temperature and humidity have to
-sit inside the ranges of the slug you are hatching or breeding, and outside them
-the building makes nothing at all. The environment gates production, it never
-scales it, so inside the range the exported rates apply unchanged.
-
-Without modules a hatchery sits at 25 degrees and 0.5 humidity, which is where a
-new node starts.
-
-A hatchery in game also checks the time of day before it hatches, and the modeler
-does not. The value that says which part of the day a slug wants comes out of the
-export as a number that is not one of the states the game defines, so there is
-nothing to check against. Read a hatchery rate as the rate while it is awake. A
-terrarium is unaffected, because breeding never looks at the clock.
+- **Environment:** set temperature and humidity in the inspector. In game,
+  out-of-range conditions stop production rather than scale its speed.
+- **New nodes:** start within the slug's comfort ranges. The module-free values
+  of 25 degrees and 0.5 humidity are kept where suitable; otherwise the range
+  midpoint is used. Maintain these conditions with modules in game.
+- **Comfort warnings:** planning continues at active recipe rates. Saved
+  readings stay unchanged. **Use comfortable conditions** resets them and can
+  be undone. Invalid or unsupported readings cause calculation errors.
+- **Time of day:** hatchery rates cover active time only. The day/night gate is
+  not modelled. Terrarium breeding has no time-of-day check.
+- **Use expected value:** requests chance-weighted output, not guaranteed slugs
+  per egg. Chance-bearing recipes and the model's chance setting can also
+  enable this.
 
 :::caution[Expected value is a lower bound]
-Some slug outcomes raise their own chance after every failed cycle, so the chance
-the game data lists is only where that outcome starts. A yellow slug listed at
-5.6 percent is really worth about 20 percent over a long run. The modeler knows
-how that works out, but the game data currently states these chances at a
-precision that makes the exact answer too long to write down, so it keeps the
-starting chance and understates them. It flags exactly which outputs this affects
-rather than presenting a number that looks precise.
+Some outcomes become more likely after failed cycles. The modeler uses the
+corrected long-run share where supported. Outputs with an approximation warning
+use the starting chance as a lower bound instead. Check warnings before relying
+on a slug production target.
 :::
 
 ## Farming plots
 
-A plot offers one slot per module type: harvester, irrigation and greenhouse. A
-recipe that requires a slot will not solve without it.
+Choose the crop's plot entry, then edit **Modules**.
 
-Only the greenhouse changes the rate. It runs the plot at 1.5 times its
-potential, which speeds up the whole cycle, so a greenhouse plot consumes half
-again as much seed and water as well as producing half again as much crop.
+- One slot each: harvester, irrigation and greenhouse.
+- Required modules start selected. Missing, unsupported or forbidden module
+  combinations cause calculation errors.
+- Greenhouse: **50 percent faster cycles**. Both seed/water consumption and crop
+  output rise by 50 percent. Other modules do not change the rate.
 
 ## Air Collector
 
-An Air Collector produces from what it can reach. You set how many nodes or
-pillars it scans and how many other collectors sit nearby, and the rate follows:
-the scan count times the yield per hit, clamped to the record's own minimum and
-maximum, divided by the crowding penalty, rounded down to steps of 500.
+Set **Environment** in the inspector. Canvas placement does not supply these
+readings.
 
-An unscanned collector still produces the minimum.
+- **Scanning variant:** enter scanned nodes or pillars and other collectors in
+  range. An unscanned collector still produces the minimum.
+- **Height variant:** enter **Build height** in centimetres. The base multiplier
+  rises from 1 at 4,000 cm (40 m) to 5 at 45,000 cm (450 m), clamped at both ends.
+  New nodes start at 4,000 cm with no neighbours.
+- **Crowding:** divides the amount per cycle by 1 plus 1.1 times the other
+  collector count. Both variants apply it.
 
-One variant works from build height instead of scanning. There you enter how
-high the collector stands, and its base output scales from once to five times
-across the range the buildable allows.
+The scan yield or height yield is clamped to the building's amount limits,
+reduced by crowding, rounded down in 500-unit steps, then clamped again. Those
+are amount units, not per-minute rates. Cycle duration determines the final rate.
 
 ## Modular Miner
 
-A modular miner is assembled from a head, optional boosters, and a waste or
-fluid module. Which combinations are allowed, what they cost in power, and how
-they change the extraction rate all come from the miner description for that
-resource.
+Choose the resource's palette entry. Configure it in the inspector:
 
-It is clocked like anything else, and the clock scales what the whole assembly
-moves, the acid a fluid head drinks included. The range comes from the miner's
-own building record, so it can be narrower than the one a factory building
-offers.
+- **Mining head:** meet the displayed minimum head requirement.
+- **Waste attachment / Fluid attachment:** choose compatible options. The
+  configuration determines output, waste and fluid-input ports.
+- **Booster slots:** choose boosters individually. Some resources require them.
+  Available slots, rate bonuses and power costs depend on the resource.
+- **Merge both outputs onto one belt:** combines the two main outputs only when
+  both contain the same part. It does not mix resources or convert waste.
+- **Changing attachments:** disconnect a fixed input before removing it through
+  a configuration change.
+
+Clock scales material rates, including acid intake. Fixed fluid intake is per
+installed miner, so partial production can still require the full intake at the
+chosen clock. Check the clock control's range: a Modular Miner can stop at
+100 percent where an ordinary miner supports 250 percent.
 
 ## Dimensional Depot
 
-The game data carries the depot's upgrade percentages but not the rate those
-percentages are measured against, so there is no upload speed to put on a node
-and no tier to choose. A depot is calculated without an upload limit and says so
-on the node rather than refusing to calculate the part of the model it sits in.
-If you know your own upload rate, set it as a limit on the depot's port and the
-model keeps to it.
+Connect eligible solids, then select **Depot upload tier** in the inspector.
+
+- **Rates:** 15 items/min at base. Standard research adds 30, 60, 120 and
+  240 items/min tiers where present in the game data.
+- **Tier ceiling:** caps total incoming flow across all depot inputs. It does
+  not demand that rate or detect your save's completed research.
+- **No tier:** a new depot, a cleared tier or missing tier data leaves upload
+  uncapped. Calculation continues with a warning.
+- **Custom ceiling:** set an input port to **At most**. This limits that port
+  only, not the whole depot.
 
 ## Solar panels and wind turbines
 
-These follow the world rather than a fuel, so they have no input to size them.
-Instead the node carries a count, and the summary shows the range the export
-describes.
-
-A solar panel is exact at both ends. The game hands the exported night value and
-the exported day value straight to the power grid, so the modeler can state both.
-What it cannot state is the long run average, because the length of a day is not
-part of the export.
-
-A wind turbine is not modelled at all. Its output is capped against its exported
-maximum multiplied by a session setting that players can change and that the
-export does not contain, so any ceiling the modeler printed would be wrong. It
-says the value is unknown instead. Two turbines standing close together also stop
-producing entirely, which is a placement rule the modeler has no way to see.
+- **Solar panels:** set **Node count** in the inspector. Power uses the exported
+  night/day range multiplied by count. No long-run average is calculated, and
+  the day value is not guaranteed constant output.
+- **Wind turbines:** not offered as supported generators. Missing session,
+  height and wind data prevent a supported power calculation, including for
+  imported turbines. Nearby-turbine placement restrictions are not simulated.
 
 ## Building limits
 
-Some buildings may only exist a limited number of times in a save. Where the data
-says so, the machines section of the summary adds how many the model uses against
-that limit and how many are left, and it marks the row in words once the model
-goes past it.
+Capacity and fixed rates are different controls:
 
-The solve is not blocked. The modeler has no view of your world or your save, so
-it can tell you that a model would need more of a building than the game allows,
-but it will not decide for you that the model is wrong.
+- **At most 60/min:** a ceiling. Actual flow may be lower.
+- **Exactly 60/min:** a fixed rate. Can conflict with supply or another limit.
+- **Switch port mode:** use the inspector or click the node's existing limit
+  badge. Recipe machine limits also offer **At most** and **Exactly**.
+- **Capacity:** on recipes and sinks, the selected belt or pipe caps total
+  connected flow in each direction. It is not a production target. Depots use
+  their upload tier instead.
+- **Manual mode:** entered machine and port limits become exact constraints.
+
+**Save-wide building limits** are separate. The machines summary shows the
+model's usage, remaining allowance and excess. It does not count buildings
+already placed in your save. Exceeding the allowance warns without blocking
+calculation. Missing assembly roles, invalid modules and incompatible parts can
+still block the affected calculation.
 
 ## FaxIT Network
 
-A FaxIT network is one node holding the drives you put in it. Each drive comes
-out of the game data with its own power draw, its own limit on how many of that
-drive a network may hold, and how many different items it can keep apart. A
-network without a drive does not solve, and a network asked to hold more
-different items than its drives allow says so.
+Choose **FaxIT Network** when drive profiles are available, then select
+**FaxIT drives** in the inspector. This is a network, not a drive-crafting recipe.
 
-Only items the data marks as storable in a network can go in. What is modelled
-is the power the drives draw and how many different items they can hold. How
-long the network holds them is not, because a model has no clock.
+- Drives contribute power draw and capacity for distinct item types.
+- No drives, too many copies of a drive, or too many distinct parts cause errors.
+- Only parts marked as storable in FaxIT are accepted.
+- Storage duration and filling time are not simulated.

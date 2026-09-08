@@ -1,58 +1,129 @@
 ---
 title: Importing
-description: Starting a model from a savegame, a planner result, or a file.
+description: Start from a savegame, a Planner plan, or a portable model file.
 sidebar:
   order: 6
 ---
 
-A new model does not have to start empty. The create page offers four ways in:
-an empty model, a file, a Production Planner result, and a savegame. Each one
-shows what it found before anything is created.
+1. Choose **New model** and select matching **Game data**.
+2. Complete **Model name and settings**.
+3. At **Starting point**, expand **Or start from existing data**.
+4. Choose **Import file**, **Copy planner result**, or **Import savegame**.
+
+Single-model imports start locally, even when you are signed in.
+Review each preview before accepting, then inspect the graph and save.
+For cloud saving, see [Saving and sharing](/production-modeler/saving/).
 
 ## From a savegame
 
-Pick a `.sav` file and the modeler reads it and reports what is inside. The save
-is analysed in memory only. It is never written into a model or into a local
-draft, and nothing about it is kept once you close the dialog.
+Use a non-empty `.sav` from Satisfactory 1.0 or newer, up to 256 MiB.
+Invalid saves and files exceeding decompression limits are rejected.
+This creates a filtered starting model, not a reconstruction of your factory.
 
-Satisfactory 1.0 or newer is required, and a save may be at most 256 MiB. A file
-that is not a supported save, or that unpacks far beyond what a save should,
-is refused rather than half read.
+1. Choose **Import savegame**, then **Select .sav file**.
+2. Wait for analysis, or use **Cancel analysis** to stop.
+3. Review matched unlocks, extractors, inventories, and unrecognized entries.
+4. Choose **Create filtered model**, or **Cancel** without creating anything.
 
-The report has three parts. Resource sources are the extractors it found, with
-the resource, the purity and the clock each one runs at. Building types are the
-buildings it counted. Inventory item types are what your containers hold. Each
-row says whether it was matched, left unresolved, ambiguous, or is a kind the
-modeler does not model, and anything it could not resolve is listed separately.
+:::note[Savegame privacy]
+The browser uploads your `.sav` to the analysis service, which processes it without storing it.
+Desktop analysis runs locally and works offline.
+The raw save is never stored in the model or draft.
+Closing the dialog clears its analysis; imported nodes and unlock filters remain in the model.
+:::
 
-Only exact resource extractor matches can be imported, and importing them
-creates the matching resource source nodes. Buildings are reported and not
-imported, because a save records the building but not the recipe it is set to,
-and the modeler does not guess a recipe. The whole report can be copied if you
-want to work from it by hand.
+What carries over:
+
+- Extractors need exact matches for their building, source definition, and resource.
+- Recognized purity carries over; extractor clock values do not.
+- Unmatched or ambiguous extractors stay in the report.
+- Matched recipe and production-machine unlocks become model filters.
+
+What does not:
+
+- Production buildings and inventories are report data, not imported factory nodes.
+- The analysis does not supply running recipes, so the importer does not guess them.
+- Belts, pipes, and factory connections are not recreated.
+
+You can create a filtered model even when no extractors match.
+If no recipes match, the recipe filter stays active and empty.
+Check your game data, or use **Remove savegame filter** in the palette for the full catalog.
 
 ## From a Production Planner plan
 
-Give the dialog a planner session id, private or public, or select a planner
-JSON file you exported. Preview the conversion first: it says how many
-diagnostics the conversion produced before you create anything.
+**Copy planner result** creates an independent Modeler graph.
+Changes never sync back to the Planner or forward from later Planner edits.
 
-The conversion is one way. What you get is an independent modeler graph, and
-later changes in the planner are not carried over.
+1. Calculate and save the Planner plan before importing by session ID.
+2. Choose **Copy planner result**.
+3. Enter a **Cloud planner session ID**, or select exported Planner JSON.
+4. Choose **Preview conversion** and read the messages.
+5. Choose **Import model**, or **Cancel** without importing.
 
-Recipe blocks become recipe nodes with their rates on the ports. The blocks that
-were the plan's edges, its raw inputs, its available items, its outputs and its
-byproducts, become storage nodes, which is what a boundary looks like in a
-model. Anything with no counterpart, such as a note or an error block, is kept
-as an explicit orphan and reported, so nothing is dropped silently.
+Session IDs require sign-in and a connection.
+Use a private plan you own or a public plan you can access.
+JSON files have a 5 MiB limit and do not require sign-in.
+An uncalculated request without saved graph nodes cannot be imported.
+
+Conversion keeps useful structure, not every Planner feature:
+
+- Recipe blocks retain their recipe run and clock settings.
+- Raw inputs, available items, outputs, and byproducts become storage nodes.
+- Parallel flows between the same ports can become one connection.
+- Notes, errors, and unmatched recipes become orphan nodes, not working recipes.
+- Unmappable connections can be omitted with a diagnostic.
+- Invalid conversions can be rejected.
+
+Desktop JSON conversion runs locally with available game data.
+In the browser, included-data conversion sends the plan to the Modeler service.
+Browser conversion with an imported `.kdata` profile runs locally.
+Conversion is separate from cloud-saving consent.
+
+For several plans, use **Import Planner data** on the overview.
+Review the source counts, then choose **Import all plans**.
+
+- The current local Planner plan becomes a local model.
+- Signed-in cloud plans become private cloud models with their folders and tags.
+- This bulk action explicitly requests cloud creation for those cloud plans.
+- Browser-imported game data cannot be used for those cloud writes.
+- Original Planner data stays unchanged.
+- Existing target models let already imported source revisions be skipped.
+
+Check the result counts and use **Retry failed plans** after resolving failures.
 
 ## From a file
 
-Two file formats open here. A native export is the modeler's own versioned
-format and opens directly. A `.sfmd` file is the desktop Satisfactory Modeler
-format, and it is previewed before anything is created, including whatever it
-could not represent. A file is never partially applied without saying so.
+Accepts `.ksfmd`, plus older `.sfpmd` and `.sfmd` files, up to 5 MiB each.
+All use **Review model import**, including current native exports.
 
-Both are bounded at 5 MiB.
+1. Choose **Import file**, or **Import and export**, then **Import model** in an open model.
+2. Select a file, or drop one onto the overview, workspace, or import dialog.
+3. Review the name, node and connection counts, and messages.
+4. Choose how to open it:
+   - **Load model** replaces the current local working model under its existing identity.
+   - **Import reviewed model** creates and opens a separate local model.
 
-Exporting is described on the [saving page](/production-modeler/saving/).
+Neither action merges nodes into the current graph.
+The create page offers only **Import reviewed model**.
+On the overview, both actions create a new local model.
+Accepting a file does not update the cloud model it came from.
+
+:::caution[Keep the current graph]
+Prefer **Import reviewed model** when you want a separate copy.
+If prompted, **Save and close** saves your current work before continuing.
+**Keep editing** cancels the replacement.
+**Leave anyway** continues without saving current edits.
+:::
+
+Native files need their recorded catalog version to be available.
+Older files without native data use the catalog selected for conversion.
+Missing data can block import; it does not trigger automatic migration to another pack.
+Install or select matching [Game data](/production-modeler/game-data/) and retry.
+A `.kdata` drop imports a pack, not a factory model.
+
+Desktop file conversion runs locally.
+Browser conversion with included data sends the file contents to the Modeler service.
+With a browser-imported pack, conversion runs locally instead.
+
+Keep the original model and matching `.kdata` files until you have checked the result.
+Use [Export .ksfmd model](/production-modeler/saving/#import-and-export) for a new portable copy.

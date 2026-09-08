@@ -1,113 +1,172 @@
 ---
 title: Canvas
-description: Placing nodes, wiring ports and keeping a large model readable.
+description: Place nodes, connect ports, and keep large factory graphs readable.
 sidebar:
   order: 2
 ---
 
-The canvas is where the model lives. Pan with the left mouse button, zoom with
-the wheel around the cursor, and drag with the right button to pull a selection
-box. Shift or Control adds to a selection instead of replacing it.
+- **Double-click empty space:** open the node palette at that position.
+- **Right-click empty space:** open the same palette.
+- **Left-drag empty space:** pan. **Mouse wheel:** zoom around the cursor.
+- **Right-drag:** draw a selection box. **Shift** or **Control:** extend selection.
+- **Middle-click:** paste the copied selection.
 
-A selected node is outlined, and every connection running into or out of it
-lights up with it. Select several nodes and the whole set lights up together, so
-a path through a large model can be followed without clicking each connection.
-A broken connection keeps its own colour, because that matters more than the
-path it belongs to.
+You can also hold **Shift** and left-drag empty space to draw a selection box.
+Both selection boxes include every card they overlap, even if part of the card
+extends outside the box. You do not need to enclose the whole card.
 
-Right click a node for what you can do with it: open a container, edit it in the
-inspector, select the whole chain it belongs to or every node like it, duplicate
-or copy it, disconnect everything, or delete it. Right clicking empty canvas is
-what opens the palette, and so is double clicking it; the middle button pastes
-what you copied. Double clicking a node puts the cursor in its inspector
-instead, and double clicking a container opens it.
+The toolbar no longer has a **+ Add** button. Palette keyboard access remains
+available; see [Keyboard shortcuts](/production-modeler/shortcuts/).
 
-Selecting a chain and then arranging it lays it out along its own connections,
-left to right, without moving the block somewhere else on the canvas. Arrange
-sits in the action bar and on the L key. Fitting the view fits the selection
-when there is one, and the whole container when there is not.
+Select a node to highlight its connected wires. Right-click it for editing,
+copying, selecting its chain, disconnecting, or deleting. Double-click a node
+to edit it in the Inspector. On narrow screens, select it and choose **Edit**
+to open the panel. Double-click a container to enter it.
 
-The arrow keys move whatever is selected. They step by the building grid while
-it is on, so a nudged node lands where a dragged one would, and Shift covers
-more ground. A whole run of presses is one step in the history. The full list of
-keys and gestures is on the [shortcuts page](/production-modeler/shortcuts/).
+The bottom-left controls show the live zoom percentage. Use **Zoom out** and
+**Zoom in** to change it, or **Fit canvas to view** to frame your selection.
+With nothing selected, it fits the current container. These controls also work
+in read-only models.
+
+The bottom-right **Minimap** shows nodes, connections, selected nodes, and the
+visible area. Click it to move the view without changing zoom. Focus it and use
+arrow keys to pan, or **Enter** / **Space** to fit the current container.
+Collapse it with the header button. It starts collapsed when the canvas is narrow
+or short, and shrinks to stay within the available space when opened.
+
+Use **Arrange** or **L** to lay out the selected nodes along their connections.
+Arrow keys nudge the selection; hold **Shift** for larger steps.
 
 ## The panel beside the canvas
 
-The right hand panel carries three tabs. The summary totals the model, the
-inspector edits whatever is selected, and messages lists everything the solver
-had to say. Click a node and the panel switches to the inspector on its own, so
-a selection and its settings are never more than one click apart.
+The side panel has three tabs:
 
-Messages name the node they are about rather than an internal identifier, and
-clicking one selects that node on the canvas. The same complaint about forty
-nodes is one row with a count beside it, so a single unfed port cannot bury
-everything else, and the whole list can be copied as text for asking about it.
-Only a solve that runs long enough to be worth stopping still interrupts the
-canvas itself.
+- **Summary:** totals for the model, container, or selection.
+- **Inspector:** settings for the selected node or connection.
+- **Messages:** calculation errors, warnings, and other diagnostics.
 
-The summary totals more than rates. It says which belts or pipes the model
-needs and how full they run, which unlocks it depends on, and which mods it
-draws on, and it can be copied as text the same way. A building whose limit the
-model exceeds is reported among the messages rather than only in a panel row.
+Selecting a node opens the Inspector on desktop. On narrow screens, use **Edit**
+to open it. Selecting a diagnostic reveals its node, including nodes inside
+another container. Repeated diagnostics are grouped;
+copy the list when reporting a problem.
 
-What each tab shows is described on the [panels page](/production-modeler/panels/).
+The panel can be resized or hidden. On narrow screens, open it with the summary
+button and close it to return to the full canvas. The button shows when errors
+or warnings are waiting.
+
+Game-data and model-status notices sit above the canvas, not above the side
+panel. A long-running solve also offers a stop action there. See
+[Panels](/production-modeler/panels/) for each tab's controls.
 
 ## Connections
 
-Drag from a port to a compatible port to connect them. A port can carry several
-connections, and their order matters: when a split has to prioritize, the solver
-follows the order you see. Reorder them from the inspector.
+1. Drag from an output port to a compatible input port.
+2. Drop on empty space instead to open a filtered palette.
+3. Pick a compatible node to place it already connected.
 
-Drop a connection on empty space and the palette opens filtered to that port, so
-the node you pick arrives already wired.
+Arrowheads point into the receiving port. Select a node or connection to see
+its highlighted wires flow from source to target. If your system requests
+reduced motion, flow and loading spinners run more slowly. Decorative node
+effects stay disabled.
 
-Each port can carry a limit, and the inspector says which of the two it is: at
-most that rate, or exactly that rate. A limited port carries a small badge on
-the canvas, so a port pinned to a rate never looks like a free one. A limit
-applies to whatever building carries the port, a Boiler or a Turbine as much as
-a recipe, and a limit on a port nothing carries away sizes the node itself.
+Ports can carry several connections. In Full mode, their order controls
+priority where allocation is required. Reorder connections in the Inspector.
 
-A selection copied on the canvas travels through the system clipboard, so it can
-be pasted into another model or another tab.
+A port limit can be an **exact rate** or an **upper bound**. A ceiling does not
+force production to reach it. Limits also work on supported non-recipe buildings,
+not just ordinary recipe nodes.
 
-A solved connection carries a small badge saying what it takes to move that
-rate: the smallest belt or pipeline that carries it whole, or, once the flow
-outruns the biggest line the game has, how many of that line it needs. The
-badge changes colour once it is more than one. If you already know which line
-you are building, pin it on the connection in the inspector and the badge
-answers in that line instead.
+A solved connection shows an automatic estimate of the belt or pipe needed for
+its rate. The badge shows when more than one line is needed. It is not a picker
+for assigning a particular transport to the connection.
+
+Copied selections use the system clipboard, so they can move between models,
+tabs, or windows. Browser clipboard permissions may be required.
 
 ## Waypoints
 
-A connection can be routed through as many waypoints as you like. Double click a
-connection to add one, double right click a waypoint to remove it, and double
-right click a connection to delete it. Waypoints follow when you move both ends
-of a connection together.
+- Double-click a connection to add a waypoint.
+- Double-right-click a waypoint to remove it.
+- Double-right-click a connection to delete it.
+- Move both endpoints together to move their waypoints with them.
 
-Three path styles are available: curves, direct lines, and orthogonal routing.
+Drag a connection's rate label to adjust its routing. Double-click the label
+to reset its manual placement. Label changes can be undone and saved with the
+model.
+
+Choose curves, direct lines, or orthogonal routing in
+[Settings](/production-modeler/settings/#connections-and-grids).
 
 ## Grids
 
-The canvas sits on the same background grid as the rest of the site. It is
-decoration, not a snap target.
+The decorative background grid is not a snap target. Two working grids control
+placement:
 
-Two working grids exist on top of it and they are separate. The building grid snaps nodes, the
-connection grid snaps waypoints, and each has its own X and Y spacing. Both can
-be applied to everything, to the current outpost, or to the current selection.
+- **Building grid:** snaps nodes.
+- **Connection grid:** snaps waypoints.
+
+Each has independent X and Y spacing. Apply a grid to the whole model, current
+outpost, or selection. Nudging follows the building grid when it is enabled.
+Review the scope before applying a grid to existing work.
+
+## Node status and quick controls
+
+The **Fixed building count** field in a recipe header sets exactly that many
+buildings running at the configured clock. It is not an item rate or a count of
+installed buildings allowed to idle. Clear it to return to **Auto**.
+
+Automatic downstream nodes size themselves from that production, but connected
+upstream limits still apply. If a fixed count needs more than its supply can
+provide, the whole connected group shows **N/A** until the conflict is resolved.
+The error reports the requested buildings and the reachable building-equivalents,
+not items per minute. Increase the upstream supply, allow an extractor's count
+to grow, or lower the fixed count or clock. Changing the downstream node to
+**Auto** does not override a fixed upstream ceiling.
+
+Use the checkmark at the bottom of a node to mark it **Built**. This tracks what
+you have built in the game and is kept with the saved model. Built cards have a
+uniform green outline and glow, with no extra stripe along the top. When both
+ends of a connection are built, the line turns green and its rate label gains a
+matching highlight. Clearing **Built** on either end restores the normal connection
+styling. Diagnostic icons remain visible on built connections.
+
+The lock beside it protects a node from moving, editing, connecting,
+disconnecting, or deleting. You can still select a locked node and inspect its
+details. Unlock it before making changes; its lock state is also saved.
+
+Machine nodes keep their quick controls in a compact bottom section, visible
+even when recipe details are collapsed:
+
+- **Power:** a pill showing the calculated power use or production.
+- **Buildings and clock:** a pill showing the calculated machine count and
+  per-building clock percentage, such as **1 × 20%**. Use its copy button to copy
+  just the percentage number for the game's clock input. The copied value has
+  up to six decimal places, without a `%` sign, even if the card displays a
+  rounded value or fraction. Copying also works on locked nodes and read-only
+  models.
+- **Clock setting:** edit the percentage beside the Power Shard icon to change
+  the configured clock. This can differ from the calculated per-building clock.
+- **Somersloops:** click the pill to add one, up to the machine's slot limit.
+  Clicking again at the limit resets it to zero.
+
+Available controls depend on the building. The
+[Inspector](/production-modeler/panels/#inspector) keeps the detailed settings.
 
 ## Outposts and blueprints
 
-An outpost holds part of a model. Enter it to work inside, double click it to
-open it, and press Escape to come back out. A closed one says how much it holds,
-so a folder on the canvas does not have to be opened to be read. Each one keeps its own pan and zoom, so returning to an outpost
-puts you back where you left. Select All only takes the outpost you are in.
+**Outposts** group part of a factory. Double-click to enter; press **Escape** to
+leave. Each container keeps its own pan and zoom. **Select All** affects the
+container you are currently viewing.
 
-A blueprint scales its contents by a count, which is how you model the same
-sub factory many times over without drawing it many times over.
+**Blueprints** scale a repeated section by a count. Use one instead of drawing
+the same sub-factory repeatedly. Boundary ports carry connections between a
+container and the surrounding graph.
+
+The header trail shows where you are. Use it to return to a parent container.
+A closed container shows a summary without requiring you to enter it.
 
 ## Aligning a port
 
-A port with a connection can be aligned to it. The node moves vertically until
-the port sits on the same line as the port it feeds, and the horizontal layout
-you built stays untouched. With several connections the first one wins.
+Choose **Align to connection** in the Inspector to move the node vertically
+until its port lines up with the connected port. Horizontal placement stays
+unchanged. If the port has several connections, the first one is used.

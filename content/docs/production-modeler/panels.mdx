@@ -1,92 +1,145 @@
 ---
 title: Panels
-description: The summary, the inspector and the messages beside the canvas.
+description: Check totals, edit nodes and track down calculation problems.
 sidebar:
   order: 3
 ---
 
-The right hand column is one panel with three tabs. The summary totals the
-model, the inspector edits what is selected, and messages lists everything the
-solver had to say. Selecting a single node switches to the inspector and reopens
-the panel if you closed it.
+Use the panel beside the [canvas](/production-modeler/canvas/) to switch between three tabs:
 
-Collapse the panel when you want the whole canvas, and on a pointer device drag
-its inner edge to resize it. On a narrow screen it sits along the bottom edge
-over the canvas instead of beside it.
+- **Summary:** factory totals and requirements.
+- **Inspector:** controls for selected nodes.
+- **Messages:** diagnostics and failed operations.
+
+- **Desktop:** select one node to open Inspector, reopening a closed panel.
+- **Mobile:** selection alone does not open the panel; use **Edit** or **Show summary**.
+- Expand the mobile panel for more height, then restore it to see the canvas.
+- Resize the desktop panel by dragging its inner edge or focusing it and pressing left/right.
+- Close the panel for more canvas space; **Show summary** reopens it.
+
 
 ## Summary
 
-The summary is built from sections. One scope applies to the whole panel, and
-under it you stack as many sections as you want. Each section has its own kind
-and its own filters, so the same model can be read as what it delivers, what it
-costs to build, and what it draws from the grid at the same time.
+1. Choose a section kind, then press **Add section**.
+2. Set its filters to answer your question.
+3. Add another section to compare views, including two of the same kind.
+4. Collapse a section to hide details, or close it to remove it.
 
-Add a section with the add control at the top, and remove one from its own
-header. The set of sections, the scope and the panel width are saved with the
-model.
+- Sections, filters, scope and panel width are kept with the saved model.
 
-A section only shows values a compatible solve produced. Until then it says so
-rather than showing stale numbers.
+- **Search summary** filters rows by name.
+- **Copy summary** copies the current scope and filtered results as text.
+
+- Check **Components** and **Solved** before relying on totals from an incomplete calculation.
+- Empty sections can mean no matches or missing results, not zero requirements.
+
+For compact totals with precise tooltips, adjust [Number formats](/production-modeler/settings/#number-formats).
 
 ### Scope
 
-Six scopes decide which nodes are counted: everything, the current container,
-the current container and below, the selection, the selection and everything
-connected to it, and the selection and below.
+- **Everything:** the whole model.
+- **Current container:** nodes directly inside the container you are viewing.
+- **Current container and below:** also includes nested contents.
+- **Selected:** only selected nodes.
+- **Selected and connected:** follows connections through the chain in both directions.
+- **Selected and below:** also includes contents of selected containers.
+
+Scope applies to added sections, belts and pipes, and unlocks.
+**Mods** always describes the whole model.
+
 
 ### What a section can count
 
-Output is what the model delivers. By default that is only what leaves a port
-without being carried anywhere, which is the surplus you can take out of the
-factory. Its filters add the flows that stay inside: used, sunk, storage and
-depot.
+- **Output:** starts with Unused, including open outputs and surplus left after connected flows.
+- Add Used, Sunk, Storage or Depot to include output sent to those destinations.
+- **Input:** starts with Unmade, the inputs with no incoming connection.
+- Add Made, Mined / extracted or Taken from storage to include connected supplies.
+- **Output sink points:** AWESOME Sink points per minute from flows sent to sinks.
+- **Input sink points:** what the filtered inputs would be worth if sunk instead.
+- **Overclock:** Power Shards and Somersloops used.
+- **Machines:** building counts, whole buildings and idle capacity where relevant.
+- Building limits show remaining allowance or excess when the catalog supplies them.
+- **Costs:** construction materials for calculated buildings in scope.
 
-Input is the mirror image. By default it counts the inputs nothing in the model
-supplies, which is what you have to feed in. Its filters add made, mined or
-extracted, and taken from storage.
+**Power** reports:
 
-The two sink point sections value the same flows in AWESOME Sink points a
-minute. Output sink points counts what actually goes into a sink. Input sink
-points says what your inputs would be worth if you sank them instead of using
-them.
+- Average net power and minimum production minus maximum use.
+- Average and maximum use.
+- Minimum and average production before and after boosting.
+- Production boost percentage.
 
-Power reports nine figures: average net, minimum made minus maximum used,
-average used, maximum used, minimum and average unboosted production, minimum
-and average boosted production, and the production boost as a percentage.
+Production and net figures can show **N/A** for incomplete results or a partial connected scope.
+Try **Selected and connected** or **Everything**, then check Messages.
+N/A does not mean zero production.
 
-Overclock totals the Power Shards and the Somersloops the model uses.
+These sections appear automatically when data is available:
 
-Machines counts the buildings, and adds the building limit where the game data
-carries one. Costs lists the parts it takes to build everything in scope.
+- **Belts and pipes:** lines needed for solved connections inside the scope, plus the busiest line's load.
+- **Unlocks needed:** required milestones and research.
+- **Mods:** sources used by the model.
+
+Click a linked part or machine name to select matching nodes and reveal the first match.
+This also changes selection-based scopes.
 
 ## Inspector
 
-The inspector edits one node at a time. Select several and it says so rather
-than guessing which one you meant.
+Select one node for detailed controls.
+**Custom title** changes its canvas name without changing its catalog entry.
 
-Every node has a custom title. Beyond that the inspector shows what the node
-actually has: the machine and its capacity, the clock, the production slots, a
-node count, a limit, and the controls its kind needs. A storage node picks its
-building and its state, a resource source its resource and purity, a modular
-miner its head, boosters and attachment, a generator its fuel, a hatchery its
-temperature and humidity, a FaxIT network its drives, a blueprint its count and
-a Space Elevator its batches.
+Recipes offer clock, Somersloops, automatic rounding and capacity.
+These settings share one card; the collapsible input and output ports sit outside it.
+Other controls depend on the node, as covered in [Special buildings](/production-modeler/special-buildings/).
 
-Ports are edited here too. Add and remove them, move them up and down, give one
-a part and a limit, and align a port to the connection it feeds. A limit is an
-upper bound by default, and a toggle turns it into the exact rate instead. When
-nothing carries a port away, the limit is what sizes the node.
+A fixed recipe count sets the downstream plan in Basic and Full. If a connected
+input cannot supply that count, Messages reports the missing amount while the
+downstream values remain visible. The recipe input displays its required rate;
+the connection displays the available supply. Add that supply to make the plan
+achievable. Manual mode continues to require balanced exact values.
 
-Connections belong to the port they leave. Their order is what the solver
-follows when a split has to prioritize, so reordering them here is how you set
-priority. The same list disconnects a single connection, adds and removes
-waypoints, and pins the belt or pipeline a connection is built from.
+For quick adjustments, use the clock input and clickable Somersloop pill in the
+node's bottom section on the [canvas](/production-modeler/canvas/#node-status-and-quick-controls).
+They remain visible when recipe details are collapsed. A locked node can still
+be inspected, but must be unlocked before editing.
+
+- Select at least two clockable machines to get a shared clock control.
+- At least two eligible recipes with slots also get a shared Somersloop control.
+- Bulk clock and Somersloop changes keep each node's fixed building count, upper
+  bound or Auto setting. They change only the chosen modifier and use one undo step.
+- Net power appears when available.
+
+Expand **Input Ports** or **Output Ports** to edit a port:
+
+1. Drag its handle or use the arrows to reorder it within its direction.
+2. Add, remove or change parts only where the node supports editable ports.
+3. Enter a nonnegative limit in the displayed per-minute unit.
+4. Choose **At most** for a ceiling or **Exactly** for a required rate.
+5. Clear the limit to remove it.
+
+A limit on an unconnected port sizes the node.
+Move connections earlier or later to set priority in **Full** mode.
+Click an endpoint name to reveal the other node.
+Connection controls add or remove waypoints and disconnect one or all connections.
+**Align to connection** moves the node vertically, using the first connection.
+
+Inspector edits apply directly and support Undo; keep them with the normal [saving controls](/production-modeler/saving/).
 
 ## Messages
 
-Messages is everything the solver reported, in one place. Each one names the
-node it is about rather than an internal identifier, and clicking it selects
-that node on the canvas.
+Messages remains the diagnostics panel, including solver issues, building-limit warnings and failed saves.
 
-A clean solve says so. Only a solve that runs long enough to be worth stopping
-still interrupts the canvas itself, with a banner that can cancel it.
+- Counts appear on the tab, and on the closed panel's reopen button for errors and warnings.
+- Filter by **Errors**, **Warnings** or **Notes**.
+- Errors come first; repeated diagnostics are grouped with a count.
+- Click a message tied to a node or port to reveal its node, even inside another container.
+- **Copy messages** copies the filtered list as text.
+- Check filters before treating an empty list as a clean calculation.
+
+Selected-data, missing-data and read-only notices stay in the canvas column without pushing down the sidebar.
+A long-running calculation shows **Stop**, which cancels it without changing the model.
+
+If usable data is missing, editing and calculation pause.
+Use the header's **Game data** control and the [game-data guide](/production-modeler/game-data/) to recover.
+Unsaved edits remain protected by the leave warning during this temporary lock.
+A failed **Save and close** keeps the model open.
+Choose **Keep editing** to resolve the problem; **Leave anyway** discards unsaved work.
+Saving device preferences in [Settings](/production-modeler/settings/) does not save a locked model.

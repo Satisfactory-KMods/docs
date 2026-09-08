@@ -1,97 +1,143 @@
 ---
 title: Saving and sharing
-description: Drafts, snapshots, sharing, and moving models in and out.
+description: Save your work, recover backups, share models, and export files.
 sidebar:
   order: 7
 ---
 
-Work is kept as you go. A local draft is written when the model is saved, either
-by you or by autosave. That draft stays in the browser you made it in.
+New models start locally, even when you are signed in.
+Use **Save** in the toolbar to keep your work.
 
-A model reaches your account only when you turn cloud saving on for that model.
-Being signed in is not consent on its own, so a model you started stays local
-until you say otherwise. Once a model is in the cloud, every save updates it and
-it carries a revision number.
+- Autosave is on by default, with a five-minute cooldown from the first unsaved edit.
+- Further edits do not restart the countdown, so continuous editing still gets saved.
+- Change **Autosave cooldown in minutes** and the backup limit in **Settings**, then
+  **Saves and recovery**. The minimum cooldown is one minute.
+- Manual saves work immediately. After a save, any remaining changes wait for a
+  fresh cooldown. Unchanged models do not trigger automatic writes or notifications.
+- A toast confirms each completed model save and says whether it was saved locally
+  or to the cloud. Desktop saves waiting for cloud sync are reported as local saves.
 
-Your models list says how many models of your allowance you are using, and an
-account that supports the project on Patreon has no limit at all. A cloud model
-can be filed in a folder and given tags, and the list filters on both.
+Autosave pauses during loading, game-data switches, and other model operations.
+It does not save read-only models or retry unresolved cloud conflicts. Other
+failed saves remain retryable after a full cooldown. Leaving the workspace
+cancels a pending autosave; save first if you want to keep unsaved changes.
 
-A card on the overview says when its draft was last written, in the words you
-would use, with the exact time on hover. The overview searches both shelves at
-once by name and reads them in whichever order you pick: by name, biggest first,
-or by what changed last. A model can be copied there as well, which is how a
-variant starts without exporting and importing it again. Inside a model, the
-history button beside the trail switches to the models you had open last, so
-comparing two of them no longer goes through the overview.
+Browser models and backups stay in that browser's site storage.
+Clearing site data can remove them and your imported game-data profiles.
+Keep important exports outside the browser.
 
-Saving the settings dialog writes the model out the same way, so a solver mode
-or a grid you change there survives a reload. A model you are only allowed to
-read says so at the top of that dialog and keeps its settings unchanged.
+Desktop models are `.ksfmd` files.
+Find their folder under **Settings**, then **Desktop data**.
+Recovery backups stay in app storage, not the model folder.
+Before using **Reload data** after external file edits, save or discard open model changes.
+That action reloads the page and discards unsaved settings.
 
-Leaving with unsaved changes asks first, whether you close the tab or follow a
-link out of the modeler.
+To save to your account, sign in and enable the cloud button in the model header.
+Later saves update the cloud model; the button cannot make it local-only again.
+The cloud button stays visible on editable models. When unavailable, its tooltip
+explains whether you need to sign in on the current site or are using imported
+browser game data. Localhost follows the same rules as the published site.
+
+:::caution[Imported browser packs stay local]
+Models using browser-imported `.kdata` profiles cannot be cloud-saved.
+After switching a cloud model to one, choose **Save a local copy** to keep your edits.
+The cloud original stays unchanged.
+:::
+
+Leaving with unsaved changes offers three choices:
+
+- **Save and close** saves first, then leaves.
+- **Keep editing** cancels leaving without saving.
+- **Leave anyway** drops unsaved changes without creating a recovery copy.
+
+If saving fails or changes remain unsaved, the model stays open.
+Desktop window closing uses the same choices.
+Browser tab closing or reloading uses the browser's own warning, with no save action.
+Cancel that warning and save in the Modeler before closing.
 
 ## Conflicts and recovery
 
-If the same model was changed somewhere else, the modeler does not silently
-overwrite anything. It shows your version, the version you started from, and the
-remote version, and you decide.
+A browser **Save conflict** compares the base, local, and cloud versions.
 
-After an interrupted session the modeler offers what it recovered on the next
-visit rather than dropping it.
+- **Keep local copy** saves your work as a separate private local model.
+- **Use cloud version** replaces your open work with the remote model.
+
+Browser cloud saves write a recovery draft before uploading.
+If upload fails, check **Messages** and retry when connected.
+A recovery draft is not a cloud save or a queued desktop-style upload.
+
+Desktop saves locally first and can queue cloud updates while offline.
+**Saved locally** does not mean **Synced to cloud**.
+Resolve pending sync, sign-in, error, or conflict states before relying on another device.
+Desktop sync snapshots the remote version as **Desktop auto-sync**, then uploads the local model.
+This can replace edits from another session, so avoid editing on several devices at once.
+A failed snapshot or upload leaves sync pending or in an error/conflict state.
+
+When **Recover local draft** appears, compare the draft with the open model.
+Choose **Restore draft**, inspect the result, then save.
+**Discard draft** removes the recovery draft and reloads the cloud version.
+Recovery cannot restore changes that were never saved.
 
 ## Snapshots
 
-A snapshot is a named point you can come back to. Restore one and it becomes a
-new revision of the model, so restoring never destroys what you had.
+Open **Snapshots** with the camera button in the model header.
+
+- Local backups are created on draft saves.
+- **Maximum backups** defaults to 100 per model; older entries are pruned.
+- Set it to zero to stop retaining backups.
+- Restore a backup under **Recover local draft**, then inspect and save the replaced graph.
+
+1. For a cloud snapshot, sign in as the model's owner and finish its cloud save.
+2. Enter a name and choose **Create snapshot**.
+3. To restore, choose the snapshot's restore action and confirm.
+
+Cloud snapshot actions need a connection; queued desktop saves are not enough.
+Restoration also needs the snapshot's game data.
+Restoring writes a new revision, but does not automatically snapshot the state it replaces.
+Create a snapshot or export first if you may want that state back.
+Deleting a named snapshot is permanent.
 
 ## Sharing
 
-Publishing a model creates a read only link. Anyone with it can look at the
-shared revision and clone it into their own account, and their clone is
-independent of yours.
+1. Sign in and open a model you own.
+2. Open **Share model** and enable **Publish a viewing link**.
+3. Wait for the cloud save and publication, then choose **Copy link**.
 
-A model built with mods says so while you share it, and again on its card in
-Browse. Whoever opens it without those mods would otherwise see a broken factory
-and no reason for it.
+Publishing a local model requests cloud saving too.
+Anyone can view a public model without an account; only its owner can edit it.
+The link is not a frozen snapshot: later cloud saves can change what readers see.
+Turn off publication to make it private again.
+Copies already made by other people remain independent.
 
-Everything published this way is also listed under Browse, which you can reach
-from the modeler start page without an account. A card there says what the model
-delivers, what it has to be fed, which buildings it is made of, and how large it
-is, so you can tell models apart before opening one. You can search by name,
-filter by tag, and order by newest or by name. Copying one into your own models
-needs an account, opening one does not.
-
-A model built against older game data is marked as such. It still opens, and
-your copy is migrated when you edit it.
+Public models also appear in **Browse**, with search and tag filters.
+Inside a shared model, use **Edit a copy** instead of changing the original.
+Signed-out users and users of browser-imported packs get a local copy.
+Check mod notices and game-data warnings before trusting the results.
+A viewing link does not install the required mods or pack.
 
 ## Import and export
 
-Models can be exported and imported as `.sfmd`, the desktop Satisfactory Modeler
-format. An import previews what it found before anything is created, including
-whatever it could not represent, so a file is never partially applied without
-saying so.
+1. Open **Import and export**, then choose **Export .ksfmd model**.
+2. Keep the browser download, or choose a destination in the desktop save dialog.
 
-Where a model cannot be expressed in the legacy format, the modeler exports its
-own versioned format instead of dropping detail quietly. That native export is
-the complete graph without any solved results, and it opens again without a
-preview because nothing about it has to be interpreted.
+`.ksfmd` contains the graph and model settings, including native Modeler details.
+Older external readers may not preserve those details; check export **Messages**.
+Exports exclude game data, images, recovery backups, undo history, and solver results.
+Keep the matching `.kdata` file separately.
 
-A savegame and a Production Planner result are the other two ways in. Both are
-described on the [importing page](/production-modeler/importing/).
+Imports accept `.ksfmd`, `.sfpmd`, and `.sfmd`, with a preview and a 5 MiB limit.
+Follow [Importing](/production-modeler/importing/) for files, savegames, and Planner results.
 
 ## Catalog versions
 
-Every model records the catalog it was built against. When the game data behind
-the modeler is updated, existing models stay on their own catalog until you
-migrate them, and the migration is previewed first.
+Models record their game-data version, not a copy of the pack.
+Open **Game data** in the header to switch or reload an installed pack on browser or desktop.
+The graph, unsaved edits, and undo/redo history stay intact.
+The model's data binding is stored on the next save, including autosave.
+Switching data does not automatically migrate recipes or rewire connections.
 
-The preview opens in its own view. It lists what changed between the two
-catalogs, and for anything that no longer exists it asks you to choose: a
-replacement, or keeping the node as an explicit orphan. The migration only
-applies once every missing reference has an answer, so nothing is silently
-rewired. A record that changed but still fits needs no decision.
-
-The versions in play are listed in the help dialog, which also copies them for a
-bug report.
+If bound data is missing, **Using selected game data** marks the fallback.
+Nodes and connections stay; missing references appear in **Messages**.
+Results may differ, and the saved model stays unchanged until you save.
+If neither saved nor selected data loads, editing and calculating are blocked.
+For pack setup, switching, and migration details, see [Game data](/production-modeler/game-data/).

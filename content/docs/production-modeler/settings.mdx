@@ -1,82 +1,140 @@
 ---
 title: Settings
-description: What the settings dialog changes, and what belongs to the model rather than to your browser.
+description: Tune the model, set device preferences and save changes safely.
 sidebar:
   order: 4
 ---
 
-The settings dialog holds two kinds of setting. Some belong to the model and
-travel with it, so anyone who opens the model calculates the same numbers.
-Others belong to this browser, so the way you like to read a number does not
-change what someone else sees.
+Open **Modeler settings** and use the side navigation, or the scrolling top row on small screens.
+Switching sections keeps your draft; Save and Cancel stay in the footer.
 
-Choose a section from the navigation beside the settings, or above them on a
-small screen. Switching sections keeps your draft changes. Save applies them
-together; Cancel discards them and restores any language or theme preview.
-Desktop file and game-data operations take effect immediately instead.
+- **This model:** Calculation, connection paths and snap grids travel with the saved model.
+- **This device:** machine defaults, recovery settings, number formats and appearance stay local.
+- The drag threshold is a device preference inside Connections and grids.
+- Applying defaults to existing nodes changes the model, not just your device preferences.
 
-Saving the dialog writes the model out the same way a normal save does. A model
-you are only allowed to read says so at the top and keeps its settings
-unchanged.
+- **Save:** applies staged changes and saves other unsaved canvas work too.
+- Saving follows the model's existing local or cloud-saving choice.
+- Device preferences are kept after the model save succeeds.
+- **Not saved:** the dialog stays open with its draft ready to retry.
+- Editing and closing are disabled while Save runs.
+- **Cancel**, closing or Escape discards the draft, including staged grids and machine defaults.
+- Language and theme previews revert, but earlier canvas edits remain untouched.
+- Desktop file and game-data operations are immediate exceptions, not drafts.
+
+Read-only models allow device preferences, not model settings or applying defaults to nodes.
+For a shared model, use **Edit a copy** from [Saving and sharing](/production-modeler/saving/).
 
 ## Calculation
 
-The solver mode decides how much the solver is allowed to conclude. A new model
-starts in Full. The modes are described on the
-[start page](/production-modeler/).
+Choose a [Calculation mode](/production-modeler/#what-the-solver-does):
 
-Three multipliers sit next to it, and all three belong to the model. The recipe
-input multiplier scales what every recipe consumes, which is how you model a
-session that changed it. Recipes the game data marks as exempt are left alone.
-The power multiplier scales what buildings draw. The Space Elevator multiplier
-scales what the recipes flagged for it deliver.
+- **None:** leave calculated values blank.
+- **Manual:** solve entered equalities.
+- **Basic:** also apply limits and maximize flows.
+- **Full:** also honor connection priority; the default for new models.
 
-All three start at one, so an untouched model calculates the plain game rates.
+
+
+**Random recipe output** offers fixed outputs or statistical expected values.
+Expected values are long-run averages, not guaranteed output every cycle.
+Fixed outputs do not override recipes or nodes that explicitly require expected values.
+
+Set **Game multipliers** to match your session:
+
+- **Recipe input multiplier:** scales consumption, except recipes marked exempt.
+- **Power multiplier:** scales building power use.
+- **Space Elevator multiplier:** scales output of recipes flagged for it.
+- All three require positive values and default to 1.
+
+**Show invalid diagnostics** marks invalid values on the canvas.
+**Show exact connection mismatches** marks solved port values that differ from their connections.
+
+Hiding markers does not fix issues or remove them from [Messages](/production-modeler/panels/#messages).
 
 ## Connections and grids
 
-The path style draws connections as curves, as direct lines, or as orthogonal
-2D routing. The drag threshold decides how far the pointer has to travel before
-a press counts as a drag rather than a click.
+- **Path style:** Curves, Direct or orthogonal 2D routing changes drawing, not wiring.
+- **Drag threshold in pixels:** raise it to ignore small movements, lower it to start dragging sooner.
+- The [building grid](/production-modeler/canvas/#grids) snaps nodes; the connection grid snaps waypoints.
+- Each grid has separate horizontal and vertical spacing.
+- Enabling a grid affects future movement after Save.
 
-Two working grids exist and they are separate. The building grid snaps nodes,
-the connection grid snaps waypoints, and each has its own horizontal and
-vertical spacing. Turning one on only affects what you move from then on. To
-line up what is already there, apply it: each grid has its own apply action and
-a scope of everything, the current container or the selection. The result says
-how many nodes it moved and how many it skipped.
+To align existing work:
+
+1. Set the grid spacing.
+2. Choose **Everything**, **Current container** or **Selected**.
+3. Press **Apply node grid** or **Apply connection grid**.
+4. Read the updated count, then Save to keep the staged changes.
+
+- Selected means selected nodes for the node grid, selected connections for the connection grid.
+- Apply works even with interactive snapping off.
+
+
+
 
 ## Machine defaults
 
-Where the game data groups several buildings that do the same job, you can pick
-which one a new node gets and which capacity it starts with. Applying the
-defaults reaches back into the model with the same scope choice, so an existing
-model can be moved onto a different building without editing every node.
 
-A catalog that has no such groups says so instead of offering an empty control.
+1. Pick a machine group from the loaded catalog.
+2. Set machine, transport capacity, limit, automatic rounding and per-minute display.
+3. Save the preferences.
+
+Existing nodes stay unchanged unless you use **Apply defaults**.
+Choose Everything, Current container or Selected, then apply and Save.
+Incompatible machines, clocks or transport capacities are skipped.
+Check the updated and skipped counts, or **Nothing to update**.
+
+
+Catalogs without supported groups show a notice instead of empty controls.
+For one existing node, use the [Inspector](/production-modeler/panels/#inspector).
 
 ## Number formats
 
-Every number on screen is exact underneath, and the format only decides how it
-is shown. You set that per place: the machine count, the connection rate, the
-summary, and each of their tooltips, among others. Each one picks fractions or
-decimals, a number of digits, and whether it rounds to nearest, up or down.
+1. Choose **Where the format applies**, such as Machine count, Connection rate or Summary.
+2. Select **Fraction** or **Decimal**.
+3. Set Digits and choose Nearest, Up or Down for rounding.
+4. Set tooltip formats separately, then Save.
 
-Because a tooltip carries its own format, the usual arrangement is a short
-decimal on the canvas and the exact fraction in the tooltip.
+
+Defaults use Decimal with Digits set to 2, and Fraction for tooltips.
+Formats change display, not calculation.
+Rounding the displayed machine count up is not the node's automatic-rounding setting.
 
 ## Saves and recovery
 
-Autosave writes a local recovery draft on an interval you set in minutes, and
-the maximum number of backups bounds how many of those are kept. These belong
-to this browser, not to the model.
+- **Save automatically:** enables autosave on this device.
+- **Autosave cooldown in minutes:** defaults to 5, with a minimum of 1. The countdown
+  starts with the first unsaved edit and does not restart as you keep working.
+- **Maximum backups:** defaults to 100 retained recovery backups.
+- Autosave is enabled by default but pauses while editing or saving is blocked.
+- Manual saves bypass the cooldown. Remaining unsaved changes wait for a fresh
+  cooldown after a save attempt finishes.
+- Autosave follows the model's cloud-saving choice; signing in does not enable cloud saving.
+- A toast confirms a completed save and distinguishes local storage from cloud storage.
+  Clean models do not trigger automatic saves or duplicate notifications.
 
-What autosave does and does not do is on the
-[saving page](/production-modeler/saving/).
+
+:::caution[Keep unsaved work open during a data lock]
+Missing game data can lock the model, but leaving still warns about unsaved work.
+A failed **Save and close** keeps the model open.
+Choose **Keep editing**, restore usable data, then save the model.
+Saving device preferences does not save a locked model.
+:::
+
+:::caution[Desktop operations are immediate]
+**Desktop data** manages model folders, files and game-data profiles.
+Cancel does not undo these operations.
+Reloading model files requires saved or discarded model changes and confirmation.
+Reloads discard unsaved settings drafts, so save the dialog first if you need them.
+:::
+
+For pack changes without replacing your open graph, use the header's **Game data** control.
+The [game-data guide](/production-modeler/game-data/) covers pack switching and desktop maintenance.
 
 ## Appearance
 
-Theme and language are here, and both apply to this browser. Two model settings
-sit with them because they change what the canvas marks rather than what it
-calculates: whether invalid solved values are flagged, and whether a solved port
-value that does not match its connections is flagged.
+- **Language:** English or Deutsch.
+- **Theme:** Light or Dark.
+- Both preview immediately and stay on this device after Save.
+- Cancel or closing restores the previous appearance.

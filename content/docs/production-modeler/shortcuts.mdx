@@ -1,58 +1,82 @@
 ---
 title: Keyboard shortcuts
-description: Every key and mouse gesture the modeler listens to.
+description: Keys, mouse gestures and touch controls.
 sidebar:
   order: 8
 ---
 
-The same list is in the modeler itself. Press the question mark key or F1 to
-open it. The dialog groups shortcuts by editing, canvas navigation, and model
-actions, with mouse and touch gestures shown separately. Keys joined by a plus
-sign are pressed together; "or" separates alternative combinations. It shows
-Ctrl on Windows and Linux, Cmd on macOS, and translated key names in German.
-
-:::note
-On macOS use **Cmd** wherever this page says **Ctrl**.
-:::
+Open the in-app reference with **?**, **F1**, or the toolbar's keyboard button.
+Press keys joined by **+** together. On macOS, use **Cmd** instead of **Ctrl**.
 
 ## Keys
 
 | Shortcut | Action |
 | --- | --- |
-| **Ctrl + Z** | Undo the last model transaction |
-| **Ctrl + Y** / **Ctrl + Shift + Z** | Redo the last undone transaction |
-| **Ctrl + A** | Select every node in the current container |
-| **Ctrl + C** or **Ctrl + Insert** | Copy the selection |
-| **Ctrl + X** or **Shift + Delete** | Cut the selection |
+| **Ctrl + Z** | Undo |
+| **Ctrl + Y** or **Ctrl + Shift + Z** | Redo |
+| **Ctrl + A** | Select all nodes in the current container |
+| **Ctrl + C** or **Ctrl + Insert** | Copy selection |
+| **Ctrl + X** or **Shift + Delete** | Cut selection |
 | **Ctrl + V** or **Shift + Insert** | Paste copied nodes |
-| **Delete** / **Backspace** | Delete the selection |
-| **Ctrl + S** | Save the local or cloud revision |
-| **A** / **Insert** | Add a node at the centre of the canvas |
-| **Enter** | Focus the selected node in the inspector |
-| **Escape** | Close a popup, or leave the current container |
-| **?** / **F1** | Open the shortcut list |
+| **Delete** or **Backspace** | Delete selected nodes or connections |
+| **A** or **Insert** | Open the palette near the view centre |
+| **Enter** | Focus the selected node's inspector editor |
+| **Ctrl + F** or **F** | Find a node, not browser text |
+| **Ctrl + 0** | Fit selected nodes, or the current container if none are selected |
+| **L** | Arrange selected nodes |
+| **Arrow keys** | Move selected nodes one step |
+| **Shift + Arrow keys** | Move selected nodes five steps |
+| **Ctrl + S** | Save the local or cloud model |
+| **Ctrl + Enter** | Calculate |
+| **Escape** | Close palette or cancel keyboard connection; otherwise leave the container or clear selection at the top level |
+| **?** or **F1** | Open shortcut reference |
 
-A shortcut is ignored while you are typing in a field or while a dialog is open,
-so **A** in a search box adds a letter and not a node.
+- **Node step:** building-grid spacing when enabled; otherwise 8 canvas units.
+- **Focus:** canvas shortcuts pause in fields, dropdowns, editable areas, buttons
+  and modal dialogs. Read-only models block editing actions.
+- **Adding:** no **+ Add** toolbar button. Use the palette shortcut or canvas
+  gestures, then choose an entry.
+- **Language:** change it in **Settings**. **Ctrl + L** remains the browser's
+  address-bar shortcut, not a language control.
 
-Ctrl + L cannot be taken from the browser reliably, so there is no language
-shortcut. Change the language in the settings dialog.
+Focused controls have their own keys:
+
+| Control | Keys and action |
+| --- | --- |
+| Palette search | **Up / Down:** result rows. **Left / Right:** entries in grid view. **Enter:** choose result. **Escape:** close. |
+| Port or connection handle | **Enter:** connect to the sole compatible target, or open the target picker. Use **Add node** there for a compatible palette. |
+| Connection label | **Arrows:** move 10 units. **Shift + Arrows:** move 1 unit. **Home:** reset. Save, undo and redo remain available unless a modal is open. |
+| Waypoint | **Delete / Backspace:** remove that waypoint only. |
+
+**Shift** moves nodes farther but labels more precisely. **Escape** cancels an
+active label or waypoint drag. Position changes can be undone.
 
 ## Mouse
 
-Pan with the left button and zoom with the wheel around the cursor. Drag with
-the right button to pull a selection box, and hold Shift or Ctrl while you do to
-add to the selection instead of replacing it.
-
-Double click empty canvas to open the palette, or right click for the same menu.
-Right click a node instead and you get that node's own menu. The middle button
-pastes what you copied.
-
-Double click a container to enter it. Double click a connection to add a
-waypoint. Double right click a waypoint to remove it, and double right click a
-connection to delete the connection.
+- **Left-drag empty canvas:** pan. **Wheel:** zoom around the cursor.
+- **Drag a node:** move it. **Shift / Ctrl / Cmd + click:** add to selection.
+- **Right-drag:** box-select nodes. Hold **Shift**, **Ctrl** or **Cmd** to add to
+  selection. **Escape** cancels. A completed selection drag does not open a menu.
+- **Double-click or right-click empty canvas:** open palette at the pointer.
+  Double-click does not zoom.
+- **Right-click a node:** open its context menu.
+- **Middle-click:** paste at the pointer when a copied selection is available.
+- **Double-click a container:** enter it. **Double-click another node:** edit it
+  in the inspector. Node buttons and fields keep their own controls.
+- **Connect ports:** drag between compatible ports, or click them in sequence.
+  Drop a connection in empty space to add and connect a compatible node.
+- **Double-click a connection line:** add a waypoint. Drag the waypoint to reroute.
+- **Double-right-click a waypoint or nearby line:** remove the waypoint.
+  **Double-right-click away from waypoints:** delete the connection.
+- **Drag a rate label:** move it and bend the connection. **Double-click label:**
+  reset its position, not add a waypoint.
 
 ## Touch
 
-Drag with one finger and pinch to zoom. Tap ports to connect them, and use the
-toolbar for the selection actions the keyboard would otherwise cover.
+- **One-finger drag:** pan empty canvas or move a node. **Pinch:** zoom.
+- **Tap compatible ports:** connect them. Drag a port connection into empty
+  space to open the compatible-node palette.
+- **Toolbar multi-select:** select several nodes without modifier keys.
+- **Toolbar actions:** copy, cut, duplicate, paste, disconnect and delete.
+- **Drag labels or waypoints:** reposition them. Use inspector controls to add
+  or remove waypoints and disconnect connections without right-click gestures.
