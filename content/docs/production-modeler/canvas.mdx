@@ -111,11 +111,15 @@ Review the scope before applying a grid to existing work.
 
 ## Node status and quick controls
 
-The **Fixed building count** field in a recipe header sets exactly that many
+The **Fixed building count** field in a node header sets exactly that many
 buildings running at the configured clock. It is not an item rate or a count of
-installed buildings allowed to idle. Clear it to return to **Auto**.
+installed buildings allowed to idle. Clear it to return to **Auto**. Recipe
+nodes take it, and so do extractors and Modular Miners, where it says how many
+of them stand on the node.
 
-Automatic downstream nodes size themselves from that production, but connected
+A fixed count is a plan, so what it produces is meant to be used: the chain
+behind it grows to consume it, including source counts drawn as a single
+building, rather than leaving that production unused. Connected
 upstream limits still apply. If a fixed count needs more than its supply can
 provide, the whole connected group shows **N/A** until the conflict is resolved.
 The error reports the requested buildings and the reachable building-equivalents,
