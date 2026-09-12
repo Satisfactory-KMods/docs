@@ -46,6 +46,28 @@ Each entry needs at least one selector and a non-empty `properties:` list. The c
 accumulates matches when selectors are combined, but one selector per entry is easier to audit. One
 document can hold any number of patch entries.
 
+## Hard asset references in native defaults
+
+Use full asset object paths for hard-reference properties such as
+`TArray<TObjectPtr<UStaticMesh>>`. A YAML sequence replaces the array; string
+allowlists remain ordinary strings. For example, with Periodic Madness installed:
+
+```yaml
+type: cdo
+patches:
+  - target: /Script/PeriodicMadness.PMCleanerSettings
+    properties:
+      - path: mStaticMeshesCleanlist
+        value:
+          - /Game/FactoryGame/Resource/RawResources/Nodes/ResourceNode_OreIron_01.ResourceNode_OreIron_01
+```
+
+KDataForge keeps hard references added to permanent native defaults alive across
+garbage collection and session changes. These assets remain resident until the game
+exits, even if a later edit removes them from the array. No YAML opt-in or class
+declaration change is needed. After upgrading from a build where inspecting these
+arrays crashed, fully restart the game before loading the pack again.
+
 ## Inline instances in property arrays
 
 An ordinary `properties:` entry can replace an array of instanced `UObject` references. Write each
