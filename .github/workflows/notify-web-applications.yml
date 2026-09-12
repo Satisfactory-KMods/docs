@@ -12,6 +12,6 @@ jobs:
       - name: 📣 Trigger docs-deploy
         uses: peter-evans/repository-dispatch@v3
         with:
-          token: ${{ secrets.WEB_APPLICATIONS_DISPATCH_TOKEN }}
+          token: ${{ secrets.BOT_TOKEN }}
           repository: Satisfactory-KMods/web-applications
           event-type: docs-content-updated
