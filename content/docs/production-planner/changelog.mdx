@@ -5,6 +5,12 @@ sidebar:
   order: 8
 ---
 
+:::caution[The Production Planner is no longer developed]
+No new features or fixes are planned for the planner. Work continues in the
+Production Modeler, which covers the same factory planning and more. Get it at
+[k-mods.com/production-modeler/download](https://k-mods.com/production-modeler/download).
+:::
+
 Every release, in short. Newest first.
 
 ## 2.3-beta (August 2026)
@@ -16,6 +22,28 @@ Every release, in short. Newest first.
 - **Collapsed sub-assemblies can be moved**: dragging one used to snap it
   straight back to where it started. It now stays where you drop it, and the
   nodes inside it move with it.
+- **Extractors panel**: raw resources are configured in their own sidebar panel
+  instead of the old Configure Miner dialog. Every catalog resource can be set
+  to automatic, an external supply, the standard extractor recipe, or a fully
+  configured Modular Miner, and the panel shows the extraction formula plus the
+  resulting buildings, clock, power, inputs and outputs before you apply it.
+- **Modular Miner boosters**: three booster slots, each empty, half (`+50%`) or
+  full (`+100%`), replace the old Power Module pickers. Mining head, purity, the
+  processing module and the fluid module are still yours to choose; the clock is
+  now the solver's, between `0` and `100%`.
+- **Extractor module catalog**: the Crusher, Smelter and fluid modules are
+  picked from a searchable catalog showing each module's inputs, outputs, bonus
+  and malus.
+- Manual crafting is no longer planned: a recipe whose only producer is the
+  build gun, a workbench, a workshop or the automated workbench is left out of
+  the catalogs and the solve. A recipe a machine can also make keeps that
+  machine.
+- Fixed: the savegame import matched nothing on a fully researched save. Recipe
+  and building paths are now normalized on both sides, and the same tested
+  helper is used by the create wizard and the in-workspace panel.
+- Fixed: importing a savegame no longer requires an account. The analysis stores
+  nothing and reads no account data.
+- Fixed: plans and wiki links saved before the exporter's id reset keep working.
 
 ## 2.2-beta (August 2026)
 

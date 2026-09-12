@@ -1,0 +1,134 @@
+---
+title: Game data
+description: Import packs, hot-swap an open model, and recover missing game data.
+sidebar:
+  order: 1.5
+---
+
+Game data defines the recipes, machines, icons, and rules used by the Modeler.
+A `.kdata` file is a data pack. A `.ksfmd` file is a model. They are not
+interchangeable.
+
+The included **Satisfactory+** pack is ready to use. Import another pack for
+vanilla Satisfactory or a different mod combination.
+
+## Import a pack
+
+1. Install [KModelerExporter](https://ficsit.app/mod/KModelerExporter) with the
+   mods you want to model.
+2. Load a save in Satisfactory and run `/modeler-generate` in chat.
+3. Find `FactoryGame/KMods/ModelerExport/ProductionModeler.kdata`.
+4. Open the Modeler's game-data collection and import the file.
+5. Review validation, give the pack a recognizable name, and create a new
+   profile. Replace an existing profile only when that is intentional.
+
+Keep the original `.kdata` file. It lets you restore the pack or move it to
+another device.
+
+:::caution[Importing is not hot-swapping]
+Importing or replacing a pack reloads the app. Save your open model first.
+The header switcher preserves unsaved work when switching between packs that
+are already installed.
+:::
+
+## Select data for a new model
+
+- **Activate:** select the pack and stay on the collection page.
+- **Ready to plan:** select the pack and open model creation.
+- **Active:** the selection used when starting a new model.
+
+Use the **pencil** on an imported pack to edit its name. In the browser, you can
+change its icon in the same dialog. **Save** applies both; **Cancel** discards
+the edits. Names need 1 to 64 characters.
+
+Renaming keeps the pack's data, active selection, and model bindings. No reload
+needed. The included Satisfactory+ pack cannot be renamed.
+
+An existing model can have its own saved pack binding. Opening that model is
+not the same as starting a new one with the collection's active pack.
+
+## Switch an open model
+
+1. Open **Game data** in the model header.
+2. Choose an installed pack. Use **Refresh list** if a newly installed pack is
+   missing from the list.
+3. Wait for validation and switching to finish.
+4. Check the new results and **Messages**.
+5. The next save, **including autosave**, stores the new pack binding.
+
+For temporary tests, work in a copy or turn off autosave first. Otherwise, an
+experimental selection can become the saved selection when the autosave
+interval elapses.
+
+Switching keeps:
+
+- Nodes, ports, and connections, including missing recipe references.
+- Unsaved graph edits and undo/redo history.
+- Canvas position and zoom.
+
+Calculations, catalog choices, and icons use the new pack. Results can change
+even when both packs report the same data version.
+
+:::note[Whole packs only]
+Switching replaces the active data set. It does not merge individual mods or
+install mods into Satisfactory. Export a new pack for a changed mod combination.
+:::
+
+## Reload edited data
+
+Choose **Reload selected data** to reread the current pack without reloading
+the editor. Use it after editing the desktop pack's files or updating the
+installed browser profile.
+
+Reload validates the data and refreshes calculations and icons. It keeps the
+same graph and marks the model as changed, even if the data version is unchanged.
+**Refresh list** only refreshes the pack picker; it does not reload catalog data.
+
+Switching waits for saves, restores, imports, and other model-changing
+operations to finish. Editing, autosave, and solving pause during the switch.
+Autosave resumes afterwards if it is enabled and the catalog is usable.
+
+## Missing or invalid data
+
+If a model's saved pack or pinned version cannot be loaded, the Modeler tries
+the currently selected pack. **Using selected game data** explains the fallback.
+
+- Compatible parts of the graph remain editable and calculable.
+- Missing recipes or items stay in place and appear in Messages.
+- Opening the fallback alone does not overwrite the saved model or its binding.
+- Normal save validation still applies. Repair missing references or switch back
+  to a compatible pack before saving.
+
+If the selected pack also fails, editing is locked. Choose another installed
+pack or import a valid export.
+
+A failed hot-swap keeps or restores the previous selection when recovery can be
+verified. Otherwise, editing and calculation stay paused. Unsaved-work warnings
+remain active. Do not close the app expecting a failed switch to have saved it.
+
+## Local packs and cloud models
+
+**Browser:** imported packs and their models stay in that browser. Clearing site
+data can remove them. Export both your model and the pack for transfer or backup.
+Imported browser packs are not uploaded to the cloud.
+
+If an owned cloud model uses an imported browser pack, choose **Save a local
+copy** to keep the changes. The original cloud model is not overwritten by that
+local copy.
+
+**Desktop:** packs are stored on the device. Keep your exports when moving
+between installations. **Settings > Desktop data > Reload data** is a different,
+page-reloading storage action; use the header's **Reload selected data** for
+in-modeler catalog testing.
+
+Cloud save and recovery behavior are covered in
+[Saving and sharing](/production-modeler/saving/).
+
+## Remove a pack
+
+Activate another pack first, then remove the imported profile from the
+collection and confirm the action. The included Satisfactory+ pack cannot be
+removed.
+
+Removing a pack does not delete its models. Those models may need the pack
+reimported, or they will use the missing-data fallback described above.

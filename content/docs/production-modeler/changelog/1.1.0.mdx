@@ -1,0 +1,48 @@
+---
+title: Version 1.1.0
+description: Game-data switching, construction tracking, and canvas improvements in Production Modeler 1.1.0.
+slug: production-modeler/changelog/1.1.0
+sidebar:
+  label: '1.1.0'
+  order: 1
+---
+
+## Added
+
+- Saved **Built** markers and node locks to track construction and protect nodes from changes.
+- Always-visible node footer with power and building/clock pills, a clock input, and click-to-cycle Somersloops.
+- **Canvas controls:** live zoom level, zoom buttons, and fit-to-view in the bottom-left corner.
+- **Detailed minimap:** see connections, selection, and the visible area. Click to navigate.
+- **Game data switcher:** swap installed packs without leaving the model.
+- **Reload selected data:** test edited packs without reloading the editor.
+- **Refresh list:** pick up newly installed packs from the switcher.
+- **Pack editing:** rename imported packs. Change browser pack icons in the same dialog.
+- **Selected-data fallback:** open models with available data when their saved pack is missing.
+
+## Changed
+
+- Redesigned **Settings** and **Leave with unsaved changes** dialogs.
+- Wider node cards. More room for labels and controls.
+- Removed **+ Add** from the toolbar. Double-click, right-click, and keyboard palette access remain.
+- Removed outdated **Alpha** labels from the landing page and docs.
+- Reworked the guides and added dedicated game-data instructions.
+
+## Fixed
+
+- Align connection arrowheads with their receiving ports. No floating gap when zoomed in.
+- Report unreachable fixed building counts in buildings, not items per minute.
+- Preserve unsaved graph edits, viewport, and undo/redo history when switching packs.
+- Refresh calculations and icons when packs share the same data version.
+- Keep missing recipes and connections visible instead of dropping them.
+- Keep the sidebar aligned when game-data notices appear.
+- Keep Power Shard and Somersloop icons compact in the inspector.
+- Prevent pending calculations or model restores from overwriting a data switch.
+- Keep unsaved-work warnings active if data recovery fails.
+- Keep catalog loading and calculation working across model handoffs.
+- Reorder ports by dragging their handles in the desktop app. A calculation
+  landing mid-drag no longer cancels the move.
+
+:::note[Switching is not importing]
+Hot-swapping works with installed packs. Importing a new `.kdata` pack still
+reloads the app. Save first. See [Game data](/production-modeler/game-data/).
+:::

@@ -5,6 +5,12 @@ sidebar:
   order: 3
 ---
 
+:::caution[The Production Planner is no longer developed]
+No new features or fixes are planned for the planner. Work continues in the
+Production Modeler, which covers the same factory planning and more. Get it at
+[k-mods.com/production-modeler/download](https://k-mods.com/production-modeler/download).
+:::
+
 Once a plan exists, refine it until it matches the factory you want to build.
 
 ## Desired outputs
@@ -19,6 +25,15 @@ validation → Recipe routes** to inspect up to ten complete routes for each
 produced item. The planner selects the best route for your current strategy,
 but you can choose another route or return to **Automatic (best route)**. Each
 option compares route depth, raw-input score, and byproducts.
+
+Two recipes can share one item. Select both and set their output weights from
+1% to 99%; changing one adjusts the other so the shares always total 100%. The
+planner holds that mix in its material balance, which is what lets one route
+consume a co-product the other one makes. If a mix has no feasible balance the
+planner says so and keeps the previous selection.
+
+**Compare Alternatives** puts the complete routes side by side with their
+machine count, power and depth, so a route can be judged before it is applied.
 
 ## Catalogs & availability
 
@@ -45,8 +60,15 @@ The Review step still warns when its required building or raw input has been
 disabled, so the effect is visible before calculation.
 
 In **Settings → Availability & unlocks**, import a Satisfactory save to limit
-recipes and buildings to what that save has unlocked. The import summary shows
+recipes and buildings to what that save has unlocked. No account is needed, and
+the save is parsed and discarded rather than stored. The import summary shows
 what was detected; you can clear it without changing the save file.
+
+Recipes you can only craft by hand never appear at all. Anything whose only
+producer is the build gun, a workbench, a workshop or the automated workbench is
+left out of the catalogs and out of the solve, because the planner plans
+automated production. A recipe that a machine can also make keeps that machine
+and simply loses the by-hand option.
 
 If no permitted dependency route remains, the planner reports the unresolved
 item instead of silently using an excluded resource or invalid fallback.
@@ -62,66 +84,54 @@ allowed raw resource or one of your Available Inputs. Calculating and balancing
 those routes runs in a bounded backend worker pool, so a large plan does not
 block unrelated API requests.
 
-## Miners
+## Extractors
 
-Open **Configure Miner** from the Outputs panel and set the resource, node
-**purity**, **miner tier**, and **overclock**. Not sure what overclock to
-use? Enter a **target rate** instead and it calculates the overclock
-percentage needed to hit it. Your configured miners show up under
-**Configured Miners** in the same panel, and the calculator applies each one
-directly wherever the plan needs that resource no manual available input
-needed, and no fixed rate: the miner scales with the rest of the plan just
-like a recipe node does, with its own output, byproduct, and any required
-fluid input wired in as real connections.
+Open the **Extractors** panel to decide how every raw resource reaches the
+plan. Search the resource, and the panel says whether it is already configured
+and whether the plan currently needs it at all.
+
+Each resource is supplied one of four ways:
+
+- **Automatic** lets the planner pick the extraction route from the catalog.
+- **External supply** treats the resource as delivered from outside, so no
+  extractor is built for it.
+- **Standard extractor** uses an ordinary extractor recipe for that resource,
+  such as a pump or a collector, and lets you pick which one.
+- **Modular Miner** configures the miner in full.
+
+A Modular Miner takes a **mining head** (Mk.1, Mk.2 or Mk.3, worth one, two and
+four times the ore amount), the **node purity** you are building on, a
+**processing module** and a **fluid module**, and three **booster slots** that
+are each empty, half (`+50%`) or full (`+100%`).
+
+Both modules are picked from a searchable catalog that shows what each one
+consumes and produces, its bonus and its malus, so you can see what a Crusher
+or a Smelter does to the output before choosing it. Some resources force a
+choice: one may only be extracted with a fluid module attached, another needs at
+least one booster, and another has a mining head it cannot go below.
+
+The panel shows the arithmetic under **Extraction formula**. The rate one miner
+reaches at full clock is its base output times the head multiplier times an
+efficiency, and that efficiency is the purity plus the fluid and booster
+bonuses, with the processing module's malus applied to those bonuses. It never
+falls below `0.5`.
+
+You do not set an overclock here. The solver decides how many miners to build
+and gives them a clock between `0` and `100%`, and the panel projects the
+resulting buildings, clock, power draw, required inputs and produced outputs
+before you apply it.
 
 A resource deposit is treated as the miner's extraction source, not as a
-material that the miner consumes and reproduces. This matters for Fluid
-Modules whose output is still the same resource: their required Water or other
-fluid remains part of the material balance instead of being optimized away.
-Waste Module replacement outputs and byproducts likewise remain real outputs
-and can feed another recipe or appear as surplus.
-
-For the Modular Miner, some resources also let you attach modules. The
-**Waste Module** (Crusher or Smelter, pick one) replaces the raw ore with a
-crushed intermediate or a primary ingot at the same total rate, plus a small
-byproduct. The **Fluid Module** boosts the extraction rate using a supplied
-fluid (Water, Muriatic Acid, etc.) some resources (Sulfur, for example) can
-only be extracted with it attached at all. The two modules sit on
-independent attachment slots in-game, so you can combine a Waste Module with
-a Fluid Module on the same miner for both effects at once.
-
-**Power Modules** come in a `+50%` and a `+25%` version, and you can attach up
-to three of each at the same time. Like the Fluid Module's boost, their
-percentages add together rather than multiplying, so three of each gives
-`+225%` extraction. A Crusher or Smelter dampens that combined boost the same
-way it dampens the Fluid Module's (a Crusher halves it, a Smelter cancels it).
-
-Overclock runs from `1%` to `100%`. Miners use the game's own extractor power
-curve, so their power draw follows the clock you set.
-
-Once a miner is dialed in, **Copy settings to another resource** applies the
-same head tier, purity, overclock, and Power modules to a second resource in
-one click handy when a whole set of nodes shares the same setup. Waste and
-Fluid modules belong to a specific resource, so they are re-picked for the
-target: the same kind of module if it has one, otherwise none (or its required
-Fluid module, if it can only be extracted with one).
-
-## Slug Hatchery
-
-Open **Hatchery Info** from the Outputs panel and pick a slug color to see
-the heat and humidity range it needs to hatch or breed, whether a Tank
-module supplying a fluid is required, the Incubator tier, and which modules
-to build. The mod treats hatching as something you test for in-game, so
-these are target ranges to dial modules toward, not exact settings.
-
-Any recipe elsewhere in your plan that consumes a slug directly also shows
-that slug's conditions right on its own node, so you don't need to look it
-up separately.
+material that the miner consumes and reproduces. This matters for fluid modules
+whose output is still the same resource: their required Water or other fluid
+remains part of the material balance instead of being optimized away.
+Processing module outputs and byproducts likewise remain real outputs and can
+feed another recipe or appear as surplus.
 
 :::note
-Purity comes from the actual node in the game world (impure/normal/pure) it's
-not something you choose freely, so set it to match the node you actually plan
-to build on.
+Purity comes from the actual node in the game world (impure, normal or pure).
+It is not something you choose freely, so set it to match the node you actually
+plan to build on.
 :::
 
 ## Notes
