@@ -1,0 +1,25 @@
+---
+title: Version 1.2.1
+description: Reliable Windows game-data imports, unlimited desktop packs, and complete icon exports.
+slug: production-modeler/changelog/1.2.1
+sidebar:
+  label: '1.2.1'
+  order: 1
+---
+
+## Changed
+
+- Import and export desktop `.kdata` files without size, file-count, or image
+  budgets, including large catalogs and translation bundles.
+- Increase the browser `.kdata` upload limit from 64 MiB to 128 MiB.
+- Show separate import hints for desktop and browser, and explain when checked
+  game data could not be saved.
+
+## Fixed
+
+- Import and activate valid game data on Windows after a successful preview.
+  Close temporary files before replacing the saved profile registry, recovery
+  state, or an existing `.kdata` export.
+- Remove the companion KModelerExporter mod's archive and icon budgets, which
+  could omit pictures from large modpacks. Export again with the updated mod
+  to include pictures missing from an earlier export.
