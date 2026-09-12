@@ -9,8 +9,14 @@ Game data defines the recipes, machines, icons, and rules used by the Modeler.
 A `.kdata` file is a data pack. A `.ksfmd` file is a model. They are not
 interchangeable.
 
-The included **Satisfactory+** pack is ready to use. Import another pack for
-vanilla Satisfactory or a different mod combination.
+The desktop app includes **Satisfactory+** and **Vanilla** as separate packs,
+ready to use without an import. Satisfactory+ remains the initial selection.
+Updating the app adds Vanilla while keeping your existing packs and selection.
+
+The web app includes Satisfactory+. Its Vanilla card says **Included in the
+desktop version** and offers the desktop download. It does not install or
+activate Vanilla in the browser. You can still import your own `.kdata` export
+in either app for a different game version or mod combination.
 
 ## Import a pack
 
@@ -42,7 +48,7 @@ change its icon in the same dialog. **Save** applies both; **Cancel** discards
 the edits. Names need 1 to 64 characters.
 
 Renaming keeps the pack's data, active selection, and model bindings. No reload
-needed. The included Satisfactory+ pack cannot be renamed.
+needed. The bundled Satisfactory+ and Vanilla profiles cannot be renamed.
 
 An existing model can have its own saved pack binding. Opening that model is
 not the same as starting a new one with the collection's active pack.
@@ -116,7 +122,12 @@ If an owned cloud model uses an imported browser pack, choose **Save a local
 copy** to keep the changes. The original cloud model is not overwritten by that
 local copy.
 
-**Desktop:** packs are stored on the device. Keep your exports when moving
+**Desktop:** Vanilla and imported packs use local game data and calculation.
+Unchanged Satisfactory+ can use current web data when online. To undo local
+edits to a bundled profile, activate it and choose **Settings > Desktop data >
+Restore bundled data**. App updates preserve edited profiles.
+
+Packs are stored on the device. Keep your exports when moving
 between installations. **Settings > Desktop data > Reload data** is a different,
 page-reloading storage action; use the header's **Reload selected data** for
 in-modeler catalog testing.
@@ -127,7 +138,7 @@ Cloud save and recovery behavior are covered in
 ## Remove a pack
 
 Activate another pack first, then remove the imported profile from the
-collection and confirm the action. The included Satisfactory+ pack cannot be
+collection and confirm the action. The bundled Satisfactory+ and Vanilla profiles cannot be
 removed.
 
 Removing a pack does not delete its models. Those models may need the pack

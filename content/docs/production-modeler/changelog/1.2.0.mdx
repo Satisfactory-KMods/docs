@@ -1,0 +1,30 @@
+---
+title: Version 1.2.0
+description: Bundled Vanilla on desktop, version details, update controls, and cloud saving for older or local game data.
+slug: production-modeler/changelog/1.2.0
+sidebar:
+  label: '1.2.0'
+  order: 1
+---
+
+## Added
+
+- Include Vanilla game data in the desktop app as a separate ready-to-use
+  profile. Show Vanilla in the web collection with an explicit desktop-only
+  availability notice. Keep existing profiles and the active selection.
+- Show the installed desktop version, commit, and build date on the home page.
+- Open a dedicated update dialog when a new version is available, with a link
+  to the changelog and a visible update reminder on the home page.
+- Close an update reminder until the next app start, skip that specific version,
+  or install it. A skipped update remains available from the home page.
+
+## Changed
+
+- Show update download and installation progress in the update dialog. Resolve
+  unsaved model changes before starting an installation from the workspace.
+
+## Fixed
+
+- Save and sync valid models even when their older or local game-data version
+  is unavailable in the cloud. Preserve the original game-data binding and
+  snapshot the previous cloud revision before replacing it.

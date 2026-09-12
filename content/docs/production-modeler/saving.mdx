@@ -72,6 +72,10 @@ Resolve pending sync, sign-in, error, or conflict states before relying on anoth
 Desktop sync snapshots the remote version as **Desktop auto-sync**, then uploads the local model.
 This can replace edits from another session, so avoid editing on several devices at once.
 A failed snapshot or upload leaves sync pending or in an error/conflict state.
+Cloud storage accepts valid models whose older or local game-data version is
+unavailable on the server. Saving preserves that binding. Keep the matching
+`.kdata` pack for another device; cloud saving does not upload the pack or make
+its recipes available to server calculations.
 
 When **Recover local draft** appears, compare the draft with the open model.
 Choose **Restore draft**, inspect the result, then save.
