@@ -1,0 +1,48 @@
+---
+title: Version 1.3.0
+description: Desktop wiki support, direct port-rate editing, larger browser packs, and smoother canvas interaction.
+slug: production-modeler/changelog/1.3.0
+sidebar:
+  label: '1.3.0'
+  order: 1
+---
+
+## Added
+
+- Browse and search the wiki inside the desktop app using records, images,
+  and translations from the selected game-data pack.
+- View the wiki map on desktop with bundled tiles for zoom levels 3 to 5.
+  Load savegame overlays locally. Higher zoom levels require an internet
+  connection.
+- Click a port's rate on the canvas to set an exact rate, apply an upper
+  limit, or return to automatic calculation. Enter decimals or fractions,
+  with fluid rates shown in cubic metres per minute.
+- Follow a three-step getting-started guide on an empty canvas or in Help:
+  add buildings, connect ports, and set a target rate.
+
+## Changed
+
+- Accept `.kdata` v2 packs with optional wiki data while continuing to read
+  v1 packs. Preserve the wiki section when exporting a desktop pack.
+- Ship SatisfactoryPlus game data as a bundled `.kdata` archive alongside
+  Vanilla, using the same pack format as imported game data.
+- Increase the browser `.kdata` upload limit from 128 MiB to 512 MiB and
+  support packs containing up to 10,000 files.
+- Reduce unnecessary redraws and summary calculations when selecting or
+  moving nodes in large models. Changing summary settings no longer restarts
+  the production calculation.
+
+## Fixed
+
+- Save model settings after changing recipe input, power, or Space Elevator
+  multipliers.
+- Let outposts without a connected supply represent external production
+  sized to downstream demand. Keep explicit rate limits and balance inputs
+  against outputs when a supply is connected.
+
+## Game-data compatibility
+
+The bundled Vanilla and SatisfactoryPlus packs currently contain catalog
+data only. To use the desktop wiki, import a `.kdata` pack that includes wiki
+data. Existing v1 packs still work for modeling. Modeler 1.2.1 and older
+cannot import v2 packs.
