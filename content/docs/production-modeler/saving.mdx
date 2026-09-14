@@ -32,6 +32,24 @@ Recovery backups stay in app storage, not the model folder.
 Before using **Reload data** after external file edits, save or discard open model changes.
 That action reloads the page and discards unsaved settings.
 
+In desktop builds with updates enabled, **Check for updates** appears beside the
+version on the overview and while a plan is open. Checks also run at startup and
+every minute. Download-channel builds detect newer builds even when the release
+number stays the same. The build number identifies each build and retry.
+
+When an update is available, a dialog lets you inspect the changes and install it.
+Inside a plan, choose **Save and install**. The app saves through the usual local
+or cloud save flow, then closes the plan and installs the update. If saving fails
+or changes remain unsaved, the plan stays open and installation does not start.
+The app restarts after installation. Queued desktop cloud sync still means that
+the plan is saved locally, not necessarily uploaded yet.
+
+Closing the dialog hides that build for the current session. Skipping it hides
+that specific release or build across restarts. A newer build can still notify
+you, and the button beside the version lets you reopen an available update.
+Older desktop installations without an updater need one manual installation of
+an update-enabled build from the download page.
+
 To save to your account, sign in and enable the cloud button in the model header.
 Later saves update the cloud model; the button cannot make it local-only again.
 The cloud button stays visible on editable models. When unavailable, its tooltip
