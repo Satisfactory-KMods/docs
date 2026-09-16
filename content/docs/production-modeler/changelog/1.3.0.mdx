@@ -1,6 +1,6 @@
 ---
 title: Version 1.3.0
-description: Desktop wiki support, direct port-rate editing, larger browser packs, and smoother canvas interaction.
+description: Desktop wiki support, direct port-rate editing, model icons and colours, one snapping grid, and BurnerManufacturer, Solar Tower and Icarus planning.
 slug: production-modeler/changelog/1.3.0
 sidebar:
   label: '1.3.0'
@@ -24,6 +24,33 @@ sidebar:
   drag and drop or the card menu, use `/` for subfolders, narrow the list by
   folder, tag chips, or storage location, and keep folders and tags on models
   that are only on this device; they travel with the first cloud save.
+- Give a model an icon and a colour in its details: pick an Iconify icon or a
+  game image, choose a colour preset or set your own. The library cards and the
+  editor header carry both.
+- Show the canvas grid with a toggle next to Fit in the bottom-left corner. The
+  grid scales with the zoom, sits on the site background, and is the same grid
+  that buildings snap to; its default cell is 50.
+- Snap dragged connection labels to the grid by their centre; on 2D routes a
+  label also levels with a nearby port so the line into it runs straight.
+- Hold Ctrl while dragging a building, a label or a waypoint to invert snapping
+  for that drag alone.
+- Read a storage's output as what goes in: an output with no part, rate or
+  connection shows the input part at the incoming rate. Wiring it on hands that
+  part to the belt.
+- Show buildings from a loaded savegame on the wiki map, with per-type
+  toggles, search and their real pickup icons, and keep resource deposits on
+  the map with their remaining amount and hand-mining yield.
+- Show the app version next to the Production Modeler brand on the home page
+  and in a slim bar at the bottom of the editor.
+- Model BurnerManufacturer recipes with a separate, selectable fuel input,
+  including clock and Somersloop power scaling without electric grid demand.
+- Plan Refined Power Solar Towers with the selected fluid recipe, linked and
+  visible mirrors, and a daylight snapshot. Count installed mirrors in building,
+  construction and power totals even when they cannot see the tower.
+- Plan the single Icarus receiver with daytime, cooldown and orbital-stock
+  settings. Keep global orbital upkeep independent of receiver duty and count
+  the selected Railgun's power separately. Launch batches and tick-dependent
+  charging times are not simulated.
 
 ## Changed
 
@@ -39,6 +66,24 @@ sidebar:
 - Reduce unnecessary redraws and summary calculations when selecting or
   moving nodes in large models. Changing summary settings no longer restarts
   the production calculation.
+- Pin a building count directly in the footer chip that shows it: the solved
+  count is the placeholder, typing a number fixes it, clearing hands it back to
+  the calculation. The separate field in the card header is gone.
+- Cut long names on the cards to one line with an ellipsis; the tooltip carries
+  the full name. Cards are 50 px wider and the footer chips share one height.
+- Move every dialog, in the Modeler and across the site, onto one dialog
+  anatomy: eyebrow, title, description, content and footer look and behave the
+  same everywhere, including Escape and backdrop handling.
+- Use an outpost or blueprint as a sub-factory: the container's ports are the
+  same on both sides. What you connect to an input on the overview is handed
+  out inside under "From outside", so it can feed the machines there; what the
+  machines deliver under "To outside" leaves through the container's output.
+  Models wired the earlier way keep working.
+- Hide the desktop update status bar while a model is open; the update dialog
+  still appears.
+- Show tooltip amounts as numbers with four decimals instead of fractions such
+  as "9549/80/min". Installs that kept the earlier defaults move along; a format
+  you chose yourself stays as it is.
 
 ## Fixed
 
@@ -49,6 +94,18 @@ sidebar:
 - Let outposts without a connected supply represent external production
   sized to downstream demand. Keep explicit rate limits and balance inputs
   against outputs when a supply is connected.
+- Load imported `.kdata` packs again. A pack whose parts lacked fields the
+  schema fills in failed its integrity check on every open with "Required game
+  data is missing", although the import itself had succeeded.
+- Stop the "Recover local draft" dialog from returning on every visit after
+  restoring a draft: the restored draft continues the cloud copy, so its next
+  save is accepted instead of being rejected as stale.
+- Keep a draft's creation date and its backup marker across saves, and show the
+  "Saved" toast once when settings are saved.
+- Open the app's home page when clicking the logo in the desktop app instead of
+  leaving for k-mods.com.
+- Preserve planned Icarus stocks and existing port identities when explicitly
+  mapping renamed orbital items during a game-data migration.
 
 ## Game-data compatibility
 
@@ -56,3 +113,7 @@ The bundled Vanilla and SatisfactoryPlus packs currently contain catalog
 data only. To use the desktop wiki, import a `.kdata` pack that includes wiki
 data. Existing v1 packs still work for modeling. Modeler 1.2.1 and older
 cannot import v2 packs.
+
+BurnerManufacturer, Solar Tower and Icarus support requires fresh game data
+from the updated KModelerExporter. Missing or inconsistent special-building
+metadata produces diagnostics instead of a supported calculation.

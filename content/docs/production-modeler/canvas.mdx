@@ -180,13 +180,29 @@ Available controls depend on the building. The
 
 ## Outposts and blueprints
 
-**Outposts** group part of a factory. Double-click to enter; press **Escape** to
-leave. Each container keeps its own pan and zoom. **Select All** affects the
-container you are currently viewing.
+**Outposts** group part of a factory, for example one smelting site of a larger
+plan. Double-click to enter; press **Escape** to leave. Each container keeps its
+own pan and zoom. **Select All** affects the container you are currently viewing.
 
 **Blueprints** scale a repeated section by a count. Use one instead of drawing
-the same sub-factory repeatedly. Boundary ports carry connections between a
-container and the surrounding graph.
+the same sub-factory repeatedly.
+
+### Wiring a container
+
+A container's ports are the same ports on both sides:
+
+1. On the overview, connect a supply to the container's **input** (for example
+   Iron Ore into a smelting outpost). Add ports in the inspector as needed.
+2. Enter the container. The boundary card shows that input under **From
+   outside**: drag from it into your first machines, the ore is available
+   there.
+3. Connect your last machines to the container's output, shown under **To
+   outside**.
+4. Back on the overview, the container's **output** feeds the rest of the plan.
+
+Nothing needs to be typed twice: an input takes its part from the belt that
+reaches it outside and hands the same part on inside. A blueprint multiplies
+what its machines make by its count, so its ports show the total that crosses.
 
 The header trail shows where you are. Use it to return to a parent container.
 A closed container shows a summary without requiring you to enter it.
