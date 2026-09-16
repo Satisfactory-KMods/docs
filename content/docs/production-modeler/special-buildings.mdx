@@ -124,6 +124,28 @@ batch schedule. The selected Railgun's operating power is counted independently
 of receiver duty. Check the actual launch schedule in game; the material rates
 describe sustained operation with adequately maintained orbital stocks.
 
+## Modular Reactor
+
+Add a **Modular Reactor** assembly for the fuel you want to burn. One assembly
+contains its foundation, support ring, I/O ring and ten reactor chambers. Choose
+one shielding tier. The cooling addon is counted only when **Cooling addon
+installed** is enabled.
+
+Set **Reactor clock**, **Factory ticks per second**, **Starting heat**, the
+cooling supply, and whether the cycle produces power, steam or both. Selecting
+both outputs follows the game's split-power and split-water paths. The modeler
+uses the exported heat-to-cooling and heat-to-steam curves, applies integer
+inventory rounding once per Factory Tick, and includes the fuel-load and waste
+ticks around each active cycle. A cycle that reaches emergency-stop heat is
+rejected instead of reporting production.
+
+Factory tick rate is explicit because the game consumes cooling and produces
+steam per tick without multiplying those inventory amounts by delta time. Use
+the rate that applies to the server or session you are planning. These are
+planned snapshot conditions, not live reactor telemetry. Fresh game data from
+KModelerExporter is required; incomplete fuel, component, shielding, curve or
+tick metadata remains unsupported.
+
 ## Slug Hatchery and Terrarium
 
 - **Environment:** set temperature and humidity in the inspector. In game,

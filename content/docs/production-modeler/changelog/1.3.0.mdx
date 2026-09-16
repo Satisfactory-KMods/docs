@@ -1,6 +1,6 @@
 ---
 title: Version 1.3.0
-description: Desktop wiki support, direct port-rate editing, model icons and colours, one snapping grid, and BurnerManufacturer, Solar Tower and Icarus planning.
+description: Desktop wiki support, direct port-rate editing, model icons and colours, one snapping grid, and complete Refined Power special-building planning.
 slug: production-modeler/changelog/1.3.0
 sidebar:
   label: '1.3.0'
@@ -40,8 +40,8 @@ sidebar:
 - Show buildings from a loaded savegame on the wiki map, with per-type
   toggles, search and their real pickup icons, and keep resource deposits on
   the map with their remaining amount and hand-mining yield.
-- Show the app version next to the Production Modeler brand on the home page
-  and in a slim bar at the bottom of the editor.
+- Show the installed build information in the home-page hero and carry the
+  complete update/version bar into the bottom of the editor.
 - Model BurnerManufacturer recipes with a separate, selectable fuel input,
   including clock and Somersloop power scaling without electric grid demand.
 - Plan Refined Power Solar Towers with the selected fluid recipe, linked and
@@ -51,6 +51,9 @@ sidebar:
   settings. Keep global orbital upkeep independent of receiver duty and count
   the selected Railgun's power separately. Launch batches and tick-dependent
   charging times are not simulated.
+- Plan Refined Power Modular Reactors as their complete physical assembly,
+  including ten chambers, I/O ring, optional cooling addon, selected shielding,
+  fuel, cooling medium, heat, clock, tick rate, steam and power output.
 
 ## Changed
 
@@ -79,8 +82,8 @@ sidebar:
   out inside under "From outside", so it can feed the machines there; what the
   machines deliver under "To outside" leaves through the container's output.
   Models wired the earlier way keep working.
-- Hide the desktop update status bar while a model is open; the update dialog
-  still appears.
+- Open model details by clicking the model's icon, colour and name in the editor
+  header. Remove the redundant edit and details buttons beside it.
 - Show tooltip amounts as numbers with four decimals instead of fractions such
   as "9549/80/min". Installs that kept the earlier defaults move along; a format
   you chose yourself stays as it is.
@@ -118,6 +121,6 @@ data only. To use the desktop wiki, import a `.kdata` pack that includes wiki
 data. Existing v1 packs still work for modeling. Modeler 1.2.1 and older
 cannot import v2 packs.
 
-BurnerManufacturer, Solar Tower and Icarus support requires fresh game data
+BurnerManufacturer, Solar Tower, Icarus and Modular Reactor support requires fresh game data
 from the updated KModelerExporter. Missing or inconsistent special-building
 metadata produces diagnostics instead of a supported calculation.
