@@ -50,6 +50,24 @@ ceiling, not a fixed output rate. Clock bounds depend on the building.
 supplemental resources; handle any waste ports. Only supported generator
 profiles appear in the palette.
 
+## Burner manufacturers
+
+Recipes made in a machine based on **BurnerManufacturer** have a separate fuel
+input. Choose **Fuel** in the inspector and supply both that input and the recipe
+ingredients. If the recipe also uses the selected fuel as an ingredient, keep
+the two inputs connected separately.
+
+Fuel use follows the machine's producing power, clock and Somersloop settings.
+It does not add electric grid consumption. Loading several fuel items at once
+changes the in-game inventory requirement, not the average fuel rate. The
+modeler calculates continuous operation, not fuel-loading delays or startup.
+
+Changing fuel removes incompatible fuel connections while keeping recipe
+connections. Switching to an electric producer removes the fuel input. Both
+changes can be undone. Import fresh game data from KModelerExporter if your
+catalog does not contain the machine's burner profile. Missing fuel or power
+data prevents a supported calculation.
+
 ## Refined Power
 
 - **Boiler:** includes its required heater on the same assembly node. Neither
@@ -61,6 +79,50 @@ profiles appear in the palette.
 - **Missing power data:** shows a warning, not a reliable zero-power result.
   Material flow can still calculate when RPM, generator curve or ceiling data
   is missing.
+
+## Solar Tower
+
+Choose a Solar Tower assembly for its input fluid, then select a compatible
+mirror. Set **Linked mirrors**, **Mirrors with line of sight**, and **Daylight
+factor** in the inspector. These describe a snapshot, not average production
+over a full day. Use 0 for night and the game's daylight factor between 0 and 1
+otherwise. New nodes start with enough clear mirrors at factor 1.
+
+Only mirrors with line of sight contribute heat. The tower clamps their combined
+heat between 29 and 600, then checks the selected fluid's minimum heat. Too
+little heat prevents calculation; extra heat does not speed up the recipe.
+Its water/fluid consumption, output and cycle time come from the active modpack.
+Installed mirrors count toward buildings, construction cost and power even
+when they are obscured. Environment changes support undo/redo.
+
+Export fresh game data to include these profiles. The exporter uses the first
+matching recipe in RefinedRDApi's live list, just as the tower does. Missing
+runtime recipes, cycle data or mirror ratings produce explicit diagnostics.
+
+## Icarus
+
+Add an **Icarus** assembly and select a compatible Railgun. The receiver's water
+and steam amounts, cycle time, cooldown and orbital stock thresholds come from
+your modpack. Set **Daytime**, **Cooldown active** and each **Orbital stock** in
+the inspector. These are planned operating conditions, not a live save reading.
+Night, an active cooldown or insufficient orbital stock prevents calculation.
+
+The game permits one receiver per world. Its duty can fall below 100 percent,
+but the model cannot create another receiver to meet excess demand or multiply
+it through an Outpost/Blueprint count. Construction cost still includes one
+whole receiver and one selected Railgun at partial duty.
+
+Orbital upkeep is separate from the water/steam cycle: supply **3 of every
+orbital item per minute**, even when receiver demand is lower or zero. The real
+subsystem also drains stocks at night. Keep enough stock above the displayed
+minimum to bridge the gaps between launches.
+
+Railgun charge capacity, accepted items and the 26-second firing sequence are
+exported. Charging itself advances per game tick, so this plan does **not**
+predict charging times, launch batches or how many Railguns sustain a particular
+batch schedule. The selected Railgun's operating power is counted independently
+of receiver duty. Check the actual launch schedule in game; the material rates
+describe sustained operation with adequately maintained orbital stocks.
 
 ## Slug Hatchery and Terrarium
 
