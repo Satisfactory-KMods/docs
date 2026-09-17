@@ -35,6 +35,30 @@ entries:
   picked. Multiple documents, even across packs, just add more rows to the sink subsystem: they
   don't need to be merged into one file.
 
+## Many items at once: filter entries
+
+An entry may replace `item:` with an `ofClass:` scope (default `/Script/FactoryGame.FGItemDescriptor`)
+plus the [scope filters](/kdataforge/features/targeting#ofclass-scope--filters-select-by-tag-name-recipe-shape-or-property-values)
+(`matchName:`, `matchTag:`, `where:`, …). Every loaded item descriptor class that passes the filters
+gets the entry's `points:` (and `overridden:`):
+
+```yaml
+type: sinkpoints
+entries:
+  - ofClass: /Script/FactoryGame.FGItemDescriptor
+    where:
+      path: mForm
+      in: [RF_LIQUID, RF_GAS] # every fluid and gas: not sinkable
+    points: 0
+  - ofClass: /Script/FactoryGame.FGItemDescriptor
+    matchName: Desc_Nuclear* # everything nuclear is worth a fixed 500
+    points: 500
+```
+
+Filter entries expand against the descriptor classes loaded when the document applies, and the load
+report warns when a filter matched nothing. A later explicit `item:` row for the same descriptor in
+the same document wins, because rows are keyed by class name.
+
 ## Registration timing and Resource Node boundary
 
 KDataForge queues sink point tables during initialization and registers them per world before SML's

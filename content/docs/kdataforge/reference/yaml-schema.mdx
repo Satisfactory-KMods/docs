@@ -178,11 +178,24 @@ patches:
     # AND/OR:
     allAssetsOfClass: /Script/KAPI.KAPIDataAssetBase
     #   every asset of that class (and subclasses) found in the asset registry
-    # AND/OR:
+    # AND/OR an `ofClass:` scope narrowed by one or more filters (all filters must pass):
+    ofClass: /Script/FactoryGame.FGRecipe # the scope: this class, its subclasses, its assets
+    #   required for matchTag / matchName / where; producedIn / ingredient / product default
+    #   to /Script/FactoryGame.FGRecipe when omitted
     matchTag: KMods.AlternateRecipe # scalar or sequence (all must match)
-    ofClass: /Script/FactoryGame.FGRecipe # required scope for matchTag
     tagProperty: mGameplayTags # optional explicit tag container property
     matchAssets: true # also match data-asset instances (default true)
+    matchName: Recipe_Alternate_* # wildcard on the class name (full path when it contains '/');
+    #   scalar or sequence (any may match)
+    producedIn: /Script/FactoryGame.FGBuildableManufacturer # recipes whose mProducedIn
+    #   references this class or a subclass; scalar or sequence (any may match)
+    ingredient: Desc_IronIngot_C # recipes with this item (or a subclass) in mIngredients
+    product: Desc_IronPlate_C # recipes with this item (or a subclass) in mProduct
+    where: # one map, or a sequence of maps that must all hold
+      - path: mManufactoringDuration # property path; `[*]` = any element (read-only)
+        greaterThan: 4 # exactly one operator per clause:
+        #   equals | notEquals | lessThan | lessOrEqual | greaterThan | greaterOrEqual
+        #   contains | notContains | in [any of] | notIn [any of] | matches (wildcard) | isEmpty (true/false)
 
     # ---- modifiers ----
     applyToSubclasses: false # class targets: also patch every derived class CDO
@@ -200,7 +213,9 @@ patches:
 
 A `sublevel` document blocks RefinedRDLib or KBFL sublevel descriptor assets during the
 `CDOChanges` stage. `block:` must be a non-empty sequence. Each entry is an exact asset object path,
-or a map with `target:` (scalar or sequence) and/or `allAssetsOfClass:`:
+or a map with `target:` (scalar or sequence), `allAssetsOfClass:`, and/or an `ofClass:` scope with
+[filters](#property-patches-type-cdo) (`matchTag:`, `matchName:`, `where:`; assets only, `ofClass:`
+is required):
 
 ```yaml
 type: sublevel
@@ -210,6 +225,8 @@ block:
       - /AnotherMod/World/DA_Nodes_A.DA_Nodes_A
       - /AnotherMod/World/DA_Nodes_B.DA_Nodes_B
   - allAssetsOfClass: /Script/RefinedRDLib.RRDLSublevelAsset
+  - ofClass: /Script/RefinedRDLib.RRDLSublevelAsset
+    matchName: DA_Optional_*
 ```
 
 Exact paths use direct object loading. Bulk class scans include derived classes but depend on the
@@ -233,6 +250,7 @@ Segment(.Segment)*      Segment = Name([<int>] | ["key"] | [key])*
 | `mSomeMap["Iron"].Value`         | struct member of map value for key `Iron`                           |
 | `mSomeSet[2]`                    | third element of a set (logical order)                              |
 | `mMeshComponent.RelativeScale3D` | dereference through an object-typed member (components, subobjects) |
+| `mIngredients[*].ItemClass`      | **any** element (cdo `where:` filters only, never in `properties:` ops) |
 
 Blueprint-defined properties match on their **authored** name (case-insensitive), so mangled BP
 names never appear in YAML.
@@ -408,14 +426,20 @@ recipes:
 ### Removing registered content (`recipe`, `schematic`, `research`)
 
 These three document types also accept a document-level `remove:` sequence. It may be the whole
-document or appear beside the normal entries list. Every entry must be a bare class reference; map
-entries are invalid. Full paths and generated-content short ids resolve:
+document or appear beside the normal entries list. An entry is either a bare class reference (full
+path, bare class name, or generated-content short id) that removes exactly that class, or a **filter
+map** using the [scope filters](#property-patches-type-cdo) — `matchTag:`, `matchName:`,
+`producedIn:`, `ingredient:`, `product:`, `where:`, optional `ofClass:` — that removes every class of
+the type passing all of them:
 
 ```yaml
 type: schematic
 remove:
   - /Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C
   - Schematic_ObsoleteFromAnotherPack
+  - where: # filter map: ofClass defaults to FGSchematic here
+      path: mTechTier
+      greaterOrEqual: 8
 
 # Optional: registration/generation entries can coexist. Explicit removal runs after registration.
 schematics:
@@ -424,7 +448,12 @@ schematics:
 
 - Only `recipe`, `schematic`, and `research` (including `type: mam`) support this key. `item`,
   `resource`, `building`, `unlock`, and `class` do not have a live registry-removal path.
-- Matching is by exact class. Removing a parent does not remove its subclasses.
+- A bare reference matches by exact class; removing a parent does not remove its subclasses. A filter
+  map's `ofClass:` defaults to `FGRecipe` / `FGSchematic` / `FGResearchTree` and must stay within
+  that base; a map without any filter key is an error.
+- Filter rules are stored as predicates and evaluated against every class of the kind the game
+  presents (recipes: on every grant; schematics/research: at world registration), so classes that
+  load later are still caught.
 - Schematic and research-tree removal is save-clean and reverses on the next session after the pack
   is removed. Existing purchase/unlock state is not revoked.
 - Recipe removal prevents future adds and sweeps recipes restored from the server save. The
@@ -433,10 +462,11 @@ schematics:
 - Removing a schematic does not remove recipes it already granted. Pair schematic and recipe
   removal rules when the content itself must become unavailable.
 
-See [Recipes](/kdataforge/features/recipes#removing-recipes),
+See [Removing Content](/kdataforge/features/removing-content) for the consolidated guide, and
+[Recipes](/kdataforge/features/recipes#removing-recipes),
 [Schematics](/kdataforge/features/schematics#removing-schematics), and
 [Research Trees](/kdataforge/features/research-trees#removing-research-trees) for kind-specific
-examples and multiplayer boundaries.
+notes.
 
 - `register: true` (default) queues the class for per-world registration into SML's
   `UModContentRegistry`, **before the registry freezes at world begin play**. Auto-propagation
@@ -778,7 +808,16 @@ entries:
   - item: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
     points: 100
     overridden: 50 # optional
+  - ofClass: /Script/FactoryGame.FGItemDescriptor # filter form instead of `item:` — every loaded
+    where: #   item descriptor passing the filters gets these points
+      path: mForm
+      in: [RF_LIQUID, RF_GAS]
+    points: 0
 ```
+
+An entry names one `item:`, or replaces it with an `ofClass:` scope (default `FGItemDescriptor`)
+plus [filters](#property-patches-type-cdo) (`matchTag:`, `matchName:`, `where:`, …). Filter entries
+expand against the item descriptor classes loaded when the document applies.
 
 **Not live-reloadable** (registry freeze): sinkpoint changes need a session restart.
 
@@ -795,9 +834,15 @@ remove:
     nodeTypes: [Node, FrackingCore]
     allowOccupied: false
     removeFromScanner: true
+  - ofClass: /Script/FactoryGame.FGResourceDescriptor # filter form instead of `resource:`
+    matchName: Desc_OreUranium* #   every loaded descriptor passing the filters
+    nodeTypes: [Node]
 ```
 
 - `resource:` must resolve to a `UFGResourceDescriptor` class. Generated-content short ids work.
+  Alternatively an entry carries an `ofClass:` scope (default `FGResourceDescriptor`) plus
+  [filters](#property-patches-type-cdo) (`matchTag:`, `matchName:`, `where:`, …) and applies its
+  options to every loaded descriptor class that passes.
 - `nodeTypes:` is optional. Omitted or empty means all types; accepted values are `Node`,
   `FrackingSatellite`, `FrackingCore`, `Geyser`, and `Deposit`, with or without the
   `EResourceNodeType::` prefix.

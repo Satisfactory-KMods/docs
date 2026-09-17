@@ -1,0 +1,234 @@
+---
+title: Removing Content
+description: Taking recipes, schematics, and research trees out of the game with `remove:`, by exact class or by filter, what each removal does to an existing save, and how it combines with resource-node purges and sublevel blocking.
+sidebar:
+  order: 21
+---
+
+KDataForge can take existing content **out** of the game as well as patch or generate it. Three
+document types accept a top-level `remove:` sequence, and each entry is either one exact class or
+a **filter rule** that removes every class of that type matching the same selectors
+[`type: cdo` patches use](/kdataforge/features/targeting#ofclass-scope--filters-select-by-tag-name-recipe-shape-or-property-values):
+
+| Document type              | Removes                                           | Default filter scope                    | Save impact                                                                  |
+| -------------------------- | ------------------------------------------------- | --------------------------------------- | ---------------------------------------------------------------------------- |
+| `type: recipe`             | craftable recipes (incl. build-gun recipes)       | `/Script/FactoryGame.FGRecipe`          | writes the save (recipe list is saved); self-heals after uninstall           |
+| `type: schematic`          | milestones, MAM schematics, shop entries, …       | `/Script/FactoryGame.FGSchematic`       | save-clean; purchases stay                                                   |
+| `type: research` / `mam`   | M.A.M. research trees                             | `/Script/FactoryGame.FGResearchTree`    | save-clean; research progress stays                                          |
+
+Two neighbouring features remove **world** content rather than registered classes and have their
+own pages: [`type: resourcenode`](/kdataforge/features/resources#removing-resource-nodes-type-resourcenode)
+destroys placed resource nodes, and [`type: sublevel`](/kdataforge/features/sublevels) stops
+optional sublevels from streaming in. Both accept the same filter rules; the differences are
+summarised [below](#resource-nodes-and-sublevels).
+
+Nothing else has a removal path. `item`, `resource`, `building`, `unlock`, and `class` documents do
+not accept `remove:`: there is no live registry to take an item out of. To make an item disappear
+in practice, remove the recipes that produce it and the schematics that unlock those recipes.
+
+## The two entry forms
+
+A **bare class reference** removes exactly that class. Full Unreal paths, bare loaded class names,
+and generated-content short ids from this or another loaded pack all resolve; subclasses are never
+implied:
+
+```yaml
+type: recipe
+remove:
+  - /Game/FactoryGame/Recipes/Constructor/Recipe_IronPlate.Recipe_IronPlate_C
+  - Recipe_IronPlateReinforced_C # bare class name
+  - Recipe_MyGeneratedRecipe # generated-content id
+```
+
+A **filter rule** is a map with any of the scope-filter keys, `matchTag:`, `matchName:`,
+`producedIn:`, `ingredient:`, `product:`, `where:`, optionally narrowed by an explicit `ofClass:`.
+It removes every class of the document's type in the scope that passes **all** the filters on the
+entry:
+
+```yaml
+type: recipe
+remove:
+  # every alternate recipe, by naming convention
+  - matchName: Recipe_Alternate_*
+
+  # every recipe crafted in the Particle Accelerator
+  - producedIn: /Game/FactoryGame/Buildable/Factory/HadronCollider/Build_HadronCollider.Build_HadronCollider_C
+
+  # every recipe that consumes Uranium, in any building
+  - ingredient: Desc_OreUranium_C
+
+  # every recipe of a mod, by content folder, that takes longer than a minute
+  - ofClass: /Script/FactoryGame.FGRecipe
+    matchName: /Game/SomeMod/Recipes/*
+    where:
+      path: mManufactoringDuration
+      greaterThan: 60
+```
+
+The scope defaults to the document type's base class, so `ofClass:` is only needed to narrow it,
+for example to a mod's own recipe base class. Bare references and filter rules can be mixed in one
+`remove:` sequence, and `remove:` can sit beside the normal generation entries (`recipes:`,
+`schematics:`, `research:`) in the same document.
+
+Filter rules are **predicates, not lists**. They are stored as rules and evaluated against every
+class the game presents, so a Blueprint recipe that loads later in the session is still tested and
+removed. The load report (`/kdf report`) prints an Info line per rule with how many loaded classes
+it matched at apply time (`Removal rule '… where matchName=Recipe_Alternate_*' currently matches 92
+loaded class(es)`), which is the fastest way to check a filter before shipping it.
+
+## Recipes
+
+Removing a recipe keeps it out of the list of craftable recipes: it disappears from machines, the
+Craft Bench, and, for build recipes, the build gun (the buildable itself stays in the world). The
+game has no "remove recipe" API and its authoritative list is **saved**, so KDataForge does two
+things:
+
+- **Prevention**: every grant of a removed recipe is cancelled the moment the game tries it, which
+  also covers the unlocks purchased schematics re-apply on every load.
+- **Cleanup**: recipes an existing save already restored are swept out during world initialization,
+  before the recipe manager and its replication component read the list.
+
+Because the sweep writes the save, it runs on the server only; a client's list is
+server-authoritative and arrives already filtered. The write is not permanent: uninstalling the pack
+removes the prevention hook, and the next load re-applies every purchased schematic's unlocks, so the
+recipes come back.
+
+```yaml
+type: recipe
+remove:
+  # take a vanilla recipe away
+  - Recipe_IronPlateReinforced_C
+  # …and every recipe that produced its ingredient in an Assembler
+  - product: Desc_IronScrew_C
+    producedIn: Build_AssemblerMk1_C
+```
+
+:::note
+Packaged builds install both the single and the batch recipe-grant prevention hooks. In the Unreal
+Editor (PIE) only the initialization sweep runs; a recipe granted again later in the same PIE
+session can reappear. Verify prevention in a packaged game.
+:::
+
+Removal never revokes schematic purchases. To also hide the unlock source, remove the schematic
+too (below).
+
+## Schematics
+
+Schematic removal goes through SML's content registry filter before the schematic manager builds
+its per-session list. Nothing is written to the save, so uninstalling the pack brings the schematic
+back on the next load. Bare references and filter rules both work; `ofClass:` defaults to
+`FGSchematic`:
+
+```yaml
+type: schematic
+remove:
+  - /Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C
+  # every tier 8+ milestone
+  - ofClass: /Script/FactoryGame.FGSchematic
+    where:
+      - path: mTechTier
+        greaterOrEqual: 8
+      - path: mType
+        equals: EST_Milestone
+  # every schematic that unlocks a Quantum Encoder recipe
+  - where:
+      path: mUnlocks[*].mRecipes[*].mProducedIn
+      contains: Build_QuantumEncoder_C
+```
+
+Removal does **not** revoke purchases. An already-purchased schematic stays in the save and keeps
+re-applying its unlocks on load, including the recipes it granted. Pair schematic removal with
+recipe removal when the content itself must become unavailable:
+
+```yaml
+# file: no-nuclear.schematic.yml
+type: schematic
+remove:
+  - Schematic_8-1_C # Nuclear Power milestone
+```
+
+```yaml
+# file: no-nuclear.recipe.yml
+type: recipe
+remove:
+  - product: Desc_NuclearFuelRod_C
+  - ingredient: Desc_OreUranium_C
+```
+
+## Research trees
+
+Research-tree removal works exactly like schematic removal: the tree is filtered out of SML's
+content registry before the M.A.M. builds its list, nothing is saved, and uninstalling the pack
+brings the tree back. `type: mam` is an alias for `research` and accepts the same grammar;
+`ofClass:` defaults to `FGResearchTree`:
+
+```yaml
+type: research
+remove:
+  - /Game/FactoryGame/Schematics/Research/BPD_ResearchTree_Caterium.BPD_ResearchTree_Caterium_C
+  # every research tree another mod ships, by folder
+  - matchName: /Game/SomeMod/Research/*
+```
+
+Removal does not revoke progress: already-unlocked or completed research state stays in the save,
+and unlocks it granted stay granted. To remove recipes granted through that progression, add a
+`type: recipe` `remove:` too.
+
+## Ordering and conflicts
+
+- Removals apply **after** registrations, whichever pack each came from. An explicit `remove:`
+  therefore always beats a `register:` (or generation) of the same class.
+- A removal rule from one pack can name a class another pack generated (the generated-content id
+  resolves across loaded packs; an ambiguous id logs the usual ambiguity diagnostic).
+- Removing a parent class never removes its subclasses. Use a filter rule when you mean a family.
+- Schematic and research-tree removal filters every peer's own list from the same YAML. A client
+  **without** the pack keeps the schematic in its local list, so ship removal packs to every
+  process in a multiplayer session. Recipe removal is server-authoritative and needs the pack on
+  the server.
+
+## Resource nodes and sublevels
+
+`type: resourcenode` purges placed nodes by their effective resource descriptor, and
+`type: sublevel` blocks provider data assets before their levels stream in. Both accept the same
+filter keys instead of one exact reference:
+
+```yaml
+type: resourcenode
+remove:
+  # every uranium descriptor (a vanilla one plus any modded variant deriving from it)
+  - ofClass: /Script/FactoryGame.FGResourceDescriptor
+    matchName: Desc_OreUranium*
+    nodeTypes: [Node]
+```
+
+```yaml
+type: sublevel
+conditions:
+  hasMod: RefinedRDLib
+block:
+  - ofClass: /Script/RefinedRDLib.RRDLSublevelAsset # required: sublevel assets have no default scope
+    matchName: DA_Optional_*
+```
+
+Unlike recipe rules, these two expand their filters **once**, when the document applies, against
+the descriptor classes and assets loaded at that moment; the load report says how many matched.
+Resource-node destruction can outlive the pack (the game saves destruction tombstones), so read the
+persistence warnings on the [Resources](/kdataforge/features/resources#removing-resource-nodes-type-resourcenode)
+page before shipping one.
+
+## Troubleshooting
+
+- **"`remove` map entries need a filter"**: a map entry must carry at least one of `matchTag`,
+  `matchName`, `producedIn`, `ingredient`, `product`, `where`. `ofClass:` alone selects nothing;
+  to remove one class, write it as a bare reference instead.
+- **A filter rule reports "currently matches 0 loaded class(es)"**: the scope or the filter is too
+  strict, or the classes are not loaded yet. Recipe rules still catch later-loading classes; for
+  schematic and research rules, check the count on the next session once the game has loaded
+  them, or name the classes explicitly.
+- **The recipe is gone but the item still shows in the codex / build menu**: removal only affects
+  the recipe list. Items and buildings are not registry-removable; hide them via a `type: cdo`
+  patch (`mCanBeDiscarded`, categories, …) or remove the schematics that reference them.
+- **Everything came back after uninstalling the pack**: that is the design. All three removal
+  kinds are non-destructive to the save's purchase and progress state and restore themselves.
+- The full grammar, including where `remove:` may appear, lives in the
+  [YAML schema](/kdataforge/reference/yaml-schema#removing-registered-content-recipe-schematic-research).

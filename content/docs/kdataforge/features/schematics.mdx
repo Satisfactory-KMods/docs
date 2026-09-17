@@ -212,16 +212,21 @@ a vanilla schematic that's already registered doesn't need.)
 
 ## Removing schematics
 
-A `type: schematic` document accepts a top-level `remove:` sequence. Each entry is a bare class
-reference: a full Unreal class path, a bare loaded class name, or a generated content id from this
-or another loaded KDataForge pack. Removal-only documents are valid, and `remove:` can also be mixed
-with normal `schematics:` entries:
+A `type: schematic` document accepts a top-level `remove:` sequence. Each entry is either a bare
+class reference (a full Unreal class path, a bare loaded class name, or a generated content id from
+this or another loaded KDataForge pack) or a **filter map** that removes every schematic passing the
+[scope filters](/kdataforge/features/targeting#ofclass-scope--filters-select-by-tag-name-recipe-shape-or-property-values)
+(`matchName:`, `matchTag:`, `where:`; the scope defaults to `FGSchematic`). Removal-only documents
+are valid, and `remove:` can also be mixed with normal `schematics:` entries:
 
 ```yaml
 type: schematic
 remove:
   - /Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C
   - Schematic_MyGeneratedMilestone
+  - where: # every tier 8+ schematic
+      path: mTechTier
+      greaterOrEqual: 8
 
 schematics:
   - id: Schematic_ReplacementMilestone
@@ -230,10 +235,11 @@ schematics:
         value: Replacement Milestone
 ```
 
-`remove:` names the exact schematic class to remove; it does not remove subclasses. If a generated
-id is ambiguous across packs, KDataForge logs the same ambiguity diagnostic used for other short-id
-class references. Removals run after registrations, so an explicit `remove:` wins over a
-`register:` for the same class.
+A bare reference names the exact schematic class to remove; it does not remove subclasses. If a
+generated id is ambiguous across packs, KDataForge logs the same ambiguity diagnostic used for
+other short-id class references. Removals run after registrations, so an explicit `remove:` wins
+over a `register:` for the same class. The consolidated guide is
+[Removing Content](/kdataforge/features/removing-content).
 
 Schematic removal is save-clean. KDataForge removes the class from SML's content registry before
 the schematic manager builds its per-session list, so uninstalling the pack brings the schematic

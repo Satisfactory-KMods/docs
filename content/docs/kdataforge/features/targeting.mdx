@@ -1,6 +1,6 @@
 ---
 title: Targeting
-description: Every way to select patch targets, including class CDOs, asset instances, all assets of a class, tag matching, subclasses, and spawned actors.
+description: Every way to select targets, including class CDOs, asset instances, all assets of a class, tag / name / property filters, recipe shortcuts (producedIn, ingredient, product), subclasses, spawned actors, and the same filters in remove:, block:, and sinkpoints entries.
 sidebar:
   order: 4
 ---
@@ -121,12 +121,37 @@ patches:
         value: 0.75
 ```
 
-## `matchTag:` + `ofClass:` select by gameplay tag
+## `ofClass:` scope + filters: select by tag, name, recipe shape, or property values
 
-Selects everything of `ofClass:` (required scope) that carries the tag(s). `matchTag:` accepts a
-scalar or a sequence, and when it's a sequence, **all** tags must match. Two optional keys are
-available: `tagProperty:` names the tag container property explicitly, and `matchAssets:` also
-matches data-asset instances (default `true`):
+The remaining selectors all work the same way: `ofClass:` names a **scope** (that class and every
+subclass of it, plus data-asset instances of it unless `matchAssets: false`), and one or more
+**filters** on the same patch entry pick the members of that scope to patch. Every filter present on
+an entry must pass, so the filters are AND-combined:
+
+| Filter                         | Matches when …                                                                                   |
+| ------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `matchTag:` (+ `tagProperty:`) | the object carries **every** listed gameplay tag                                                |
+| `matchName:`                   | the class name (or full path) matches **any** listed wildcard pattern                            |
+| `producedIn:`                  | a recipe's `mProducedIn` references **any** listed building class **or a subclass of it**       |
+| `ingredient:`                  | a recipe's `mIngredients[*].ItemClass` references **any** listed item class or a subclass of it |
+| `product:`                     | a recipe's `mProduct[*].ItemClass` references **any** listed item class or a subclass of it     |
+| `where:`                       | **every** listed `path` / operator clause holds                                                 |
+
+The three recipe shortcuts (`producedIn:`, `ingredient:`, `product:`) default the scope to
+`/Script/FactoryGame.FGRecipe` when `ofClass:` is omitted, and any `matchTag:`, `matchName:` or
+`where:` on the same entry shares that default. Without a recipe shortcut those three require an
+explicit `ofClass:`. Set `ofClass:` anyway to narrow the scope to a mod's own recipe base class.
+
+Filters never narrow a `target:` or `allAssetsOfClass:` selector on the same entry, those still
+match everything they name. When no object in the scope passes, KDataForge logs one warning that
+repeats the filters it evaluated, so you can see which one was too strict.
+
+### `matchTag:` select by gameplay tag
+
+Selects everything in the scope that carries the tag(s). `matchTag:` accepts a scalar or a sequence,
+and when it's a sequence, **all** tags must match. Two optional keys are available: `tagProperty:`
+names the tag container property explicitly, and `matchAssets:` also matches data-asset instances
+(default `true`):
 
 ```yaml
 type: cdo
@@ -146,6 +171,208 @@ patches:
 Register your own tags first using `type: gametag`. The GameTags stage always runs before
 everything else. Then match on them in the same pack: see
 [Game Tags](/kdataforge/features/game-tags).
+
+### `matchName:` select by class name pattern
+
+Matches the class name against a wildcard pattern (`*` any run of characters, `?` one character,
+case-insensitive). The trailing `_C` of Blueprint classes is optional in the pattern. When the
+pattern contains a `/`, it is matched against the **full class path** instead, which lets you select
+by content folder. A sequence matches when **any** pattern matches:
+
+```yaml
+type: cdo
+patches:
+  - ofClass: /Script/FactoryGame.FGRecipe
+    matchName: Recipe_Alternate_* # every vanilla alternate recipe, no tags needed
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.8
+  - ofClass: /Script/FactoryGame.FGSchematic
+    matchName: /Game/FactoryGame/Schematics/Progression/* # by folder: the milestones
+    properties:
+      - path: mTimeToComplete
+        op: multiply
+        value: 0.5
+```
+
+For data-asset instances the pattern is matched against the asset's own name and path, not its
+class.
+
+### `producedIn:` / `ingredient:` / `product:` recipe shortcuts
+
+The three shortcuts answer the questions pack authors ask most often about recipes, without
+spelling out a `where:` clause. Each accepts a class path (any form that `target:` accepts: full
+path, bare class name, or generated-content id) or a sequence of them, and a recipe matches when
+**any** entry is referenced **or one of its subclasses is**:
+
+```yaml
+type: cdo
+patches:
+  # every recipe crafted in a Constructor is 25% faster
+  - producedIn: /Game/FactoryGame/Buildable/Factory/ConstructorMk1/Build_ConstructorMk1.Build_ConstructorMk1_C
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.75
+
+  # every recipe crafted in ANY manufacturing building (Constructor, Assembler, Manufacturer,
+  # Refinery, Blender, Particle Accelerator, modded machines deriving from the same base, …)
+  - producedIn: /Script/FactoryGame.FGBuildableManufacturer
+    properties:
+      - path: mVariablePowerConsumptionFactor
+        op: multiply
+        value: 0.9
+
+  # every recipe that consumes Plastic OR Rubber
+  - ingredient: [Desc_Plastic_C, Desc_Rubber_C]
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.9
+
+  # every recipe that produces a Screw, but only when it is crafted in an Assembler
+  - product: Desc_IronScrew_C
+    producedIn: Build_AssemblerMk1_C
+    properties:
+      - path: mProduct[0].Amount
+        op: multiply
+        value: 2
+```
+
+The subclass rule is what makes the native base classes useful as values: `FGBuildableManufacturer`
+covers every machine that derives from it, `/Script/FactoryGame.FGBuildGun` covers every build-gun
+(buildable) recipe, and `/Script/FactoryGame.FGWorkBench` covers every hand-craftable recipe (the
+vanilla Craft Bench is `BP_WorkBenchComponent_C`, a subclass). A class that is not loaded yet when
+the patch runs is matched by exact path only (a warning tells you), the subclass rule needs the class
+resolved.
+
+### `where:` filter by property values
+
+`where:` compares reflected properties of every candidate in the scope. It takes one map, or a
+sequence of maps that must **all** hold. Each map names a `path:` (the same
+[property path grammar](/kdataforge/reference/yaml-schema#property-paths) as `properties:`, plus
+`[*]` for "any element") and **exactly one** operator:
+
+| Operator                                                   | Applies to                                       | Matches when …                                                                                                      |
+| ---------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `equals`, `notEquals`                                      | everything                                       | the value equals the given YAML value (class references: the class **or a subclass**)                               |
+| `lessThan`, `lessOrEqual`, `greaterThan`, `greaterOrEqual` | numbers, enums (ordinal), booleans               | numeric comparison                                                                                                  |
+| `contains`, `notContains`                                  | arrays, sets, tag containers, strings/names/text | an element equals the value (same rules as `equals`), the container has the tag, or the text contains the substring |
+| `in`, `notIn`                                              | everything                                       | **any** listed value matches: `equals` for a scalar leaf, `contains` for an array/set/tag container leaf                 |
+| `matches`                                                  | everything                                       | the display text matches a wildcard pattern (`*Alternate*`); references use their path                              |
+| `isEmpty: true/false`                                      | containers, text, references                     | the container/text is empty, or the reference is null                                                               |
+
+A candidate that does not have the property at all simply does not match. A comparison that cannot
+apply to the property's type (`greaterThan` on an array, `[*]` on a float, …) is reported **once**
+per patch entry as a warning naming the path. Remember that the scope class's **own** CDO is a
+candidate as well, and it only holds default values: `isEmpty: true` on `mProducedIn` matches
+`FGRecipe` itself, not just the orphaned Blueprint recipes you were thinking of. `/kdf report` lists
+every object a patch touched.
+
+```yaml
+type: cdo
+patches:
+  # long recipes (more than 8 seconds) that use Iron Ingot get a bit faster
+  - ofClass: /Script/FactoryGame.FGRecipe
+    where:
+      - path: mManufactoringDuration
+        greaterThan: 8
+      - path: mIngredients[*].ItemClass # [*] = any element
+        equals: Desc_IronIngot_C
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.8
+
+  # every schematic up to tier 3 completes instantly
+  - ofClass: /Script/FactoryGame.FGSchematic
+    where:
+      path: mTechTier # a single clause can be written as one map
+      lessOrEqual: 3
+    properties:
+      - path: mTimeToComplete
+        value: 0
+
+  # liquids and gases never earn sink points (`in` = any of the listed values)
+  - ofClass: /Script/FactoryGame.FGItemDescriptor
+    where:
+      path: mForm
+      in: [RF_LIQUID, RF_GAS]
+    properties:
+      - path: mResourceSinkPoints
+        value: 0
+
+  # recipes crafted in a Constructor OR an Assembler (`in` on an array = contains any)
+  - ofClass: /Script/FactoryGame.FGRecipe
+    where:
+      path: mProducedIn
+      in: [Build_ConstructorMk1_C, Build_AssemblerMk1_C]
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.9
+
+  # recipes nobody can craft anywhere (empty mProducedIn) get the Craft Bench
+  - ofClass: /Script/FactoryGame.FGRecipe
+    where:
+      path: mProducedIn
+      isEmpty: true
+    properties:
+      - path: mProducedIn
+        op: append
+        value: /Game/FactoryGame/Buildable/-Shared/WorkBench/BP_WorkBenchComponent.BP_WorkBenchComponent_C
+```
+
+`[*]` may appear more than once in a path (`mUnlocks[*].mRecipes[*]`) and descends through struct
+members and object references alike; a `where:` clause with `[*]` matches when **any** element path
+satisfies the operator. `[*]` is read-only: a `properties:` op still has to address one concrete
+element (`mIngredients[0].Amount`).
+
+Inside a `where:` path a **class reference reads through to its defaults**: `mProduct[0].ItemClass.mForm`
+compares the produced item's form, and `mUnlocks[*].mRecipes[*].mProducedIn` on a schematic walks
+into every unlocked recipe's producer list (soft references are loaded on demand). This is a filter
+convenience only; `properties:` ops never write through a class reference.
+
+Filters and the lazy class watch: like `applyToSubclasses:`, every scope-filter patch keeps watching
+the session. A Blueprint recipe or item class that loads later (common for content the game only
+references on demand) is tested against the same filters the moment it becomes available, and
+patched when it passes.
+
+## The same filters in `remove:`, `block:`, and `sinkpoints` entries
+
+The scope filters are not a `cdo` feature. Every document type that selects existing content takes
+the same keys in place of one exact reference, with a default scope that fits the type:
+
+| Document / key                            | Filter entry selects                                 | Default `ofClass:`                    | Details                                                                                                  |
+| ----------------------------------------- | ---------------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `type: recipe` → `remove:`                | recipes to take out of the game                      | `FGRecipe`                            | [Removing Content](/kdataforge/features/removing-content#recipes)                                        |
+| `type: schematic` → `remove:`             | schematics to take out of the game                   | `FGSchematic`                         | [Removing Content](/kdataforge/features/removing-content#schematics)                                     |
+| `type: research` / `mam` → `remove:`      | research trees to take out of the game               | `FGResearchTree`                      | [Removing Content](/kdataforge/features/removing-content#research-trees)                                 |
+| `type: resourcenode` → `remove:`          | resource descriptors whose placed nodes are purged   | `FGResourceDescriptor`                | [Resources](/kdataforge/features/resources#removing-resource-nodes-type-resourcenode)                    |
+| `type: sublevel` → `block:`               | provider data assets to block                        | none, `ofClass:` required             | [Sublevels](/kdataforge/features/sublevels)                                                              |
+| `type: sinkpoints` → `entries:`           | item descriptors that receive the entry's `points:`  | `FGItemDescriptor`                    | [Sink Points](/kdataforge/features/sinkpoints)                                                           |
+
+```yaml
+type: recipe
+remove:
+  - producedIn: /Game/FactoryGame/Buildable/Factory/HadronCollider/Build_HadronCollider.Build_HadronCollider_C
+```
+
+```yaml
+type: sinkpoints
+entries:
+  - ofClass: /Script/FactoryGame.FGItemDescriptor
+    where:
+      path: mForm
+      in: [RF_LIQUID, RF_GAS]
+    points: 0
+```
+
+Recipe, schematic, and research removal rules are stored as **predicates** and re-checked against
+every class the game presents, so late-loading Blueprint content is covered. Resource-node,
+sublevel, and sink-point filters expand once, when the document applies, against what is loaded at
+that moment; the load report tells you how many matched.
 
 ## `applyToSubclasses:` widen a class target to every derived class
 
@@ -198,12 +425,20 @@ one placed node by location, descriptor, purity, amount, or node type. See
 The selector keys cover targets from a single class to every actor in a class family. Use the table
 below to choose the narrowest useful selector:
 
-| I want to patch…                                   | Selector                                    |
-| -------------------------------------------------- | ------------------------------------------- |
-| One recipe / item / building class                 | `target:` class path                        |
-| One data-asset instance                            | `target:` object path (no `_C`)             |
-| A handful of unrelated targets, same `properties:` | `target:` sequence of paths                 |
-| A whole data-asset family                          | `allAssetsOfClass:`                         |
-| Everything carrying a tag                          | `matchTag:` + `ofClass:`                    |
-| A base class **and** everything derived            | class `target:` + `applyToSubclasses: true` |
-| Values on placed/spawning actors                   | + `applyToSpawnedActors: true`              |
+| I want to patch…                                            | Selector                                    |
+| ----------------------------------------------------------- | ------------------------------------------- |
+| One recipe / item / building class                          | `target:` class path                        |
+| One data-asset instance                                     | `target:` object path (no `_C`)             |
+| A handful of unrelated targets, same `properties:`          | `target:` sequence of paths                 |
+| A whole data-asset family                                   | `allAssetsOfClass:`                         |
+| Everything carrying a tag                                   | `matchTag:` + `ofClass:`                    |
+| Every class whose name / folder matches a pattern           | `matchName:` + `ofClass:`                   |
+| Every recipe crafted in a building (or building family)     | `producedIn:`                               |
+| Every recipe consuming / producing an item (or item family) | `ingredient:` / `product:`                  |
+| Everything whose property values meet a condition           | `where:` + `ofClass:`                       |
+| A base class **and** everything derived                     | class `target:` + `applyToSubclasses: true` |
+| Values on placed/spawning actors                            | + `applyToSpawnedActors: true`              |
+
+Filters combine: `producedIn:` + `ingredient:` + `where:` on one entry select recipes that satisfy
+all three. Prefer the narrowest combination that still describes what you mean, and check
+`/kdf report` to see exactly which classes were patched.

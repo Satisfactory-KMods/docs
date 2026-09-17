@@ -22,6 +22,13 @@ A gameplay tag fixes both problems. Tag every recipe you touch as you create or 
 **one** patch that matches the tag and applies to whatever currently carries it. That covers today's
 four recipes or next month's forty, with no patch-list maintenance required.
 
+> ℹ️ **Tags are for sets the game does not already describe.** If the recipes you want share a
+> producer building, an ingredient, a product, a naming convention, or a property value, you don't
+> need a tag at all: `producedIn:`, `ingredient:`, `product:`, `matchName:` and `where:` select on
+> those directly, and combine with `matchTag:` on the same patch. See
+> [Targeting → scope filters](/kdataforge/features/targeting#ofclass-scope--filters-select-by-tag-name-recipe-shape-or-property-values).
+> This tutorial is about the case where the set is defined by *you*, not by the data.
+
 ## Step 1: register your own tag
 
 ```yaml

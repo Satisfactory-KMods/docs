@@ -69,10 +69,13 @@ time you register it.
 
 ## Removing recipes
 
-A `type: recipe` document can also declare a top-level `remove:` sequence. Each entry is a bare
-class reference: a full Unreal class path, a bare loaded class name, or a generated content id from
-this or another loaded KDataForge pack. Removal-only documents are valid, and `remove:` can also be
-mixed with normal `recipes:` entries in the same document:
+A `type: recipe` document can also declare a top-level `remove:` sequence. Each entry is either a
+bare class reference (a full Unreal class path, a bare loaded class name, or a generated content id
+from this or another loaded KDataForge pack) or a **filter map** that removes every recipe passing
+the [scope filters](/kdataforge/features/targeting#ofclass-scope--filters-select-by-tag-name-recipe-shape-or-property-values)
+(`producedIn:`, `ingredient:`, `product:`, `matchName:`, `matchTag:`, `where:`; the scope defaults
+to `FGRecipe`). Removal-only documents are valid, and `remove:` can also be mixed with normal
+`recipes:` entries in the same document:
 
 ```yaml
 type: recipe
@@ -80,12 +83,17 @@ remove:
   - /Game/FactoryGame/Recipes/Constructor/Recipe_IronPlate.Recipe_IronPlate_C
   - Recipe_IronPlateReinforced_C
   - Recipe_MyGeneratedRecipe
+  - producedIn: Build_HadronCollider_C # every Particle Accelerator recipe
+  - matchName: Recipe_Alternate_* # every alternate recipe
 ```
 
-`remove:` names the exact recipe class to suppress; it does not remove subclasses. If a generated id
-is ambiguous across packs, KDataForge logs the same ambiguity diagnostic used for other short-id
-class references. Removals are applied after queued registrations, so an explicit `remove:` wins
-over a `register:` for the same class.
+A bare reference names the exact recipe class to suppress; it does not remove subclasses. If a
+generated id is ambiguous across packs, KDataForge logs the same ambiguity diagnostic used for
+other short-id class references. Filter maps are stored as rules and re-checked on every recipe
+grant, so recipes that load later in the session are covered. Removals are applied after queued
+registrations, so an explicit `remove:` wins over a `register:` for the same class. The
+consolidated guide, including how recipe removal interacts with schematics and saves, is
+[Removing Content](/kdataforge/features/removing-content).
 
 Recipe removal is the one content removal kind that writes back into the save. SML has no
 `RemoveRecipe` API, and the authoritative list is the save-backed recipe manager list. KDataForge
@@ -128,6 +136,29 @@ usually the schematic.
 Set `register: false` if you want the class to exist, so other YAML can reference it, but not be
 independently discoverable. This is useful for an internal helper recipe that only ever appears
 nested inside something else.
+
+## Editing existing recipes in bulk
+
+Changing recipes that already exist is a `type: cdo` job, and recipes have three selectors of their
+own: `producedIn:` (crafted in a building, or any building deriving from a base class),
+`ingredient:` and `product:` (consume / produce an item, or any item deriving from a base class).
+They default their scope to `FGRecipe`, accept a single class or a list, and combine with each
+other and with `where:`:
+
+```yaml
+type: cdo
+patches:
+  - producedIn: /Script/FactoryGame.FGBuildableManufacturer # every machine recipe …
+    ingredient: Desc_IronIngot_C # … that consumes Iron Ingot
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.8
+```
+
+Every form is covered on [Targeting](/kdataforge/features/targeting#producedin--ingredient--product-recipe-shortcuts),
+and [Balancing](/kdataforge/examples/balancing#bulk-edits-by-producer-building-producedin) has
+copyable examples.
 
 ## Troubleshooting
 
