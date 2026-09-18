@@ -1,0 +1,77 @@
+---
+title: Version 1.4.0
+description: The wiki map learns the whole planet with crash sites, roads, rocks and spawn points, draws belts, pipes, rails and power lines to scale, shows Refined Power water dam nodes, sorts saved buildings by build-menu category, separates deposits, opens the caves, and the solver stops leaving buildings idle.
+slug: production-modeler/changelog/1.4.0
+sidebar:
+  label: '1.4.0'
+  order: 1
+---
+
+Release notes, Pioneer. The map learns the whole planet and draws its lines to
+scale, water dam nodes show up, deposits get their own drawer, the caves come
+out of hiding, and the solver stops leaving buildings idle.
+
+## Added
+
+- **The map knows the planet now.** Crash sites, roads, spawn points, the
+  world border, gas pillars, spore flowers and the large and small rocks you
+  can blow up are built into the wiki map as their own layers. Every crash
+  site tells you what it costs to open (the item and count, or the power in
+  MW); with a save loaded it also says whether the hard drive is already
+  yours. Rocks, pillars and spore flowers show what a loaded save has already
+  cleared. Everything works offline.
+- **Vehicles and trains on the map.** A loaded save now places your trucks,
+  tractors, explorers, factory carts, drones, locomotives and freight wagons
+  as their own world-object group.
+- **Water dam nodes on the map.** Refined Power's water dam nodes now show up
+  with the line the dam is built along, the number of sections and the
+  output in MW at that spot. A loaded save marks the ones that already carry
+  a dam or a turbine as taken. Needs a fresh export with the updated
+  exporter.
+
+## Changed
+
+- **A tidier map panel.** The filter panel is wider, pushes the map aside
+  instead of covering it, and lists everything as compact rows instead of
+  tiles. Buildings from a save are grouped by their build-menu category and
+  sub-category with fold-out headings; the caves, crash sites and other world
+  layers share one Map layers section.
+- **Belts, pipes, rails and roads drawn to scale.** Lines on the map are now
+  as wide as the real thing (a belt 1.35 m, a rail 6 m, a road corridor
+  25 m) and grow as you zoom in instead of staying hairlines. Power lines are
+  drawn between the poles and machines they connect, and hovering any line
+  shows its length.
+- **Deposits get their own loot tab.** Hand-mined deposits now live in a
+  Deposits section on the wiki map, apart from the resource nodes you park a
+  miner on. Every resource remembers its own on/off switch and shows up by
+  default. On the map they are hexagons, so they never pass for a node.
+- **Caves are open for exploration.** The underground caves and their
+  entrances are on the map from the start. Spelunking over? The Underground
+  section switches them off.
+
+## Fixed
+
+- **Buildings that lost their name.** A saved building whose class the wiki
+  keeps under a different folder or a mod name (Pipeline Mk.2, the Seed
+  Extractor), or that only has a build-menu entry, now shows its real name,
+  icon and category instead of a raw class identifier. The few classes the
+  wiki data does not know at all get a readable name and a small question
+  mark in the panel instead of vanishing.
+- **Slugs spotted.** The blue, yellow and purple power-slug icons show on the
+  desktop wiki map again. Markers and the World objects legend use the slug
+  item images from the active game-data pack.
+- **No more idle machines at the end of the line.** A dead-end auto building
+  takes everything its supply delivers. A recipe behind an auto-count miner,
+  or behind a storage fed by several producers, now scales to the full
+  upstream flow instead of stopping at one building and complaining about a
+  surplus.
+- **Pin your Modular Miner output.** Set an exact rate or an upper limit on a
+  merged Modular Miner output without breaking the plan. The port keeps its
+  rate, the miner count follows the pin, and returning the port to automatic
+  restores it.
+- **Overclocked generators stop cheating.** A generator placed as a burn
+  recipe (Coal-Powered, Fuel or Nuclear) now makes power linearly with its
+  clock. It used to borrow the power-consumption curve, so 22 generators at
+  250% claimed more MW than the 55 they replace at 100%.
+- **Dev links go to dev.** Models shared from the dev site and the dev desktop
+  channel link to dev.k-mods.com instead of production.
