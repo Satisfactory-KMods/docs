@@ -7,130 +7,72 @@ sidebar:
   order: 1
 ---
 
-Hi Pioneers! A big one this time. Your factories can now be folded up and
-dropped into other factories, outposts and blueprints have been merged into one
-Existing Factory building that reports its own power draw, the survey team has
-finished mapping the whole planet and draws every belt and rail at its real
-width, Refined Power water dam nodes show up, deposits get their own drawer,
-the caves are open for business, and the solver has been reminded that an idle
-building is a compliance violation.
-
-ADA: "A factory inside a factory is not recursion, Pioneer. It is efficiency."
+Hi Pioneers! Sub-models, one Existing Factory node, a full planet survey on
+the map, water dam nodes, and a solver that no longer leaves buildings idle.
 
 ## NEW FEATURES
 
-- **Sub-models: one factory as a building in another.** Place **Model Input**
-  and **Model Output** nodes to declare what a model takes in and hands out,
-  then pick **Sub-model** in another plan's palette and choose it from your
-  models, the ones on this device or the public ones. It lands as one node that
-  scales like a recipe: ask for twice its output and the calculation counts two
-  copies, inputs and power included. Whole copies by default, a copy limit as
-  ceiling or exact count, no overclock or Somersloops (FICSIT does not
-  overclock whole factories), lockable and markable as built. The new
-  **Sub-models** tab shows what your model offers and the models placed in it.
-  Open the model it stands for in a new tab, or in the same window with a way
-  back on the desktop; placed models are brought up to date when the plan
-  opens and on request.
-- **Existing factories count themselves.** Leave a factory empty and set a
-  rate on each of its ports, on the canvas or in the Inspector: that is what
-  one factory moves. The count you draw is where the plan starts; the
-  calculation grows it when it needs more of them and leaves it alone when
-  nothing pulls on it. With machines inside, the same rates are limits on the
-  boundary and the count is yours.
-- **Special nodes explain themselves.** Hover a special node in the palette
-  and it tells you what it is, how it is used and why it exists, so the sink,
-  the depot or a model input no longer have to be built to be understood.
-  ADA approves of reading the manual.
-- **One Existing Factory building.** The outpost and the blueprint are now a
-  single **Existing Factory** container. It keeps the boundary ports and the
-  count, and adds a title, an icon picked from the item and building images,
-  and a stated power: enter the MW the site consumes or generates and the
-  summary counts it with the rest of the model. Inputs always sit ahead of
-  outputs; a new input slots in before them. Saved models open unchanged,
-  including SFMD imports and models shared by link; only their port order
-  moves inputs first.
-- **The map knows the planet now.** Crash sites, roads, spawn points, the
-  world border, gas pillars, spore flowers and the large and small rocks you
-  can blow up are built into the wiki map as their own layers. Every crash
-  site tells you what it costs to crack open (the item and count, or the power
-  in MW); with a save loaded it also says whether that hard drive is already
-  yours. Rocks, pillars and spore flowers show what a loaded save has already
-  cleared. Everything works offline, no MAM uplink required.
-- **Vehicles and trains on the map.** A loaded save now places your trucks,
-  tractors, explorers, factory carts, drones, locomotives and freight wagons
-  as their own world-object group. Yes, even the cart.
-- **Water dam nodes on the map.** Refined Power's water dam nodes now show up
-  with the line the dam is built along, the number of sections and the output
-  in MW at that spot. A loaded save marks the ones that already carry a dam or
-  a turbine as taken. Needs a fresh export with the updated exporter.
+- **Sub-model node.** Place another model as one node.
+  - Interface: **Model Input** / **Model Output** nodes in the placed model, one
+    part each, pooled by part.
+  - Ports carry one copy's I/O; count solved like recipe buildings, whole
+    copies by default, copy limit as ceiling or exact.
+  - Per-copy power consumed/produced added to totals.
+  - No overclock, no Somersloops. Lockable, markable as built.
+  - Sources: own cloud models, local drafts, public models. Self-reference
+    and cycles refused.
+  - **Sub-models** tab: this model's interface + placed models with copies and
+    MW. Open model (browser: new tab; desktop: same window with back link).
+    Refresh on open when the source revision changed, and on request.
+- **Existing Factory counts itself.** Empty factory + rate on each port = I/O
+  per factory. Drawn count is the start; solver grows it on demand; limit caps
+  it. Machines inside: port rates are boundary limits, count is manual.
+- **Special node tooltips.** Palette hover: what it is, how to use it, why it
+  exists. All 12 special nodes.
+- **Existing Factory node.** Outpost + Blueprint merged. Boundary ports,
+  count, title, item/building icon, stated MW consumed/generated (counted in
+  summary). Inputs ordered before outputs. Old models, SFMD imports and share
+  links load unchanged.
+- **Map: planet survey.** Crash sites (unlock cost: item + count or MW; save
+  marks collected drives), roads, spawn points, world border, gas pillars,
+  spore flowers, large/small rocks (save marks cleared). Offline.
+- **Map: vehicles and trains.** Trucks, tractors, explorers, factory carts,
+  drones, locomotives, freight wagons from a save as one world-object group.
+- **Map: water dam nodes.** Refined Power dam nodes with dam line, section
+  count, MW at spot; save marks built dams/turbines. Needs fresh export.
 
 ## QUALITY OF LIFE
 
-- **A tidier map panel.** The filter panel is wider, pushes the map aside
-  instead of covering it, and lists everything as compact rows instead of
-  tiles. Buildings from a save are grouped by their build-menu category and
-  sub-category with fold-out headings; the caves, crash sites and other world
-  layers share one Map layers section.
-- **Belts, pipes, rails and roads drawn to scale.** Lines on the map are now
-  as wide as the real thing (a belt 1.35 m, a rail 6 m, a road corridor
-  25 m) and grow as you zoom in instead of staying hairlines. Power lines are
-  drawn between the poles and machines they connect, and hovering any line
-  shows its length.
-- **Deposits get their own loot tab.** Hand-mined deposits now live in a
-  Deposits section on the wiki map, apart from the resource nodes you park a
-  miner on. Every resource remembers its own on/off switch and shows up by
-  default. On the map they are hexagons, so they never pass for a node.
-- **Caves are open for exploration.** The underground caves and their
-  entrances are on the map from the start. Spelunking over? The Underground
-  section switches them off.
+- **Map panel.** Wider, pushes map aside, compact rows. Saved buildings grouped
+  by build-menu category/sub-category. Caves, crash sites, world layers in one
+  Map layers section.
+- **Map lines to scale.** Belt 1.35 m, rail 6 m, road 25 m; scale with zoom.
+  Power lines drawn pole-to-pole/machine. Hover = length.
+- **Map deposits.** Own Deposits section, hexagon markers, per-resource toggle,
+  on by default.
+- **Map caves.** Underground caves/entrances on by default; Underground section
+  toggles.
 
 ## BUGFIXES
 
-- **A way out of an open factory.** The canvas shows a Leave button while a
-  container is open, so touch screens and a focused button no longer trap you
-  inside; a container deleted while open is left automatically. No Pioneer
-  left behind.
-- **The wiki window opens on Windows.** Opening the wiki beside the modeler
-  left a white window that could not be closed, and the modeler with it: the
-  window was built inside a synchronous native command, which deadlocks
-  Windows. It is built asynchronously now, and the wiki window no longer asks
-  for the update checks only the main window may run.
-- **What a factory delivers to its boundary leaves the model.** A machine
-  inside an existing factory that hands its product to a boundary port with
-  nothing wired outside was forced to zero, so a pinned "to outside" rate
-  reported that the group could only reach 0. The product now leaves the
-  model like any unused output, and a rate pinned on a boundary port that is
-  wired on both sides reads once across the boundary instead of splitting
-  into half in and half out.
-- **Buildings that lost their name.** A saved building whose class the wiki
-  keeps under a different folder or a mod name (Pipeline Mk.2, the Seed
-  Extractor), or that only has a build-menu entry, now shows its real name,
-  icon and category instead of a raw class identifier. The few classes the
-  wiki data does not know at all get a readable name and a small question
-  mark in the panel instead of vanishing.
-- **Slugs spotted.** The blue, yellow and purple power-slug icons show on the
-  desktop wiki map again. Markers and the World objects legend use the slug
-  item images from the active game-data pack.
-- **No more idle machines at the end of the line.** A dead-end auto building
-  takes everything its supply delivers. A recipe behind an auto-count miner,
-  or behind a storage fed by several producers, now scales to the full
-  upstream flow instead of stopping at one building and complaining about a
-  surplus.
-- **Pin your Modular Miner output.** Set an exact rate or an upper limit on a
-  merged Modular Miner output without breaking the plan. The port keeps its
-  rate, the miner count follows the pin, and returning the port to automatic
-  restores it.
-- **Overclocked generators stop cheating.** A generator placed as a burn
-  recipe (Coal-Powered, Fuel or Nuclear) now makes power linearly with its
-  clock. It used to borrow the power-consumption curve, so 22 generators at
-  250% claimed more MW than the 55 they replace at 100%. FICSIT auditors have
-  been notified.
-- **Dev links go to dev.** Models shared from the dev site and the dev desktop
-  channel link to dev.k-mods.com instead of production.
-- **A drawn supply is a plan.** With two auto-count miners feeding one chain,
-  the calculation used to hold both at their drawn counts and leave the
-  larger supply half unused. It now uses that supply whole and grows the
-  other miner to match, so 240 crushed ore no longer sits behind one SAM node.
-- **Numbers, not formulas.** Every amount reads as a decimal: 217.5, never
-  435/2. That covers warnings, tooltips, the fields you edit and the arrow-key
-  steps in them. The Fraction number style is gone from the settings.
+- Leave button while a container is open; deleted container auto-leaves.
+- Wiki window on Windows: white/unclosable. Window built in sync command →
+  event-loop deadlock. Now async. Wiki window no longer requests update checks.
+- Container boundary: child output to a boundary port with nothing wired
+  outside was forced to 0 ("can only reach 0"). Now leaves the model. Pinned
+  boundary rate counted once, not half in/half out.
+- Saved buildings with a mod/folder class (Pipeline Mk.2, Seed Extractor) or
+  build-menu-only entry show real name/icon/category. Unknown classes: readable
+  name + "?" instead of vanishing.
+- Power slug icons back on the desktop map (markers + legend).
+- Dead-end auto building takes full upstream supply (auto-count miner, storage
+  fed by several producers) instead of stopping at 1 with a surplus warning.
+- Exact rate / upper limit on a merged Modular Miner output keeps the port
+  rate, count follows; automatic restores.
+- Burn-recipe generators (Coal, Fuel, Nuclear): power linear with clock. Was
+  using the consumption curve (22 × 250% > 55 × 100%).
+- Dev site / dev desktop share links → dev.k-mods.com.
+- Two auto-count miners on one chain: larger drawn supply used whole, other
+  miner grows to match. 240 crushed ore no longer idle behind one SAM node.
+- All amounts decimal (217.5, not 435/2): warnings, tooltips, edit fields,
+  arrow-key steps. Fraction number style removed.

@@ -7,24 +7,18 @@ sidebar:
   order: 3
 ---
 
-Hi Pioneers! A maintenance patch: game data imports without budgets, a bigger
-browser upload, and a few things on Windows that refused to cooperate.
-
 ## QUALITY OF LIFE
 
-- Import and export desktop `.kdata` files without size, file-count or image
-  budgets, including large catalogs and translation bundles.
-- The browser `.kdata` upload limit grows from 64 MiB to 128 MiB.
-- Separate import hints for desktop and browser, and a clear message when
-  checked game data could not be saved.
+- Desktop `.kdata` import/export without size, file-count or image budgets.
+- Browser `.kdata` upload 64 → 128 MiB.
+- Separate desktop/browser import hints; message when checked data could not
+  be saved.
 
 ## BUGFIXES
 
-- Large production chains calculate faster: redundant solver constraints are
-  gone, exact rates and the existing solve budget stay.
-- Import and activate valid game data on Windows after a successful preview.
-  Temporary files are closed before the saved profile registry, recovery
-  state or an existing `.kdata` export is replaced.
-- The companion KModelerExporter mod drops its archive and icon budgets, which
-  could leave pictures out of large modpacks. Export again with the updated
-  mod to pick up pictures missing from an earlier export.
+- Faster solves on large chains: redundant constraints removed, exact rates
+  and budget unchanged.
+- Windows: game data imports/activates after preview; temp files closed before
+  replacing registry, recovery state or `.kdata` export.
+- KModelerExporter: archive/icon budgets removed (missing pictures in large
+  modpacks). Re-export to pick them up.
