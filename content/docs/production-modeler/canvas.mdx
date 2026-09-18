@@ -193,10 +193,12 @@ and building images in the Inspector so it reads as the site it stands for.
 An existing factory does not need anything inside it. Leave it empty and set a
 rate on each of its ports, on the canvas or in the Inspector: that is what one
 such factory takes in and hands out per minute, so there is no ceiling or exact
-to choose. The calculation then counts the factories the plan needs, the way it
-counts the buildings of a recipe, and the count on the card reads that result.
-The factory's own **limit** caps the count. Once machines stand inside, the
-same port rates are limits on the boundary again and the count is yours.
+to choose. The **count** on the card is where the plan starts: the calculation
+grows it when it needs more factories, the way it grows an unfixed miner, and
+the card shows the calculated count beside it when they differ. With nothing
+pulling on the factory it stays at the count you drew. The factory's own
+**limit** caps the count. Once machines stand inside, the same port rates are
+limits on the boundary again and the count is yours.
 
 What machines inside deliver to a boundary port with nothing wired outside
 leaves the model, like any unused output; a rate pinned on that port sizes
