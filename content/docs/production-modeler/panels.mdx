@@ -5,10 +5,11 @@ sidebar:
   order: 3
 ---
 
-Use the panel beside the [canvas](/production-modeler/canvas/) to switch between three tabs:
+Use the panel beside the [canvas](/production-modeler/canvas/) to switch between four tabs:
 
 - **Summary:** factory totals and requirements.
 - **Inspector:** controls for selected nodes.
+- **Sub-models:** what this model offers to other models, and the models placed in it.
 - **Messages:** diagnostics and failed operations.
 
 - **Desktop:** select one node to open Inspector, reopening a closed panel.
@@ -122,6 +123,19 @@ Connection controls add or remove waypoints and disconnect one or all connection
 **Align to connection** moves the node vertically, using the first connection.
 
 Inspector edits apply directly and support Undo; keep them with the normal [saving controls](/production-modeler/saving/).
+
+## Sub-models
+
+The first block reads this model's own interface off the current calculation:
+every part its **Model Input** nodes take in and its **Model Output** nodes
+hand out, with the rate one copy of the model moves, and the power one copy
+draws and makes. That is what another model receives when it places this one.
+Interface nodes without a part or a settled flow are counted separately.
+
+The second block lists the models placed in this one with the copies the
+calculation found, their power and revision. Click a name to reveal the node,
+open the model it stands for, or refresh one or all of them. See
+[reusing a model](/production-modeler/canvas/#reusing-a-model-in-another-model).
 
 ## Messages
 

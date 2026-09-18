@@ -128,7 +128,7 @@ placement:
 - **Connection grid:** snaps waypoints.
 
 Each has independent X and Y spacing. Apply a grid to the whole model, current
-outpost, or selection. Nudging follows the building grid when it is enabled.
+existing factory, or selection. Nudging follows the building grid when it is enabled.
 Review the scope before applying a grid to existing work.
 
 ## Node status and quick controls
@@ -178,21 +178,45 @@ even when recipe details are collapsed:
 Available controls depend on the building. The
 [Inspector](/production-modeler/panels/#inspector) keeps the detailed settings.
 
-## Outposts and blueprints
+## Existing factories
 
-**Outposts** group part of a factory, for example one smelting site of a larger
-plan. Double-click to enter; press **Escape** to leave. Each container keeps its
-own pan and zoom. **Select All** affects the container you are currently viewing.
+An **Existing Factory** groups part of a factory, for example one smelting site
+of a larger plan or a section you have already built. Double-click to enter;
+press **Escape** or use the **Leave** button in the top left corner of the
+canvas to get back out. Each container keeps its own pan and zoom.
+**Select All** affects the container you are currently viewing.
 
-**Blueprints** scale a repeated section by a count. Use one instead of drawing
-the same sub-factory repeatedly.
+Set a **count** to scale a repeated section instead of drawing the same
+sub-factory repeatedly. Give it a **title** and pick an **icon** from the item
+and building images in the Inspector so it reads as the site it stands for.
+
+An existing factory does not need anything inside it. Leave it empty and set a
+rate on each of its ports, on the canvas or in the Inspector: that is what one
+such factory takes in and hands out per minute, so there is no ceiling or exact
+to choose. The calculation then counts the factories the plan needs, the way it
+counts the buildings of a recipe, and the count on the card reads that result.
+The factory's own **limit** caps the count. Once machines stand inside, the
+same port rates are limits on the boundary again and the count is yours.
+
+What machines inside deliver to a boundary port with nothing wired outside
+leaves the model, like any unused output; a rate pinned on that port sizes
+them. Wired on both sides, the pin reads once across the boundary.
+
+An existing factory can also state its **power**: enter the MW it consumes or
+generates and the summary counts that alongside the machines in the model.
+Machines placed inside the container are still counted on their own, so the
+stated MW is for what is not drawn.
+
+Older models that used an outpost or a blueprint open as existing factories
+with everything in place; only the inputs move ahead of the outputs.
 
 ### Wiring a container
 
-A container's ports are the same ports on both sides:
+A container's ports are the same ports on both sides. Inputs always come
+before outputs; a new input slots in ahead of the outputs:
 
 1. On the overview, connect a supply to the container's **input** (for example
-   Iron Ore into a smelting outpost). Add ports in the inspector as needed.
+   Iron Ore into a smelting factory). Add ports in the inspector as needed.
 2. Enter the container. The boundary card shows that input under **From
    outside**: drag from it into your first machines, the ore is available
    there.
@@ -201,11 +225,42 @@ A container's ports are the same ports on both sides:
 4. Back on the overview, the container's **output** feeds the rest of the plan.
 
 Nothing needs to be typed twice: an input takes its part from the belt that
-reaches it outside and hands the same part on inside. A blueprint multiplies
-what its machines make by its count, so its ports show the total that crosses.
+reaches it outside and hands the same part on inside. The count multiplies
+what its machines make, so its ports show the total that crosses.
 
 The header trail shows where you are. Use it to return to a parent container.
 A closed container shows a summary without requiring you to enter it.
+
+## Reusing a model in another model
+
+A model can stand in another model as one node, a **Sub-model**, and scale
+like a recipe. First say what the model offers:
+
+1. In the model you want to reuse, place **Model Input** nodes for the parts
+   it takes from outside and **Model Output** nodes for the parts it delivers.
+   Each carries one part; connect them to the machines that use or make it.
+   Several nodes of the same part pool into one entry.
+2. Solve the model as usual. The **Sub-models** tab in the panel shows the
+   interface that results: each part with the rate one copy of the model
+   moves, and the power one copy draws and makes.
+
+Then, in the plan that uses it, choose **Sub-model** in the palette and pick
+the model: your own models, the ones saved on this device, or a public one.
+The model is solved on its own once and placed as a node whose ports carry
+those rates. Ask for 60 plates from a model that makes 30 and the calculation
+counts two copies; the inputs scale with them, and so does the power. Whole
+copies are the default; the Inspector offers the fraction, a copy limit as a
+ceiling or an exact count. A sub-model cannot be overclocked or slooped. It
+can be locked and marked as built like any other node.
+
+**Open model** on the node, in its context menu or in the Inspector shows the
+model it stands for: a new browser tab, or on the desktop the same window with
+a way back to the plan in the header. **Refresh** reads the model again. When
+a plan opens, every placed model is compared with the model it stands for and
+brought up to date if that model changed; Messages lists what was refreshed
+and what could not be read. Ports of parts that stay keep their connections.
+
+A model cannot be placed inside itself, directly or through another model.
 
 ## Aligning a port
 

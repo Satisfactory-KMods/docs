@@ -15,10 +15,14 @@ assemblies. Available buildings and settings depend on your model's game data.
 - **Find an entry:** search names, inputs or outputs. Switch between grid and
   detailed list. Recipe filters cover mods, tiers, progression and alternates.
   Search and filters reset when the palette reopens.
+- **Read a special node before placing it:** hover it in the palette for what
+  it is, how it is used and why it exists.
 
 | Special node | Purpose |
 | --- | --- |
-| **Outpost / Blueprint** | Group a sub-factory behind boundary ports: what enters outside is handed out inside, what is delivered inside leaves outside. Double-click to enter. Not individual game buildings. |
+| **Existing Factory** | Group a sub-factory behind boundary ports: what enters outside is handed out inside, what is delivered inside leaves outside. Inputs sit ahead of outputs. Scale it by a count, give it a title and an item or building icon, and state the MW it consumes or generates. Left empty, the rate set on each port is what one factory moves and the count is calculated. Double-click to enter. Not an individual game building; older outposts and blueprints open as this node. |
+| **Sub-model** | Another model placed as one node. Its ports carry what one copy of that model takes in and hands out; the calculation counts the copies like the buildings of a recipe and adds the power one copy draws and makes. No overclock or Somersloops. Open model shows the model it stands for; Refresh reads it again. |
+| **Model Input / Model Output** | The interface of a model meant to be placed elsewhere. One part each: an input hands it in from whoever places the model, an output collects it for them. What flows through them is what one copy of the model needs and delivers. |
 | **Splitter** | One solid part. Starts with one input and three outputs. |
 | **Merger** | Combine the same solid part. Starts with three inputs and one output. |
 | **Pipeline Junction** | One liquid or gas. Starts with two inputs and two outputs. No solids. |
@@ -109,7 +113,7 @@ Night, an active cooldown or insufficient orbital stock prevents calculation.
 
 The game permits one receiver per world. Its duty can fall below 100 percent,
 but the model cannot create another receiver to meet excess demand or multiply
-it through an Outpost/Blueprint count. Construction cost still includes one
+it through an Existing Factory count. Construction cost still includes one
 whole receiver and one selected Railgun at partial duty.
 
 Orbital upkeep is separate from the water/steam cycle: supply **3 of every

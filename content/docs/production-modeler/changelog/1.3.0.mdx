@@ -7,104 +7,120 @@ sidebar:
   order: 2
 ---
 
-## Added
+Hi Pioneers! The wiki moved into the desktop app, ports take a rate straight
+on the canvas, models get icons and colours, the grid snaps everything, and
+Refined Power's big machines (Solar Towers, the Icarus receiver, Modular
+Reactors) and the burner manufacturers can finally be planned properly.
 
-- Browse and search the wiki inside the desktop app using records, images,
-  and translations from the selected game-data pack.
-- View the wiki map on desktop with bundled tiles for zoom levels 3 to 5.
-  Load savegame overlays locally. Higher zoom levels require an internet
-  connection.
-- Click a port's rate on the canvas to set an exact rate, apply an upper
-  limit, or return to automatic calculation. Enter decimals or fractions,
-  with fluid rates shown in cubic metres per minute.
-- Follow a three-step getting-started guide on an empty canvas or in Help:
-  add buildings, connect ports, and set a target rate.
-- Manage every model in one library. A model saved on this device and in the
-  cloud is one card that says where it lives. File models into folders with
-  drag and drop or the card menu, use `/` for subfolders, narrow the list by
-  folder, tag chips, or storage location, and keep folders and tags on models
-  that are only on this device; they travel with the first cloud save.
-- Give a model an icon and a colour in its details: pick an Iconify icon or a
-  game image, choose a colour preset or set your own. The library cards and the
-  editor header carry both.
-- Browse and enter MDI icons without an internet connection, and reuse existing
-  tags and folders directly from the model-details dialog.
-- Show the canvas grid with a toggle next to Fit in the bottom-left corner. The
-  grid scales with the zoom, sits on the site background, and is the same grid
-  that buildings snap to; its default cell is 50.
-- Snap dragged connection labels to the grid by their centre; on 2D routes a
-  label also levels with a nearby port so the line into it runs straight.
-- Hold Ctrl while dragging a building, a label or a waypoint to invert snapping
-  for that drag alone.
-- Read a storage's output as what goes in: an output with no part, rate or
-  connection shows the input part at the incoming rate. Wiring it on hands that
-  part to the belt.
-- Show buildings from a loaded savegame on the wiki map, with per-type
-  toggles, search and their real pickup icons. Draw footprints and spline-based
-  structures as geometry instead of marker clouds.
-- Toggle the bundled underground caves and entrances. Organise world objects
-  into compact category grids with section-level select and clear actions, and
-  show the corresponding item icons for power slugs.
-- Keep resource deposits on the map with their bound resource, remaining
-  amount and hand-mining yield.
-- Restore the original wrapping version, update controls and build information
-  in the home-page hero. Carry the complete slim update/version bar into the editor.
-- Model BurnerManufacturer recipes with a separate, selectable fuel input,
-  including clock and Somersloop power scaling without electric grid demand.
-- Plan Refined Power Solar Towers with the selected fluid recipe, linked and
-  visible mirrors, and a daylight snapshot. Count installed mirrors in building,
-  construction and power totals even when they cannot see the tower.
-- Plan the single Icarus receiver with daytime, cooldown and orbital-stock
-  settings. Keep global orbital upkeep independent of receiver duty and count
-  the selected Railgun's power separately. Launch batches and tick-dependent
-  charging times are not simulated.
-- Plan Refined Power Modular Reactors as their complete physical assembly,
-  including ten chambers, I/O ring, optional cooling addon, selected shielding,
-  fuel, cooling medium, heat, clock, tick rate, steam and power output.
+## NEW FEATURES
 
-## Changed
+- **The wiki, offline.** Browse and search the wiki inside the desktop app
+  using records, images and translations from the selected game-data pack.
+- **The map, offline.** View the wiki map on desktop with bundled tiles for
+  zoom levels 3 to 5 and load savegame overlays locally. Higher zoom levels
+  still need an internet connection.
+- **Rates on the canvas.** Click a port's rate to set an exact rate, apply an
+  upper limit, or hand it back to the automatic calculation. Enter decimals
+  or fractions; fluid rates show in cubic metres per minute.
+- **Onboarding for new hires.** A three-step getting-started guide on an empty
+  canvas or in Help: add buildings, connect ports, set a target rate.
+- **One model library.** A model saved on this device and in the cloud is one
+  card that says where it lives. File models into folders with drag and drop
+  or the card menu, use `/` for subfolders, narrow the list by folder, tag
+  chips or storage location, and keep folders and tags on models that are only
+  on this device; they travel with the first cloud save.
+- **Model icons and colours.** Pick an Iconify icon or a game image, choose a
+  colour preset or set your own. The library cards and the editor header carry
+  both.
+- **Icons without uplink.** Browse and enter MDI icons without an internet
+  connection, and reuse existing tags and folders straight from the
+  model-details dialog.
+- **The grid.** Show the canvas grid with a toggle next to Fit in the
+  bottom-left corner. It scales with the zoom, sits on the site background and
+  is the same grid buildings snap to; its default cell is 50.
+- **Labels snap too.** Dragged connection labels snap to the grid by their
+  centre; on 2D routes a label also levels with a nearby port so the line into
+  it runs straight.
+- **Ctrl overrides snapping.** Hold Ctrl while dragging a building, a label or
+  a waypoint to invert snapping for that drag alone.
+- **Storage output reads its input.** An output with no part, rate or
+  connection shows the input part at the incoming rate. Wiring it on hands
+  that part to the belt.
+- **Your buildings on the map.** Buildings from a loaded savegame show on the
+  wiki map with per-type toggles, search and their real pickup icons.
+  Footprints and spline-based structures are drawn as geometry instead of
+  marker clouds.
+- **Caves and slugs.** Toggle the bundled underground caves and entrances.
+  World objects sit in compact category grids with section-level select and
+  clear actions, and power slugs show their item icons.
+- **Deposits stay.** Resource deposits keep their bound resource, remaining
+  amount and hand-mining yield on the map.
+- **Home-page hero, restored.** The original wrapping version, update controls
+  and build information are back in the hero, and the complete slim
+  update/version bar carries into the editor.
+- **Burner manufacturers.** Model BurnerManufacturer recipes with a separate,
+  selectable fuel input, including clock and Somersloop power scaling without
+  electric grid demand.
+- **Solar Towers.** Plan Refined Power Solar Towers with the selected fluid
+  recipe, linked and visible mirrors, and a daylight snapshot. Installed
+  mirrors count in building, construction and power totals even when they
+  cannot see the tower.
+- **The Icarus receiver.** Plan the single Icarus receiver with daytime,
+  cooldown and orbital-stock settings. Global orbital upkeep stays independent
+  of receiver duty and the selected Railgun's power counts separately. Launch
+  batches and tick-dependent charging times are not simulated.
+- **Modular Reactors.** Plan Refined Power Modular Reactors as their complete
+  physical assembly: ten chambers, I/O ring, optional cooling addon, selected
+  shielding, fuel, cooling medium, heat, clock, tick rate, steam and power
+  output.
 
-- Redesign the model cards with the storage location, folder, tags, an in-place
+## QUALITY OF LIFE
+
+- **Model cards, redesigned.** Storage location, folder, tags, an in-place
   editor with tag suggestions, and a right-click menu that moves a model to a
   folder, removes only the local copy, or deletes only the cloud copy.
-- Accept `.kdata` v2 packs with optional wiki data while continuing to read
-  v1 packs. Preserve the wiki section when exporting a desktop pack.
-- Ship SatisfactoryPlus game data as a bundled `.kdata` archive alongside
-  Vanilla, using the same pack format as imported game data.
-- Increase the browser `.kdata` upload limit from 128 MiB to 512 MiB and
-  support packs containing up to 10,000 files.
-- Reduce unnecessary redraws and summary calculations when selecting or
-  moving nodes in large models. Changing summary settings no longer restarts
-  the production calculation.
-- Pin a building count directly in the footer chip that shows it: the solved
-  count is the placeholder, typing a number fixes it, clearing hands it back to
-  the calculation. The separate field in the card header is gone.
-- Cut long names on the cards to one line with an ellipsis; the tooltip carries
-  the full name. Cards are 50 px wider and the footer chips share one height.
-- Move every dialog, in the Modeler and across the site, onto one dialog
-  anatomy: eyebrow, title, description, content and footer look and behave the
-  same everywhere, including Escape and backdrop handling.
-- Use an outpost or blueprint as a sub-factory: the container's ports are the
+- **`.kdata` v2.** Accept v2 packs with optional wiki data while continuing to
+  read v1 packs. The wiki section survives a desktop pack export.
+- **SatisfactoryPlus, bundled.** SatisfactoryPlus game data ships as a bundled
+  `.kdata` archive alongside Vanilla, in the same pack format as imported game
+  data.
+- **Bigger uploads.** The browser `.kdata` upload limit grows from 128 MiB to
+  512 MiB and packs may hold up to 10,000 files.
+- **Less redrawing.** Selecting or moving nodes in large models triggers fewer
+  redraws and summary calculations, and changing summary settings no longer
+  restarts the production calculation.
+- **Pin the count in the footer.** Pin a building count directly in the footer
+  chip that shows it: the solved count is the placeholder, typing a number
+  fixes it, clearing hands it back to the calculation. The separate field in
+  the card header is gone.
+- **Card names on one line.** Long names are cut with an ellipsis; the tooltip
+  carries the full name. Cards are 50 px wider and the footer chips share one
+  height.
+- **One dialog anatomy.** Every dialog, in the Modeler and across the site,
+  shares eyebrow, title, description, content and footer, including Escape and
+  backdrop handling.
+- **Outposts and blueprints as sub-factories.** The container's ports are the
   same on both sides. What you connect to an input on the overview is handed
   out inside under "From outside", so it can feed the machines there; what the
   machines deliver under "To outside" leaves through the container's output.
   Models wired the earlier way keep working.
-- Open model details by clicking the model's icon, colour and name in the editor
-  header. Remove the redundant edit and details buttons beside it.
-- Show tooltip amounts as numbers with four decimals instead of fractions such
-  as "9549/80/min". Installs that kept the earlier defaults move along; a format
-  you chose yourself stays as it is.
+- **Model details from the header.** Click the model's icon, colour and name
+  in the editor header to open its details; the redundant edit and details
+  buttons beside it are gone.
+- **Decimals in tooltips.** Tooltip amounts show as numbers with four decimals
+  instead of fractions such as "9549/80/min". Installs that kept the earlier
+  defaults move along; a format you chose yourself stays as it is.
 
-## Fixed
+## BUGFIXES
 
 - Preserve a saved canvas position and zoom when opening an imported model.
 - Save model settings after changing recipe input, power, or Space Elevator
   multipliers.
 - Switch the language while reading the wiki and see the page in that language
   right away, instead of after the next reload.
-- Let outposts without a connected supply represent external production
-  sized to downstream demand. Keep explicit rate limits and balance inputs
-  against outputs when a supply is connected.
+- Let outposts without a connected supply represent external production sized
+  to downstream demand. Keep explicit rate limits and balance inputs against
+  outputs when a supply is connected.
 - Load imported `.kdata` packs again. A pack whose parts lacked fields the
   schema fills in failed its integrity check on every open with "Required game
   data is missing", although the import itself had succeeded.
@@ -117,18 +133,20 @@ sidebar:
   leaving for k-mods.com.
 - Preserve planned Icarus stocks and existing port identities when explicitly
   mapping renamed orbital items during a game-data migration.
-- Save a game image chosen as a model icon to the cloud without a 422 validation
-  error. Creation, metadata edits and local validation accept the same formats.
+- Save a game image chosen as a model icon to the cloud without a 422
+  validation error. Creation, metadata edits and local validation accept the
+  same formats.
 - Keep draft recovery actions disabled while the model is loading or another
   operation is running, so an early restore click is not silently rejected.
 
-## Game-data compatibility
+## GAME DATA
 
-The bundled Vanilla and SatisfactoryPlus packs currently contain catalog
-data only. To use the desktop wiki, import a `.kdata` pack that includes wiki
-data. Existing v1 packs still work for modeling. Modeler 1.2.1 and older
-cannot import v2 packs.
+The bundled Vanilla and SatisfactoryPlus packs currently contain catalog data
+only. To use the desktop wiki, import a `.kdata` pack that includes wiki data.
+Existing v1 packs still work for modeling. Modeler 1.2.1 and older cannot
+import v2 packs.
 
-BurnerManufacturer, Solar Tower, Icarus and Modular Reactor support requires fresh game data
-from the updated KModelerExporter. Missing or inconsistent special-building
-metadata produces diagnostics instead of a supported calculation.
+BurnerManufacturer, Solar Tower, Icarus and Modular Reactor support needs fresh
+game data from the updated KModelerExporter. Missing or inconsistent
+special-building metadata produces diagnostics instead of a supported
+calculation.
