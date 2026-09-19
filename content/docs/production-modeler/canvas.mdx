@@ -240,7 +240,8 @@ reading every port off one card:
    output.
 4. Back on the overview, the container's **output** feeds the rest of the plan.
 
-Inside, the palette offers **Factory input** and **Factory output**: placing
+Inside, the palette offers **Factory input** and **Factory output** in place
+of Model Input and Model Output, which belong to the top level only: placing
 one adds the port to the container and stands it where you dropped it, and
 dragging a connection onto empty canvas offers the matching one already wired.
 Drag a port node where it reads best; delete it, or use the bin in its header,
@@ -270,10 +271,13 @@ like a recipe. First say what the model offers:
    interface that results: each part with the rate one copy of the model
    moves, and the power one copy draws and makes.
 
-Then, in the plan that uses it, choose **Sub-model (Exp)** in the palette and pick
-the model from the catalog: your own models, the ones saved on this device, or
-a public one. Each card shows what the model delivers and needs, its tags and
-folder; hover it for the long card with size, buildings and revision. Search
+Then, in the plan that uses it, choose **Sub-model (Exp)** in the palette: the
+panel turns into the model catalog (the arrow in its header goes back to the
+node list) and you pick the model there: your own models, the ones saved on
+this device, or a public one. As a grid each tile shows the parts as icons,
+green for what the model delivers and red for what it needs; the detailed list
+names them with the tags and folder. Hover a card for the long card with size,
+buildings and revision. Search
 by name, tag, folder or product, filter by where a model lives, and hide the
 ones without an interface with **Placeable only**. Type a name and press Enter
 to place the first match.
@@ -300,19 +304,34 @@ A model cannot be placed inside itself, directly or through another model.
 A **blueprint** is a selection kept under a name so you can place it again in
 any plan. Select the nodes, then choose **Save as blueprint** in the canvas
 toolbar or in a node's context menu, and give it a name, an icon and a colour.
+The name and icon are suggested from the selection's end product: the part a
+Model Output declares, or otherwise the part left open on an output port, with
+the rate the last calculation put on it, such as "Iron Plate 60/min". Type
+over it if you want another name.
 The selected nodes and the connections between them are saved as they stand;
 a container brings what is inside it. Built and locked marks are not part of a
 blueprint, because they belong to the plan the selection came from.
-Blueprints stay on this device, like drafts.
+Blueprints always stay on this device, without a limit, and are mirrored to
+your account while you are signed in; see
+[Blueprints in your account](/production-modeler/saving/#blueprints-in-your-account).
 
-**Blueprints** in the toolbar, or the **Blueprint** entry in the palette, opens
-the catalog. Each card shows what the blueprint delivers and needs and how many
-nodes it holds; hover it for the long card with connections, buildings and
-when it was saved. A blueprint saved with other game data says so and can
+**Blueprints** in the toolbar, or the **Blueprint** entry in the palette, turns
+the palette panel into the blueprint catalog; the arrow in its header goes back
+to the node list, and the panel can be dragged around like the palette. Like
+the palette it has a grid and a detailed list: a grid tile shows the parts as
+icons, green for what the blueprint delivers and red for what it needs, and
+the list names them. The choice is remembered and shared with the sub-model
+picker. Each card shows how many nodes it holds; hover it for the long card
+with connections, buildings and when it was saved. A blueprint saved with other game data says so and can
 still be placed. Every card offers two ways of placing it:
 
-- **Production line** puts the nodes back exactly as they were copied, editable
-  like any other node, at the point where you opened the palette.
+- **Production line** puts the nodes back as they were copied, editable like
+  any other node, at the point where you opened the palette, and completes
+  their interface: at the top level a **Model Input** for every part the
+  selection wants and a **Model Output** for every part it delivers, wired to
+  every port of that part. Inside an existing factory the same open ports
+  become factory ports instead, and a Model Input or Model Output among the
+  placed nodes becomes a factory port standing where the node stood.
 - **Existing factory** folds them into one existing factory that wears the
   blueprint's name and icon. Every port the selection left open becomes a port
   of the factory, one per part and direction, already wired to the machines
@@ -321,7 +340,7 @@ still be placed. Every card offers two ways of placing it:
 
 Either way it is one step for undo. Search by name or part; Enter places the
 first match as a production line. The pencil renames a blueprint or changes
-its icon and colour, the bin removes it from this device.
+its icon and colour, the bin removes it from this device and from your account.
 
 ## Aligning a port
 

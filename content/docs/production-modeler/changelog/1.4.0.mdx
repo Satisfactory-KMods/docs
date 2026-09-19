@@ -24,10 +24,19 @@ the map, water dam nodes, and a solver that no longer leaves buildings idle.
   - **Sub-models** tab: this model's interface + placed models with copies and
     MW. Open model (browser: new tab; desktop: same window with back link).
     Refresh on open when the source revision changed, and on request.
-- **Blueprints.** Save a selection under a name, icon and colour; place it
-  from its catalog as a production line (the nodes as copied) or as one
-  Existing Factory whose ports are the selection's open ports, one per part,
-  wired. Device-local, one undo step, built and locked marks dropped.
+- **Blueprints.** Save a selection under a name, icon and colour (suggested
+  from the end product and its solved rate); place it from its catalog as a
+  production line (the nodes as copied plus Model Input/Output for open
+  parts, factory ports inside a factory) or as one Existing Factory whose
+  ports are the selection's open ports, one per part, wired. One undo step,
+  built and locked marks dropped. Always kept on the device without a limit
+  and, while signed in, mirrored to the account (50, Patreon 2,000; a full
+  account leaves new ones on the device until there is room). Newer side wins,
+  a deletion elsewhere is followed. Switch under **Settings**, **Saves and
+  recovery**.
+- **Grid or list in the catalogs.** The blueprint catalog and the sub-model
+  picker take the palette's view toggle: tiles with part icons or rows naming
+  them, one remembered choice for both. Palette port icons read stronger.
 - **Factory ports as nodes.** Inside an Existing Factory its ports stand as
   nodes: drag them, wire them, add **Factory input** / **Factory output** from
   the palette. Model unchanged; only the port position is stored.
