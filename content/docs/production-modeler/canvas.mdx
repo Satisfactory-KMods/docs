@@ -204,10 +204,11 @@ and building images in the Inspector so it reads as the site it stands for.
 An existing factory does not need anything inside it. Leave it empty and set a
 rate on each of its ports, on the canvas or in the Inspector: that is what one
 such factory takes in and hands out per minute, so there is no ceiling or exact
-to choose. The **count** on the card is where the plan starts: the calculation
-grows it when it needs more factories, the way it grows an unfixed miner, and
-the card shows the calculated count beside it when they differ. With nothing
-pulling on the factory it stays at the count you drew. The factory's own
+to choose. The **count** in the card's footer chip is where the plan starts:
+the calculation grows it when it needs more factories, the way it grows an
+unfixed miner, and the chip shows the calculated count after an arrow when
+they differ. With nothing pulling on the factory it stays at the count you
+drew. The factory's own
 **limit** caps the count. Once machines stand inside, the same port rates are
 limits on the boundary again and the count is yours.
 
@@ -226,20 +227,32 @@ with everything in place; only the inputs move ahead of the outputs.
 ### Wiring a container
 
 A container's ports are the same ports on both sides. Inputs always come
-before outputs; a new input slots in ahead of the outputs:
+before outputs; a new input slots in ahead of the outputs. Inside the
+container each port stands as a node of its own, the way a model's inputs and
+outputs do, so you place it where its belt arrives or leaves instead of
+reading every port off one card:
 
 1. On the overview, connect a supply to the container's **input** (for example
    Iron Ore into a smelting factory). Add ports in the inspector as needed.
-2. Enter the container. The boundary card shows that input under **From
-   outside**: drag from it into your first machines, the ore is available
-   there.
-3. Connect your last machines to the container's output, shown under **To
-   outside**.
+2. Enter the container. That input is a **From outside** node: drag from it
+   into your first machines, the ore is available there.
+3. Connect your last machines to a **To outside** node, the container's
+   output.
 4. Back on the overview, the container's **output** feeds the rest of the plan.
+
+Inside, the palette offers **Factory input** and **Factory output**: placing
+one adds the port to the container and stands it where you dropped it, and
+dragging a connection onto empty canvas offers the matching one already wired.
+Drag a port node where it reads best; delete it, or use the bin in its header,
+to remove the port from the container. Adding a port in the Inspector puts a
+new node inside in the same way. Inputs start in a column on the left and
+outputs on the right until you move them.
 
 Nothing needs to be typed twice: an input takes its part from the belt that
 reaches it outside and hands the same part on inside. The count multiplies
-what its machines make, so its ports show the total that crosses.
+what its machines make, so its ports show the total that crosses; a counted
+factory's port shows that total first and the rate one factory states
+beneath it.
 
 The header trail shows where you are. Use it to return to a parent container.
 A closed container shows a summary without requiring you to enter it.
@@ -258,7 +271,12 @@ like a recipe. First say what the model offers:
    moves, and the power one copy draws and makes.
 
 Then, in the plan that uses it, choose **Sub-model (Exp)** in the palette and pick
-the model: your own models, the ones saved on this device, or a public one.
+the model from the catalog: your own models, the ones saved on this device, or
+a public one. Each card shows what the model delivers and needs, its tags and
+folder; hover it for the long card with size, buildings and revision. Search
+by name, tag, folder or product, filter by where a model lives, and hide the
+ones without an interface with **Placeable only**. Type a name and press Enter
+to place the first match.
 The model is solved on its own once and placed as a node whose ports carry
 those rates. Ask for 60 plates from a model that makes 30 and the calculation
 counts two copies; the inputs scale with them, and so does the power. Whole
@@ -266,9 +284,11 @@ copies are the default; the Inspector offers the fraction, a copy limit as a
 ceiling or an exact count. A sub-model cannot be overclocked or slooped. It
 can be locked and marked as built like any other node.
 
-**Open model** on the node, in its context menu or in the Inspector shows the
+**Open model** in the node's header, in its context menu or in the Inspector shows the
 model it stands for: a new browser tab, or on the desktop the same window with
-a way back to the plan in the header. **Refresh** reads the model again. When
+a way back to the plan in the header. The desktop saves your plan first; if
+that save fails, you stay on the plan and Messages says why. **Refresh** reads
+the model again. When
 a plan opens, every placed model is compared with the model it stands for and
 brought up to date if that model changed; Messages lists what was refreshed
 and what could not be read. Ports of parts that stay keep their connections.
