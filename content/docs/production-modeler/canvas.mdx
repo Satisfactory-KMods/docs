@@ -295,8 +295,46 @@ and what could not be read. Ports of parts that stay keep their connections.
 
 A model cannot be placed inside itself, directly or through another model.
 
+## Saving part of a plan as a blueprint
+
+A **blueprint** is a selection kept under a name so you can place it again in
+any plan. Select the nodes, then choose **Save as blueprint** in the canvas
+toolbar or in a node's context menu, and give it a name, an icon and a colour.
+The selected nodes and the connections between them are saved as they stand;
+a container brings what is inside it. Built and locked marks are not part of a
+blueprint, because they belong to the plan the selection came from.
+Blueprints stay on this device, like drafts.
+
+**Blueprints** in the toolbar, or the **Blueprint** entry in the palette, opens
+the catalog. Each card shows what the blueprint delivers and needs and how many
+nodes it holds; hover it for the long card with connections, buildings and
+when it was saved. A blueprint saved with other game data says so and can
+still be placed. Every card offers two ways of placing it:
+
+- **Production line** puts the nodes back exactly as they were copied, editable
+  like any other node, at the point where you opened the palette.
+- **Existing factory** folds them into one existing factory that wears the
+  blueprint's name and icon. Every port the selection left open becomes a port
+  of the factory, one per part and direction, already wired to the machines
+  that need it. Enter the factory to see the nodes inside; the factory is
+  counted and limited like any other existing factory.
+
+Either way it is one step for undo. Search by name or part; Enter places the
+first match as a production line. The pencil renames a blueprint or changes
+its icon and colour, the bin removes it from this device.
+
 ## Aligning a port
 
 Choose **Align to connection** in the Inspector to move the node vertically
 until its port lines up with the connected port. Horizontal placement stays
 unchanged. If the port has several connections, the first one is used.
+
+## Finding a node
+
+**Find a node** in the toolbar, or **Ctrl + F**, opens a catalog of every node
+in the whole model, containers included. Each card shows the node's name, kind
+and building, the parts on its ports, the container it stands in and how many
+connections it has; hover a card for the long description with its clock,
+limit, count and built or locked state. Search by name, building or part,
+narrow by kind or by container, then choose a card or press Enter for the
+highlighted one: the canvas enters its container and travels to it.

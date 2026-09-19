@@ -24,6 +24,16 @@ the map, water dam nodes, and a solver that no longer leaves buildings idle.
   - **Sub-models** tab: this model's interface + placed models with copies and
     MW. Open model (browser: new tab; desktop: same window with back link).
     Refresh on open when the source revision changed, and on request.
+- **Blueprints.** Save a selection under a name, icon and colour; place it
+  from its catalog as a production line (the nodes as copied) or as one
+  Existing Factory whose ports are the selection's open ports, one per part,
+  wired. Device-local, one undo step, built and locked marks dropped.
+- **Factory ports as nodes.** Inside an Existing Factory its ports stand as
+  nodes: drag them, wire them, add **Factory input** / **Factory output** from
+  the palette. Model unchanged; only the port position is stored.
+- **Catalogs for models and nodes.** **Switch model** (**Ctrl + O**) and
+  **Find a node** (**Ctrl + F**) are card catalogs with search, filters and
+  long hover cards.
 - **Existing Factory counts itself.** Empty factory + rate on each port = I/O
   per factory. Drawn count is the start; solver grows it on demand; limit caps
   it. Machines inside: port rates are boundary limits, count is manual.
