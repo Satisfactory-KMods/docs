@@ -124,15 +124,15 @@ things.
   (`Entry->Line`), because they're about one specific YAML node. Example, from `type: cdo`:
 
   ```
-  [Error] my-pack/bad.cdo.yml:12: 'matchTag' requires an 'ofClass' scope class
+  [Error] my-pack/bad.cdo.yml:12: 'matchTag', 'matchName' and 'where' require an 'ofClass' scope class (only the recipe shortcuts 'producedIn', 'ingredient', 'product' default to FGRecipe)
   ```
 
   If `ValidateDocument` returns `false`, `ApplyDocument` is **never called** for that document. It's
   zero ops, and the document doesn't count toward "document(s) applied" in the report at all.
 
 - **`ApplyDocument` is semantic.** Now it resolves your YAML against the actual running game. Does
-  `target:` point at a real, loadable class or object? Does `matchTag` + `ofClass` actually match
-  anything? This is where a structurally-perfect document can still fail because a path is wrong or
+  `target:` point at a real, loadable class or object? Does `matchTag` / `producedIn` / `where` + `ofClass` actually
+  match anything? This is where a structurally-perfect document can still fail because a path is wrong or
   a class doesn't exist:
 
   ```

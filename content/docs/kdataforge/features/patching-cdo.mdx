@@ -18,7 +18,7 @@ alongside it.
 ## Shape of a patch entry
 
 A `type: cdo` document is just a `patches:` list. Each entry needs at least one target selector
-(`target:`, `allAssetsOfClass:`, or `matchTag:`/`ofClass:`), optional modifiers, and a
+(`target:`, `allAssetsOfClass:`, or an `ofClass:` scope with filters such as `matchTag:`, `matchName:`, `producedIn:`, `where:`), optional modifiers, and a
 `properties:` list describing the actual edits. The example below halves `mManufactoringDuration`
 on the iron ingot recipe:
 
@@ -29,7 +29,7 @@ patches:
     target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
     # target: also accepts a sequence of paths, patching every entry with the same properties:
     # OR: allAssetsOfClass: ...
-    # OR: matchTag: ... + ofClass: ...
+    # OR: ofClass: ... + filters (matchTag / matchName / producedIn / ingredient / product / where)
 
     # ---- modifiers (all optional) ----
     applyToSubclasses: false
@@ -111,7 +111,7 @@ the property's type, and how to address nested/array/map properties in the path 
 
 | Concern                                                                                                                                                                        | Page                                                                                           |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| **Selecting what to patch**: class path, object path, `allAssetsOfClass:`, `matchTag:`/`ofClass:`, `applyToSubclasses:`, `applyToSpawnedActors:`, the bare class-name shortcut | [Targeting](/kdataforge/features/targeting)                                      |
+| **Selecting what to patch**: class path, object path, `allAssetsOfClass:`, `ofClass:` scope filters (`matchTag:`, `matchName:`, `producedIn:`/`ingredient:`/`product:`, `where:`), `applyToSubclasses:`, `applyToSpawnedActors:`, the bare class-name shortcut | [Targeting](/kdataforge/features/targeting)                                      |
 | **What you can do to a value**: all 22 operations and which property kinds accept them                                                                                         | [Operations](/kdataforge/features/operations)                                    |
 | **How to write a value**: every property kind's YAML form (bool, numerics, enums, strings, FText, object/class/soft refs, structs, arrays/sets/maps, gameplay tags)            | [Property Types](/kdataforge/features/property-types)                            |
 | **The path grammar**: array indices, map keys, struct/object dereference, authored-name matching                                                                               | [YAML Schema → Property Paths](/kdataforge/reference/yaml-schema#property-paths) |
@@ -138,7 +138,7 @@ instance and do not preserve player-modified or save-restored values through sna
 
 ## Troubleshooting
 
-- **A patch "did nothing" and there's no error**: check `matchTag`/`allAssetsOfClass` selectors
+- **A patch "did nothing" and there's no error**: check `matchTag`/`where`/`producedIn`/`allAssetsOfClass` selectors
   first. A selector that matches zero objects only warns (`/kdf report`). It doesn't fail the
   document, and it's an easy typo to miss because nothing looks broken until you actually check.
 - **Not sure which of the three target selectors to reach for?** [Targeting → Choosing a

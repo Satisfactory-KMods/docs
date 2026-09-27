@@ -1,6 +1,6 @@
 ---
 title: Balancing
-description: Editing examples for base-game balance, recipes, items, resources, equipment, consumables, schematics, research, categories, belts, and bulk tag edits.
+description: Editing examples for base-game balance, recipes, items, resources, equipment, consumables, schematics, research, categories, belts, and bulk edits by tag, producer building, ingredient, product, name pattern, or property value.
 sidebar:
   order: 2
 ---
@@ -368,3 +368,208 @@ patches:
 
 Registering and matching your **own** tags works the same way. See
 [Game Tags](/kdataforge/features/game-tags).
+
+## Bulk edits by producer building (`producedIn`)
+
+Not everything you want to select carries a tag. The most common recipe question is "everything
+crafted in machine X", and `producedIn:` answers it directly. It defaults its scope to `FGRecipe`,
+takes one class or a list, and a recipe matches when its `mProducedIn` references that class **or a
+subclass of it**. Full class paths, bare class names, and generated-content ids all work:
+
+```yaml
+type: cdo
+patches:
+  # every Constructor recipe: 25% faster
+  - producedIn: Build_ConstructorMk1_C
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.75
+
+  # every Assembler OR Manufacturer recipe: 10% less power (variable-power recipes)
+  - producedIn:
+      - /Game/FactoryGame/Buildable/Factory/AssemblerMk1/Build_AssemblerMk1.Build_AssemblerMk1_C
+      - /Game/FactoryGame/Buildable/Factory/ManufacturerMk1/Build_ManufacturerMk1.Build_ManufacturerMk1_C
+    properties:
+      - path: mVariablePowerConsumptionFactor
+        op: multiply
+        value: 0.9
+```
+
+The subclass rule turns the native base classes into families. Three are worth memorising:
+
+| `producedIn:` value                          | Selects every recipe crafted …                                                                      |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `/Script/FactoryGame.FGBuildableManufacturer` | in any manufacturing machine: Constructor, Assembler, Manufacturer, Refinery, Blender, Packager, … and modded machines built on the same base |
+| `/Script/FactoryGame.FGBuildGun`             | with the build gun, that is every buildable's build recipe                                          |
+| `/Script/FactoryGame.FGWorkBench`            | by hand at the Craft Bench / Equipment Workshop (`BP_WorkBenchComponent_C` and friends derive from it) |
+
+```yaml
+type: cdo
+patches:
+  # hand-crafting is twice as fast, everywhere
+  - producedIn: /Script/FactoryGame.FGWorkBench
+    properties:
+      - path: mManualManufacturingMultiplier
+        op: multiply
+        value: 0.5
+
+  # every buildable costs 20% less (rounded down by the game per ingredient)
+  - producedIn: /Script/FactoryGame.FGBuildGun
+    where:
+      path: mIngredients
+      isEmpty: false
+    properties:
+      - path: mIngredients[0].Amount
+        op: multiply
+        value: 0.8
+```
+
+## Bulk edits by ingredient or product
+
+`ingredient:` and `product:` follow the same rules for `mIngredients` and `mProduct`: an item class
+(or a base class, to catch every item deriving from it), one or many, any-of. They stack with each
+other and with `producedIn:`; every filter on the entry has to hold:
+
+```yaml
+type: cdo
+patches:
+  # everything that consumes Plastic or Rubber crafts 10% faster
+  - ingredient: [Desc_Plastic_C, Desc_Rubber_C]
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.9
+
+  # every recipe producing Screws in an Assembler yields double
+  - product: Desc_IronScrew_C
+    producedIn: Build_AssemblerMk1_C
+    properties:
+      - path: mProduct[0].Amount
+        op: multiply
+        value: 2
+
+  # every recipe that produces ANY equipment (subclass rule on an item base class)
+  - product: /Script/FactoryGame.FGEquipmentDescriptor
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.5
+```
+
+`mProduct[0].Amount` addresses the first product. Recipes with several outputs need one op per
+index; a `where:` clause such as `path: mProduct[*].ItemClass` / `equals: Desc_IronScrew_C` does
+not tell an op which index matched.
+
+## Bulk edits by name pattern (`matchName`)
+
+Vanilla content follows naming conventions, and `matchName:` lets you select on them without tags.
+Patterns are case-insensitive wildcards; the `_C` suffix is optional, and a pattern containing `/`
+is matched against the full class path so you can select by content folder:
+
+```yaml
+type: cdo
+patches:
+  # every vanilla alternate recipe, no KAPI dependency needed
+  - ofClass: /Script/FactoryGame.FGRecipe
+    matchName: Recipe_Alternate_*
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.8
+
+  # every milestone (Progression folder) researches twice as fast
+  - ofClass: /Script/FactoryGame.FGSchematic
+    matchName: /Game/FactoryGame/Schematics/Progression/*
+    properties:
+      - path: mTimeToComplete
+        op: multiply
+        value: 0.5
+```
+
+## Bulk edits by property value (`where`)
+
+`where:` compares any reflected property of every candidate in an `ofClass:` scope. One map, or a
+list of maps that must all hold; each map has a `path:` and exactly one operator (`equals`,
+`notEquals`, `lessThan`, `lessOrEqual`, `greaterThan`, `greaterOrEqual`, `contains`, `notContains`,
+`matches`, `isEmpty`). `[*]` in a path means "any element":
+
+```yaml
+type: cdo
+patches:
+  # slow recipes (longer than 8 s) that use Iron Ingot get a bit faster
+  - ofClass: /Script/FactoryGame.FGRecipe
+    where:
+      - path: mManufactoringDuration
+        greaterThan: 8
+      - path: mIngredients[*].ItemClass
+        equals: Desc_IronIngot_C
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.8
+
+  # every schematic up to tier 3 unlocks instantly
+  - ofClass: /Script/FactoryGame.FGSchematic
+    where:
+      path: mTechTier
+      lessOrEqual: 3
+    properties:
+      - path: mTimeToComplete
+        value: 0
+
+  # every liquid or gas: no sink points (`in` = any of the listed values; enums compare by name)
+  - ofClass: /Script/FactoryGame.FGItemDescriptor
+    where:
+      path: mForm
+      in: [RF_LIQUID, RF_GAS]
+    properties:
+      - path: mResourceSinkPoints
+        value: 0
+
+  # items whose display name mentions "Nuclear" cannot be discarded
+  - ofClass: /Script/FactoryGame.FGItemDescriptor
+    where:
+      path: mDisplayName
+      matches: "*Nuclear*"
+    properties:
+      - path: mCanBeDiscarded
+        value: false
+
+  # recipes with no producer at all become hand-craftable
+  - ofClass: /Script/FactoryGame.FGRecipe
+    where:
+      path: mProducedIn
+      isEmpty: true
+    properties:
+      - path: mProducedIn
+        op: append
+        value: /Game/FactoryGame/Buildable/-Shared/WorkBench/BP_WorkBenchComponent.BP_WorkBenchComponent_C
+```
+
+Reference-typed comparisons (`equals`/`contains`/`in` on a class or soft-class property) match the
+class **or any subclass**, the same way `producedIn:` does, so `path: mProducedIn` / `contains:
+/Script/FactoryGame.FGBuildableManufacturer` is the long-hand spelling of `producedIn:`, and
+`path: mProducedIn` / `in: [Build_ConstructorMk1_C, Build_AssemblerMk1_C]` of a two-entry
+`producedIn:` list. The full operator table lives on
+[Targeting](/kdataforge/features/targeting#where-filter-by-property-values).
+
+## Removing content in bulk
+
+The same filters drive `remove:`. Taking every Particle Accelerator recipe and every tier-8
+milestone out of the game is two short documents; the mechanics, save impact, and the
+recipe-plus-schematic pairing are on [Removing Content](/kdataforge/features/removing-content):
+
+```yaml
+type: recipe
+remove:
+  - producedIn: Build_HadronCollider_C
+```
+
+```yaml
+type: schematic
+remove:
+  - where:
+      path: mTechTier
+      greaterOrEqual: 8
+```

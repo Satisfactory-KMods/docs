@@ -97,10 +97,23 @@ remove:
 
 | Field               | Default | Meaning                                                                 |
 | ------------------- | ------- | ----------------------------------------------------------------------- |
-| `resource`          | required | `UFGResourceDescriptor` class path or generated-content short id       |
+| `resource`          | required¹ | `UFGResourceDescriptor` class path or generated-content short id     |
 | `nodeTypes`         | all     | Sequence of `Node`, `FrackingSatellite`, `FrackingCore`, `Geyser`, or `Deposit` |
 | `allowOccupied`     | `false` | When false, skips a node group used by an extractor                     |
 | `removeFromScanner` | `true`  | Also removes scanner pairs and matching KAPI extractor allow-list data  |
+
+¹ Instead of `resource:`, an entry may carry an `ofClass:` scope (default `FGResourceDescriptor`)
+plus the [scope filters](/kdataforge/features/targeting#ofclass-scope--filters-select-by-tag-name-recipe-shape-or-property-values)
+(`matchName:`, `matchTag:`, `where:`, …); the entry's options then apply to every loaded descriptor
+class that passes, and the load report says how many matched:
+
+```yaml
+type: resourcenode
+remove:
+  - ofClass: /Script/FactoryGame.FGResourceDescriptor
+    matchName: Desc_OreUranium* # vanilla uranium plus any modded variant named like it
+    nodeTypes: [Node]
+```
 
 Qualified node-type names such as `EResourceNodeType::Geyser` also work. An omitted or empty
 `nodeTypes` sequence matches every type. Matching uses each node's **effective** resource class,

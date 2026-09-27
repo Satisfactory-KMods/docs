@@ -54,6 +54,29 @@ The scan includes derived asset classes. A map may combine `target:` and `allAss
 matches accumulate. The provider is an optional dependency: an unresolved bulk class produces an
 Info diagnostic instead of a hard dependency failure.
 
+## Block assets by filter
+
+To block only some of a provider's assets, give a map entry an `ofClass:` scope plus the
+[scope filters](/kdataforge/features/targeting#ofclass-scope--filters-select-by-tag-name-recipe-shape-or-property-values)
+(`matchName:`, `matchTag:`, `where:`). `ofClass:` is required here, sublevel assets have no default
+scope, and only asset instances are matched, never class defaults:
+
+```yaml
+type: sublevel
+conditions:
+  hasMod: RefinedRDLib
+block:
+  - ofClass: /Script/RefinedRDLib.RRDLSublevelAsset
+    matchName: DA_Optional_* # by asset name
+  - ofClass: /Script/KBFL.KBFLSubLevelSpawning
+    where:
+      path: mSubLevelArray
+      isEmpty: false
+```
+
+Filter entries expand against the asset registry when the document applies (same Asset Registry
+caveat as `allAssetsOfClass:`); the load report states how many assets a filter matched.
+
 :::note
 Bulk discovery depends on the Asset Registry. If an installed provider class resolves but the scan
 finds no assets during early startup, KDataForge reports that condition. List exact `target:` paths
