@@ -1,6 +1,6 @@
 ---
 title: Version 1.4.1
-description: Dark Matter recycling uses connected Sink overflow, and Space Elevator deliveries accept exact input rates.
+description: Connected byproduct recycling, exact Space Elevator deliveries, and bundled game-data updates.
 slug: production-modeler/changelog/1.4.1
 sidebar:
   label: '1.4.1'
@@ -9,9 +9,13 @@ sidebar:
 
 ## BUGFIXES
 
-- **Dark Matter recycling.** Residue left over in a connected production loop
-  can feed additional Dark Matter Crystal production; surplus crystals reach
-  the connected Sink while the required crystal flow stays available.
+- **Connected byproduct recycling.** A multi-output recipe can feed an unused
+  byproduct into a connected recipe and send its surplus to a Sink without
+  reducing the flow needed elsewhere. Dark Matter Residue and Crystals are one
+  example.
 - **Space Elevator deliveries.** A configured exact input rate now works as a
   delivery demand even when the catalog has no phase cost or timing data.
   Connecting an elevator at that rate no longer invalidates its production chain.
+- **Bundled game data updates.** Desktop picks up changed Wiki and image data
+  even when the catalog version stays the same. Imported overrides remain
+  untouched until you restore the bundled profile.
