@@ -1,6 +1,6 @@
 ---
 title: Version 1.4.1
-description: Connected byproduct recycling, exact Space Elevator deliveries, bundled game-data updates, fullscreen, and a closable offline notice.
+description: Fullscreen, closable offline notice, update check interval, readable zoomed-out cards, byproduct recycling and Space Elevator fixes.
 slug: production-modeler/changelog/1.4.1
 sidebar:
   label: '1.4.1'
@@ -9,28 +9,23 @@ sidebar:
 
 ## QUALITY OF LIFE
 
-- **Close the offline notice.** The desktop notice about being offline or the
-  server status being unavailable now has a close button. It stays closed until
-  the app restarts.
-- **Choose how often to check for updates.** Settings has an **Updates**
-  section in the desktop app. Check every minute, every 15 minutes, every hour,
-  every 6 hours, once a day, or only when the app starts.
-- **Fullscreen.** The canvas toolbar has a fullscreen button, also on **F11**.
-  It fills the screen with the canvas and hides the model header and the build
-  bar. Press it again to bring them back.
-- **Larger text when zoomed out.** A new Appearance setting, off by default.
-  While you are zoomed far out, each card shows only its name and main figure in
-  text large enough to read. The cards keep their size, so nothing moves.
+- **Offline notice closable.** Offline and server-status notice on desktop has
+  a close button; stays closed until restart.
+- **Update check interval.** **Settings**, **Updates** (desktop): every minute,
+  15 minutes, hour, 6 hours, once a day, or only at start.
+- **Fullscreen.** Canvas toolbar button or **F11**; hides the model header and
+  the build bar.
+- **Larger text when zoomed out.** **Settings**, **Appearance**, off by
+  default: far out, cards show only name and main figure in readable text. Card
+  size unchanged.
 
 ## BUGFIXES
 
-- **Connected byproduct recycling.** A multi-output recipe can feed an unused
-  byproduct into a connected recipe and send its surplus to a Sink without
-  reducing the flow needed elsewhere. Dark Matter Residue and Crystals are one
-  example.
-- **Space Elevator deliveries.** A configured exact input rate now works as a
-  delivery demand even when the catalog has no phase cost or timing data.
-  Connecting an elevator at that rate no longer invalidates its production chain.
+- **Byproduct recycling.** Unused byproduct can feed a connected recipe, surplus
+  to a Sink, without cutting flow elsewhere (e.g. Dark Matter Residue,
+  Crystals).
+- **Space Elevator deliveries.** Exact input rate counts as delivery demand
+  without phase cost or timing data; chain stays valid.
 - **Bundled game data updates.** Desktop picks up changed Wiki and image data
-  even when the catalog version stays the same. Imported overrides remain
-  untouched until you restore the bundled profile.
+  with an unchanged catalog version. Imported overrides untouched until the
+  bundled profile is restored.
