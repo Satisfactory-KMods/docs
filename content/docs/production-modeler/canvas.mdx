@@ -24,6 +24,21 @@ runs it, the cycle time, the power it draws or makes, and its tier, mod and
 alternate marks. A special node explains what it is, how it is used and why it
 exists. The recent chips above the catalog show the same card.
 
+The palette's left column sorts the catalog into categories read from the game
+data: raw resources, liquids, gases, fuel, nuclear, organic, farming,
+packaging, Space Elevator parts, alternate recipes, power, and one entry per
+producing machine. Mod packs sort the same way, and the counts follow the
+search. Click an entry to see its details at the bottom: inputs and outputs per
+minute, how many recipes make or use each part, its machines and their power,
+the cycle time, the milestone or research that unlocks it and a link to its
+wiki page. Double-click an entry or press Enter to add it.
+
+Star an entry to keep it in the Favorites row at the top; favorites are kept per
+device. Click a part in the details to list the recipes that make or use it, and
+**Back** to return to your search. Type `in:` or `out:` to search only inputs or
+outputs: a prefix covers the words after it, so `in:coal out:steel ingot` finds
+what turns coal into Steel Ingots.
+
 Select a node to highlight its connected wires. Right-click it for editing,
 copying, selecting its chain, disconnecting, or deleting. Double-click a node
 to edit it in the Inspector. On narrow screens, select it and choose **Edit**
@@ -101,6 +116,10 @@ For an input, choose Plan automatically to create its supply chain. The wizard
 starts with that part and its required per-minute amount. The chain's final
 producer appears at the point where you dropped the connection, with suppliers
 arranged to its left. Existing nodes, pan and zoom stay where you left them.
+On the review step, **Add another target** keeps the current part and rate and
+starts the next one. All targets are planned together: chains that need the
+same intermediates or resources share one production step and one input.
+Modular Miners the planner places merge both outputs onto one belt.
 
 Keyboard focus highlights the wire itself. A focused label has its own small
 outline, and broken connections keep their error colour.
@@ -114,6 +133,13 @@ Double click a label to put it back in the middle of its connection. You can
 undo or redo a move or reset. With the label focused, arrow keys move it by ten
 canvas pixels, Shift plus an arrow moves it by one, and Home resets it. Escape
 cancels a drag. Read-only models keep their labels in the saved positions.
+
+Click a label to select its connection. Right-click a connection or its label,
+or press the menu key or Shift+F10 on a focused label, for the connection menu:
+select the source, the target or the whole chain, serve the connection earlier
+or later at its split or merge, reset the label, or delete the connection. The
+menu takes the focus and the arrow keys move through it. Read-only models offer
+the selection entries only.
 
 
 ## Waypoints
