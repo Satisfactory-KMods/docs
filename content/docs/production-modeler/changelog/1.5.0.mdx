@@ -34,11 +34,23 @@ sidebar:
   switch. The header names the open tab, each tab has its own address
   (`/production-modeler/datapacks`, `/models`, `/public`) and the last one
   comes back. `/production-modeler/browse` leads to Public Models.
-- **Model library as a file manager.** Folder tree, a details list or tiles of
-  the open folder (folders first) and a details pane. Double-click or Enter
-  opens, Backspace goes up, F2 renames a folder, Delete deletes. New folders
-  are named in place, folders drag onto other folders with everything inside,
-  and a folder menu offers Open, New subfolder, Rename, Move to and Delete.
+- **Model library as a file manager.** A sidebar that browses folders and
+  models, a details list or tiles of the open folder, and a details pane.
+  Double-click or Enter opens, Backspace goes up, F2 renames a folder, Delete
+  deletes. New folders are named in place, folders drag onto other folders
+  with everything inside, and a folder menu offers Open, New subfolder,
+  Rename, Move to and Delete.
+  - **Model library** at the top of the sidebar counts every model and opens
+    the top level: folders first, then the models in no folder. Each folder
+    lists its subfolders, then its models.
+  - A click on a model in the sidebar opens its folder with the model
+    selected; a double click opens the model.
+  - Models and folders also drag from the sidebar. Dropping on
+    **Model library** or the first crumb of the address bar moves them to the
+    top level.
+  - The details list is the default view. Tiles show what a model produces
+    and needs, its nodes, its last change and where it is stored. Folders
+    always come first, in the tiles as their own band above the models.
 - **Model details pane.** What a model produces and needs, its interface with
   the rates set on it, the buildings it uses, node, connection, recipe,
   factory and sub-model counts, folder, tags, revision, dates, and whether it
@@ -63,10 +75,9 @@ sidebar:
 - **Search prefixes.** `in:coal` or `out:steel ingot` searches only inputs or
   outputs; a prefix covers the words after it, so `in:coal out:steel ingot`
   finds what turns coal into Steel Ingots.
-- **Home page layout.** Uses the full window width. The header no longer
-  links to Create and the Production Planner; **New model** sits in the
-  library toolbar. The stat tiles and the public teaser are gone; counts are
-  in the library status bar.
+- **Home page layout.** The header no longer links to Create and the
+  Production Planner; **New model** sits in the library toolbar. The stat
+  tiles and the public teaser are gone; counts are in the library status bar.
 
 ## BUGFIXES
 

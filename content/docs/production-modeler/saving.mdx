@@ -213,19 +213,31 @@ address reopens the tab you used last. Choose
 
 The **Model library** works like a file manager. It lists every model in one
 place, whether it is saved on this device, in the cloud, or both, and the
-**Stored** column says where each one lives. The folder tree sits on the left,
-the list of the open folder in the middle, and the details of whatever you
-selected on the right. Search by name, or narrow the list with the storage switch,
-the tag chips, or a folder. A search looks through every folder below the open
-one. Local models remain usable while cloud models load. A cloud error offers a
-retry and does not replace your local models with an empty screen.
+**Stored** column says where each one lives. The sidebar on the left browses
+your folders, the list of the open folder sits in the middle, and the details of
+whatever you selected are on the right. Search by name, or narrow the list with
+the storage switch, the tag chips, or a folder. A search looks through every
+folder below the open one. Local models remain usable while cloud models load. A
+cloud error offers a retry and does not replace your local models with an empty
+screen.
+
+The sidebar works like the one of a file browser. Its top row, **Model library**,
+counts all your models and opens the top level. There you find your folders
+first, then the models that are in no folder. Each folder in the sidebar lists
+its subfolders and then its models. Click a model in the sidebar to open its
+folder in the list with the model selected, and double-click it to open the
+model.
 
 Click a row to select it and double-click it, or press **Enter**, to open the
 model or enter the folder. **Backspace** goes up one level, **F2** renames the
 selected folder and **Delete** deletes the selection after a confirmation. The
 address bar above the list shows where you are, and each of its folders is a drop
-target. The view switch toggles between the details list and tiles, and your
-choice is saved.
+target.
+
+The list opens in the details view. The view switch changes it to tiles, which
+also show what each model produces and needs, its node count, when it last
+changed, and where it is stored. Your choice is saved. Folders always come
+before models, and in the tiles they get their own band above them.
 
 The details pane reads the model without calculating it. It shows what the model
 produces and needs, its interface of model inputs and outputs with the rates you
@@ -242,10 +254,12 @@ its link. **Open a shared model** below the list opens a link or ID you received
 
 ### Folders and tags
 
-Create a folder with the folder button in the tree header, using `/` for a
+Create a folder with the folder button in the sidebar header, using `/` for a
 subfolder, or with **New folder here** in the library toolbar, which names the new
-folder right in the list. Drag a model onto a folder in the tree, the list or the
-address bar to file it. Folders drag the same way and take everything inside them
+folder right in the list. Drag a model from the list or the sidebar onto a folder
+in the sidebar, the list or the address bar to file it. Drop it on
+**Model library**, in the sidebar or at the start of the address bar, to take it
+back to the top level. Folders drag the same way and take everything inside them
 along, but never into themselves. On a phone, open a row's **More actions** menu
 and choose **Move to folder**. Folders and tags of a cloud model are stored with
 your account; those of a model that is only on this device stay on this device and
@@ -266,7 +280,7 @@ button when a model is open in the workspace. The dialog sets everything at once
 Choose an Iconify icon or a game image from the selected game data, and a colour
 from the presets or a custom value. Both icon formats can be saved locally or
 to the cloud. Tags help you find models, and the folder decides
-where the model appears in the library tree. The icon and colour show in the
+where the model appears in the library. The icon and colour show in the
 library and on the workspace toolbar button, so each model is recognisable at a
 glance. **Save** confirms with a toast; the cloud copy of a model saved to your
 account is updated in the same step.
