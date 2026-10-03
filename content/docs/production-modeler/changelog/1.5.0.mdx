@@ -1,6 +1,6 @@
 ---
 title: Version 1.5.0
-description: Auto Planner plans several targets and merges shared chains, Add a node gets categories, details and favorites, connections get a right-click menu, a file-manager model library, and whole-machine rounding is gone.
+description: Multi-target Auto Planner, Add a node categories and details, connection menu, file-manager model library, whole-machine rounding removed.
 slug: production-modeler/changelog/1.5.0
 sidebar:
   label: '1.5.0'
@@ -9,89 +9,58 @@ sidebar:
 
 ## NEW FEATURES
 
-- **Plan several targets at once.** The Auto Planner takes more than one
-  target: on the review step, **Add another target** keeps the current one and
-  starts the next. Chains that need the same intermediates or resources share
-  one production step and one input. A target that another chain also
-  consumes gets its own producer, so its full rate still leaves as product.
-- **Add a node: categories.** The left column lists categories read from the
-  game data: raw resources, liquids, gases, fuel, nuclear, organic, farming,
-  packaging, Space Elevator parts, alternate recipes, power, and each
-  producing machine. Mod packs sort the same way. Counts follow the search.
-- **Add a node: details.** One click shows the entry at the bottom of the
-  dialog: inputs and outputs per minute, how many recipes make or use each
-  part, the machines with their power, cycle time, the milestone or research
-  that unlocks it, and a link to its wiki page. Double click or Enter adds it.
-- **Connection menu.** Right-click a connection label or line, or press the
-  menu key or Shift+F10 on a focused label: select the source, the target or
-  the whole chain, serve earlier or later at a split or merge, reset the
-  label, delete. The menu takes the focus and the arrow keys move through it.
-  Read-only models offer the selection entries only.
-- **Older desktop versions.** The download page lists earlier builds and
-  releases under **Older versions**, each with its platform downloads. When
-  the storage for a site is full, the oldest version is deleted automatically.
-- **Home page tabs.** Datapacks, Your Models and Public Models on one sliding
-  switch. The header names the open tab, each tab has its own address
-  (`/production-modeler/datapacks`, `/models`, `/public`) and the last one
-  comes back. `/production-modeler/browse` leads to Public Models.
-- **Model library as a file manager.** A sidebar that browses folders and
-  models, a details list or tiles of the open folder, and a details pane.
-  Double-click or Enter opens, Backspace goes up, F2 renames a folder, Delete
-  deletes. New folders are named in place, folders drag onto other folders
-  with everything inside, and a folder menu offers Open, New subfolder,
-  Rename, Move to and Delete.
-  - **Model library** at the top of the sidebar counts every model and opens
-    the top level: folders first, then the models in no folder. Each folder
-    lists its subfolders, then its models.
-  - A click on a model in the sidebar opens its folder with the model
-    selected; a double click opens the model.
-  - Models and folders also drag from the sidebar. Dropping on
-    **Model library** or the first crumb of the address bar moves them to the
-    top level.
-  - The details list is the default view. Tiles show what a model produces
-    and needs, its nodes, its last change and where it is stored. Folders
-    always come first, in the tiles as their own band above the models.
-- **Model details pane.** What a model produces and needs, its interface with
-  the rates set on it, the buildings it uses, node, connection, recipe,
-  factory and sub-model counts, folder, tags, revision, dates, and whether it
-  uses the current game data. Cloud models load on selection. Public models
-  offer Open, Copy to my models and Copy link.
+- **Auto Planner: several targets.** **Add another target** on the review step.
+  - Shared intermediates and inputs produced once.
+  - A target another chain also consumes gets its own producer.
+- **Add a node: categories.** Raw resources, liquids, gases, fuel, nuclear,
+  organic, farming, packaging, Space Elevator parts, alternates, power, each
+  machine. Mod packs included. Counts follow the search.
+- **Add a node: details.** I/O per minute, recipe count per part, machines
+  with power, cycle time, unlock, wiki link. Double click or Enter adds.
+- **Connection menu.** Right-click label or line, or Menu / Shift+F10 on a
+  focused label.
+  - Select source, target or chain; serve earlier/later; reset label; delete.
+  - Read-only models: selection only.
+- **Older desktop versions.** Download page lists earlier builds under
+  **Older versions**. Oldest deleted automatically when storage is full.
+- **Home page tabs.** Datapacks, Your Models, Public Models.
+  - Own address each (`/production-modeler/datapacks`, `/models`, `/public`),
+    last tab remembered. `/production-modeler/browse` opens Public Models.
+  - Your Models and Public Models use the full page width.
+- **Model library as file manager.**
+  - Sidebar: library root and folders only.
+  - List (default) or tiles, folders first. Root holds models without folder.
+  - Double click / Enter opens, Backspace up, F2 renames folder, Delete deletes.
+  - Drag models from the list, folders from list or sidebar, onto any folder.
+    **Model library** or the first crumb moves to top level.
+  - Folder menu: Open, New subfolder, Rename, Move to, Delete.
+- **Model details pane.** Products, needs, interface rates, buildings, counts,
+  folder, tags, revision, dates, game data status. Public models: Open, Copy
+  to my models, Copy link.
 
 ## QUALITY OF LIFE
 
-- **Device settings from the home page.** Opens machine defaults, saves,
-  numbers and appearance (updates and data on desktop) without a model.
-- **Leaving with unsaved changes.** **Settings**, **Saves**: ask every time
-  (default), save automatically, or discard. A failed automatic save still
-  asks.
-- **Click a connection label to select it.** Dragging the label still moves
-  it.
-- **Modular Miners merged in plans.** The Auto Planner always places a
-  Modular Miner with both outputs on one belt.
-- **Favorites in Add a node.** Star an entry; favorites get their own row at
-  the top, kept per device.
-- **Follow a part.** Click an input or output in the details to list the
-  recipes that make or use it, with their counts. **Back** restores the search.
-- **Search prefixes.** `in:coal` or `out:steel ingot` searches only inputs or
-  outputs; a prefix covers the words after it, so `in:coal out:steel ingot`
-  finds what turns coal into Steel Ingots.
-- **Home page layout.** The header no longer links to Create and the
-  Production Planner. The library header holds the address bar, the search,
-  the storage switch, the sort, the view switch and the tag chips, next to
-  **New model**, **Import file** and **New folder**. The stat tiles and the
-  public teaser are gone; counts are in the library status bar.
-- **Window size remembered.** The app and the wiki window reopen with the size,
-  position and maximized state they had when closed, on a monitor that is still
-  connected; fullscreen and minimized are not kept.
+- **Device settings on the home page.** Machine defaults, saves, numbers,
+  appearance (desktop: updates, data) without a model.
+- **Unsaved changes on leave.** **Settings**, **Saves**: ask (default), save,
+  discard. Failed auto-save still asks.
+- **Connection labels.** Click selects, drag moves.
+- **Modular Miner in plans.** Both outputs on one belt.
+- **Add a node favorites.** Starred entries in their own top row, per device.
+- **Follow a part.** Click an input/output in the details to list its recipes.
+  **Back** restores the search.
+- **Search prefixes.** `in:` / `out:`, e.g. `in:coal out:steel ingot`.
+- **Home page header.** Address bar, search, storage, sort, view, tags,
+  **New model**, **Import file**, **New folder**. Patreon status on top.
+  - Removed: Create/Planner links, stat tiles, public teaser. Counts in the
+    status bar.
+- **Window size remembered.** App and wiki window reopen with size, position
+  and maximized state. Fullscreen and minimized not kept.
 
 ## BUGFIXES
 
-- **Whole-machine rounding removed.** The option "Round the solved machine
-  count up to whole machines" is gone. It rounded counts up inside the solve
-  and broke whole calculations. Counts stay exact. Models and SFMD files that
-  still carry the option load as before and ignore it.
-- **Even split behind exact values.** A split now serves exact rates first,
-  also ones fixed several nodes further down the chain. It then shares the
-  rest evenly between the Auto chains, at every split point. One chain no
-  longer takes everything while the others get 0. A changed connection order
-  still applies the priority.
+- **Whole-machine rounding removed.** Broke calculations; counts stay exact.
+  Old models and SFMD files ignore the option.
+- **Even split behind exact values.** Exact rates first (also further down the
+  chain), rest split evenly between Auto chains. No more chains at 0.
+  Connection order still sets priority.
