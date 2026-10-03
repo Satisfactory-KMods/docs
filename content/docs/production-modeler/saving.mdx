@@ -74,6 +74,12 @@ from the switcher or the recent list.
 Browser tab closing or reloading uses the browser's own warning, with no save action.
 Cancel that warning and save in the Modeler before closing.
 
+To stop being asked, set **Leaving with unsaved changes** in
+[Settings](/production-modeler/settings/#saves-and-recovery). **Save automatically**
+saves first and leaves once the save has finished, and **Discard changes** leaves
+without saving. If an automatic save fails, the dialog opens after all with the
+error, and the model stays open.
+
 ## Blueprints in your account
 
 A [blueprint](/production-modeler/canvas/#saving-part-of-a-plan-as-a-blueprint)
@@ -155,7 +161,7 @@ The link is not a frozen snapshot: later cloud saves can change what readers see
 Turn off publication to make it private again.
 Copies already made by other people remain independent.
 
-Public models also appear in **Browse**, with search and tag filters.
+Public models also appear in the **Public Models** tab of the home page, with search and tag filters.
 Inside a shared model, use **Edit a copy** instead of changing the original.
 Signed-out users and users of browser-imported packs get a local copy.
 Check mod notices and game-data warnings before trusting the results.
@@ -198,50 +204,70 @@ preview, check the named target and confirm. This also lets you override SF+ loc
 Reset that profile in Settings to return to managed SF+ data. Advanced desktop
 storage, profile renaming, deletion, export and refresh remain in **Desktop data**.
 
-Your saved models are below the game data collection. Use **Your models** at the
-top to jump there, or choose **Import file** for a portable model. The **Model
-library** lists every model in one place, whether it is saved on this device, in
-the cloud, or both, and each card says where it lives. Search by name, or narrow
-the list with the storage switch, the tag chips, or a folder in the tree beside
-the grid. Local models remain usable while cloud models load. A cloud or
-public-list error offers a retry and does not replace your local models with an
-empty screen.
+The home page has three tabs on one slider: **Datapacks** holds the game data
+collection, **Your Models** your library, and **Public Models** what the community
+shared. Each tab has its own address, such as `/production-modeler/public`, so a
+link or the header's **Browse** entry opens the right one, and the plain home
+address reopens the tab you used last. Choose
+**Import model** in the library toolbar for a portable model file.
 
-The directory browser helps you explore and navigate your models by folder. The
-folder tree on the left shows all folders and their model counts. Click a folder
-to see its contents, or drill into subfolders by clicking their tiles above the
-grid. The breadcrumb at the top shows your location and serves as a drop target:
-drag a model card onto any breadcrumb crumb to file it into that folder. An "Up
-one level" tile appears when you are inside a folder, letting you navigate back
-to the parent. You can toggle between grid view and list view using the buttons
-in the toolbar, and your choice is saved.
+The **Model library** works like a file manager. It lists every model in one
+place, whether it is saved on this device, in the cloud, or both, and the
+**Stored** column says where each one lives. The folder tree sits on the left,
+the list of the open folder in the middle, and the details of whatever you
+selected on the right. Search by name, or narrow the list with the storage switch,
+the tag chips, or a folder. A search looks through every folder below the open
+one. Local models remain usable while cloud models load. A cloud error offers a
+retry and does not replace your local models with an empty screen.
+
+Click a row to select it and double-click it, or press **Enter**, to open the
+model or enter the folder. **Backspace** goes up one level, **F2** renames the
+selected folder and **Delete** deletes the selection after a confirmation. The
+address bar above the list shows where you are, and each of its folders is a drop
+target. The view switch toggles between the details list and tiles, and your
+choice is saved.
+
+The details pane reads the model without calculating it. It shows what the model
+produces and needs, its interface of model inputs and outputs with the rates you
+set on them, the buildings it uses, how many nodes, connections, recipes, existing
+factories and sub-models it has, its folder and tags, its revision, when it was
+created and changed, and whether it uses your current game data. The details of a
+cloud model appear once it has been read after you select it. A selected folder
+shows how many models it holds directly and in total, its subfolders, and what the
+models inside it produce.
+
+The **Public Models** tab uses the same list and details pane. Select a model to
+see what it makes and its interface, then open it, copy it to your models, or copy
+its link. **Open a shared model** below the list opens a link or ID you received.
 
 ### Folders and tags
 
 Create a folder with the folder button in the tree header, using `/` for a
-subfolder, then drag a card onto a folder to file it. On a phone, open the
-card's **More actions** menu and pick the folder there. You can also create a
-folder in the current directory with the **New folder here** button on the
-toolbar. Folders and tags of a cloud model are stored with your account; those
-of a model that is only on this device stay on this device and travel with its
-first cloud save. Right-click a folder to add a subfolder, rename it, or delete
-it. Deleting a folder moves its models up one level.
+subfolder, or with **New folder here** in the library toolbar, which names the new
+folder right in the list. Drag a model onto a folder in the tree, the list or the
+address bar to file it. Folders drag the same way and take everything inside them
+along, but never into themselves. On a phone, open a row's **More actions** menu
+and choose **Move to folder**. Folders and tags of a cloud model are stored with
+your account; those of a model that is only on this device stay on this device and
+travel with its first cloud save. Right-click a folder to open it, add a
+subfolder, rename it, move it, or delete it. Deleting a folder moves its models up
+one level.
 
 Deleting a model that is saved on this device and in the cloud removes both
-copies after one confirmation. The card menu also offers **Remove local copy**
+copies after one confirmation. The **More actions** menu also offers **Remove local copy**
 and **Delete cloud copy** when you want to keep the other side.
 
 ### Model details
 
-Edit a model's name, icon, colour, tags, and folder from its card menu or the
-workspace toolbar. Click the card's **More actions** menu and choose **Edit
-model details**, or use the toolbar's model details button when a model is open
-in the workspace. The dialog sets everything at once. The name is required.
+Edit a model's name, icon, colour, tags, and folder from the library or the
+workspace toolbar. Select the model and choose **Edit model details** in its
+details pane or its **More actions** menu, or use the toolbar's model details
+button when a model is open in the workspace. The dialog sets everything at once. The name is required.
 Choose an Iconify icon or a game image from the selected game data, and a colour
 from the presets or a custom value. Both icon formats can be saved locally or
 to the cloud. Tags help you find models, and the folder decides
-where the model appears in the library tree. The icon and colour show on the
-card and on the workspace toolbar button, so each model is recognisable at a
+where the model appears in the library tree. The icon and colour show in the
+library and on the workspace toolbar button, so each model is recognisable at a
 glance. **Save** confirms with a toast; the cloud copy of a model saved to your
 account is updated in the same step.
 
