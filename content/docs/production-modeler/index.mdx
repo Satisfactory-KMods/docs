@@ -71,7 +71,10 @@ The optional first step accepts a Satisfactory `.sav` file. Its unlocked recipe
 paths are matched exactly against the loaded catalog, and the resulting recipe
 and production-machine filters stay with the model. They constrain the wizard,
 later automatic plans, catalog-backed palette entries and machine choices. The
-palette shows when this filter is active and lets you remove it.
+palette shows when this filter is active and lets you remove it. A production
+machine counts as unlocked when the save holds a build recipe of the milestone
+or research that unlocks it. The filter keeps what that analysis found, so
+upload the save again after an update to refresh it.
 
 Only the matched catalog IDs are saved. The save binary is processed in memory
 and is not stored in the model or browser draft. In the web app it goes to the
@@ -234,8 +237,15 @@ The planned output requires that missing supply before it can run in the game.
 Explicit port rates, downstream limits and recycling-loop balances still apply.
 An unlimited alternate feed does not reset the downstream plan to one building:
 automatic defaults remain large enough to carry your fixed production target.
-Conflicting constraints, missing recipes, and unsupported behavior are reported
-in Messages. Return flows in recycling loops are used before external supply.
+
+When exact values ask for less than a pinned supply makes, the group is still
+calculated. The consumers take what they need, Auto recipes between them are
+sized to that, and the rest shows as surplus on the output that makes it, like
+a belt that backs up in the game. Example: Brass Ingot fixed at 150 per minute
+and Fan Blades fixed at 15 per minute. A supply too small for an exact rate is
+still reported as a conflict, and Manual mode keeps every value strict. Missing
+recipes and unsupported behavior are reported in Messages. Return flows in
+recycling loops are used before external supply.
 
 App version, game-data version, and saved model revision are different values.
 Include the details from **Help and about** when reporting unexpected results.

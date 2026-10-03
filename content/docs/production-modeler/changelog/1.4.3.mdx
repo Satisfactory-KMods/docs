@@ -1,0 +1,23 @@
+---
+title: Version 1.4.3
+description: Exact rates with leftover supply stay calculated, savegame filter unlocks machines from mod build recipes, SatisfactoryPlus pack re-exported.
+slug: production-modeler/changelog/1.4.3
+sidebar:
+  label: '1.4.3'
+  order: 1
+---
+
+## BUGFIXES
+
+- **Exact rates with leftover supply.** No conflict when a pinned supply makes
+  more than pinned consumers take; group stays calculated, the extra shows as
+  surplus on that output (e.g. Brass Ingot = 150, Fan Blades = 15). Too little
+  supply for an exact rate is still a conflict. Manual mode unchanged.
+- **Savegame filter with mods.** Machines from mod build recipes outside
+  `Recipes/Buildings` count as unlocked (Refined Power boilers and turbines,
+  Slug Hatchery, farming modules). Re-upload the save to refresh a filter.
+
+## GAME DATA
+
+- **SatisfactoryPlus pack.** Re-exported with KModelerExporter 2026.4.578;
+  recipes and machines unchanged.
