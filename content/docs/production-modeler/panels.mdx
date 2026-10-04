@@ -108,6 +108,16 @@ be inspected, but must be unlocked before editing.
   bound or Auto setting. They change only the chosen modifier and use one undo step.
 - Net power appears when available.
 
+Once the plan is solved, the Inspector also lists the Power Shards and
+Somersloops the node needs for all its buildings, or the sum over a
+multi-selection. Each building above 100% clock takes one Power Shard per
+started 50%, so 101 to 150% take one, 151 to 200% two and 201 to 250% three.
+A building the plan uses only in part runs at that part of the clock: 2.5
+buildings at 250% are two at 250% and one at 125%, seven shards in all.
+Somersloops are the node's slots times all its buildings, the partly used one
+included. Hover a total to see the sum node by node.
+Nothing appears when the node needs neither.
+
 Expand **Input Ports** or **Output Ports** to edit a port:
 
 1. Drag its handle or use the arrows to reorder it within its direction.

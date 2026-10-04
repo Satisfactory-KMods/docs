@@ -41,8 +41,22 @@ each part, the buildings it is produced in with the power they draw or make,
 the cycle time, cycles per minute and energy per cycle, the part's stack size,
 sink points and energy value, extraction rates per node purity, fuels, build
 cost, the milestone or research that unlocks it and a link to its wiki page.
-**X** closes the details, and **Use recipe** at the bottom right adds the
-selected entry. Double-click an entry or press Enter to add it directly.
+The card stays compact: its header holds the name, the building icon, the
+badges, a wiki link, **Use recipe** and **X**, each part sits on one line with
+its rate per minute (the amount per cycle is in its tooltip), and the rest is
+laid out as labelled chip rows. **X** closes the details, and **Use recipe**
+adds the selected entry. Double-click an entry or press Enter to add it
+directly.
+
+Every tile and list row has the same height and the same order: the entry's
+icon, its name, the icon of the building it runs in (hover it for the name),
+then the parts it moves on one line. The search bar above the list has a clear
+button; press **/** or **Ctrl + F** anywhere in the panel to jump to it, and
+**Escape** empties it before a second **Escape** closes the panel. Below it,
+filter chips narrow the list by type (recipes or buildings), alternates,
+favorites only, mod, tier, progression tier, and by which fields the search
+covers. Each active filter, the picked category included, shows as a chip that
+removes it, and **Reset all** clears them all while keeping what you typed.
 
 Star an entry to keep it in the Favorites row at the top; favorites are kept per
 device. Click a part in the details to list the recipes that make or use it, and
@@ -131,6 +145,13 @@ On the review step, **Add another target** keeps the current part and rate and
 starts the next one. All targets are planned together: chains that need the
 same intermediates or resources share one production step and one input.
 Modular Miners the planner places merge both outputs onto one belt.
+
+**How should it plan?** on the review step picks the recipes with the Planner's
+strategies: Shortest Path (the default), Shortest Chain, Fewest Resources, Low
+Power, Balanced and Byproduct Reuse. Pick up to two; with two, the plan weighs
+both. Byproduct Reuse is an add-on: byproducts are reused first and the other
+choice covers the rest, and on its own it plans Balanced. The choice is
+remembered for the next plan.
 
 Keyboard focus highlights the wire itself. A focused label has its own small
 outline, and broken connections keep their error colour.

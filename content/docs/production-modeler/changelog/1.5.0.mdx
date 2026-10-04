@@ -1,6 +1,6 @@
 ---
 title: Version 1.5.0
-description: Multi-target Auto Planner, Add a node categories and details, connection menu, file-manager model library, whole-machine rounding removed.
+description: Multi-target Auto Planner with strategies, Add a node categories and details, connection menu, file-manager model library, whole-machine rounding removed.
 slug: production-modeler/changelog/1.5.0
 sidebar:
   label: '1.5.0'
@@ -12,6 +12,9 @@ sidebar:
 - **Auto Planner: several targets.** **Add another target** on the review step.
   - Shared intermediates and inputs produced once.
   - A target another chain also consumes gets its own producer.
+- **Auto Planner: strategies.** Up to two on the review step, as in the Planner:
+  Shortest Path (default), Shortest Chain, Fewest Resources, Low Power,
+  Balanced, Byproduct Reuse (an add-on). The choice is remembered.
 - **Add a node: categories.** Raw resources, liquids, gases, fuel, nuclear,
   organic, farming, packaging, Space Elevator parts, alternates, power, each
   machine. Mod packs included. Counts follow the search.
@@ -24,7 +27,19 @@ sidebar:
     energy per cycle.
   - Stack size, sink points, energy value, extraction per purity, fuels, build
     cost, unlock, wiki link.
-  - **X** closes, **Use recipe** bottom right adds. Double click or Enter too.
+  - Compact card: name, building icon and badges in one line, **Use recipe**,
+    wiki link and **X** in its header, one line per part with the rate per
+    minute (per cycle in the tooltip), the rest as labelled chip rows.
+    Double click or Enter adds too.
+- **Add a node: search and filters.** Search bar with a clear button; **/** or
+  **Ctrl+F** jumps to it, **Escape** clears it before closing the panel.
+  - Filter chips: type (recipes or buildings), alternates, favorites only, mod,
+    tier, progression tier and which fields the search covers.
+  - Every active filter shows as a chip that removes it; **Reset all** clears
+    them and keeps the search.
+- **Add a node: compact list and grid.** Tiles and list rows share one height
+  and one order: icon, name, the building it runs in, then its parts on one
+  line. The building icon names the building on hover.
 - **Connection menu.** Right-click label or line, or Menu / Shift+F10 on a
   focused label.
   - Select source, target or chain; serve earlier/later; reset label; delete.
@@ -48,6 +63,10 @@ sidebar:
 
 ## QUALITY OF LIFE
 
+- **Power Shards and Somersloops needed.** Inspector sums them over the node's
+  buildings, or over a multi-selection. Tooltip shows the sum per node.
+  - One shard per started 50% above 100% clock; a partly used building runs
+    at that part of the clock. Somersloops = slots × buildings.
 - **Device settings on the home page.** Machine defaults, saves, numbers,
   appearance (desktop: updates, data) without a model.
 - **Unsaved changes on leave.** **Settings**, **Saves**: ask (default), save,
