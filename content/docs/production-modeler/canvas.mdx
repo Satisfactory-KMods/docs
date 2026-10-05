@@ -7,13 +7,20 @@ sidebar:
 
 - **Double-click empty space:** open the node palette at that position.
 - **Right-click empty space:** open the same palette.
-- **Left-drag empty space:** pan. **Mouse wheel:** zoom around the cursor.
+  [Settings, Interaction](/production-modeler/settings/#interaction) can make the
+  double-click zoom in there or do nothing, and the right-click do nothing. **Insert**,
+  and **A** while single-key shortcuts are on, still open the palette.
+- **Left-drag empty space:** pan. **Mouse wheel:** zoom around the cursor. To pan with the
+  wheel instead, set it in [Settings, Interaction](/production-modeler/settings/#interaction);
+  **Ctrl + wheel** (Cmd on a Mac) then zooms.
 - **Right-drag:** draw a selection box. **Shift** or **Control:** extend selection.
 - **Middle-click:** paste the copied selection.
 
 You can also hold **Shift** and left-drag empty space to draw a selection box.
-Both selection boxes include every card they overlap, even if part of the card
-extends outside the box. You do not need to enclose the whole card.
+By default both selection boxes include every card they overlap, even if part of the
+card extends outside the box. You do not need to enclose the whole card. To pick only
+the cards fully inside the box, set **Selection box picks** in
+[Settings, Interaction](/production-modeler/settings/#interaction).
 
 The toolbar no longer has a **+ Add** button. Palette keyboard access remains
 available; see [Keyboard shortcuts](/production-modeler/shortcuts/).
@@ -82,6 +89,11 @@ The bottom-left controls show the live zoom percentage. Use **Zoom out** and
 With nothing selected, it fits the current container. These controls also work
 in read-only models.
 
+A model opens on the view it was saved with, and each container keeps its own.
+To see every card whenever a model opens instead, choose **Fit everything** under
+**When a model opens** in [Settings, Interaction](/production-modeler/settings/#interaction).
+The saved view stays in the model until you pan or zoom yourself.
+
 The bottom-right **Minimap** shows nodes, connections, selected nodes, and the
 visible area. Click it to move the view without changing zoom. Focus it and use
 arrow keys to pan, or **Enter** / **Space** to fit the current container.
@@ -90,6 +102,10 @@ or short, and shrinks to stay within the available space when opened.
 
 Use **Arrange** or **L** to lay out the selected nodes along their connections.
 Arrow keys nudge the selection; hold **Shift** for larger steps.
+
+**Undo** takes back up to 100 changes; **Undo steps** in
+[Settings, Interaction](/production-modeler/settings/#interaction) allows 10 to 1000.
+The steps last while the model is open and are not saved with it.
 
 ## The panel beside the canvas
 

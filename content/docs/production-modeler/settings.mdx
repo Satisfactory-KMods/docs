@@ -9,8 +9,8 @@ Open **Modeler settings** and use the side navigation, or the scrolling top row 
 Switching sections keeps your draft; Save and Cancel stay in the footer.
 
 - **This model:** Calculation, connection paths and snap grids travel with the saved model.
-- **This device:** machine defaults, recovery settings, number formats and appearance stay local.
-- The drag threshold is a device preference inside Connections and grids.
+- **This device:** machine defaults, recovery settings, number formats, appearance, interaction and
+  accessibility stay local.
 - Applying defaults to existing nodes changes the model, not just your device preferences.
 
 - **Save:** applies staged changes and saves other unsaved canvas work too.
@@ -24,8 +24,8 @@ Switching sections keeps your draft; Save and Cancel stay in the footer.
 
 Read-only models allow device preferences, not model settings or applying defaults to nodes.
 **Device settings** on the Production Modeler home page opens the device sections
-without a model: machine defaults, saves and recovery, number formats and appearance, plus
-updates and data on desktop.
+without a model: machine defaults, saves and recovery, number formats, appearance, interaction and
+accessibility, plus updates and data on desktop.
 For a shared model, use **Edit a copy** from [Saving and sharing](/production-modeler/saving/).
 
 ## Calculation
@@ -59,7 +59,6 @@ Hiding markers does not fix issues or remove them from [Messages](/production-mo
 ## Connections and grids
 
 - **Path style:** Curves, Direct or orthogonal 2D routing changes drawing, not wiring.
-- **Drag threshold in pixels:** raise it to ignore small movements, lower it to start dragging sooner.
 - The [building grid](/production-modeler/canvas/#grids) snaps nodes; the connection grid snaps waypoints.
 - Each grid has separate horizontal and vertical spacing.
 - Enabling a grid affects future movement after Save.
@@ -168,3 +167,36 @@ startup, and **Help** can check at any time.
 - **Add a node by category:** on by default. The node list is grouped
   under category headings and the categories sit in their own column. Turn it
   off for the flat list. Applies on this device after Save.
+
+## Interaction
+
+- **Mouse wheel:** **Zooms** by default. **Pans (Ctrl zooms)** moves the canvas with the
+  wheel like a trackpad; hold Ctrl (Cmd on a Mac) while turning it to zoom. A trackpad
+  pinch zooms either way. Applies on this device after Save.
+- **Drag threshold in pixels:** raise it to ignore small movements, lower it to start
+  dragging sooner. Applies on this device after Save.
+- **Selection box picks:** **Cards it touches** by default, so a box that crosses part
+  of a card selects it. **Only cards fully inside** leaves out every card that reaches
+  past the box. Applies to the right-drag and the Shift-drag box on this device after
+  Save.
+- **Double-click on empty canvas:** **Add a node** opens the palette there, as before.
+  **Zoom in** doubles the zoom around the clicked point, also on a read-only model.
+  **Nothing** ignores the double-click. Applies on this device after Save.
+- **Right-click on empty canvas:** **Add a node** opens the palette there, as before.
+  **Nothing** opens nothing and still keeps the browser's menu away. Right-clicking a
+  card or a connection opens its own menu either way. Applies on this device after Save.
+- **When a model opens:** **Show the last view** by default. **Fit everything** fits
+  every card into view whenever a model opens. Entering or leaving a container still
+  shows that container's saved view. Opening does not change the model: its saved
+  view is replaced only once you pan or zoom. Applies on this device after Save.
+- **Undo steps:** how many changes undo can take back, from 10 to 1000; 100 by
+  default. Lowering the limit drops the oldest steps with your next change. An empty
+  field is not saved. Applies on this device after Save.
+
+## Accessibility
+
+- **Single-character shortcuts (A, F, L, ?):** on by default. Turn them off when speech
+  input or a screen reader presses them by accident. Ctrl and Cmd shortcuts, Insert, F1
+  and the arrow keys keep working, and the
+  [keyboard shortcuts](/production-modeler/shortcuts/) list marks the four as off.
+  Applies on this device after Save.
