@@ -211,8 +211,10 @@ the affected node, even inside another container.
 
 ## Clock and Somersloops
 
-**Clock** scales recipe speed. `1` is rated speed; `2` doubles input and output
-for the same machine count. Power follows the building's own rules.
+**Clock** scales recipe speed and reads in percent, as in the game. `100%` is
+rated speed; `200%` doubles input and output for the same machine count. The
+Inspector names the building's range, such as 1%–250%, and offers presets from
+50% to 250%. Power follows the building's own rules.
 
 **Somersloops** boost output without scaling material input in the same way.
 Slot count, amplification, and power costs depend on the building.
@@ -223,12 +225,12 @@ as a single undo step. The Summary includes supported shard and slot totals.
 
 ## What the solver does
 
-- **None:** leave calculated values blank while arranging the graph.
 - **Manual:** solve entered equalities.
-- **Basic:** add limits and maximize flows.
-- **Full:** also honor connection priority.
+- **Full:** add limits, maximize flows and honor connection priority.
 
-New models start in Full. Change modes in
+New models start in Full. A model that already uses **None** (calculated values
+left blank) or **Basic** (Full without connection priority) keeps its mode and
+still offers it in Settings; new models no longer pick them. Change modes in
 [Settings](/production-modeler/settings/#calculation). Relevant edits schedule
 a solve; **Calculate** starts one immediately. Long-running solves can be stopped
 without deleting the model.
@@ -261,6 +263,21 @@ Brass Pipes and a Brass Drive. The Fan Blades take 24, and the pipes and the
 drive get 42 each. A consumer with a ceiling takes at most its ceiling. To let
 one connection take what it can before the others, change the connection order
 in Full mode.
+
+When the same material can reach a consumer along more than one route, Basic
+and Full use what the model already makes before making more. A co-product that
+would otherwise back up is used first, and of the plans that waste the least,
+the one that draws the least from outside wins. Example: 900 Carbon Powder per
+minute from Distilled Natural Gas, whose Natural Gas feeds Condensed Graphene
+while Petroleum Coke takes both its Heavy Oil Residue and the Residue that
+Diluted Bitumen makes from its Asphalt. That needs 3.6 distillers and 216 m³ of
+Purified Crude Oil, where Condensed Graphene alone needed 6 distillers. A merge
+whose connection order you changed in Full mode keeps that order instead.
+
+To decide yourself how an output splits, give a connection a share in the
+Inspector, for example 25 percent. Connections without a share stay on Auto and
+split what the set shares leave. The shares of one output may add up to at most
+100 percent, and to exactly 100 percent when every connection has one.
 
 App version, game-data version, and saved model revision are different values.
 Include the details from **Help and about** when reporting unexpected results.

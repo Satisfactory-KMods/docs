@@ -123,11 +123,14 @@ Expand **Input Ports** or **Output Ports** to edit a port:
 1. Drag its handle or use the arrows to reorder it within its direction.
 2. Add, remove or change parts only where the node supports editable ports.
 3. Enter a nonnegative limit in the displayed per-minute unit.
-4. Choose **At most** for a ceiling or **Exactly** for a required rate.
+4. Choose **At most** for a ceiling, **At least** for a minimum or **Exactly** for a
+   required rate.
 5. Clear the limit to remove it.
 
 A limit on an unconnected port sizes the node.
 Move connections earlier or later to set priority in **Full** mode.
+An output with several connections gives each one a **share** field: the
+percentage of that output the connection takes. Leave it empty for Auto.
 Click an endpoint name to reveal the other node.
 Connection controls add or remove waypoints and disconnect one or all connections.
 **Align to connection** moves the node vertically, using the first connection.

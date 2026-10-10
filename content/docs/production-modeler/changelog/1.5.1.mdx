@@ -1,0 +1,64 @@
+---
+title: Version 1.5.1
+description: Calculations such as 2*10 in every number field, at least limits on ports, connection shares in percent, interaction settings, byproducts used before a recipe makes more, recycling loops sized by demand, packs from the 1.5.0 exporter.
+slug: production-modeler/changelog/1.5.1
+sidebar:
+  label: '1.5.1'
+  order: 1
+---
+
+## NEW FEATURES
+
+- **Calculations in number fields.** Type `2*10` for 20, or use `+`, `-`, `/`
+  and parentheses. Exact; only the result is kept.
+  - Rates, limits, counts, clock, multipliers, shares and settings fields.
+  - Enter or leaving the field applies it. An unfinished `2*` keeps the old value.
+- **At least limits.** A port limit can now be a minimum as well as a ceiling or
+  an exact rate. Pick **At least** in the Inspector.
+  - Above the minimum the port runs like Auto, up to the other limits. With
+    nothing else to size the plan it settles at the minimum.
+  - A minimum the connected group cannot reach shows in Messages with the rate
+    it can reach.
+  - The port icon toggles between the exact rate and the chosen bound. Manual
+    mode solves every limit as an exact rate.
+- **Connection shares.** A port with more than one connection takes a percent
+  per connection in the Inspector. Empty is Auto.
+  - The connection label shows the share.
+  - Over 100%, or every share set without reaching 100%, shows in Messages.
+  - Native files keep shares; legacy SFMD export reports that it cannot.
+- **Interaction settings.** New **Interaction** section in Settings.
+  - Mouse wheel zooms or pans; drag threshold.
+  - Selection box picks touched or enclosed cards.
+  - Double-click and right-click on empty canvas.
+  - View a model opens on; number of undo steps.
+  - Shortcuts dialog marks single-key shortcuts that are switched off.
+
+## QUALITY OF LIFE
+
+- **Calculation modes.** New models offer Manual and Full. A model already in
+  None or Basic keeps its mode and still offers it in Settings.
+- **Compare page.** Old compare links open the model. Compare game-data
+  versions with **Migration** in the toolbar.
+
+## BUGFIXES
+
+- **Byproducts first.** Where routes for one material rejoin, co-products
+  already made are used before another recipe makes the same material. Then
+  the least raw input wins.
+  - Heavy Oil Residue from Distilled Natural Gas is used before Diluted Bitumen
+    makes more.
+- **Recycling loops.** A machine in a loop with an unused co-product no longer
+  runs at a full building and drags the loop up with it. Sized by demand.
+- **Saved view.** Zoom buttons, minimap and double-click zoom after a plain
+  click on the canvas are remembered again.
+
+## GAME DATA
+
+- **Bundled packs.** Vanilla and SatisfactoryPlus exported with KModelerExporter
+  1.5.0.
+  - SatisfactoryPlus: the three native Seed Extractor recipes.
+  - Power shard types and sort rule counts come from the export. Older packs
+    still derive them.
+- **Unverified exporter data.** A machine whose clock range the exporter could
+  not read keeps the exporter's reason. Plot recipes with unknown slot needs
+  stay unverified instead of falling back to class data.

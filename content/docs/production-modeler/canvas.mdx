@@ -142,12 +142,23 @@ effects stay disabled.
 Ports can carry several connections. In Full mode, their order controls
 priority where allocation is required. Reorder connections in the Inspector.
 
-A port limit can be an **exact rate** or an **upper bound**. A ceiling does not
-force production to reach it. Limits also work on supported non-recipe buildings,
-not just ordinary recipe nodes. Click a port's rate to type a limit right in the
-row. Press Enter to apply it or Escape to keep the old value. The equals or
-less-than-or-equal icon next to the rate switches between an exact rate and an
-upper bound.
+A port limit can be an **exact rate**, an **upper bound** or a **lower bound**.
+A ceiling does not force production to reach it. A lower bound is the least the
+port must move: above it the port runs like Auto, up to whatever else limits the
+plan, and with nothing else to size the plan it settles at the minimum. When the
+connected group cannot reach it, Messages names the port and the rate it can
+reach. Limits also work on supported non-recipe buildings, not just ordinary
+recipe nodes. Click a port's rate to type a limit right in the row. Press Enter
+to apply it or Escape to keep the old value. The icon next to the rate (equals,
+less-than-or-equal or greater-than-or-equal) switches between an exact rate and
+the bound you chose in the Inspector. In **Manual** mode every limit is solved
+as an exact rate.
+
+Every number field in the modeler also takes a short calculation. Type `2*10`
+for 20 per minute, or use `+`, `-`, `/` and parentheses, such as `(60+30)/2`.
+The field works the result out exactly when you press Enter or leave it, and
+keeps only the result. Multiplication and division come before addition and
+subtraction. An unfinished calculation such as `2*` keeps the old value.
 
 An output the recipe only rolls for, such as the off-colour slugs of a
 hatchery, wears its chance per cycle as a small badge next to its name. The
