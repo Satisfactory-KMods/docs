@@ -1,6 +1,6 @@
 ---
 title: Module Structure
-description: C++ module organization, folder layout, and dependency rules across KDataForge's four runtime modules.
+description: C++ module organization, folder layout, and dependency rules across KDataForge's five runtime modules.
 sidebar:
   order: 3
 ---
@@ -13,7 +13,7 @@ cover built-in. Both audiences need to know which module their code belongs in a
 dependencies they're allowed to take on. The split isn't arbitrary. It marks the difference between
 a stable public contract and internals that can change release to release.
 
-KDataForge ships as one Unreal plugin split into four separate C++ modules rather than one.
+KDataForge ships as one Unreal plugin split into five separate C++ modules rather than one.
 Fewer DLL boundaries generally mean fewer allocator and export headaches, so this split is
 deliberate, not incidental. Each boundary exists to isolate something specific: a public API
 surface, an exception-throwing dependency, or the in-game editor's UI dependencies.
@@ -36,15 +36,16 @@ Three concerns drive where a module boundary sits:
   leaking into the loader/reflection runtime, even though the module itself is still declared as a
   Runtime module.
 
-## The four modules
+## The five modules
 
-All four modules are declared `"Type": "Runtime"` in the `.uplugin` manifest, including
+All five modules are declared `"Type": "Runtime"` in the `.uplugin` manifest, including
 `KDataForgeEditorUI`. `KDataForgeApi` contains the public handler contract. Third-party handlers
 derive against it, while registration also links the main `KDataForge` module. `KDataForgeYaml` is
 the YAML backend, wrapping rapidyaml behind a façade,
 and it's the only module with exceptions enabled. `KDataForge` is the main runtime, holding the
 loader, the reflection engine, the subsystems, the built-in handlers, the chat command, and
-networking. `KDataForgeEditorUI` is the in-game editor UI, built with Slate, and its Build.cs
+networking. `KDataForgeReflection` owns standalone reflection export and metadata tooling without
+adding those concerns to main runtime. `KDataForgeEditorUI` is the in-game editor UI, built with Slate, and its Build.cs
 currently declares the UI dependency set unconditionally.
 
 That's a deliberate naming trap worth calling out. "EditorUI" refers to an **in-game** editor
@@ -128,11 +129,23 @@ nothing outside this one `.cpp` needs to call into it.
 and there is no checksum handshake or operation stream. See the current multiplayer boundaries in
 [Architecture](/kdataforge/background/architecture#multiplayer-boundaries).
 
-Its dependency list is the longest of the four: `Core`, `CoreUObject`, `Engine`, `Projects`,
+Main runtime dependency list is broad: `Core`, `CoreUObject`, `Engine`, `Projects`,
 `Json`, `GameplayTags`, `NetCore`, `AssetRegistry`, `ImageWrapper`, `RenderCore`, `RHI`, the
 `DummyHeaders` stub module, `FactoryGame`, and `SML`, plus `KDataForgeApi` and `KDataForgeYaml`.
 The `ImageWrapper`, `RenderCore`, and `RHI` trio backs `type: asset` documents, turning arbitrary 2D
 image files into runtime `UTexture2D` assets through `KDFAssetHandler`.
+
+### `KDataForgeReflection` exporter
+
+Reflection export stays in separate runtime module. Main `KDataForge` module does not depend on it.
+Module provides `KDF.DumpReflection`, `/kdf-reflection`, validation command, metadata commandlet,
+Blueprint loading, native/Blueprint maps, asset indexes, uncapped texture image export, and background
+JSON/ZIP writing. Its direct
+dependencies are `Core`, `CoreUObject`, `Engine`, `Projects`, `Json`, `AssetRegistry`,
+`ImageCore`, `DummyHeaders`, `FactoryGame`, and `SML`. See
+[Reflection Export](/kdataforge/reference/reflection-export) for commands and output contract.
+`UKDFReflectionWorldModule` is non-root and is spawned by `UKDFWorldModule` through soft class path;
+SML allows only one root world module per plugin and world-module type.
 
 ### `KDataForgeEditorUI` the in-game editor
 
@@ -154,13 +167,17 @@ is covered on [Editor Integration](/kdataforge/reference/editor-integration).
 ## Dependency graph
 
 Arrows below point from a module to what it depends on. `KDataForgeApi` sits at the bottom with the
-smallest footprint by design. Everything else builds on top of it, and only `KDataForgeEditorUI`
-depends on all three of the others at once:
+smallest footprint by design. Reflection exporter is independent from main runtime and YAML/API
+layers:
 
 ```
 KDataForgeEditorUI   → KDataForge, KDataForgeYaml, KDataForgeApi
                         (+ InputCore, UMG, Slate, SlateCore, AppFramework, AssetRegistry,
                            FactoryGame, SML)
+
+KDataForgeReflection → Core, CoreUObject, Engine, Projects, Json, AssetRegistry,
+                        DummyHeaders, FactoryGame, SML
+
         ▲
 KDataForge           → KDataForgeYaml, KDataForgeApi
                         (+ Engine, Projects, Json, GameplayTags, NetCore, AssetRegistry,
@@ -194,7 +211,7 @@ plugin once:
    against `KDataForgeApi`; calling `UKDFSubsystem::RegisterHandler` also requires `KDataForge`.
    Handlers never include loader or scanner internals. Everything they need arrives via the context structs that the
    [Handler Template](/kdataforge/reference/handler-template) walks through.
-5. **All four modules share the same build settings:** `CppStandard = Cpp20`,
+5. **All five modules share the same build settings:** `CppStandard = Cpp20`,
    `PCHUsage = UseExplicitOrSharedPCHs`, `bLegacyPublicIncludePaths = false`, and the project's clang-format
    is enforced across all of them.
 

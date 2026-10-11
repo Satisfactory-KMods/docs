@@ -8,8 +8,9 @@ sidebar:
 The `resource` type runs in the `Items` stage at priority `25`, after `item` (`30`) and before
 `building` (`20`). Its entries key is `resources`. The default and required base class is
 `/Script/FactoryGame.FGResourceDescriptor`. Register-only mode (`class:`) is not supported, so
-entries use `id:`. YAML files are scanned once during GameInstance initialization. Restart the
-session after changing them.
+entries use `id:`. YAML files are scanned during GameInstance initialization and again through
+`/kdf reload`. Existing generated resource classes keep their runtime identity, so restart the
+session when removing or structurally replacing a generated resource definition.
 
 The similar names hide four separate systems:
 

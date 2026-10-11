@@ -1,0 +1,133 @@
+---
+title: Reflection Export
+description: Export runtime Unreal classes, structs, enums, defaults, Blueprint mappings, and asset indexes for Pack Manager and linter use.
+sidebar:
+  order: 9
+---
+
+KDataForge can export every reflected type loaded by running game plus Blueprint-generated classes,
+user-defined structs, and user-defined enums found through Asset Registry. Exporter runs on game
+thread in bounded slices. JSON writing runs in background.
+
+## Run
+
+Wait until world begins play, then use console:
+
+```text
+KDF.DumpReflection
+```
+
+Or chat:
+
+```text
+/kdf-reflection
+```
+
+Bare console and chat commands use the full packaged profile: assets, functions, flattened classes,
+mandatory ZIP packaging, and PNG texture export. Add options only to override that profile.
+
+Clients do nothing unless `--force` is supplied. Server or host is normal export location. Default
+directory is `FactoryGame/KMods/ReflectionExport/`.
+
+| Option | Meaning |
+| --- | --- |
+| `--out <dir>` | Override output directory. |
+| `--mounts /Game,/Plugin` | Restrict Blueprint discovery to comma-separated mount points. |
+| `--assets` | Add asset-by-class indexes beyond textures; loading attempts still cover every selected registry asset. |
+| `--asset-cap N` | Limit assets recorded per class. |
+| `--functions` | Include reflected function signatures and flags. |
+| `--flattened` | Write inherited-property view to `classes.flat.ndjson`. |
+| `--pack` | Compatibility no-op; final ZIP is always written. |
+| `--skip-widgets[=true|false]` | Skip widget Blueprints; enabled by default. |
+| `--widgets` | Shortcut that includes widget Blueprints. |
+| `--budget-ms N` | Game-thread budget per tick; default `8`. |
+| `--batch-size N` | Blueprint load batch size; garbage collection runs between batches. |
+| `--families name:path,...` | Extend linter catalog families. |
+| `--force` | Allow local client export. |
+
+Progress appears in chat and `LogKDFReflection`. Run `KDF.ValidateReflection [--out <dir>]` after
+completion. Validation checks required FactoryGame reflection shapes, native/Blueprint mapping,
+authored user-struct member names, required files, and deterministic default-value round trips.
+
+## Output
+
+- `manifest.json`: runtime engine/build, platform, options, installed mods, counts, and failed loads.
+- `classes.ndjson`, `structs.ndjson`, `enums.ndjson`: path-sorted records with inline property data.
+- `classes.flat.ndjson`: optional inherited-property view.
+- `indexes/subclasses.json`, `indexes/assets.json`: class and registry lookup indexes.
+- `indexes/textures.json`: image path, format, dimensions, export method, or per-texture failure reason.
+- `images/**`: selected texture images as PNG, proportionally limited to 1024x1024.
+- `nativeMapping.json`: native-to-Blueprint and reverse mappings.
+- `catalog/instanced_classes.json`: linter family catalog.
+- `schema/reflection.schema.json`: draft 2020-12 schema.
+- `<ISO-date>.kdfdata`: mandatory ZIP bundle containing every output file.
+
+Texture selection recursively scans reflected non-widget class defaults. This retains descriptor, item,
+recipe, and schematic icons while excluding material-only maps, widget-only decoration, unreferenced helper
+textures, dynamic render/media textures, and transient runtime textures without a portable asset identity.
+Selected textures remain uncapped and appear in `indexes/textures.json` with Asset Registry tags, source and
+exported dimensions, resize state, image path, or explicit failure details. Every successful image is PNG.
+Cooked BC/BC7 data is decoded before writing; GPU readback supplies pixels when cooked CPU data is unavailable.
+Images larger than 1024x1024 are proportionally downscaled or use a suitable cooked mip. Smaller images keep
+their dimensions. Unavailable textures remain indexed but produce no placeholder image.
+
+Exporter attempts to load every previously unloaded registry asset under configured mounts with
+quiet/no-warn flags and bounded batches. Failed loads remain in manifest. Garbage collection runs through
+engine safe points, never directly from ticker-time export code. `--assets` adds indexes for data assets,
+curves, and other classes referenced by object properties; `--asset-cap` applies only to non-texture index
+classes, not loading coverage.
+
+Native constructors sometimes generate a fresh GUID, current timestamp, seed, transient object name,
+or uninitialized byte sequence. Exporter detects volatile reflected types and values, emits reflected zero
+value, and writes `defaultVolatile: true`. Result stays valid `ImportText` input and deterministic. Stable
+constructor defaults remain unchanged. Blueprint-authored member names are emitted lowercase because Unreal's
+case-preserving `FName` display casing depends on asset load order. Lookup remains case-insensitive.
+
+To import, open desktop editor **Datapacks**, choose **Import game data**, select generated
+`.kdfdata`, then bind imported datapack to project. Pack Manager validates manifest/schema, stores
+immutable archive copy, and exposes contents as datapack `reflection` section to editor and language
+server. Directory form is useful during editor/language-server development.
+
+## Editor Metadata Supplement
+
+Packaged game may have `WITH_METADATA` disabled. Runtime records then contain
+`metadataAvailable: false`; export still succeeds. Generate metadata in modding editor:
+
+```powershell
+UnrealEditor-Cmd.exe FactoryGame.uproject -run=KDFReflectionMetaExport -out=C:\Temp\KDFMeta
+```
+
+Merge supplement into separate copy with same native commandlet:
+
+```powershell
+UnrealEditor-Cmd.exe FactoryGame.uproject -run=KDFReflectionMetaExport `
+  -runtime=C:\Path\ReflectionExport `
+  -supplement=C:\Temp\KDFMeta\metadata.supplement.json `
+  -out=C:\Path\ReflectionMerged
+```
+
+Merge records editor and game build per field and rebuilds mandatory ISO-named `.kdfdata` ZIP. Output must
+be separate from runtime export. Add `-force` only when replacing an existing merge output directory. No
+Python merge script is packaged into mod or archive.
+
+For full file/schema checks and deterministic comparison of two exports:
+
+```powershell
+python Mods/GameFeatures/KDataForge/Tools/validate_reflection_export.py `
+  C:\Path\ReflectionExport --compare C:\Path\SecondReflectionExport
+```
+
+Validator applies emitted draft 2020-12 schema to every JSON record and excludes only
+`manifest.generatedAt` from comparison hash. It requires Python `jsonschema`.
+
+## Limits
+
+- Blueprint load failures remain in `manifest.json.failedLoads` with reason.
+- Dedicated-server cooks or unsupported GPU formats may expose no readable pixels. Such records contain
+  failure details instead of image bytes.
+- Per-class cap applies to non-texture classes.
+- All-mount exports can be large, especially with functions, flattened records, assets, or widgets.
+- Tick budget is checked between reflected records and Blueprint loads. One synchronous Asset
+  Registry query, Blueprint load, garbage collection, or unusually large type can exceed budget by
+  its own execution time because Unreal does not expose resumable versions of those operations.
+- Output determinism assumes identical game build, mod set, options, and registered content.

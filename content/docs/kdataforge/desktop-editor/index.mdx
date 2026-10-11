@@ -1,0 +1,30 @@
+---
+title: Desktop Pack Manager
+description: Edit KDataForge packs, inspect reflection data, and use bundled plugins on your computer.
+sidebar:
+  order: 1
+  label: Overview
+---
+
+KDataForge Pack Manager is the desktop editor for local KDataForge projects. Open a project to edit
+pack manifests and YAML, inspect a `.kdfdata` reflection export, and run validation before testing
+in game.
+
+## Start
+
+1. Open a project containing `DataForge/` or a pack directory with `pack.yml`.
+2. Import a `.kdfdata` reflection archive in **Datapacks** if you want class and property metadata.
+3. Edit YAML in **Code editor** or **Visual editor**. Check **Problems** for diagnostics.
+4. Choose **Lint pack** under **Settings → Language server**, then test the pack in game.
+
+The language server, linter, and ContentLib importer are core
+[built-in plugins](/kdataforge/desktop-editor/plugins). Additional built-in providers handle
+templates, comparison, logs, and optional project tools. Each has local state under
+**Settings → Plugins**. Validated `.kdfdata` archives also appear as disableable resource plugins.
+
+Already have ContentLib JSON? [Import it as a new KDataForge pack](/kdataforge/desktop-editor/contentlib-import).
+The conversion shows generated YAML and warnings before creating a pack.
+
+Reflection archives and ContentLib source folders serve different purposes. The **Datapacks**
+screen accepts `.kdfdata` only. The **ContentLib importer** reads a `ContentLib/` folder and writes
+new YAML pack files.

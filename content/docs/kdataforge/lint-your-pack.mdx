@@ -1,9 +1,24 @@
 ---
 title: Lint Your Pack
-description: Run standalone KDataForge Linter or KPatchwork policy linter before starting game or opening pull request.
+description: Validate packs in KDataForge Pack Manager; reproduce existing KPatchwork CI checks with the standalone linter.
 sidebar:
   order: 3
 ---
+
+## Recommended: KDataForge Pack Manager
+
+For local pack authoring, use [KDataForge Pack Manager](/kdataforge/desktop-editor) instead of
+installing the standalone Python linter. Open your project, edit YAML in the Code or Visual editor,
+and review live diagnostics in **Problems**. For a full project check, choose **Lint pack** under
+**Settings → Language server**. An optional `.kdfdata` reflection archive adds class and property
+information. After validation, test the pack in game with
+[`/kdf report`](/kdataforge/getting-started#kdf-report-and-loading-changes).
+
+KPatchwork's pull-request CI still uses the pinned Python linter and repository-specific policy
+schemas. Use the commands below when reproducing that existing CI result. The desktop app validates
+KDataForge runtime grammar, so a passing desktop check does not replace KPatchwork's policy check.
+
+## Standalone Python linter for existing CI
 
 Standalone [KDataForge Linter](https://github.com/Satisfactory-KMods/KDataForge-Linter) validates
 packs with bundled schemas. Its CLI uses a `lint` subcommand plus a path:

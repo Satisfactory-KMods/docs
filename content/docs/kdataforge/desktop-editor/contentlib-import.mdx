@@ -1,0 +1,84 @@
+---
+title: Import ContentLib
+description: Convert a ContentLib folder into a reviewable KDataForge pack.
+sidebar:
+  order: 3
+---
+
+Use **Settings → Plugins → ContentLib Importer → Import ContentLib pack** when migrating
+ContentLib JSON. Select a `ContentLib/` folder or its parent mod folder. The importer reads the
+source; it does not change or delete ContentLib files.
+
+ContentLib folder names, patch target lines, and JSON fields follow the
+[ContentLib documentation](https://docs.ficsit.app/contentlib/latest/index.html). The importer
+converts fields with a reliable KDataForge equivalent and reports the rest for manual review.
+
+## Workflow
+
+1. Open the destination KDataForge project.
+2. Open **Import ContentLib pack**, choose the source folder, and enter a unique **Pack ref**,
+   **Pack name**, and **Contributor**. Pack ref and contributor start with a letter and contain only
+   letters, digits, `_`, `-`, or `.`. Limits: 80 characters for the ref, 160 for the name, and 120
+   for the contributor. The ref cannot end in `.` or use a Windows device name such as `CON`,
+   `NUL`, or `COM1`.
+3. Select **Preview conversion**. Inspect generated YAML, skipped files, and every warning.
+4. Select **Create disabled pack in project**. The source is checked again; if it changed since
+   preview, import stops and asks for a new preview. Existing destination packs are never
+   overwritten.
+5. Open the new pack in **Pack Manager**. Resolve warnings and short asset references, run the
+   linter, test in game, then set `enabled: true` in `pack.yml`.
+
+The new directory is `DataForge/<PackRef>/` when the project has a `DataForge/` folder, otherwise
+`<ProjectRoot>/<PackRef>/`. Its `pack.yml` starts with `enabled: false`.
+
+## Source limits
+
+The scanner accepts at most 2,000 supported files and 64 MiB of source data combined. Each JSON
+file can be at most 2 MiB; each PNG can be at most 8 MiB. It reads JSON from `Items/`, `Recipes/`,
+`Schematics/`, their three patch folders, `CDOs/`, and `VisualKits/`, plus PNG files from `Icons/`.
+Other files and symbolic links are ignored. Missing `ContentLib/`, an empty supported source, or a
+file over these limits stops the preview with an error.
+
+## Converted content
+
+| ContentLib source                                     | KDataForge output                                                                                                                                                        |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Items/**/*.json`                                     | `type: item`, with item and resource descriptor properties; `type: sinkpoints` when sink points are given                                                                |
+| `Recipes/**/*.json`                                   | `type: recipe`, with ingredients, products, duration, and producers; `UnlockedBy` creates an ordered `type: schematic` shortcut                                          |
+| `Schematics/**/*.json`                                | `type: schematic`, including type, tier, cost, recipe, schematic, and scannable-resource unlock shortcuts                                                                |
+| `ItemPatches/`, `RecipePatches/`, `SchematicPatches/` | `type: cdo` patches using the first `//<asset path>` line as the target; item sink points create `type: sinkpoints`, and schematic unlock additions append to `mUnlocks` |
+| `CDOs/**/*.json`                                      | `type: cdo` patches from `Class` and `Edits`                                                                                                                             |
+| `VisualKits/**/*.json`                                | Referenced item icons and fluid/gas colors where supported; unsupported visual fields produce warnings                                                                    |
+| `Icons/**/*.png` with a referenced custom VisualKit   | `type: asset` texture plus icon properties on the generated item                                                                                                         |
+
+For `RecipePatches/`, supplied `Ingredients`, `Products`, and `ProducedIn` replace the existing
+list by default, matching ContentLib. Set the corresponding `ClearIngredients`, `ClearProducts`,
+or `ClearBuilders` to `false` to append instead. Setting a `Clear*` flag to `true` without its list
+clears that list. For `SchematicPatches/`, `Cost` and `SubCategories` append by default;
+`ClearCost` and `ClearSubCategories` select replacement or clearing. Recipe, schematic, and
+scannable-resource unlock additions append to `mUnlocks`; selective unlock clearing needs manual
+conversion.
+
+Generated YAML retains ContentLib's short class names where it cannot determine a full asset path.
+Check those names against your bound `.kdfdata` reflection data or replace them with full paths
+before enabling the pack.
+
+## Warnings and manual work
+
+The preview reports fields that lack a reliable equivalent. In particular, review custom
+categories, schematic icon brushes, VisualKit meshes, schematic dependency and item
+reward fields, and selective schematic `ClearRecipes`/`ClearSchematics`/
+`ClearScannableResources` operations. Additions to those unlock lists convert; selective clearing
+needs manual review. `ResourceSinkTrack` needs
+`ResourceSinkPoints` and maps to a `sinkpoints` document. A numerically prefixed ContentLib filename
+cannot be a stable KDataForge ID and is skipped with a warning. Invalid JSON or duplicate output
+paths stop the import instead of producing a partial pack.
+
+For `UnlockedBy`, generated schematics in the same source pack receive an `include:` dependency
+before the shortcut is applied. Other short schematic names depend on KDataForge name resolution;
+verify them against your game data before enabling the pack.
+
+KDataForge generates different class paths from ContentLib. Existing saves that reference
+ContentLib-generated classes may need migration. Keep the original mod and pack available while
+testing a converted save. The importer does not rewrite save files or create redirects for
+ContentLib class identities.

@@ -10,16 +10,40 @@ right immediately. That said, nothing you just did is saved anywhere yet. This t
 one step between "it works right now" and "it still works next time I launch the game" (or "my
 friend can install it too"): **exporting**.
 
+## Apply KDataForge operations directly
+
+Every editable property row has an **OP** menu. It contains only operations accepted by that
+property's runtime type, using the same validation as a YAML `properties:` entry. Numeric fields
+offer arithmetic and `clamp`; arrays offer insertion, removal, ordering, replacement, duplication,
+and deduplication; strings and containers expose their applicable append/prepend/remove/clear
+operations. `copy` and `move` are available for every property.
+
+Choosing an operation opens an argument form containing only fields that operation needs:
+
+- `value` accepts a normal KDataForge YAML scalar, sequence, or map;
+- `clamp` asks for `min` and `max`;
+- indexed array operations ask for `index` and, for `swap`, `with`;
+- `copy` and `move` ask for a `from` property path on the same object;
+- `clear`, `sort`, `unique`, and `reverse` need no arguments.
+
+Apply changes the live object immediately. Invalid YAML, an unsupported value, or an out-of-range
+index leaves the property unchanged and reports the op-engine error. **Undo** and **Redo** also
+remove and restore the corresponding export entry; `move` restores both source and destination.
+Use the inspector search to filter fields by property name, full path, or reflected type. The
+**Ops** side tab shows the ordered operation sequence currently queued for the selected object.
+
 ## Export Diff vs. Export Full
 
 Both buttons sit in the editor's inspector panel, and both call the same underlying export,
 `ExportObjectToYaml`. They differ in a single flag, `bDiffOnly`, and that flag changes what ends up
 in the file.
 
-Export Diff includes only the properties that have a vanilla snapshot recorded during this session
-for the selected object, so the resulting file stays small: just what you actually touched.
-Because untouched properties are simply absent, there's no risk. They keep tracking vanilla, or
-whatever other patches already apply to them.
+Export Diff prefers the ordered operations authored in the editor for the selected object. An
+`add`, `multiply`, `append`, `remove_at`, `copy`, or other operation therefore remains that
+operation in YAML instead of being flattened into a final `set`. Direct value editing is recorded
+as `set`. If no editor-authored operation exists, Diff falls back to properties with a vanilla
+snapshot recorded during this session. Either way, untouched properties stay absent and continue
+tracking vanilla or whatever other patches apply to them.
 
 Export Full includes every reflected property on the class that is not deprecated, transient, or
 editor-only. This is broader than the normal Unreal "editable" surface: fields without
@@ -40,9 +64,9 @@ Both buttons write to the same place:
 <ProjectDir>/DataForge/exported/<ObjectName>.cdo.yml
 ```
 
-This is a source-hardcoded editor staging path. Create the `DataForge/exported/` directory first;
-the editor reports an error if the directory does not exist. `<ProjectDir>` is Unreal's project
-directory, which is the `FactoryGame/` project directory in a packaged game.
+This is a source-hardcoded editor staging path. The editor creates `DataForge/exported/`
+automatically when needed. `<ProjectDir>` is Unreal's project directory, which is the
+`FactoryGame/` project directory in a packaged game.
 
 `<ObjectName>` is `Selected->GetName()`. For the common case of editing a recipe, item, or
 schematic **class** (its CDO), that name is the engine's synthetic default-object name. A patch to
@@ -90,6 +114,50 @@ one specific patch, you don't need to touch it at all. You'd hand-edit it when y
   [Targeting](/kdataforge/features/targeting) for the full selector/modifier reference, and
   [Patching (type: cdo)](/kdataforge/features/patching-cdo) for the patch shape.
 
+## Managing packs inside the in-game editor
+
+Switch the editor from **Runtime** to **Packs** to work on files instead of live objects. The left
+pane groups every discovered YAML file below its owning `pack.yml`. Nested packs are separate: the
+deepest `pack.yml` owns a file. Files with invalid YAML remain selectable and open directly in Raw
+mode so you can repair them.
+
+The **New pack** action creates exactly:
+
+```text
+<ProjectDir>/Mods/DataForge/<pack-name>/pack.yml
+```
+
+Pack names and document names accept letters, digits, `_`, and `-`. Existing files are never
+overwritten. Select a pack, choose a document type, enter a file name, and click **Create**. The
+type list covers every KDataForge root handler: `cdo`, `gametag`, `asset`, `localization`, `class`,
+`item`, `resource`, `building`, `unlock`, `recipe`, `schematic`, `research`, `dataasset`, `curve`,
+`sinkpoints`, `resourcenode`, and `sublevel`.
+
+Each file has two editing surfaces:
+
+- **Form** exposes every YAML map, sequence, scalar, and null node. Select a node to replace its
+  complete YAML fragment, add a map member or sequence item, or remove it. Scalar values can also
+  be edited inline. The guided controls provide context-sensitive field and sequence-entry
+  templates for every KDataForge document type. Class-valued rows use a searchable class picker
+  filtered to the expected base class; it includes loaded native classes and Blueprint classes
+  known to the asset registry. Once a target, class, or parent is selected, property-path rows can
+  be chosen from inherited reflected fields, including nested struct and array paths. Operation
+  choices are filtered against the resolved property type, while enum and boolean values offer
+  valid presets. Selecting a `properties` or `where` sequence also offers ready-made entries for
+  fields on the resolved class.
+- **Raw YAML** edits the exact file text, including comments and formatting. Switching back to Form
+  first validates and parses the text. Invalid YAML stays in Raw mode with an error message.
+
+Raw edits keep their exact text until a Form mutation occurs. A Form mutation serializes the
+parsed document again, so comments, quoting choices, and custom whitespace can be normalized or
+removed. Use Raw mode when those details matter.
+
+**Save** validates YAML syntax and required document shape, writes a temporary file, then replaces
+the destination atomically. A failed validation or write leaves the previous file intact. Unsaved
+changes block file/pack switching and closing until you save or explicitly discard them. Save does
+not apply semantic changes by itself: use `/kdf reload` for live-safe updates, or restart for
+content registrations and other startup-only stages.
+
 ## The Create panel: drafting new content instead of hand-writing YAML
 
 The editor's **CREATE** section, below the YAML preview, drafts brand-new content: item, resource,
@@ -122,6 +190,8 @@ into a real pack before relying on it long-term.
 1. Open chat, type `/kdf editor`.
 2. Switch to the **Recipes** category, search for the recipe you want (e.g. the Super Ingot recipe
    from the [item/recipe/schematic tutorial](/kdataforge/tutorials/item-icon-recipe-schematic)), and select it.
+   Browser rows show content icons when available: item/building icons, schematic and research-tree
+   icons, recipe product icons, and direct icon properties such as `mSmallIcon` or `mIcon`.
 3. In the inspector tree, find `mManufactoringDuration` and commit a new value, say `2.0` instead
    of `4.0`. The change applies immediately. Go build one and confirm it's actually faster.
 4. Click **Export Diff**. Because `mManufactoringDuration` is the only property you touched on this
@@ -167,7 +237,11 @@ not just the duration. That's usually more than you want to ship.
   it's small, not because the click didn't register.
 - **Can't find the exported/created file.** It is under the source-hardcoded
   `<ProjectDir>/DataForge/exported/` or `<ProjectDir>/DataForge/created/` staging directory. The
-  directory must already exist. Move the finished YAML into `<your-mod>/DataForge/` before shipping.
+  legacy `created/` directory must already exist. The Packs workspace creates its own
+  `Mods/DataForge/<pack-name>/` directory. Move legacy staging files into a real pack before shipping.
+- **Form mode rejects the file.** Switch to Raw YAML and repair the syntax. Form requires `pack.yml`
+  to contain one map, and every normal YAML document root to be a map. Runtime-specific semantic
+  errors are reported when KDataForge loads or reloads the file.
 - **New item/recipe/schematic from Create still isn't there.** Create only writes a draft. Move it
   into a real pack and restart the session. The SML content registry freezes at world begin play.
 - **Export Full includes fields from `Non-UPROPERTY / Internal`.** The current UI label is

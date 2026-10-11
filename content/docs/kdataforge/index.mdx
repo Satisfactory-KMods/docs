@@ -15,9 +15,10 @@ set. KDataForge does not negotiate checksums or stream applied operations.
 
 If you want to rebalance a recipe, add an item, or ship a small content pack without touching C++,
 start with [Getting Started](/kdataforge/getting-started). It builds the smallest
-possible pack and verifies that it loaded. Next, [Lint Your Pack](/kdataforge/lint-your-pack)
-with KPatchwork's static checker before starting the game. Continue with the
-[Task Guides](/kdataforge/tutorials), including
+possible pack and verifies that it loaded. Use [Desktop Pack Manager](/kdataforge/desktop-editor)
+to edit YAML, review diagnostics, and run a full pack check before starting the game. For existing
+KPatchwork pull-request policy checks, see [Lint Your Pack](/kdataforge/lint-your-pack). Continue with
+the [Task Guides](/kdataforge/tutorials), including
 [Item + Icon + Recipe + Tier-1 Unlock](/kdataforge/tutorials/item-icon-recipe-schematic)
 for the most common first content chain.
 
@@ -56,11 +57,16 @@ for inspecting and controlling a running instance without editing files:
 | Command                          | Where                               | Effect                                                                                                                                                                                                   |
 | --------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/kdf report`                    | chat                                | Prints the load report: packs, applied documents, ops, warnings, errors                                                                                                                                  |
+| `/kdf reload`                    | chat (host/server admin)            | Restores KDF property baselines, rescans all pack files, and re-applies the normal stage pipeline. See [Smart reload](/kdataforge/getting-started#smart-reload)                                            |
+| `KDF.Reload`                     | console (host/server)               | Same smart reload as `/kdf reload`; useful for dedicated-server consoles and launch automation                                                                                                           |
 | `/kdf editor`                    | chat (host)                         | Toggles the in-game editor: browse content, edit properties live, undo/redo, and export changes to YAML                                                                                                  |
 | `KDF.Editor`                     | console                             | Same as `/kdf editor`                                                                                                                                                                                    |
 | `/kdf debug on\|off`             | chat                                | Flips global debug logging (same switch as `KDF.Debug`). Bare `/kdf debug` toggles the current state                                                                                                     |
 | `KDF.Debug 1`                    | console (or launch arg `-KDFDebug`) | Global [debug logging](/kdataforge/getting-started#debugging): one `[KDF DEBUG]` line per applied op, including editor edits. Narrower scopes: `debug: true` per document or in `pack.yml` |
 | `KDF.ApplyToAssets [PathFilter]` | console (**UE editor builds only**) | Applies loaded YAML directly onto editor assets and marks packages dirty. See [Editor Integration](/kdataforge/reference/editor-integration)                                               |
+| `/kdf-reflection [options]`      | chat (host/server)                  | Exports reflected classes, structs, enums, defaults, Blueprint mappings, and optional assets. See [Reflection Export](/kdataforge/reference/reflection-export)                       |
+| `KDF.DumpReflection [options]`   | console (host/server)               | Same full reflection export with time-sliced game-thread work                                                                                                                         |
+| `KDF.ValidateReflection [--out]` | console                             | Runs acceptance checks against completed reflection output                                                                                                                            |
 
 ## Quick Start
 
@@ -85,6 +91,8 @@ patches:
 ```
 
 Start the game. The recipe now smelts twice as fast. Use `/kdf report` in chat to inspect the load
-report. Restart the session after changing YAML files. Prefer a UI? `/kdf editor` opens the in-game
-editor with live property editing and YAML export. Before shipping, run
-[Lint Your Pack](/kdataforge/lint-your-pack) to catch static schema errors.
+report. After changing YAML, use `/kdf reload` for a smart live re-apply; restart when changing
+frozen content registrations or other [restart-bound state](/kdataforge/getting-started#restart-boundaries).
+Prefer a UI? `/kdf editor` opens the in-game editor with live property editing and YAML export. For
+local pack validation, use [Desktop Pack Manager](/kdataforge/desktop-editor) to catch static schema
+errors before shipping.

@@ -5,8 +5,8 @@ sidebar:
   order: 16
 ---
 
-This document type runs in the `SubsystemMods` stage, after all content-generation stages. A session
-restart is required to pick up changes. Its entries key is `entries`, and the `track:` field accepts
+This document type runs in the `SubsystemMods` stage, after all content-generation stages. Its
+entries key is `entries`, and the `track:` field accepts
 `Default` or `Exploration`, defaulting to `Default`.
 
 This one's simple in shape but strict about timing: it sets how many AWESOME Sink points an item is
@@ -62,8 +62,9 @@ the same document wins, because rows are keyed by class name.
 ## Registration timing and Resource Node boundary
 
 KDataForge queues sink point tables during initialization and registers them per world before SML's
-content registry freezes. YAML is scanned once per GameInstance, so changes require a session
-restart. The runtime exposes no live YAML rescan command.
+content registry freezes. `/kdf reload` re-reads and validates the document, but cannot replace a
+table inside that already-frozen registry. Restart the session or dedicated server before judging a
+sink-point change.
 
 Sink points only control item scoring in the AWESOME Sink. They do not place Resource Nodes, change
 purity, or grant scanner visibility. See

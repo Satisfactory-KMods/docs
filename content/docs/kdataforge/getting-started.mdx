@@ -70,10 +70,48 @@ The `type:` key is optional here. The `.cdo.yml` filename suffix would set the r
 ## `/kdf report` and loading changes
 
 - **`/kdf report`**: prints the load report, showing which packs and documents were found, what was applied, and every diagnostic (see below).
+- **`/kdf reload`**: restores KDataForge-touched reflected properties to their original session
+  baseline, rescans every pack file, then runs the normal deterministic stage pipeline again.
+- **`KDF.Reload`**: runs the same smart reload from a host or dedicated-server console.
 
-KDataForge loads YAML once during session initialization. After editing a file, restart the session and use `/kdf report` to verify the new load.
+After editing a file, run `/kdf reload`, then use `/kdf report` to inspect the replacement load.
+Only the listen host, a dedicated-server administrator, or the server console may reload.
 
-Prefer clicking over typing? **`/kdf editor`** opens the in-game editor, where you can browse content, edit properties live, and export your changes as ready-made YAML.
+### Smart reload
+
+Reload does not blindly apply an `add`, `append`, or `multiply` operation on top of its previous
+result. Before re-applying files, KDataForge restores every touched top-level reflected property to
+the value captured before KDataForge first changed it this session. This also removes property
+changes from files deleted since the previous load. Invalid documents are skipped under normal
+diagnostic rules, so their old property effects are not retained.
+
+Reload clears and rebuilds actor patches, lazy-class watches, content-removal rules, resource-node
+rules, registration queues, diagnostics, and patch history. Any open `/kdf editor` window closes
+because its undo history refers to the pre-reload state.
+
+### Restart boundaries
+
+Some engine state cannot be reversed safely after world startup:
+
+- SML freezes recipe, schematic, research-tree, and sink-point registrations before BeginPlay. New,
+  deleted, or re-registered entries need a session restart to change those live registries.
+- Content already removed by a `remove:` rule is not re-added when that rule disappears. Reload
+  updates the rule set for later checks; restart the session to rebuild availability from startup.
+- Generated UObject identities, gameplay tags, and localization entries are process-lifetime state.
+  Current files can update existing objects or strings, but deleting their definitions does not
+  unload them. Restart to prove removal.
+- `resourcenode` reload rules apply immediately. Node destruction is server-authoritative and may
+  create vanilla save tombstones; removing the rule cannot resurrect already destroyed nodes.
+- Reload is process-local. Multiplayer clients do not receive the host's reload. Restart every
+  process with the same pack set when changes must be multiplayer-consistent.
+
+Prefer clicking over typing? **`/kdf editor`** opens the in-game editor. **Runtime** browses
+reflected objects, applies supported property operations live, and exports YAML. **Packs** browses
+files grouped by their owning `pack.yml`, creates packs below
+`<ProjectDir>/Mods/DataForge/<pack-name>/`, and edits every YAML node through Form or Raw YAML mode.
+Form mode includes schema-aware field/entry templates, filtered class selectors, reflected property
+paths, supported-operation choices, and enum/boolean presets. Save validates and writes atomically;
+`/kdf reload` applies live-safe file changes.
 
 ## Reading the report
 
@@ -151,7 +189,8 @@ assuming something is broken:
 
 ## Next steps
 
-- [Lint Your Pack](/kdataforge/lint-your-pack): catch malformed YAML and common schema mistakes before launching the game
+- [Desktop Pack Manager](/kdataforge/desktop-editor): edit YAML and catch malformed documents or schema mistakes before launching the game
+- [Lint Your Pack](/kdataforge/lint-your-pack): reproduce existing KPatchwork pull-request policy checks
 - [Targeting](/kdataforge/features/targeting): every way to select what a patch applies to
 - [Balancing](/kdataforge/examples/balancing): recipes, items, schematics, research
 - [Items](/kdataforge/features/items), [Recipes](/kdataforge/features/recipes), [Schematics](/kdataforge/features/schematics): new content from YAML, or the tied-together [End-to-End Pack](/kdataforge/examples/end-to-end-pack)

@@ -53,8 +53,10 @@ Contexts carry `mGameInstance`, `mSourceFile`, and a diagnostic sink with `AddIn
 and `AddError`. Diagnostics are non-fatal. `FKDFApplyContext` adds `bDryRun`, `mPatchRecord`, and
 `mAppliedOpCount`.
 
-There is no `bLiveReload` flag in the current API. YAML is scanned once during GameInstance
-initialization.
+There is no `bLiveReload` flag in the handler API. KDataForge scans YAML during GameInstance
+initialization and again when an authorized host runs `/kdf reload`. Reload restores captured
+top-level property baselines before rebuilding and applying the handler pipeline. Frozen SML
+registrations and irreversible world changes still require a restart.
 
 ## Registration
 
