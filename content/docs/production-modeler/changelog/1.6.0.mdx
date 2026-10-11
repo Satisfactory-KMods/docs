@@ -1,9 +1,9 @@
 ---
-title: Version 1.5.1
-description: Calculations such as 2*10 in every number field, at least limits on ports, connection shares in percent, interaction settings, byproducts used before a recipe makes more, recycling loops sized by demand, packs from the 1.5.0 exporter.
-slug: production-modeler/changelog/1.5.1
+title: Version 1.6.0
+description: Calculations such as 2*10 in every number field, at least limits on ports, connection shares in percent, interaction settings, byproducts used before a recipe makes more, recycling loops sized by demand, no machine left at 0 behind a split, merges that take turns from each input, returned material used before fresh supply, packs from the 1.5.0 exporter.
+slug: production-modeler/changelog/1.6.0
 sidebar:
-  label: '1.5.1'
+  label: '1.6.0'
   order: 1
 ---
 
@@ -41,6 +41,8 @@ sidebar:
   versions with **Migration** in the toolbar.
 - **Clock in percent.** The clock slider, its presets and the machine's range
   read in percent, like the node card. The model still stores the multiplier.
+- **Room between planned columns.** The Auto Planner leaves at least 300 px
+  between the columns of a chain it places, so its connections stay readable.
 
 ## BUGFIXES
 
@@ -51,6 +53,39 @@ sidebar:
     makes more.
 - **Recycling loops.** A machine in a loop with an unused co-product no longer
   runs at a full building and drags the loop up with it. Sized by demand.
+- **No machine left at 0.** A machine no longer stands at 0 while its input is
+  there, as Petroleum Coke did on Heavy Oil Residue. The coke chain now plans
+  without waste.
+  - Identical machines on one supply run alike, in Basic and Full.
+  - A dead end beside an exact, at most or at least chain takes what the chain
+    leaves of the extractor.
+  - Basic shares a split evenly in any connection order. In Full the connection
+    you moved first takes what it can, except between dead ends: what a dead
+    end takes goes nowhere, so they share evenly in Full too.
+- **Merges take turns.** Where a demand fixes what a machine takes, its incoming
+  connections deliver in turn, like a merger, even when one of them draws more
+  from outside. No input stands at 0 while another supplies everything. Least
+  waste still comes first.
+  - In Full, a machine whose input order you changed follows that order.
+  - Where one such merge feeds another, the one nearer the demand takes its
+    turns first; the other can still leave an input at 0.
+  - An extractor that also feeds a dead end runs down to its turn rather than
+    pushing the rest into the dead end.
+  - In a loop, what the loop returns still comes first; fresh supply may stay
+    at 0 there.
+  - A pack and unpack loop that now runs may show that it needs one put in by
+    hand to start.
+- **Recipes with no input connected.** Such a recipe feeding a merge runs one
+  building, like an extractor drawn at 1, instead of standing at 0.
+- **Drawn extractor counts.** A count far above what an exact plan needs shrinks
+  to the need. A count that only feeds dead ends keeps what you drew and shares
+  it between them.
+- **Sinks that size the chain.** An at most Sink that sizes its chain is built
+  in full, and an at least Sink settles at its minimum. On what a loop makes, an
+  at most Sink sizes the loop; on a by-product it only caps it.
+- **Returned material first.** What a loop returns is used before fresh supply,
+  whatever order the connections were made in. Full follows your connection
+  order only among plans that waste equally little.
 - **Saved view.** Zoom buttons, minimap and double-click zoom after a plain
   click on the canvas are remembered again.
 - **Decimals, not fractions.** Messages and the Auto Planner's rates show
