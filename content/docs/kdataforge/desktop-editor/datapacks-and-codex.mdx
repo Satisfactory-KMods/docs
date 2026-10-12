@@ -17,7 +17,7 @@ The exporter writes a timestamped `.kdfdata` archive under
 `FactoryGame/KMods/ReflectionExport` by default. It contains reflected classes, properties, and
 other metadata from that game and mod set. Import the archive through **Datapacks → Import** or
 drop one `.kdfdata` file onto the desktop window. The app inspects it before installing a
-content-addressed resource plugin. Only `.kdfdata` is a reflection datapack; a `ContentLib/`
+content-addressed game-data resource. Only `.kdfdata` is a reflection datapack; a `ContentLib/`
 folder follows the separate [ContentLib Import](/kdataforge/desktop-editor/contentlib-import)
 workflow.
 
@@ -41,13 +41,13 @@ project can also use **Schema only** under **Settings → Datapacks**. **Automat
 into a bundled Vanilla archive if the build includes a complete verified export; new projects do
 not silently select it.
 
-An explicit binding is saved as `[datapack].pluginId` in project settings. Disabling that plugin
+An explicit binding is saved as `[datapack].pluginId` in project settings. Disabling that resource
 keeps the binding intact but leaves validation schema-only until it is re-enabled or changed.
 Missing or partial engine metadata appears as limited or unknown. It is not proof that a class or
 property does not exist. The app reads installed archives up to its 512 MiB validation limit;
 larger source archives may be deflated during import without changing entry content.
 
-If the **Reflection Diff** plugin is enabled, choose **Compare** on an installed archive to
+If the **Reflection Diff** module is enabled, choose **Compare** on an installed archive to
 compare classes, properties, structs, and enums with another archive. Unknown metadata stays
 unknown instead of being treated as a removal.
 

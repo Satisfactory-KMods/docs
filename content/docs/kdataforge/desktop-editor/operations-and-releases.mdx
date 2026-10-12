@@ -30,7 +30,7 @@ explains its filters, quick fixes, and exports.
 ## Settings, updates, recovery
 
 **Settings** has user and project scopes. It covers editor/Prettier behavior, language server,
-plugins, datapacks, game/runtime paths, appearance, and keybindings. Its raw TOML editor reports
+built-in modules, datapacks, game/runtime paths, appearance, and keybindings. Its raw TOML editor reports
 syntax errors before saving. **Updates** checks configured signed channels; a download is
 verified before an explicit install. If no signed feed is configured, the page reports updates
 as disabled. **Recovery** lists unsaved snapshots, compares one with disk, and lets you restore
@@ -40,7 +40,7 @@ or discard it. Review the disk comparison before replacing current content.
 
 For one pack, use **Pack manager → Export .zip**; see
 [Projects and packs](/kdataforge/desktop-editor/projects-and-packs). For a mod release, open
-**Plugin tools → Ficsit.app**. The manager checks the local descriptor, `pack.yml`, version,
+**Module tools → Ficsit.app**. The manager checks the local descriptor, `pack.yml`, version,
 dependencies, changelog, logo, and page metadata. Preview any local metadata edit and inspect
 its per-file diff before applying. Package preview rescans disk and matches a content-addressed
 inventory; rerun it after changing files.
