@@ -53,6 +53,16 @@ Contexts carry `mGameInstance`, `mSourceFile`, and a diagnostic sink with `AddIn
 and `AddError`. Diagnostics are non-fatal. `FKDFApplyContext` adds `bDryRun`, `mPatchRecord`, and
 `mAppliedOpCount`.
 
+### Template providers and config values
+
+`KDataForgeApi` also exports the extension point for `{prefix:body}`
+[templates](/kdataforge/features/templates#writing-a-provider): `IKDFTemplateProvider`
+(`GetPrefix`, `GetPhase`, `Resolve`), the request and result structs, and the thread-safe
+`FKDFTemplateProviderRegistry` (`Register`, `Unregister`, `Find`, `GetPrefixes`). The typed value
+that providers return and that the Blueprint
+[Config API](/kdataforge/reference/blueprint-config-api) exchanges is `FKDFConfigValue` (with
+`EKDFConfigValueType` and `FKDFConfigKeyedValue`); both live in `KDFConfigTypes.h`.
+
 There is no `bLiveReload` flag in the handler API. KDataForge scans YAML during GameInstance
 initialization and again when an authorized host runs `/kdf reload`. Reload restores captured
 top-level property baselines before rebuilding and applying the handler pipeline. Frozen SML

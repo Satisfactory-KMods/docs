@@ -1,0 +1,255 @@
+---
+title: Config Expressions
+description: The grammar, types and error codes of the config key in conditions, which gates packs, documents and single list entries on pack configuration and game settings.
+sidebar:
+  order: 11
+---
+
+A `config:` condition decides from [pack configuration](/kdataforge/features/pack-configuration)
+or game settings whether a pack, a document, or one entry of a list applies. Its value is an
+**expression** written as a YAML string:
+
+```yaml
+conditions:
+  config: features.enableBonus && balance.ironSpeed >= 2
+```
+
+`config:` takes one expression, or a list of expressions that must **all** be true:
+
+```yaml
+conditions:
+  config:
+    - features.enableBonus
+    - balance.ironSpeed >= 2
+```
+
+## Where it works
+
+| Place                                                                                                                              | Effect when false                                                                         |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `pack.yml` `conditions:`                                                                                                           | The whole pack is skipped (its settings stay listed, marked not active).                  |
+| A document's `conditions:`                                                                                                         | The document is skipped.                                                                  |
+| `conditions:` on **any entry of any list**, at any depth: operations, patches, ingredients, unlocks, nodes, struct list members, … | That entry is removed before the document is applied.                                     |
+| A config definition (`*.config.yml`)                                                                                               | Not allowed (`config.condition-in-config`). A definition cannot depend on its own values. |
+
+All forms share the keys `conditions`, `conditionBehavior` and the older spelling
+`conditionBehaivor`. `config:` is one more key of a condition object, so it combines with
+`hasMod`, `gameVersion`, `modVersion` and `hasClass`, with `ifNotMatch`, and with condition lists
+exactly as described in [Conditions & Packs](/kdataforge/features/conditions-and-packs).
+
+```yaml
+# file: bonus-conditions.cdo.yml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      - path: mManufactoringDuration
+        op: divide
+        value: cfg:balance.ironSpeed
+      # An element condition: this entry is dropped while the bonus is off.
+      - path: mProduct[0].Amount
+        op: multiply
+        value: 2
+        conditions:
+          config: features.enableBonus
+      # Mixed with other condition keys and negated as a whole.
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.9
+        conditions:
+          - hasMod: KAPI
+          - config: features.tier == 1
+            ifNotMatch: true
+```
+
+An element condition is evaluated once, before anything is applied, and the three condition keys
+are stripped from the surviving entries. A condition inside a `conditions:` block is not an
+element condition. Two limits: an element-level `hasClass` cannot see classes that KDataForge
+generates, and `where:` filter operands resolve `cfg:` references but not apply-time templates.
+
+## Grammar
+
+```text
+or      := and ( '||' and )*
+and     := cmp ( '&&' cmp )*
+cmp     := unary [ cmp_op unary ]               (not chainable)
+cmp_op  := '==' | '!=' | '<' | '<=' | '>' | '>=' | 'contains' | 'in'
+unary   := '!' unary | primary
+primary := '(' or ')' | '[' [ literal ( ',' literal )* ] ']' | literal | operand
+literal := number | 'text' | "text" | true | false
+number  := [ '-' ] digits [ '.' digits ]        (no exponent)
+operand := id | cfg:id | cfg:pack:id | session:id | ags:id | option:id
+id      := name ( '.' name )*                   name = letter or _ followed by letters, digits, _
+```
+
+- Precedence from tightest to loosest: `!`, comparison, `&&`, `||`. Use parentheses for anything
+  else.
+- A comparison cannot be chained: `a < b < c` is an error. Write `a < b && b < c`.
+- Strings use `'...'` or `"..."` with the escapes `\\`, `\'`, `\"`, `\n` and `\t`.
+- A list literal contains literals only: `[1, 2, 3]`, `['hard', 'extreme']`.
+- Keywords are read after a full dotted name, so `in.x` is an id and `x in [1, 2]` is a test.
+  `true`, `false`, `in` and `contains` cannot be field ids.
+- Keywords, the prefixes `cfg:`, `session:`, `ags:`, `option:` and string values are
+  **case-sensitive**: `True` is an id, `CFG:x` is not a reference, and `'Hard' == 'hard'` is false.
+- `(` and `!` can be nested up to 64 levels; deeper input is the parse error `too-deep`.
+
+### Operands
+
+| Operand                                   | Reads                                                                              |
+| ----------------------------------------- | ---------------------------------------------------------------------------------- |
+| `balance.ironSpeed`                       | A field of the **own** pack.                                                       |
+| `cfg:balance.ironSpeed`                   | The same, with the explicit prefix.                                                |
+| `cfg:Other:shared.level`                  | A field of the pack `Other`.                                                       |
+| `session:<id>`, `ags:<id>`, `option:<id>` | A game setting, see [Game settings](/kdataforge/features/templates#game-settings). |
+
+The effective value is read, which is what the loaded content was built with: for a cold field
+the value from the start of the game, for a hot field the current value.
+
+## Types and rules
+
+| Type      | Comes from                                                                       |
+| --------- | -------------------------------------------------------------------------------- |
+| boolean   | `boolean` fields, `true`, `false`                                                |
+| number    | `number` fields, number literals, `select` fields with a numeric `valueType`     |
+| string    | `text` fields (string, text, name, tag), string `select` fields, string literals |
+| list of T | any `multiple: true` field, list literals                                        |
+
+- `==` and `!=` compare two values of the same type. Numbers compare by value (`100` equals `100.0`).
+  Lists cannot be compared; use `contains`, `in`, or test emptiness with `!list`.
+- `<`, `<=`, `>` and `>=` compare numbers only.
+- `list contains x` needs a list on the left and an element of the list's type on the right.
+  `x in list` is the same test the other way round.
+- `&&`, `||` and `!` work on truthiness: a boolean is itself, a number is true when not 0, a string
+  or list is true when not empty.
+- `&&` and `||` short-circuit. `false && missing` is false and does not look at `missing`.
+- An unknown id, or a type error that is reached, makes the condition **false** and logs an
+  error. The editor finds these while you type.
+- A setting that is not available yet (`session:` and `ags:` on the main menu) is not an error:
+  the pack or document is deferred and checked again once a save is loaded. `ifNotMatch` does not
+  turn such an unknown value into a match: the pack or document simply waits.
+
+## Examples
+
+With the defaults of the sample pack (`balance.ironSpeed` 2.0, `features.enableBonus` true,
+`features.tier` 1, `tags.extra` holding `KDF.Sample.Test`, a non-empty `texts.motto`):
+
+| Expression                                                             | Result                                       |
+| ---------------------------------------------------------------------- | -------------------------------------------- |
+| `features.enableBonus`                                                 | true                                         |
+| `!features.enableBonus`                                                | false                                        |
+| `balance.ironSpeed >= 2`                                               | true                                         |
+| `features.enableBonus && balance.ironSpeed > 3`                        | false                                        |
+| `features.tier == 1`                                                   | true                                         |
+| `features.tier in [2, 3]`                                              | false                                        |
+| `tags.extra contains 'KDF.Sample.Test'`                                | true                                         |
+| `!tags.extra`                                                          | false (the list is not empty)                |
+| `texts.motto != ''`                                                    | true                                         |
+| `(features.tier == 1 \|\| features.tier == 2) && features.enableBonus` | true                                         |
+| `features.enableBonus \|\| missing`                                    | true (`missing` is never read)               |
+| `missing \|\| features.enableBonus`                                    | error: unknown id, so the condition is false |
+| `cfg:Other:shared.level >= 2`                                          | depends on the pack `Other`                  |
+| `ags:FG.GameRules.NoPower == true`                                     | the live setting (deferred on the main menu) |
+
+```yaml
+# file: expression-forms.cdo.yml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.9
+        conditions:
+          config: features.enableBonus && balance.ironSpeed > 1
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.95
+        conditions:
+          config: features.tier in [2, 3]
+      - path: mGameplayTags
+        op: append
+        value: [KDF.Sample.Plain]
+        conditions:
+          config: tags.extra contains 'KDF.Sample.Test'
+      - path: mManufactoringDuration
+        op: multiply
+        value: 1.05
+        conditions:
+          config: '!features.enableBonus'
+      - path: mManufactoringDuration
+        op: multiply
+        value: 1.1
+        conditions:
+          config: "texts.motto != ''"
+      - path: mManufactoringDuration
+        op: multiply
+        value: 1.2
+        conditions:
+          config:
+            - features.enableBonus
+            - (features.tier == 1 || features.tier == 2)
+```
+
+## Writing expressions in YAML
+
+The expression is an ordinary YAML scalar, so YAML rules come first:
+
+- A plain scalar that **starts** with `!`, `[`, `'`, `"`, `&`, `*`, `%`, `@` or a backtick is not a
+  plain string. Quote the whole expression: `config: '!features.enableBonus'`. The editor reports
+  an unquoted start as `config.expression-quote`.
+- The characters `: ` (colon and space) and ` #` also cannot appear in a plain scalar. Quote the
+  expression if you need them.
+- Inside a double-quoted YAML string use single-quoted literals, and the other way round:
+  `config: "texts.motto != ''"` and `config: 'texts.motto != "off"'`.
+- In a Markdown table or inline code the pipes of `||` must be escaped. That is a documentation
+  matter only, the YAML needs no escaping.
+
+## Error codes
+
+Parse errors name a code and the position (counted in UTF-16 units from the start of the
+expression):
+
+| Code                       | Meaning                                                                    |
+| -------------------------- | -------------------------------------------------------------------------- |
+| `empty`                    | The expression is empty or only spaces.                                    |
+| `unexpected-char`          | A character that is not part of the grammar, for example `#`.              |
+| `expected-operand`         | An operand is missing: `a ==`, `a == == b`, `!`.                           |
+| `expected-close-paren`     | `(` without `)`.                                                           |
+| `expected-close-bracket`   | `[` without `]`.                                                           |
+| `unterminated-string`      | A string without its closing quote.                                        |
+| `invalid-number`           | A malformed number such as `1.` (a dot needs digits after it).             |
+| `invalid-ref`              | `cfg:`, `session:`, … without an id, or `cfg:pack:` without an id.         |
+| `reserved-id`              | `true`, `false`, `in` or `contains` used as an id, for example `cfg:true`. |
+| `chained-comparison`       | `a < b < c`.                                                               |
+| `list-element-not-literal` | A list literal that contains an id: `x in [a, 1]`.                         |
+| `trailing-input`           | Extra input after a complete expression: `a b`.                            |
+| `too-deep`                 | `(` and `!` nested deeper than 64 levels.                                  |
+
+The editor adds type checks before the game ever runs:
+
+| Code                               | Meaning                                                   |
+| ---------------------------------- | --------------------------------------------------------- |
+| `compare-mismatch`                 | `==` or `!=` between different types or two lists.        |
+| `order-non-number`                 | `<`, `<=`, `>` or `>=` on something that is not a number. |
+| `contains-non-list`, `in-non-list` | `contains` or `in` without a list on the correct side.    |
+| `list-element-mismatch`            | An element whose type does not fit the list.              |
+| `unknown-id`                       | The id is not a field of the pack.                        |
+
+They appear in the editor as `config.expression-syntax` (parse errors) and `config.expression-type`
+(type issues). A condition that is not a string or list of strings is `config.condition-invalid`.
+
+## Testing
+
+```text
+KDF.Config.Expr "features.enableBonus && balance.ironSpeed >= 2" KDFSample
+```
+
+`KDF.Config.Expr "<expression>" [pack]` prints `true`, `false`, or the error. The optional pack
+decides what a bare id means. In Blueprint use
+[`Evaluate Config Expression`](/kdataforge/reference/blueprint-config-api#templates-and-expressions).
+
+## See also
+
+- [Pack Configuration](/kdataforge/features/pack-configuration)
+- [Conditions & Packs](/kdataforge/features/conditions-and-packs)
+- [Templates and Typed References](/kdataforge/features/templates)

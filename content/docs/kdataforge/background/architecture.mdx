@@ -18,7 +18,13 @@ name `data-editor`, and any directory containing `pack.yml`. Roots may nest, and
 assigned only to its deepest enclosing root. An implicit pack ref and name come from the detected
 root's parent directory, so an explicit stable `ref` is recommended.
 
-![KDataForge runtime architecture from pack discovery through staged reflection operations and per-world actor patches](../../../assets/kdataforge/architecture.svg)
+![KDataForge runtime architecture from pack discovery and pack configuration through staged reflection operations and per-world actor patches](../../../assets/kdataforge/architecture.svg)
+
+Pack configuration is the first thing a load reads: after the scan, the `*.config.yml` definitions
+and values files of every pack are loaded into `UKDFConfigRegistry`, before pack conditions are
+evaluated and before any document is parsed. The template pre-pass then replaces `cfg:` /
+`session:` / `ags:` / `option:` values and evaluates entry-level conditions, so the stages only
+ever see plain documents. See [Pack Configuration Flow](#pack-configuration-flow).
 
 ## Lifecycle Integration (SML)
 
@@ -32,8 +38,10 @@ and apply pass. This runs before any world or save loads, so CDO edits and gener
 before anything references them. The full pass runs only once per GameInstance. During
 POST_INITIALIZATION, the load report is logged.
 
-`UKDFWorldModule` runs per world. It registers the `/kdf` chat command. During world
-INITIALIZATION, after save deserialization and before actor `BeginPlay`, it drains queued content
+`UKDFWorldModule` runs per world. It registers the `/kdf` chat command and the configuration sync
+subsystem. During world INITIALIZATION, after save deserialization and before actor `BeginPlay`, it
+first tells `UKDFSubsystem` that the world is ready (which reloads once if a document was deferred
+for want of session settings), then drains queued content
 registration, applies schematic/research registry removals, then asks `UKDFContentRemoveSubsystem`
 to sweep save-restored recipes. Registration runs first, so an explicit removal wins when both name
 the same class.
@@ -48,7 +56,14 @@ third-party handler registration window safe.
 | `UKDFSubsystem`           | GameInstanceSubsystem   | Owns loader, handler registry, class/object caches, patch records, registrations, removals, and world rules |
 | `FKDFPackScanner`         | static                  | Filesystem discovery (pruned recursive walk, `pack.yml` manifests)                                      |
 | `FKDFYamlParser`          | static (KDataForgeYaml) | ryml façade, the only YAML entry point; thread-safe parse, deterministic hand-written emitter           |
-| `FKDFConditionEvaluator`  | static                  | Document `conditions:` evaluation                                                                       |
+| `FKDFConditionEvaluator`  | static                  | Document, pack and entry `conditions:` evaluation, including `config:` expressions                      |
+| `UKDFConfigRegistry`      | member of subsystem     | Owns every `UKDFConfigDescription` (key `<pack>:<id>`), the values files, and the value lifecycle       |
+| `UKDFConfigDescription`   | UObject family          | One configured field; subclasses per widget kind. Public Blueprint surface (`UKDFConfigBlueprintLibrary`) |
+| `FKDFTemplateEngine`      | static                  | `{prefix:body}` templates, typed references, and the `config:` expression parser                        |
+| `IKDFTemplateProvider`    | interface (KDataForgeApi) | Extension point that resolves one template prefix; built-ins cover `cfg`, `session`, `ags`, `option` and reflection targets |
+| `FKDFColdPropertyCatalog` | member of subsystem     | Classifies properties as hot, cold or `newActors` for restart advice                                    |
+| `FKDFReloadScheduler`     | member of subsystem     | Debounces automatic reloads caused by setting or host value changes                                     |
+| `AKDFConfigSyncSubsystem` | AModSubsystem           | Replicates the host's effective configuration values to clients                                         |
 | `FKDFPropertyResolver`    | static                  | Property path → (FProperty, value ptr) resolution incl. containers and object dereference               |
 | `FKDFValueCodec`          | static                  | Bidirectional YAML ↔ FProperty conversion                                                               |
 | `FKDFOpEngine`            | static                  | The 22 property operations with per-kind capability matrix                                              |
@@ -133,6 +148,40 @@ server save before `AFGRecipeManager::BeginPlay` builds derived caches. Resource
 separate four-point schedule because level actors, streamed levels, spawns, and late descriptor
 retargeting become visible at different times.
 
+## Pack Configuration Flow
+
+Both entry points, `RunInitialLoad` and `ReloadAll`, run the same pipeline:
+
+1. **Scan.** The pack scanner finds packs, manifests and files.
+2. **Configuration first.** Every pack's `*.config.yml` definitions and its values file are loaded.
+   Descriptions keep their identity across reloads; definitions that vanished are marked stale.
+   The *effective* value of each field is decided here: a hot field follows the stored value (or
+   the multiplayer host's), a cold field keeps the value the running content was built with once
+   the first load has finished.
+3. **Pack conditions and dependencies.** `pack.yml` conditions run with access to `config:`
+   values. A pack that is switched off keeps its descriptions, marked not active.
+4. **Parse** the documents of the remaining packs.
+5. **Pre-pass.** Typed references and pre-pass templates are substituted in every document, and
+   entry-level `conditions:` are evaluated and stripped. A document that needs `session:` or
+   `ags:` values before a world exists is deferred. The pass also records which hot fields feed
+   cold contexts so that the result can say *restart advised*.
+6. **Stages** run in the fixed order. Apply-time templates are expanded per operation, when
+   the operand is about to be written.
+7. **Finish.** Category classes are resolved (generated classes exist only after the `Items`
+   stage) and queued description events are broadcast. Events never fire in the middle of a load.
+
+Applying changes from a UI saves pending values to the values file and, when a hot field changed,
+runs exactly one reload. Automatic reloads (a changed session setting, a changed host value)
+go through a debounce, and a burst guard suppresses runaway reload loops; user-initiated applies
+are never delayed.
+
+When the world is ready, the world module tells the subsystem. If a document was deferred, or a
+`session:` / `ags:` / `option:` value that a document used has changed, KDataForge reloads once with
+the world's values.
+
+Values files are plain YAML written atomically. Only the player's own stored values are ever
+written; host values and pending values stay in memory.
+
 ## Savegame Persistence Strategy
 
 Dynamically created content must survive save/load with valid class paths.
@@ -194,6 +243,21 @@ versions on the server and every client.
 `UKDFRemoteCallObject::Server_ApplySetOp` is a host-gated RPC scaffold. The editor UI does not call
 it, and there is no general `Server_ApplyOps` pipeline. Treat live editor changes as local process
 state, not synchronized multiplayer state.
+
+The one thing that **is** synchronized is pack configuration values, and nothing else:
+
+- The server (host or dedicated server) is the authority. `AKDFConfigSyncSubsystem` replicates its
+  effective values, each flagged hot or cold, to every client.
+- A client keeps them in memory as host overrides. Its own values file is never written from them,
+  and leaving the session restores its local values.
+- A differing hot value makes the client reload (debounced) so its content matches the host. A
+  differing cold value only raises a host-mismatch state and event, once per key and join.
+- Changes come from the host, or from a dedicated-server administrator through
+  `Server_ApplyConfigChanges`, which is permission-checked on the server and answered with
+  `Client_ConfigApplyResult`. A listen-server client cannot change values.
+
+This is value synchronization, not a pack handshake: nothing verifies that clients have the same
+packs. Install the same packs and versions everywhere.
 
 ## Determinism Rules (load-bearing)
 

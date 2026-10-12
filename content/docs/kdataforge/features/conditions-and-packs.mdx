@@ -91,6 +91,93 @@ filters `Info` diagnostics out of its printed output entirely, so a condition sk
 [Debugging a Pack That Won't Apply](/kdataforge/tutorials/debugging-a-pack-that-wont-apply#step-3-did-conditions-pass)
 for the workaround.
 
+## Conditions that read pack configuration: `config:`
+
+`config:` is one more key of a condition object. Its value is an
+[expression](/kdataforge/reference/config-expressions) over the fields of your
+[pack configuration](/kdataforge/features/pack-configuration) and over game settings, or a list of
+expressions that must all be true. It combines with `hasMod`, `gameVersion`, `modVersion`,
+`hasClass`, `ifNotMatch` and `conditionBehaivor` like any other key.
+
+```yaml
+# file: gated.cdo.yml
+type: cdo
+conditions:
+  - hasMod: KAPI
+  - config: features.enableBonus && balance.ironSpeed >= 2
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.9
+```
+
+A `config:` condition works in `pack.yml`, in a document's `conditions:`, and on single entries of
+lists (next section). It does not work inside a config definition file. Two practical rules:
+
+- Conditions on a whole pack, or on documents that **generate content** (`item`, `recipe`,
+  `schematic`, …), run at load time. Use a **cold** field there. A hot field works through
+  `/kdf reload` but is reported as *restart advised*, and the editor warns with
+  `config.hot-in-condition`.
+- Hot fields are the right choice for conditions on entries inside `cdo` patches, data assets and
+  operation lists, which are re-applied on every reload.
+
+A pack that its own `config:` condition switched off still lists its settings (marked as not
+active), so a player can switch it back on. `session:` and `ags:` settings do not exist on the main
+menu; a `config:` condition that reads one is not an error there, the pack or document is deferred
+until a save is loaded (`ifNotMatch: true` does not turn such an unknown value into a match).
+
+```yaml
+# file: modules.config.yml
+type: config
+category: SampleFeaturesCategory
+fields:
+  - id: modules.enableBalance
+    type: boolean
+    name: Enable the balance module
+    description: Turns the rebalancing documents of this pack on or off. Needs a restart.
+    default: true
+```
+
+```yaml
+# file: pack.yml
+ref: KDFSample
+name: KDataForge Sample Pack
+version: 1.0.0
+conditions:
+  config: modules.enableBalance
+```
+
+## Conditions on single list entries
+
+The keys `conditions`, `conditionBehavior` and `conditionBehaivor` are allowed on **any map entry of
+any list**, at any depth: operations, patches, ingredients, unlocks, nodes, members of a value
+payload, and so on. Before the document is applied, an entry whose condition is false is removed;
+for an entry whose condition is true, the condition keys are stripped. An entry condition that fails
+to evaluate removes the entry and logs an error.
+
+```yaml
+# file: gated-ingredients.recipe.yml
+type: recipe
+recipes:
+  - id: Recipe_GatedPlate
+    parent: /Game/FactoryGame/Recipes/Constructor/Recipe_IronPlate.Recipe_IronPlate_C
+    properties:
+      - path: mIngredients
+        value:
+          - ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+            Amount: 3
+          - ItemClass: /Game/FactoryGame/Resource/Parts/Screw/Desc_Screw.Desc_Screw_C
+            Amount: 2
+            conditions:
+              config: features.enableBonus # only present while the bonus is on
+```
+
+Entry conditions accept the same keys as document conditions. Limits: they are not looked for
+inside `conditions:` blocks, an entry-level `hasClass` cannot see classes that KDataForge itself
+generates, and operands of `where:` filters resolve `cfg:` references but not apply-time templates.
+
 ## pack.yml: the pack manifest
 
 A `pack.yml` at a detected pack root turns it into a named pack instead of the loader's fallback.
@@ -102,6 +189,8 @@ and dependency ordering. The fields below are read directly by the pack scanner:
 ref: MyOverhaul # stable ref the save-persistence and conflict-report contract
 name: My Overhaul Pack
 version: 2.1.0
+description: A short, player-facing summary of what the pack changes. # optional; shown by settings screens
+icon: icon.png # optional; pack-relative png/jpg/jpeg/tga/bmp or a /Game/... texture path
 priority: 200 # higher than default (100) → applies earlier in every stage
 enabled: true
 conditionBehaivor: AND # optional; controls condition-object aggregation
@@ -110,6 +199,12 @@ dependencies:
 conditions: # same grammar/evaluator as a document's conditions: see above
   hasMod: RefinedPower@>=4.0.0
 ```
+
+`description` is a string or a localized `{key, ns, source}` map. `icon` is a file inside the pack
+folder (`png`, `jpg`, `jpeg`, `tga` or `bmp`; a path that leaves the folder is rejected) or an object
+path of a `UTexture2D` that starts with `/`. Both are shown by pack settings screens, see
+[Pack Configuration](/kdataforge/features/pack-configuration#pack-name-description-and-icon). The
+editor reports a missing icon file as `pack.icon-missing`.
 
 `dependencies:` are hard ordering constraints. A pack is rejected if a dependency is missing,
 self-referential, or already invalid; that rejection propagates to transitive dependants. Packs in

@@ -71,8 +71,13 @@ The `type:` key is optional here. The `.cdo.yml` filename suffix would set the r
 
 - **`/kdf report`**: prints the load report, showing which packs and documents were found, what was applied, and every diagnostic (see below).
 - **`/kdf reload`**: restores KDataForge-touched reflected properties to their original session
-  baseline, rescans every pack file, then runs the normal deterministic stage pipeline again.
+  baseline, rescans every pack file (including edited
+  [configuration values files](/kdataforge/features/pack-configuration#the-values-file): hot values
+  apply, cold values report "restart required"), then runs the normal deterministic stage
+  pipeline again.
 - **`KDF.Reload`**: runs the same smart reload from a host or dedicated-server console.
+- **`/kdf sound PackRef Id`**: previews an imported Wwise sound on the local client. Console
+  equivalent: `KDF.Sound PackRef Id`. See [Wwise Sounds](/kdataforge/features/sounds).
 
 After editing a file, run `/kdf reload`, then use `/kdf report` to inspect the replacement load.
 Only the listen host, a dedicated-server administrator, or the server console may reload.
@@ -167,7 +172,9 @@ The format is `<file>: <target path>.<property path> <op> : <pre value> -> <post
 
 KDataForge loads YAML independently in every game process. It does not negotiate pack checksums,
 reject mismatches, or stream applied operations from the server. Install the same pack set and
-versions on the dedicated server or host and on every client.
+versions on the dedicated server or host and on every client. The one thing the host does send to
+clients is the value of each [pack configuration](/kdataforge/features/pack-configuration#multiplayer)
+field, held in memory only.
 
 The in-game editor's live property changes are local to the process where they are made. Export
 those changes to YAML and distribute the resulting pack when they must be consistent for all
@@ -195,3 +202,4 @@ assuming something is broken:
 - [Balancing](/kdataforge/examples/balancing): recipes, items, schematics, research
 - [Items](/kdataforge/features/items), [Recipes](/kdataforge/features/recipes), [Schematics](/kdataforge/features/schematics): new content from YAML, or the tied-together [End-to-End Pack](/kdataforge/examples/end-to-end-pack)
 - [Item + Icon + Recipe + Tier-1 Unlock](/kdataforge/tutorials/item-icon-recipe-schematic): this tutorial series' natural next step, walking through exactly that trio
+- [Pack Configuration](/kdataforge/features/pack-configuration): let players change numbers, toggles and texts of your pack without editing YAML

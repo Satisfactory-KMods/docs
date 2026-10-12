@@ -1,6 +1,6 @@
 ---
 title: Reflection Export
-description: Export runtime Unreal classes, structs, enums, defaults, Blueprint mappings, and asset indexes for Pack Manager and linter use.
+description: Export runtime Unreal classes, structs, enums, defaults, functions, game settings, reload classification, Blueprint mappings, and asset indexes for Pack Manager and validation use.
 sidebar:
   order: 9
 ---
@@ -23,8 +23,19 @@ Or chat:
 /kdf-reflection
 ```
 
-Bare console and chat commands use the full packaged profile: assets, functions, flattened classes,
-mandatory ZIP packaging, and PNG texture export. Add options only to override that profile.
+The two commands do **not** export the same amount:
+
+| Start | Options it uses | Result |
+| --- | --- | --- |
+| Console `KDF.DumpReflection` (bare) | none | Classes, structs, enums, defaults, Blueprint mappings, textures, the settings index and the cold-property catalog in the final ZIP. **No** functions, **no** data-asset or curve indexes and **no** flattened classes. |
+| Chat `/kdf-reflection` (bare) | `--assets --functions --flattened --pack --image-max-dimension=1024` | The full profile: everything above plus functions, asset indexes and flattened classes. |
+| Launch argument `-KDFReflectionAutoExport=<dir>` | `--assets --functions --flattened` (and `--image-max-dimension` from `-KDFReflectionAutoImageMaxDimension=<n>` if given) | The same export, started automatically once a world has begun play. |
+
+For the data the desktop editor needs (function completion in templates, asset-by-class indexes,
+inherited properties) use the bare chat command, the auto export, or give the console command the
+options yourself: `KDF.DumpReflection --assets --functions --flattened`. The chat defaults apply
+only when you give **no** option at all; as soon as you pass one, exactly the options you passed
+are used.
 
 Clients do nothing unless `--force` is supplied. Server or host is normal export location. Default
 directory is `FactoryGame/KMods/ReflectionExport/`.
@@ -35,8 +46,9 @@ directory is `FactoryGame/KMods/ReflectionExport/`.
 | `--mounts /Game,/Plugin` | Restrict Blueprint discovery to comma-separated mount points. |
 | `--assets` | Add asset-by-class indexes beyond textures; loading attempts still cover every selected registry asset. |
 | `--asset-cap N` | Limit assets recorded per class. |
-| `--functions` | Include reflected function signatures and flags. |
+| `--functions` | Include reflected function signatures and flags (see [Functions](#functions)). |
 | `--flattened` | Write inherited-property view to `classes.flat.ndjson`. |
+| `--image-max-dimension N` | Largest exported texture side in pixels, `1` to `4096`; default `1024`. |
 | `--pack` | Compatibility no-op; final ZIP is always written. |
 | `--skip-widgets[=true|false]` | Skip widget Blueprints; enabled by default. |
 | `--widgets` | Shortcut that includes widget Blueprints. |
@@ -55,6 +67,10 @@ authored user-struct member names, required files, and deterministic default-val
 - `classes.ndjson`, `structs.ndjson`, `enums.ndjson`: path-sorted records with inline property data.
 - `classes.flat.ndjson`: optional inherited-property view.
 - `indexes/subclasses.json`, `indexes/assets.json`: class and registry lookup indexes.
+- `indexes/settings.json`: game settings that `session:`, `ags:` and `option:` references can read, see
+  [Settings index](#settings-index).
+- `catalog/cold_properties.json`: the cold-property catalog, see
+  [Reload classification](#reload-classification-and-cold-property-catalog).
 - `indexes/textures.json`: image path, format, dimensions, export method, or per-texture failure reason.
 - `images/**`: selected texture images as PNG, proportionally limited to 1024x1024.
 - `nativeMapping.json`: native-to-Blueprint and reverse mappings.
@@ -87,6 +103,79 @@ To import, open desktop editor **Datapacks**, choose **Import game data**, selec
 `.kdfdata`, then bind imported datapack to project. Pack Manager validates manifest/schema, stores
 immutable archive copy, and exposes contents as datapack `reflection` section to editor and language
 server. Directory form is useful during editor/language-server development.
+
+## Functions
+
+With `--functions` (included in the chat default and the auto export) each class record in
+`classes.ndjson` gets a `functions` array. The desktop editor uses it to complete and check
+[template function calls](/kdataforge/features/templates#calling-functions).
+
+| Field | Meaning |
+| --- | --- |
+| `name` | The function name, lowercased so exports of different runs compare equal |
+| `authoredName` | The name with its authored letter case (`GetItemName`). Editors show this one. |
+| `path` | `<ownerPath>:<name>` |
+| `ownerPath` | The class that declares the function |
+| `flags` | The function flags, for example native, `BlueprintPure`, `Const`, `Static`, net and event flags |
+| `params` | Input parameters as property records, in declaration order |
+| `return` | The return value as a property record; absent when the function returns nothing |
+
+Property records use the same shape as class properties, including `authoredName`.
+
+## Settings index
+
+`indexes/settings.json` lists the game settings that `session:`, `ags:` and `option:`
+[references](/kdataforge/features/templates#game-settings) can read. It is written by every export.
+
+| Field | Meaning |
+| --- | --- |
+| `schemaVersion`, `engineVersion` | Format and build |
+| `counts` | Number of settings per provider: `session`, `ags`, `option`, `other` |
+| `settings` | The records, sorted by provider, lowercase id and path |
+| `unresolved` | Setting assets that could not be indexed, with a `reason` (for example an empty id) |
+
+A record has:
+
+| Field | Meaning |
+| --- | --- |
+| `id` | The setting id (`StrId`), exactly what follows the prefix in `ags:<id>` |
+| `provider` | `session` (SML session setting), `ags` (advanced game settings), `option` (local game options) or `other` (not readable by a prefix) |
+| `path`, `class`, `source` | The asset, its class, and which mod or the base game provides it |
+| `displayName`, `tooltip` | The texts shown in game |
+| `valueType` | `bool`, `int`, `float`, `string`, `color` or `other` |
+| `default` | The default value when it can be read |
+| `range`, `displayRange` | Slider or selection bounds; `displayRange` only when it differs |
+| `options` | `{value, label}` choices of an integer selector |
+| `sessionWide`, `dedicatedServerRelevant` | Whether the setting is stored per session and whether a dedicated server uses it |
+| `managerClass`, `mapWhitelist` | The manager that owns the setting and, for session settings, the maps it is limited to |
+
+The editor completes setting ids from this file and reports an unknown id as `setting.unknown-id`
+when the file exists.
+
+## Reload classification and cold-property catalog
+
+Every property declared directly by a class carries two extra fields under its `kdf` object:
+
+| Field | Meaning |
+| --- | --- |
+| `kdf.reload` | `hot`, `cold` or `newActors` |
+| `kdf.reloadReason` | One sentence that says why, present when the classification comes from the catalog |
+
+- `hot`: a write applies live (an explicit allow-list entry).
+- `cold`: the game reads the property once or only when an object is created, so a live write does
+  not change existing state.
+- `newActors`: the class default belongs to an actor or component, so only newly spawned actors see
+  a write (the patch can set `applyToSpawnedActors: true` to include existing actors).
+
+Struct members, function parameters and container elements inherit the classification of the
+class property that contains them. The editor shows the classification next to `path:`
+completions and reports operations on cold or `newActors` properties as `property.cold`, see
+[Pack Configuration](/kdataforge/features/pack-configuration#cold-properties).
+
+`catalog/cold_properties.json` is the catalog behind it: `version`, a `description`, and
+`entries` of `{class, property, reload, reason, verified}`. A class entry includes its subclasses
+and the property name is case-insensitive. `verified: false` marks an entry that is a reasonable
+assumption not yet checked in game.
 
 ## Editor Metadata Supplement
 

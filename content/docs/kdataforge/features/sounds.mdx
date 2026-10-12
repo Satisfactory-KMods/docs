@@ -1,0 +1,127 @@
+---
+title: Wwise Sounds
+description: Import pack-relative PCM16 WAV files as Wwise audio events for ADA voice-over and finite 2D playback.
+sidebar:
+  order: 19
+---
+
+`type: sound` loads WAV files from your pack at runtime and creates real `UAkAudioEvent` assets.
+Use these events in ADA messages or other properties that accept a Wwise audio event. Pack authors
+and players do not need Wwise Authoring installed, and do not generate banks themselves.
+
+```yaml
+# file: welcome.sound.yml
+type: sound
+sounds:
+  - id: AdaWelcome
+    file: audio/welcome.wav
+```
+
+`file` starts at the directory containing this pack's `pack.yml`, not at the YAML file's directory.
+Distribute the WAV alongside the YAML. Absolute paths, paths outside the pack, and symbolic links
+that resolve outside the pack are rejected. The `.sound.yml` filename can supply the type when a
+file contains only one document; every document in a multi-document file needs explicit `type`.
+
+## Accepted audio
+
+| Property       | Supported value                                              |
+| -------------- | ------------------------------------------------------------ |
+| Container      | Little-endian RIFF/WAVE (`.wav`, case-insensitive extension) |
+| Encoding       | Uncompressed signed PCM, 16 bits per sample                  |
+| Channels       | Mono or stereo                                               |
+| Sample rate    | 8000–192000 Hz                                               |
+| File size      | At most 64 MiB per file                                      |
+| Playback       | Finite, once, 2D, no spatial attenuation                     |
+| Volume routing | Master Audio Bus; follows master volume                      |
+
+PCM16 WAVE_FORMAT_EXTENSIBLE files also work when their valid-bit count and channel mask match
+mono/stereo PCM. Float WAV, 8/24/32-bit PCM, MP3, OGG, compressed WAV, streaming, loops, effects
+and spatial attenuation are unsupported. Export recordings as **16-bit PCM WAV**; 48000 Hz is a
+useful choice for voice-over. Sounds are held in memory while loaded, so keep long recordings small.
+
+Sound entries accept only `id` and `file`. Document-level `conditions`, `debug` and `include` use
+their normal grammar. `id` uses the same token rules as other generated content and shares the
+generated asset namespace with images, curves and data assets. Do not reuse one ID for two assets.
+
+## Reference an event
+
+Given `ref: ADAExample` and `id: AdaWelcome`, the event's object path is:
+
+```text
+/KDataForge/GenAssets/ADAExample.Gen_ADAExample_AdaWelcome
+```
+
+Use `AdaWelcome` inside the same pack, or the complete path for an explicit cross-pack reference.
+This also works for soft object references such as `FGMessage.mAudioEvent`:
+
+```yaml
+type: dataasset
+assets:
+  - id: WelcomeMessage
+    class: /Script/FactoryGame.FGMessage
+    properties:
+      - path: mTitle
+        value: "Welcome"
+      - path: mMessage
+        value: "Welcome, pioneer."
+      - path: mAudioEvent
+        value: AdaWelcome
+```
+
+Sounds load in the **Assets** stage before data-asset property initialization and CDO patches,
+so sound references do not depend on filenames sorting before message files. Importing a sound
+does not play it or define an ADA trigger. Configure message triggers, subtitles and queue behavior
+on the `FGMessage` separately. See the [complete ADA example](/kdataforge/examples/ada-voice-over).
+
+## Editor authoring and preview
+
+In the desktop editor, choose **File → New document → sound**, or use the **Wwise sound** content
+wizard. In Visual editor, **Sounds** provides **New sound ID**, **New sound file**, and **Add sound**.
+The wizard creates YAML; place the recording inside the pack yourself. Code editor offers `sound`
+completion and hover help; validation checks schema, file containment and the actual WAV header.
+Go to definition and Rename ID include sound declarations, full event paths and short
+`mAudioEvent` references. Runtime simulation, naming audits, dead-content analysis and changelogs
+also understand sound documents.
+
+In the in-game editor, select `sound` when creating a pack document. Add a **Wwise sound (PCM16 WAV)**
+entry, edit `id`/`file`, save, then reload the pack. Preview locally with:
+
+```text
+/kdf sound ADAExample AdaWelcome
+```
+
+The game console equivalent is `KDF.Sound ADAExample AdaWelcome`. Preview returns a real Wwise
+playing ID and logs both start and end-of-event. It needs a client with initialized audio; a
+dedicated server cannot produce sound. This preview plays the event directly, independently of
+ADA's trigger and subtitle configuration.
+
+Chat preview is available on the local host. Remote players use `KDF.Sound` in their own client
+console; a chat request cannot play sound on another machine.
+
+The supported authoring editors are the desktop editor and KDataForge's in-game editor. Runtime
+events are generated for the packaged game; `KDF.ApplyToAssets` does not import them into Unreal
+Editor assets, and Unreal Editor/PIE audio import is not supported by this runtime path.
+
+## Reload, multiplayer and errors
+
+Run `/kdf reload` after changing YAML or the WAV. The event's UObject path stays stable. An unchanged
+recording keeps its existing event; a changed recording updates that object after a replacement
+bank loaded successfully. A missing, invalid or rejected replacement is reported and leaves the
+previously imported sound object intact. Removing a declaration requires a session restart to
+discard the generated object. Bank cache lives under `FactoryGame/Content/KDataForgeRuntimeSounds`
+in the game installation; source audio stays in the pack. The cache directory must be writable.
+This cache can be cleared while the game is closed and is rebuilt on the next load.
+Incomplete or damaged cache files are replaced automatically.
+
+Install identical packs and WAV files on all multiplayer clients. Sound data is local and is not
+transferred by KDataForge's configuration synchronization. Dedicated servers validate the source
+and create event references without opening an audio device. A host reload is process-local;
+restart the session on all peers to update their audio together.
+
+Use `/kdf report` for diagnostics. Missing files, invalid PCM headers, incomplete frames, unsupported
+formats, ID collisions and unavailable Wwise audio produce explicit errors. If Wwise rejects a
+generated bank, inspect `LogAkAudio` and `LogWwiseFileHandler`. This importer targets Satisfactory's
+Wwise 2025.1 bank format; after a game audio-engine update, use a compatible KDataForge build.
+
+Wwise loads event definitions and media from SoundBanks before events can play; this feature
+prepares those resources for you. [Audiokinetic: Loading Banks](https://www.audiokinetic.com/library/2025.1.6_9117/?id=soundengine__banks__loading.html&source=SDK)

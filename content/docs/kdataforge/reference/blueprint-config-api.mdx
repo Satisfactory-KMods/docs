@@ -1,0 +1,354 @@
+---
+title: Blueprint Config API
+description: Build a pack settings screen in Blueprint. The config description objects, the Blueprint function library, apply results, multiplayer roles and events.
+sidebar:
+  order: 10
+---
+
+[Pack configuration](/kdataforge/features/pack-configuration) is defined in YAML and shown by a UI
+that a mod or a Blueprint author builds. KDataForge does not ship a settings screen. It gives
+you one **description object** per configured field, grouped by category, with typed getters,
+validating setters, and events, so a widget for each field kind takes a few nodes.
+
+Everything below lives in the module `KDataForge` and is available in Blueprint under the
+category **KDataForge | Config**.
+
+## The pieces
+
+| Piece                        | What it is                                                                                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UKDFConfigBlueprintLibrary` | Blueprint function library: pack list, descriptions by category, apply, multiplayer permissions, templates. All nodes take a world context. |
+| `UKDFConfigDescription`      | One field. Abstract; each field kind has a subclass with typed getters and setters.                                                         |
+| `FKDFConfigValue`            | A typed value in canonical text form. What descriptions accept and return.                                                                  |
+| `FKDFConfigApplyResult`      | What an apply did: saved, reloaded, restart required, errors.                                                                               |
+| `FKDFPackInfo`               | One pack: name, description, icon, state, number of fields.                                                                                 |
+| `UKDFSubsystem`              | Get it with `Get KDataForge Subsystem`. Holds the delegates `On Config Applied`, `On Config Host Mismatch` and `On Reload Completed`.       |
+
+A description is addressed by its **key** `<pack>:<id>`, for example `KDFSample:balance.ironSpeed`.
+Descriptions keep their identity across reloads: editing a definition file and running
+`/kdf reload` updates the same object in place when the field kind is unchanged, so a widget that
+holds one stays valid. A field that disappears is kept alive but marked stale (`Is Stale`) and no
+longer listed.
+
+## Field kinds
+
+The YAML `type`, `valueType`, `display` and `multiple` keys select the class:
+
+| YAML                                                            | Description class                                   | `Get Kind`    |
+| --------------------------------------------------------------- | --------------------------------------------------- | ------------- |
+| `type: text`, `valueType` `string`, `text` or `name`            | `UKDFConfigTextDescription`                         | `Text`        |
+| `type: text`, `valueType: tag`                                  | `UKDFConfigTagDescription`                          | `Tag`         |
+| `type: number`, no slider                                       | `UKDFConfigNumberDescription`                       | `Number`      |
+| `type: number` with `display: slider` (or both `min` and `max`) | `UKDFConfigSliderDescription` (extends Number)      | `Slider`      |
+| `type: boolean`                                                 | `UKDFConfigBooleanDescription`                      | `Boolean`     |
+| `type: select`                                                  | `UKDFConfigSelectDescription`                       | `Select`      |
+| `type: select` with `multiple: true`                            | `UKDFConfigMultiSelectDescription` (extends Select) | `MultiSelect` |
+| `type: text` or `number` with `multiple: true`                  | `UKDFConfigListDescription`                         | `List`        |
+
+`Get Kind` returns `EKDFConfigFieldKind` (`Text`, `Tag`, `Number`, `Slider`, `Boolean`, `Select`,
+`MultiSelect`, `List`). Switch on it, then **cast** to the matching class to reach the typed
+functions.
+
+### Common functions (every description)
+
+Identity and metadata, all pure:
+
+| Function                                   | Returns                                                                  |
+| ------------------------------------------ | ------------------------------------------------------------------------ |
+| `Get Pack Ref`, `Get Id`, `Get Key`        | `<pack>`, `<id>`, `<pack>:<id>`                                          |
+| `Get Display Name`, `Get Description Text` | The `name` and `description` as `Text`                                   |
+| `Get Tooltip`, `Has Tooltip`               | `FKDFConfigTooltip` (`Title`, `Text`) and whether one exists             |
+| `Get Category Class`                       | The `UFGCategory` subclass (plain `UFGCategory` while unresolved)        |
+| `Get Apply Mode`                           | `EKDFConfigApplyMode`: `Cold` or `Hot`                                   |
+| `Get Value Type`, `Is Array`               | `EKDFConfigValueType`; whether the field holds a list                    |
+| `Get Kind`, `Get Order`                    | The field kind; the sort order inside a category                         |
+| `Get Source File`, `Get Source Line`       | Where the field is defined                                               |
+| `Is Pack Active`                           | False when the owning pack was skipped by its conditions or dependencies |
+
+Values:
+
+| Function                                           | Returns                                                                             |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `Get Value`                                        | The pending value, else the host value, else the stored value. Use this in widgets. |
+| `Get Effective Value`                              | The value the loaded content was built with                                         |
+| `Get Default Value`                                | The default from the definition                                                     |
+| `Get Stored Value`                                 | The value in the local values file                                                  |
+| `Get Host Value`                                   | The multiplayer host's value; type `None` when there is no override                 |
+| `Get Value As String`, `Get Value As Display Text` | Canonical text (elements joined with `, `); display text with option labels         |
+
+Setters (they set the **pending** value; nothing is saved until you apply):
+
+| Function                                  | Behavior                                                                                                                                                                |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Set Value (Value, Out Error)`            | Validates and stores. Returns `false` with `Out Error` for an invalid value. A number outside `min` and `max` is clamped and accepted. Fails on read-only descriptions. |
+| `Set Value From String (Text, Out Error)` | Parses canonical text for this field. For a list field it takes one element.                                                                                            |
+| `Reset To Default`                        | Pending value = default.                                                                                                                                                |
+| `Discard Pending Change`                  | Drops the pending value.                                                                                                                                                |
+
+State:
+
+| Function              | True when                                                                    |
+| --------------------- | ---------------------------------------------------------------------------- |
+| `Is Dirty`            | A pending value exists that differs from the stored value                    |
+| `Is Default`          | The current value equals the default                                         |
+| `Is Restart Required` | A cold field whose saved value differs from the one the running content uses |
+| `Is Restart Advised`  | A hot field that also feeds a cold context or cold property                  |
+| `Is Read Only`        | The local player may not edit (see [Multiplayer](#multiplayer-roles))        |
+| `Is Host Override`    | The multiplayer host overrides this field                                    |
+| `Is Host Mismatch`    | A cold field whose host value differs from what this client loaded           |
+| `Is Stale`            | The definition vanished                                                      |
+
+Events on every description (assign in the Event Graph):
+
+| Event              | Fires                                                                              |
+| ------------------ | ---------------------------------------------------------------------------------- |
+| `On Value Changed` | The value changed: after an apply, a reload from disk, or when host values arrive. |
+| `On State Changed` | A state flag changed (dirty, restart required, host mismatch, stale, active).      |
+
+Events are queued while KDataForge loads or applies and broadcast afterwards, never in the middle
+of a load. Both pass the description.
+
+### Per-kind functions
+
+**Text** (`UKDFConfigTextDescription`): `Get Text Kind` (`String`, `Text`, `Name`), `Is Multiline`,
+`Get Max Length`, `Get String` and `Set String`, `Get Text` and `Set Text`, `Get Name Value`.
+
+**Tag** (`UKDFConfigTagDescription`): `Get Tag` and `Set Tag`, `Get Tag Root`,
+`Get Selectable Tags` (every tag below the root, for a picker).
+
+**Number** (`UKDFConfigNumberDescription`): `Get Number Kind` (`Int8`, `Int16`, `Int32`, `Int64`,
+`UInt8`, `Float`, `Double`), `Is Integer`, `Get Int` and `Set Int`, `Get Float` and `Set Float`,
+`Has Min`, `Has Max`, `Get Min`, `Get Max`, `Get Step` (0 when none), `Get Decimals`.
+
+**Slider** (`UKDFConfigSliderDescription`): everything of Number plus `Get Normalized` (the value as
+0 to 1 inside `min` to `max`) and `Set Normalized` (snapped to `step` and `decimals`).
+
+**Boolean** (`UKDFConfigBooleanDescription`): `Get Bool`, `Set Bool`, `Toggle`.
+
+**Select** (`UKDFConfigSelectDescription`): `Get Options` (array of `FKDFConfigOption` with `Value`
+and `Label`), `Get Selected Index` (`-1` when the value matches no option), `Set Selected Index`.
+
+**Multi-select** (`UKDFConfigMultiSelectDescription`): the select functions plus
+`Is Option Selected`, `Set Option Selected`, `Get Selected Indices`, `Set Selected Indices`,
+`Get Min Selected` (0 when unlimited), `Get Max Selected` (`-1` when unlimited).
+
+**List** (`UKDFConfigListDescription`): `Get Count`, `Get Element`, `Set Element`, `Add Element`,
+`Remove Element At`, `Get Min Count`, `Get Max Count` (`-1` when unlimited). Elements are canonical
+text of the field's value type.
+
+Every setter returns a `Boolean` and fills `Out Error` with a message for the player when the new
+value is rejected (out of range, too long, not one of the options, too many or too few entries, a
+tag outside the root).
+
+## Values
+
+`FKDFConfigValue` carries a type, an array flag and the elements as canonical text:
+
+| Member     | Meaning                                                                                        |
+| ---------- | ---------------------------------------------------------------------------------------------- |
+| `Type`     | `EKDFConfigValueType`: `None` (unset), `Bool`, `Int`, `Float`, `String`, `Text`, `Name`, `Tag` |
+| `Is Array` | True for `multiple: true` fields                                                               |
+| `Elements` | Array of strings; exactly one element for a scalar                                             |
+
+Canonical text is `true` or `false`, whole numbers, fixed-point floats without an exponent, and
+all other types verbatim. Helper nodes avoid hand-building values: `Make Config Value Bool`, `Int`,
+`Float`, `String`, `Text`, `Name`, `Tag` and `Make Config Value Array (Type, Elements)`, and the
+readers `Config Value To Bool`, `Int`, `Float`, `String`, `Text`, `Tag` (the first element), plus
+`Config Values Equal`.
+
+## The function library
+
+All nodes below take a world context. An empty `Pack Ref` means all packs where noted.
+
+### Packs and descriptions
+
+| Node                                           | Returns                                                                                             |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `Get All Pack Infos`                           | Every pack, active or skipped, as `FKDFPackInfo`                                                    |
+| `Get Pack Info (Pack Ref, Out Info)`           | One pack; `false` if unknown                                                                        |
+| `Get Pack Config Descriptions (Pack Ref)`      | A map `Category class` to `FKDFConfigDescriptionList` (`Descriptions`), each list sorted by `order` |
+| `Get Sorted Config Categories (Pack Ref)`      | The category classes ordered by their `mMenuPriority`                                               |
+| `Get Config Descriptions Flat (Pack Ref)`      | All descriptions sorted by category priority, then `order`                                          |
+| `Get All Config Descriptions`                  | Every non-stale description of every pack, unsorted                                                 |
+| `Find Config Description (Key)`                | The description for `<pack>:<id>`, or none                                                          |
+| `Find Config Description By Id (Pack Ref, Id)` | The same with separate arguments                                                                    |
+
+The category map exists because a Blueprint map cannot hold an array as its value; the struct
+`FKDFConfigDescriptionList` wraps it. Use `Get Sorted Config Categories` for the section order
+and look each category up in the map, or use `Get Config Descriptions Flat` and start a new section
+whenever `Get Category Class` changes.
+
+### Pending changes, apply and reload
+
+| Node                                        | Behavior                                                                                                                       |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `Has Pending Config Changes (Pack Ref)`     | Any description with a pending value                                                                                           |
+| `Discard Pending Config Changes (Pack Ref)` | Drops all pending values                                                                                                       |
+| `Apply Config Changes (Pack Ref)`           | Saves pending values and returns an `FKDFConfigApplyResult`. A hot change triggers exactly one reload.                         |
+| `Is Config Restart Required (Pack Ref)`     | Any cold field with a saved change that is not live yet                                                                        |
+| `Reload Config From Disk (Pack Ref)`        | Re-reads the values files and applies hot differences. Not available on clients of another game (the result carries an error). |
+| `Adopt Host Values (Pack Ref)`              | Client action: writes the host's values into the local file; cold ones then need a restart                                     |
+
+The same actions exist on `UKDFSubsystem` as `Apply Config Changes`, `Get Config Net Role` and
+`Can Local Player Edit Config`.
+
+### Multiplayer
+
+| Node                           | Returns                                                                                                                      |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `Get Config Net Role`          | `EKDFConfigNetRole`, see below                                                                                               |
+| `Can Local Player Edit Config` | False for plain remote clients; true standalone, for the host, on a dedicated server and for dedicated-server administrators |
+
+### Templates and expressions
+
+| Node                                                                       | Behavior                                                                                                                                           |
+| -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Resolve Template String (Text, Pack Ref, Out Error)`                      | Expands `{prefix:body}` templates (both phases) and returns the text; `Out Error` is empty on success.                                             |
+| `Resolve Template Text (Text, Pack Ref, Out Error)`                        | The same, returning `Text`                                                                                                                         |
+| `Evaluate Config Expression (Expression, Pack Ref, Out Result, Out Error)` | Evaluates a [`config:` expression](/kdataforge/reference/config-expressions). Returns `false` with `Out Error` when it does not parse or evaluate. |
+
+Use them for texts such as a settings screen's own tooltips. See
+[Templates and Typed References](/kdataforge/features/templates) for the syntax.
+
+## Packs
+
+`FKDFPackInfo`:
+
+| Member                                              | Meaning                                                                                                                   |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `Ref`, `Name`, `Description`, `Version`, `Priority` | From `pack.yml` (`Name` and `Description` as `Text`)                                                                      |
+| `Icon`                                              | A `Texture 2D`; decoded the first time a pack info is requested, empty on dedicated servers and for packs without an icon |
+| `State`, `State Reason`                             | `EKDFPackState` and a readable detail                                                                                     |
+| `Config Field Count`                                | Number of listed fields                                                                                                   |
+| `Has Pending Config`                                | A field has a pending value                                                                                               |
+| `Restart Required`                                  | A saved change needs a restart                                                                                            |
+
+`EKDFPackState`: `Active`, `DisabledByManifest` (`enabled: false`), `DuplicateRef` (a second pack
+with the same ref), `MissingDependency`, `DependencyCycle`, `SkippedByConditions`,
+`SkippedByDependency`. A pack skipped by its conditions still lists its fields; their
+`Is Pack Active` is false, so a screen can show them greyed out.
+
+## Applying changes
+
+`Apply Config Changes` returns `FKDFConfigApplyResult`:
+
+| Member                  | Meaning                                                                                        |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| `Saved`                 | At least one value was written to a values file                                                |
+| `Reloaded`              | A KDataForge reload ran as part of this apply                                                  |
+| `Reload Scheduled`      | A reload is queued because one was already running                                             |
+| `Restart Required`      | At least one saved change only takes effect after a restart                                    |
+| `Pending`               | The change was sent to the server and the answer is still outstanding (dedicated-server admin) |
+| `Request Id`            | Correlates the asynchronous answer; 0 for local applies                                        |
+| `Changed Keys`          | The `<pack>:<id>` keys that changed                                                            |
+| `Restart Required Keys` | Cold fields that need a restart                                                                |
+| `Restart Advised Keys`  | Hot fields that also feed cold contexts or cold properties: applied, but a restart is advised  |
+| `Errors`                | Messages for values that were rejected                                                         |
+
+The flow: pending values become stored values and the values file is written (a write failure
+rolls that pack back and reports an error). If a hot field changed, KDataForge reloads once. Cold
+fields stay on their old effective value and appear in `Restart Required Keys`. Finally every
+changed description fires `On Value Changed` and the subsystem fires `On Config Applied` once with
+the result.
+
+On a dedicated-server administrator's client there is no local file to write. The apply sends the
+changes to the server, returns immediately with `Pending` set, and the real result arrives through
+`On Config Applied`. Invalid single values are reported in `Errors`; the valid ones in the same
+request are still applied.
+
+## Multiplayer roles
+
+`Get Config Net Role` returns:
+
+| Role              | Meaning                                             | May edit                                        |
+| ----------------- | --------------------------------------------------- | ----------------------------------------------- |
+| `Local`           | Standalone game                                     | yes, files are local                            |
+| `ListenHost`      | Host of a listen-server game                        | yes; values are synced to clients               |
+| `DedicatedServer` | A dedicated server process                          | yes (file plus `/kdf reload`, or the admin RPC) |
+| `RemoteClient`    | A client of someone else's game                     | no, host values are read-only                   |
+| `RemoteAdmin`     | A client with dedicated-server administrator rights | yes, through an RPC                             |
+
+On a listen server only the host may change values; clients see the host's values read-only.
+`Is Read Only` on a description follows the role. While connected, a field the host controls reports
+`Is Host Override`; a cold field whose host value differs from what the client loaded reports
+`Is Host Mismatch`. Leaving the session restores the local values.
+
+Subsystem events (assign them on the result of `Get KDataForge Subsystem`):
+
+| Event                                   | Fires                                                                                |
+| --------------------------------------- | ------------------------------------------------------------------------------------ |
+| `On Config Applied (Result)`            | After a local apply, and when a dedicated-server administrator's request is answered |
+| `On Config Host Mismatch (Description)` | Once per key and join when a cold host value differs from the one this client loaded |
+| `On Reload Completed`                   | A KDataForge reload finished                                                         |
+
+## Building a settings screen
+
+This is the node flow of a typical screen. Names are the Blueprint display names.
+
+1. **Pack list.** `Get All Pack Infos`, then `For Each`. Show `Name`, `Description` and `Icon`. Skip
+   packs whose `Config Field Count` is 0. Grey out entries whose `State` is not `Active`.
+2. **Open a pack.** `Get Config Descriptions Flat (Pack Ref)` gives the fields in display order.
+   For a sectioned layout call `Get Sorted Config Categories` and, for each category, take the
+   list from `Get Pack Config Descriptions` with `Find`.
+3. **One widget per field.** `Get Kind`, then `Switch on EKDFConfigFieldKind`:
+   - `Slider`: `Cast To KDFConfigSliderDescription`. Set the widget's range from `Get Min` and
+     `Get Max`, its step from `Get Step`, its position from `Get Normalized`. On change call
+     `Set Normalized`.
+   - `Number`: a text box. Read with `Get Float` or `Get Int`, write with `Set Float` or `Set Int`.
+   - `Boolean`: a checkbox with `Get Bool` and `Set Bool`.
+   - `Select`: a dropdown filled from `Get Options` (use each `Label`), select `Get Selected Index`,
+     write `Set Selected Index`.
+   - `MultiSelect`: a checkbox per option, `Is Option Selected` and `Set Option Selected`.
+   - `Text`: `Get String`/`Set String` or `Get Text`/`Set Text` per `Get Text Kind`; use
+     `Is Multiline` and `Get Max Length`.
+   - `Tag`: a dropdown filled from `Get Selectable Tags`, `Get Tag` and `Set Tag`.
+   - `List`: rows from `Get Count` and `Get Element`; `Add Element`, `Remove Element At`.
+4. **Show the metadata.** `Get Display Name` as the label, `Get Description Text` underneath,
+   `Get Tooltip` for the hover card. A badge for `Is Restart Required` or `Is Restart Advised`.
+5. **Handle rejected input.** Every setter returns `false` with `Out Error`. Show that text next to
+   the widget and revert the widget to `Get Value`.
+6. **Stay in sync.** On construction bind `On Value Changed` and `On State Changed` of each
+   description to a refresh of its widget. They fire after applies, reloads, and when host values
+   arrive.
+7. **Respect permissions.** Disable the widgets when `Is Read Only` is true (or
+   `Can Local Player Edit Config` is false) and mark `Is Host Override` fields as set by the host.
+8. **Apply and reset.** Enable **Apply** while `Has Pending Config Changes` is true and call
+   `Apply Config Changes`. Show `Restart Required Keys` or `Restart Advised Keys` from the result.
+   If `Pending` is true, wait for `On Config Applied`. **Reset** calls `Reset To Default` on the
+   fields; **Cancel** calls `Discard Pending Config Changes`.
+9. **Host mismatch.** Bind `On Config Host Mismatch` and offer **Adopt host values**
+   (`Adopt Host Values`), or just inform the player that a restart is needed to match the host.
+
+Reading a value in gameplay Blueprint needs no widget: `Find Config Description By Id`, cast to the
+kind, and read `Get Float`, `Get Bool`, … or use `Get Effective Value` with `Config Value To Float`.
+
+## Commands
+
+| Command                                 | Where                                 | Effect                                                                                             |
+| --------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `/kdf config dump [pack]`               | chat                                  | Lists fields: key, hot or cold, value, default, effective, pending, restart required               |
+| `/kdf config set <pack>:<id> <value>`   | chat (host or dedicated-server admin) | Sets the pending value; lists take comma separated elements                                        |
+| `/kdf config apply [pack]`              | chat (host or dedicated-server admin) | Saves, reloads when needed, prints what changed, what needs a restart and what is advised          |
+| `KDF.Config.Dump [pack]`                | console                               | Every value slot (default, stored, pending, effective, host), net role, pack states, file and line |
+| `KDF.Config.Set <key> <value>`          | console                               | Same as `/kdf config set`; also works on a client so that permission errors are visible            |
+| `KDF.Config.Apply [pack]`               | console                               | Same as `/kdf config apply`                                                                        |
+| `KDF.Template "<text>" [pack]`          | console                               | Expands templates                                                                                  |
+| `KDF.Config.Expr "<expression>" [pack]` | console                               | Evaluates a `config:` expression                                                                   |
+
+`/kdf reload` also re-reads edited values files: hot values apply, cold values report restart
+required.
+
+## For C++ users
+
+The same objects are plain C++ in the module `KDataForge`: `UKDFConfigRegistry`
+(`UKDFSubsystem::GetConfigRegistry()`), the description classes, and the native delegate
+`UKDFSubsystem::OnConfigAppliedNative()`. Mods that only need values can read them through the
+template and expression engines or call the Blueprint library from C++. Third-party template
+providers are covered in
+[Templates and Typed References](/kdataforge/features/templates#writing-a-provider).
+
+## See also
+
+- [Pack Configuration](/kdataforge/features/pack-configuration)
+- [Player-Configurable Balancing](/kdataforge/tutorials/player-configurable-balancing)
+- [API Design](/kdataforge/reference/api-design)

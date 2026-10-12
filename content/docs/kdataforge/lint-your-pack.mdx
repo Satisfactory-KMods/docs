@@ -1,6 +1,6 @@
 ---
 title: Lint Your Pack
-description: Validate packs in KDataForge Pack Manager; reproduce existing KPatchwork CI checks with the standalone linter.
+description: Validate packs in KDataForge Pack Manager or with the kdf lint command, including pack configuration, templates and cold properties; reproduce existing KPatchwork CI checks with the standalone linter.
 sidebar:
   order: 3
 ---
@@ -17,6 +17,56 @@ information. After validation, test the pack in game with
 KPatchwork's pull-request CI still uses the pinned Python linter and repository-specific policy
 schemas. Use the commands below when reproducing that existing CI result. The desktop app validates
 KDataForge runtime grammar, so a passing desktop check does not replace KPatchwork's policy check.
+
+## Command line: `kdf lint`
+
+The checks of the desktop app also run without the window. `kdf lint <path>` is the command-line
+front end of the same validation core: it reads the same schemas and applies the same rules as the
+Problems panel, including everything in
+[Configuration, template and cold-property checks](#configuration-template-and-cold-property-checks)
+below.
+
+```text
+kdf lint <your-mod>
+kdf lint <your-mod> --format github
+kdf lint <your-mod> --datapack C:\Path\2026-10-12.kdfdata
+kdf lint <your-mod> --warnings-as-errors
+```
+
+| Option | Meaning |
+| --- | --- |
+| `--format text`, `json`, `github`, `sarif` | Output format. `github` produces workflow annotations, `sarif` code-scanning reports. |
+| `--datapack <file.kdfdata>` | A [reflection export](/kdataforge/reference/reflection-export) archive. It enables the class, property, function and setting checks. Without it those checks are skipped instead of guessed. |
+| `--warnings-as-errors` | Exit with a failure status on warnings too. |
+| `--allow-unknown-types` | Do not report root types that no schema knows (third-party handlers). |
+| `--schema-dir <dir>`, `--allow-schema-override` | Extra schemas, and permission for them to replace bundled ones. |
+| `--user-settings <file>` | A settings file with the lint policy (see `.kdf-editor.toml` in [Projects and Packs](/kdataforge/desktop-editor/projects-and-packs#project-settings)). |
+| `--profile runtime`, `legacy` | `runtime` (default) validates the current runtime grammar. `legacy` adds the KPatchwork policy rules, for example the required `contributer` field. |
+| `--no-color` | Plain output. |
+
+`<path>` follows the same root rules as the Python linter below: pass the folder that contains the
+`DataForge` folder (or a folder of several nested packs). The command exits with status 1 when it
+reports an error.
+
+## Configuration, template and cold-property checks
+
+These rules were added with [pack configuration](/kdataforge/features/pack-configuration). They run
+in the desktop app, in `kdf lint`, and in the language server.
+
+| Area | Codes | What is checked |
+| --- | --- | --- |
+| Config definitions | `config.filename`, `config.filename-type`, `config.duplicate-id`, `config.prefix-clash`, `config.id-reserved`, `config.default-invalid`, `config.range-invalid`, `config.option-invalid`, `config.category-missing`, `config.category-invalid`, `config.reserved-key`, plus schema errors such as a missing `name` or `description` | File naming, unique and well-formed ids, defaults that satisfy their type, ranges, options, categories that are `UFGCategory` classes |
+| References | `config.unknown-id`, `config.unknown-pack`, `config.pack-disabled`, `config.case-mismatch`, `config.type-mismatch`, `config.ref-not-resolved` | Every `cfg:` and `{cfg:}` reference points at an existing field, the field type fits the destination, nothing sits where it is never resolved |
+| Expressions | `config.expression-syntax`, `config.expression-type`, `config.expression-quote`, `config.condition-invalid`, `config.condition-in-config` | `config:` conditions parse, type-check and are quoted safely |
+| Templates | `template.unquoted-start`, `template.unbalanced`, `template.malformed`, `template.unknown-provider`, `template.nesting-depth`, and with a reflection export `template.unknown-member`, `template.member-not-callable`, `template.argument-count`, `template.argument-type`, `template.class-family` | Token syntax, nesting depth, known providers, and for apply-time providers whether the member exists and is callable with those arguments |
+| Hot and cold | `config.hot-in-cold-stage`, `config.hot-in-condition`, `config.hot-into-cold-property`, `property.cold` | Hot values used where only load-time values apply, and operations that target cold or `newActors` properties (needs a reflection export) |
+| Game settings | `setting.unknown-id`, `setting.type-mismatch` | `session:`, `ags:` and `option:` ids against the settings index of a reflection export (only when it contains one) |
+| Pack icon | `pack.icon-missing`, `pack.icon-escape`, `pack.icon-format`, `pack.icon-symlink`, `pack.icon-path` | The icon file exists, stays inside the pack, has a supported format, and is not a symlink out of the pack |
+
+`property.cold` is information by default. Set `coldProperties` under `[lint]` in
+`.kdf-editor.toml` to `"info"`, `"hint"` or `"off"` to change it. Severities of the other codes
+follow the table on the [templates](/kdataforge/features/templates#editor-diagnostics) and
+[expressions](/kdataforge/reference/config-expressions#error-codes) pages.
 
 ## Standalone Python linter for existing CI
 
@@ -120,7 +170,9 @@ The current standalone KDataForge Linter schema also validates `contributer`, so
 same field. Treat that as current linter policy, not runtime grammar.
 
 Standalone schemas accept an optional string `description` in `pack.yml`. KPatchwork's override
-requires it because CI uses the text on its generated mod page. KDataForge runtime ignores it.
+requires it because CI uses the text on its generated mod page. The KDataForge runtime also reads
+it, as the pack description for settings screens, see
+[Pack Configuration](/kdataforge/features/pack-configuration#pack-name-description-and-icon).
 :::
 
 When preparing a pack for KPatchwork, add your GitHub login or a non-empty list of co-maintainers:
@@ -161,6 +213,11 @@ was available. Structural problems, invalid values, missing files, and duplicate
 errors.
 
 ## Version notes
+
+The standalone Python linter does not know pack configuration: `*.config.yml` definitions, `cfg:`
+references, templates, `config:` conditions and the pack icon are checked by the desktop app and
+`kdf lint` only. It may report a `config` document as an unknown root type; validate such packs
+with the desktop app or `kdf lint`.
 
 Use a current standalone KDataForge Linter build when using newer runtime handlers. Current bundled
 schemas cover `type: sublevel`, `type: resourcenode`, and top-level `remove:` on `type: recipe`,

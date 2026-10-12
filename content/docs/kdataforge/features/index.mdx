@@ -36,13 +36,33 @@ the pieces fit together in one patch entry.
   applies to, a class CDO, a single asset instance, every asset of a class, tag matching,
   subclass expansion, and spawned-actor propagation.
 - [Conditions & Packs](/kdataforge/features/conditions-and-packs): `conditions:`
-  for gating whether a document applies, `pack.yml` manifest fields, `redirects:` for safe id
+  for gating whether a document, a whole pack or a single list entry applies (including `config:`
+  conditions), `pack.yml` manifest fields (description and icon), `redirects:` for safe id
   renames, and `include:` ordering between files in one pack.
 - [Patching (type: cdo)](/kdataforge/features/patching-cdo): how a `patches:` entry
   ties target selectors, modifiers, and a `properties:` list together, plus the current snapshot
   and restart boundaries.
 
+## Pack configuration and templates
+
+Two pages cover making a pack adjustable by players and reading live data from YAML.
+
+- [Pack Configuration](/kdataforge/features/pack-configuration): `*.config.yml` definitions with
+  text, number, slider, boolean, select, multi-select, list and tag fields, categories, the values
+  file players edit, hot and cold values, cold game properties, and how values reach clients in
+  multiplayer.
+- [Templates and Typed References](/kdataforge/features/templates): `cfg:` references and
+  `{prefix:body}` templates that read pack configuration, game settings, and properties or
+  function results of game classes, with nesting, escaping and YAML quoting rules.
+
+For the Blueprint side see the [Blueprint Config API](/kdataforge/reference/blueprint-config-api),
+for the condition grammar [Config Expressions](/kdataforge/reference/config-expressions), and for a
+guided build [Player-Configurable Balancing](/kdataforge/tutorials/player-configurable-balancing).
+
 ## Runtime documents
+
+- [Wwise Sounds](/kdataforge/features/sounds): import pack-relative PCM16 WAV files as audio
+  events for ADA voice-over and finite 2D playback. [Complete ADA example](/kdataforge/examples/ada-voice-over).
 
 Two document types register something into a global engine system rather than patching an object
 directly. Both are unusual enough about _when_ they take effect to deserve their own page.

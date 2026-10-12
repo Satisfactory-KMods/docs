@@ -1,0 +1,109 @@
+---
+title: ADA Voice-over from a WAV File
+description: Complete pack example that imports a PCM16 WAV, creates an ADA message, and ties it to purchasing Hub Upgrade 1.
+sidebar:
+  order: 11
+---
+
+This pack imports your recording through Wwise and assigns it to a new ADA message. The message
+becomes eligible when Hub Upgrade 1 is purchased. Triggers observe new events: use a fresh save
+or choose a milestone that has not been purchased yet. Previewing sound alone does not mark the
+ADA message as played.
+
+## Pack files
+
+```text
+DataForge/ADAExample/
+  pack.yml
+  welcome.sound.yml
+  welcome-message.dataasset.yml
+  audio/
+    welcome.wav
+```
+
+Record or export `welcome.wav` as **PCM16 WAV**, mono or stereo, 48000 Hz. Suggested spoken text:
+“Welcome, pioneer. Your first Hub upgrade is complete.” This is your audio file; the YAML does
+not synthesize speech. Keep the file below 64 MiB.
+
+```yaml
+# pack.yml
+ref: ADAExample
+name: ADA Voice-over Example
+version: 1.0.0
+```
+
+```yaml
+# welcome.sound.yml
+type: sound
+sounds:
+  - id: AdaWelcome
+    file: audio/welcome.wav
+```
+
+```yaml
+# welcome-message.dataasset.yml
+type: dataasset
+assets:
+  - id: WelcomeMessage
+    class: /Script/FactoryGame.FGMessage
+    properties:
+      - path: mTitle
+        value: "First upgrade complete"
+      - path: mMessage
+        value: "Welcome, pioneer. Your first Hub upgrade is complete."
+      - path: mAudioEvent
+        value: AdaWelcome
+      - path: mSubtitles
+        value:
+          - Subtitle: "Welcome, pioneer. Your first Hub upgrade is complete."
+            SenderClass: /Game/FactoryGame/Interface/UI/Message/Sender/Sender_ADA.Sender_ADA_C
+            TimeStamp: 0
+      - path: mCanBeQueued
+        value: true
+      - path: mCanBeRepeated
+        value: false
+      - path: mBlockedByCooldown
+        value: false
+      - path: mPriority
+        value: 1
+      - path: mTrigger
+        value:
+          class: /Game/FactoryGame/AvailabilityDependencies/BP_SchematicPurchasedDependency.BP_SchematicPurchasedDependency_C
+          properties:
+            - path: mSchematics
+              value:
+                - /Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C
+            - path: mRequireAllSchematicsToBePurchased
+              value: true
+```
+
+`mAudioEvent` is a soft Wwise event reference. The short ID resolves to
+`/KDataForge/GenAssets/ADAExample.Gen_ADAExample_AdaWelcome`; the full path is equivalent. The
+sound loads before the message's properties apply. The inline trigger uses the concrete
+availability-dependency Blueprint; the native base class is abstract.
+KDataForge registers generated `FGMessage` instances with the game's Primary Asset Manager,
+as required by Satisfactory 1.2. Install the pack before loading the world. When adding a new
+message to a running world, restart the session so the story subsystem discovers its trigger.
+
+The example includes one ADA popup subtitle at the beginning of the recording. For longer audio,
+add entries to `mSubtitles` using `Subtitle`, `SenderClass` and `TimeStamp`, with timestamps in
+seconds matching your recording. If your game version changes the sender asset, choose its
+current class from the reflection catalog. The [Satisfactory ADA guide](https://docs.ficsit.app/satisfactory-modding/latest/Development/Satisfactory/AdaMessages.html)
+explains sender and subtitle configuration.
+
+## Author and check in the editors
+
+1. Open the pack in the desktop editor. Use **Wwise sound** wizard, or create a `sound` document and
+   add `AdaWelcome` / `audio/welcome.wav` in the **Sounds** form.
+2. Add the recording to `audio/`, then create the `dataasset` document above. Run validation.
+   Unsupported encodings and out-of-pack paths appear in Problems. Go to definition on the
+   `AdaWelcome` reference should open the sound declaration.
+3. Install the complete pack, load a save, and inspect `/kdf report`.
+4. Run `/kdf sound ADAExample AdaWelcome` to hear the recording through Wwise. If this works but
+   ADA does not speak, inspect the message's trigger, conditions and queue state separately.
+5. Purchase Hub Upgrade 1 to check the message trigger. The in-game editor can inspect the generated
+   message and edit its reflected properties; pack workspace also supports `sound` entries.
+
+After editing the recording or YAML, run `/kdf reload` on the host. Multiplayer clients need the
+same pack and recording and must reload locally or restart the session. Changes to an already
+played, non-repeatable message do not reset its narrative save state.

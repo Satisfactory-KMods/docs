@@ -33,6 +33,8 @@ otherwise change its implicit identity.
 ref: MyBalancePack # stable pack reference (save-persistence contract) required if present
 name: My Balance Pack # display name (default: ref)
 version: 1.2.0 # semver, informational + used by conflict reports
+description: Short player-facing summary # optional; string or { key, ns, source }; shown by settings screens
+icon: icon.png # optional; pack-relative png/jpg/jpeg/tga/bmp, or a /Game/... UTexture2D object path
 priority: 100 # higher applies earlier within each stage (default 100)
 enabled: true # false disables the whole pack (default true)
 debug: false # true logs every applied op from every document in this pack (see Debug Logging)
@@ -55,6 +57,10 @@ conditions:
 failing pack is skipped entirely with one Info diagnostic, instead of every document failing its
 own copy of the same condition. Use it for "this whole pack is a compat layer for mod X" instead of
 repeating a `conditions:` block with `hasMod: X` at the top of every document.
+
+`description` and `icon` are optional and only used by UIs, see
+[Pack Configuration](/kdataforge/features/pack-configuration#pack-name-description-and-icon). An
+icon file must stay inside the pack folder.
 
 `dependencies:` are topological constraints. Missing or self-referential dependencies reject the
 pack, and invalidity propagates to transitive dependants. Dependency cycles are rejected. Among
@@ -138,6 +144,7 @@ examples:
 | --------------------- | ---------------- | ----------------------------------------------------------------------- |
 | `gametag`            | GameTags         | [Game Tags](/kdataforge/features/game-tags)               |
 | `asset`              | Assets           | [Data Assets](/kdataforge/features/data-assets)           |
+| `sound`              | Assets           | [Wwise Sounds](/kdataforge/features/sounds)                |
 | `dataasset`          | Assets           | [Data Assets](/kdataforge/features/data-assets)           |
 | `curve`              | Assets           | [Float and Vector Curves](/kdataforge/features/curves)    |
 | `localization`       | Localization     | [Localization](/kdataforge/features/localization)         |
@@ -154,6 +161,10 @@ examples:
 | `sinkpoints`         | SubsystemMods    | [Sink Points](/kdataforge/features/sinkpoints)            |
 | `resourcenode`       | SubsystemMods    | [Resources](/kdataforge/features/resources#removing-resource-nodes-type-resourcenode) |
 | custom (third-party) | handler-declared | registered via `RegisterHandler`, no page, it's yours                   |
+
+`type: config` is not in the table because a config definition is not a staged document. Files named
+`<name>.config.yml` are read first, before pack conditions, and never reach a handler, see
+[Pack Configuration (`type: config`)](#pack-configuration-type-config) below.
 
 > All class **generation** types (`item`, `resource`, `building`, `unlock`, and the generic
 > `class`) run in the **Items** stage, priority-ordered
@@ -321,6 +332,22 @@ to accepted YAML form:
 | `TSet`                             | sequence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `TMap`                             | map (keys converted via the key property type)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | nested structs                     | nested maps, any depth                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+
+### Typed references and templates
+
+Any value above can instead be produced from pack configuration, game settings or reflected game
+data. Full rules and examples: [Templates and Typed References](/kdataforge/features/templates).
+
+| Form | Meaning |
+| --- | --- |
+| `cfg:<id>`, `cfg:<pack>:<id>`, `session:<id>`, `ags:<id>`, `option:<id>` | A **whole, unquoted** scalar. Replaced before the stages run by the typed value: numbers and booleans unquoted, strings quoted, a `multiple` field as a sequence. Quoted forms stay literal. |
+| `{cfg:<id>}`, `{session:<id>}`, `{ags:<id>}`, `{option:<id>}` | A pre-pass template inside any string of any document. Replaced by the value as text. |
+| `{<prefix>:<target>:<member>}` with `class`, `item`, `resource`, `building`, `recipe`, `schematic`, `research`, `category`, `dataasset`, `asset` | An apply-time template in `value`, `min` and `max` of an operation. `<member>` is a property path or a function call `Name(args)`. A string that is exactly one token keeps the result's type. |
+| `\{` directly before `{<prefix>:` | Escape: the token stays literal text. |
+
+Typed references and pre-pass templates are not replaced in the values of the keys `id`, `type`,
+`include` and `ref`, in map keys, or inside `conditions:` blocks. Templates nest up to four levels.
+A plain scalar that starts with `{` is a YAML flow mapping, so quote such values.
 
 ## Gameplay Tag Registration (`type: gametag`)
 
@@ -881,6 +908,66 @@ entries:
   **existing** texts by their original source string.
 - Localization documents apply during GameInstance initialization. Restart the session after edits.
 
+## Pack Configuration (`type: config`)
+
+A file named `<name>.config.yml` (or `.config.yaml`) defines typed settings for its pack. Config
+definitions are read before pack conditions and before any document, are not part of the document
+list, and are never staged. Guide and examples:
+[Pack Configuration](/kdataforge/features/pack-configuration).
+
+```yaml
+type: config # optional; any other value in a *.config.yml file is an error
+category: SampleFeaturesCategory # optional default category (UFGCategory subclass)
+# conditions: optional, static keys only (gameVersion, hasMod, modVersion, hasClass)
+fields: # required, at least one
+  - id: balance.ironSpeed
+    type: number
+    valueType: float
+    name: Iron smelting speed
+    description: How many times faster the Iron Ingot recipe runs.
+    default: 2
+    min: 0.25
+    max: 4
+    step: 0.25
+    display: slider
+    apply: hot
+```
+
+Document keys: `type`, `category`, `conditions`, `conditionBehavior` (or `conditionBehaivor`),
+`debug`, `fields`. Other keys are ignored with a warning. `type: config` in a file that is not named
+`*.config.yml` is an error.
+
+Field keys:
+
+| Key | Applies to | Rule |
+| --- | --- | --- |
+| `id` | all | Required. Dot-separated segments `[A-Za-z_][A-Za-z0-9_]*`, at most 200 characters; unique per pack ignoring case; no id may be the dotted prefix of another; the lower-case words `true`, `false`, `in`, `contains` are reserved (`True` is a valid id). A pack that defines configuration needs a `ref` of at most 50 characters. |
+| `type` | all | Required: `text`, `number`, `boolean`, `select`. |
+| `valueType` | all | `text`: `string` (default), `text`, `name`, `tag`. `number`: `int32` (default), `int8`, `int16`, `int64`, `uint8`, `float`, `double`. `boolean`: `bool` (default), `uint8`. `select`: `string` (default), `text`, `name`, `tag`, `int8`, `int16`, `int32`, `int64`, `uint8`, `float`, `double`, `bool`. |
+| `name`, `description` | all | Required. A non-empty string or `{key, ns, source}`. |
+| `tooltip` | all | Optional `{title, text}`, each a string or `{key, ns, source}`. |
+| `category` | all | A `UFGCategory` subclass: bare id of a class generated in the pack, class path, or `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>`. Required on the field unless the document sets one. |
+| `default` | all | Required. A list when `multiple: true`. Must satisfy the type's constraints. |
+| `apply` | all | `hot` or `cold` (default). |
+| `order` | all | Integer. Default: declaration index across the pack's config files. |
+| `multiple` | `text`, `number`, `select` | `true` makes a list (`text`, `number`) or a multi-select (`select`). Not allowed for `boolean`. |
+| `min`, `max` | `number` | Whole numbers for integer types; `min <= max`. Apply to every element of a list. |
+| `step` | `number` | Greater than 0. |
+| `decimals` | `number` | 0 to 9. Default: digits of `step`, else 4 (`float`) or 6 (`double`). |
+| `display` | `number` | `slider` (needs `min < max`, not with `multiple`) or `input`. Default: slider when both bounds exist. |
+| `multiline` | `text` | Only with `valueType: text`. |
+| `maxLength` | `text` | 1 to 1024, default 1024. |
+| `tagRoot` | `text` with `valueType: tag` | A gameplay tag; only tags below it are accepted. |
+| `options` | `select` | Required, at least one `{value, label}`. Values unique and of the `valueType`; `label` is a string or `{key, ns, source}`. |
+| `minSelected`, `maxSelected` | `select` with `multiple` | `minSelected` is at most the number of options; `maxSelected` is not below `minSelected` and at most 64. |
+| `minCount`, `maxCount` | `text`, `number` with `multiple` | List length bounds, at most 64. A list without `maxCount` holds at most 64 entries. |
+| `descriptionClass`, `properties` | all | Reserved, ignored with a warning. |
+
+A field with an error is skipped; the rest of the file and pack still load. The values file is
+`<ProjectDir>/Configs/Packs/<PackRef>.config.yml` (`FactoryGame/Configs/Packs/` in a packaged
+game). Values are read through `cfg:`, `{cfg:}` and `config:`, see
+[Typed references and templates](#typed-references-and-templates) and [Conditions](#conditions).
+
 ## Debug Logging
 
 Every applied op can be traced. Three levels, from narrow to global:
@@ -958,6 +1045,25 @@ fail closed even if another OR branch matches. An empty array passes under `AND`
 Version ranges use SML's semver syntax: `>=1.2.3`, `^3.12.0`, `~1.2.0`, exact `1.2.3`, unions with
 `||`.
 
+### `config:` conditions and list-entry conditions
+
+A condition object also accepts `config:`, an expression string or a list of expression strings
+(all must be true) over pack configuration fields and game settings. Grammar, types and error codes:
+[Config Expressions](/kdataforge/reference/config-expressions).
+
+```yaml
+conditions:
+  config: features.enableBonus && balance.ironSpeed >= 2
+  # or: config: [features.enableBonus, 'balance.ironSpeed >= 2']
+```
+
+`config:` is allowed in `pack.yml`, in a document's `conditions:` and on list entries, and is an
+error inside a config definition. The keys `conditions`, `conditionBehavior` and
+`conditionBehaivor` are also allowed on **any map entry of any list** at any depth (operations,
+patches, ingredients, unlocks, value payload members, …). Before the document is applied an entry
+whose condition is false is removed, and the condition keys of surviving entries are stripped. See
+[Conditions & Packs](/kdataforge/features/conditions-and-packs#conditions-on-single-list-entries).
+
 ## Dependency Ordering (`include:`)
 
 `include:` lists relative file paths (same pack) whose documents must **apply before** this one
@@ -969,5 +1075,6 @@ warning.
 Apply order is deterministic: dependency-aware pack topology (priority descending and `ref`
 ascending among ready packs) → stage → handler (priority descending, root type ascending) →
 same-stage `include:` constraints → relative path. KDataForge does not negotiate a multiplayer pack
-checksum or stream general operations between peers. See
+checksum or stream general operations between peers; only [pack configuration](/kdataforge/features/pack-configuration#multiplayer)
+values are sent from the host to clients. See
 [Architecture](/kdataforge/background/architecture).

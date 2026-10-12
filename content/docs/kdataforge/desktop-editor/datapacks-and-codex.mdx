@@ -21,6 +21,18 @@ content-addressed resource plugin. Only `.kdfdata` is a reflection datapack; a `
 folder follows the separate [ContentLib Import](/kdataforge/desktop-editor/contentlib-import)
 workflow.
 
+What the editor can do with the archive depends on what the export contains:
+
+| Archive part | Used for |
+| --- | --- |
+| Classes, properties, defaults | Class pickers, `path:` completion, value checks, class hover cards |
+| Functions (`--functions`) | Completion, signature help and checks for [template function calls](/kdataforge/features/templates#calling-functions) |
+| Asset index (`--assets`) | `{dataasset:}` and `{asset:}` completion |
+| Settings index (`indexes/settings.json`) | `session:`, `ags:` and `option:` completion, hover cards and the `setting.*` checks |
+| Reload classification (`kdf.reload`) and cold-property catalog | The `cold` and `newActors` tags on properties and the [restart warnings](/kdataforge/desktop-editor/editing-and-validation#cold-properties-and-hot-values) |
+
+Archives that lack a part still import; the features that need it stay off instead of guessing.
+
 ## Bind an archive
 
 Imported archives are available in **Datapacks**. Browse classes and properties, filter the

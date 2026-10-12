@@ -6,7 +6,7 @@ sidebar:
   label: Overview
 ---
 
-KDataForge Editor is a Windows desktop app for local KDataForge projects. It combines a pack
+KDataForge Editor is a standalone Windows editor for local KDataForge projects. It combines a pack
 manager, code and visual YAML editors, reflection browser, validation, project tools, Git, and game
 logs. A KDataForge pack still runs in the game; the editor prepares and checks its files.
 
@@ -26,14 +26,15 @@ logs. A KDataForge pack still runs in the game; the editor prepares and checks i
 | --- | --- |
 | Create, clone, duplicate, enable, or export a pack | [Projects and packs](/kdataforge/desktop-editor/projects-and-packs) |
 | Edit YAML, rename IDs, inspect classes, or fix diagnostics | [Editing and validation](/kdataforge/desktop-editor/editing-and-validation) |
+| Write pack configuration, `cfg:` references, templates and `config:` conditions with completion and checks | [Configuration, references and templates](/kdataforge/desktop-editor/editing-and-validation#configuration-references-and-templates) |
 | Import reflection data and browse the Codex | [Datapacks and Codex](/kdataforge/desktop-editor/datapacks-and-codex) |
-| Generate content, audit dependencies, or compare compatibility | [Plugin tools](/kdataforge/desktop-editor/plugin-tools) |
+| Generate content, audit dependencies, or compare compatibility | [Module tools](/kdataforge/desktop-editor/plugin-tools) |
 | Ask a project-aware assistant or connect an MCP client | [KDF Assist](/kdataforge/desktop-editor/assist) |
 | Use Git, game logs, recovery, settings, or release tools | [Operations and releases](/kdataforge/desktop-editor/operations-and-releases) |
-| Enable providers or write a bundled TypeScript plugin | [Plugins](/kdataforge/desktop-editor/plugins) and [Plugin authoring](/kdataforge/desktop-editor/plugin-authoring) |
+| Enable bundled features | [Built-in modules](/kdataforge/desktop-editor/built-in-modules) |
 
-Built-in providers have local on/off switches in **Plugins** or **Settings → Plugins**. Validated
-`.kdfdata` archives also appear there as resource plugins. [ContentLib Import](/kdataforge/desktop-editor/contentlib-import)
+Built-in providers have local on/off switches in **Built-in Modules** or **Settings → Plugins**. Validated
+`.kdfdata` archives also appear there as game-data resources. [ContentLib Import](/kdataforge/desktop-editor/contentlib-import)
 converts a different source format into a new pack.
 
 Reflection archives and ContentLib source folders serve different purposes. **Datapacks** accepts

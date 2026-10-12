@@ -1,0 +1,674 @@
+---
+title: Pack Configuration
+description: Let players tune a pack without editing YAML. Typed config fields, the values file, categories, hot and cold values, cold properties, and multiplayer behavior.
+sidebar:
+  order: 22
+---
+
+A pack normally ships fixed numbers. Pack configuration lets you expose some of them as **typed
+settings**. A config definition (`<name>.config.yml`) declares fields such as a speed slider, a
+checkbox, or a tier dropdown. KDataForge stores the player's choices in one small values file per
+pack, and your other documents read those choices through [typed references and
+templates](/kdataforge/features/templates) or `config:` [conditions](/kdataforge/reference/config-expressions).
+A mod (or you, in Blueprint) can build a settings screen from the same definitions with the
+[Blueprint Config API](/kdataforge/reference/blueprint-config-api).
+
+Configuration is the first thing a pack loads. Definitions and values are read before pack
+conditions, before any document is parsed, and before the stages run, so everything in the pack can
+already use them. For a guided build of the example used on this page, follow
+[Player-Configurable Balancing](/kdataforge/tutorials/player-configurable-balancing).
+
+## Quick start
+
+Three files turn a hard-coded value into a setting. The category class groups the field in a
+settings screen, the config definition declares the field, and the patch reads it.
+
+```yaml
+# sample-config-category.class.yml (excerpt of the sample pack)
+type: class
+classes:
+  - id: SampleBalanceCategory
+    parent: /Script/FactoryGame.FGCategory
+    properties:
+      - path: mDisplayName
+        value:
+          key: SampleBalanceCategory_Name
+          ns: KDFSample
+          source: Sample Balance
+      - path: mMenuPriority
+        value: 10
+```
+
+```yaml
+# iron.config.yml (excerpt of kdf-sample.config.yml)
+type: config
+fields:
+  - id: balance.ironSpeed
+    type: number
+    valueType: float
+    name: Iron smelting speed
+    description: How many times faster the Iron Ingot recipe runs than in the base game.
+    category: SampleBalanceCategory
+    default: 2
+    min: 0.25
+    max: 4
+    step: 0.25
+    display: slider
+    apply: hot
+```
+
+```yaml
+# iron-ingot-faster.cdo.yml (excerpt of the sample pack)
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      - path: mManufactoringDuration
+        op: divide
+        value: cfg:balance.ironSpeed
+```
+
+On the first load KDataForge creates `FactoryGame/Configs/Packs/KDFSample.config.yml` with the
+default. Change `ironSpeed` there, run `/kdf reload`, and the recipe follows. The `cfg:` value is a
+[typed reference](/kdataforge/features/templates#typed-references): because it is the whole
+unquoted scalar, it becomes the number `2.0`, not text.
+
+## Definition files
+
+Every file named `<name>.config.yml` (or `.config.yaml`) anywhere below a pack root is a **config
+definition**. These files are not ordinary documents. They are always read first, they never appear
+in the document list, and a pack can have as many as it likes. Field ids are unique across all of
+them.
+
+| Key                               | Required | Meaning                                                                                                                                                                                                        |
+| --------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`                            | no       | If present it must be `config`. Any other type in a `*.config.yml` file is an error.                                                                                                                           |
+| `category`                        | no       | Default category for every field in the file (see [Categories](#categories)).                                                                                                                                  |
+| `conditions`, `conditionBehavior` | no       | Static [conditions](/kdataforge/features/conditions-and-packs) only (`gameVersion`, `hasMod`, `modVersion`, `hasClass`). A `config:` condition is an error here: a definition cannot depend on its own values. |
+| `debug`                           | no       | Same as in other documents.                                                                                                                                                                                    |
+| `fields`                          | yes      | A non-empty list of fields.                                                                                                                                                                                    |
+
+`type: config` in a file that is not named `*.config.yml` is an error and the document is dropped.
+The reverse holds too: a `*.config.yml` file with another explicit type is skipped.
+
+A broken field is reported as an error and only that field is skipped. The rest of the file, and the
+rest of the pack, still load.
+
+### Common field keys
+
+| Key           | Required | Meaning                                                                                                                                                                                                                                                                                                                                    |
+| ------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `id`          | yes      | Segments of letters, digits and `_` (not starting with a digit), joined by dots: `balance.ironSpeed`. Unique per pack, ignoring case. A field may not also be the prefix of another (`a.b` and `a.b.c` clash). `true`, `false`, `in` and `contains` are reserved because [expressions](/kdataforge/reference/config-expressions) use them. |
+| `type`        | yes      | `text`, `number`, `boolean` or `select`.                                                                                                                                                                                                                                                                                                   |
+| `valueType`   | no       | The stored type. Allowed values depend on `type` (see below).                                                                                                                                                                                                                                                                              |
+| `name`        | yes      | Display name: a string, or the localized form `{key, ns, source}`.                                                                                                                                                                                                                                                                         |
+| `description` | yes      | One or two sentences for the settings screen. Same text forms as `name`.                                                                                                                                                                                                                                                                   |
+| `tooltip`     | no       | `{title, text}`, each a string or localized form.                                                                                                                                                                                                                                                                                          |
+| `category`    | yes\*    | A `UFGCategory` subclass. \*Not needed on a field when the document sets a default.                                                                                                                                                                                                                                                        |
+| `default`     | yes      | The value used until the player changes it. A list when `multiple: true`.                                                                                                                                                                                                                                                                  |
+| `apply`       | no       | `hot` or `cold`. Defaults to `cold` (see [Hot and cold values](#hot-and-cold-values)).                                                                                                                                                                                                                                                     |
+| `order`       | no       | Whole number that sorts fields inside a category. Defaults to the declaration order across the pack's config files (files sorted by path).                                                                                                                                                                                                 |
+| `multiple`    | no       | `true` turns `select` into a multi-select and `text` or `number` into a list. Not allowed for `boolean`.                                                                                                                                                                                                                                   |
+
+`name` and `description` are mandatory so that every setting is explained in the UI. Keys
+`descriptionClass` and `properties` are reserved for a later version and ignored with a warning.
+Unknown keys are ignored with a warning too.
+
+### Field types at a glance
+
+| `type`                          | `valueType`                                                             | Extra keys                                                          | Blueprint class                                                 |
+| ------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `text`                          | `string` (default), `text`, `name`                                      | `multiline` (only `text`), `maxLength` (default 1024, at most 1024) | `UKDFConfigTextDescription`                                     |
+| `text`                          | `tag`                                                                   | `tagRoot`                                                           | `UKDFConfigTagDescription`                                      |
+| `number`                        | `int32` (default), `int8`, `int16`, `int64`, `uint8`, `float`, `double` | `min`, `max`, `step`, `decimals`, `display`                         | `UKDFConfigNumberDescription`, or `UKDFConfigSliderDescription` |
+| `boolean`                       | `bool` (default), `uint8`                                               | none                                                                | `UKDFConfigBooleanDescription`                                  |
+| `select`                        | any of the above plus `bool` (default `string`)                         | `options`, `minSelected`, `maxSelected`                             | `UKDFConfigSelectDescription`                                   |
+| `select` + `multiple`           | as above                                                                | as above                                                            | `UKDFConfigMultiSelectDescription`                              |
+| `text` or `number` + `multiple` | as the single field                                                     | `minCount`, `maxCount`                                              | `UKDFConfigListDescription`                                     |
+
+The [Blueprint Config API](/kdataforge/reference/blueprint-config-api#field-kinds) lists the getters
+and setters of every class.
+
+### Every field type in one file
+
+This file declares one field of each kind. Copy the part you need.
+
+```yaml
+# file: demo.config.yml
+type: config
+category: SampleFeaturesCategory # default for every field below
+fields:
+  # ----- text -----
+  - id: demo.title
+    type: text # valueType defaults to string
+    name: Title
+    description: A short single-line text.
+    default: Hello
+    maxLength: 40
+    apply: hot
+
+  - id: demo.motto
+    type: text
+    valueType: text # a localizable FText; multiline needs valueType: text
+    multiline: true
+    maxLength: 200
+    name: Motto
+    description: A longer text that can span several lines.
+    default: Forged from YAML.
+    apply: hot
+
+  - id: demo.internalName
+    type: text
+    valueType: name # an FName
+    name: Internal name
+    description: A name value.
+    default: MyThing
+
+  - id: demo.marker
+    type: text
+    valueType: tag # one gameplay tag below tagRoot
+    tagRoot: KDF.Sample
+    name: Marker tag
+    description: Pick one tag below KDF.Sample.
+    default: KDF.Sample.Test
+    apply: hot
+
+  # ----- number -----
+  - id: demo.count
+    type: number # int32 input: no min+max pair, so no slider
+    name: Count
+    description: A whole number.
+    default: 10
+    min: 1
+    max: 100
+    apply: hot
+
+  - id: demo.speed
+    type: number
+    valueType: float
+    display: slider # needs min < max
+    min: 0.25
+    max: 4
+    step: 0.25
+    decimals: 2
+    name: Speed
+    description: A slider with a step.
+    default: 1
+    apply: hot
+
+  - id: demo.ratio
+    type: number
+    valueType: double
+    display: input
+    name: Ratio
+    description: A free decimal number.
+    default: 0.125
+    decimals: 3
+    apply: hot
+
+  # ----- boolean -----
+  - id: demo.enabled
+    type: boolean
+    name: Enabled
+    description: A checkbox.
+    default: true
+    apply: hot
+
+  # ----- select -----
+  - id: demo.difficulty
+    type: select # valueType defaults to string
+    name: Difficulty
+    description: Exactly one option.
+    default: easy
+    options:
+      - value: easy
+        label: Easy
+      - value: hard
+        label:
+          key: Demo_Hard
+          ns: KDFSample
+          source: Hard # the localized label form
+
+  - id: demo.tier
+    type: select
+    valueType: int32 # option values are typed
+    name: Tier
+    description: A numeric choice.
+    default: 2
+    options:
+      - { value: 1, label: Tier 1 }
+      - { value: 2, label: Tier 2 }
+      - { value: 3, label: Tier 3 }
+
+  # ----- multi-select -----
+  - id: demo.enabledTiers
+    type: select
+    valueType: int32
+    multiple: true # several options
+    minSelected: 1
+    maxSelected: 2
+    name: Enabled tiers
+    description: Pick one or two tiers.
+    default: [1, 2]
+    options:
+      - { value: 1, label: Tier 1 }
+      - { value: 2, label: Tier 2 }
+      - { value: 3, label: Tier 3 }
+    apply: hot
+
+  # ----- lists -----
+  - id: demo.names
+    type: text
+    multiple: true # a list of strings
+    minCount: 1
+    maxCount: 4
+    name: Names
+    description: Between one and four names.
+    default: [Alpha, Beta]
+    apply: hot
+
+  - id: demo.multipliers
+    type: number
+    valueType: float
+    multiple: true # a list of numbers; min and max apply to every element
+    min: 0
+    max: 10
+    name: Multipliers
+    description: A list of factors.
+    default: [1, 1.5]
+    apply: hot
+
+  - id: demo.tags
+    type: text
+    valueType: tag
+    multiple: true # a list of gameplay tags
+    tagRoot: KDF.Sample
+    name: Tags
+    description: Any number of tags below KDF.Sample.
+    default: [KDF.Sample.Test]
+    apply: hot
+```
+
+### Numbers
+
+- Integer widths take whole numbers. `min` and `max` of an integer field must be whole numbers.
+- `step` must be greater than 0. `decimals` (0 to 9) controls how many fractional digits are shown
+  and stored. Without it, the digits of `step` are used, otherwise 4 for `float` and 6 for `double`.
+- `display: slider` needs `min` and `max` with `min < max`. If you leave `display` out, a field with
+  both bounds is a slider and any other number field is a plain input. A slider cannot be combined
+  with `multiple`.
+- Values outside the range are **clamped** and reported as a warning when read from the values
+  file. Setting a value in Blueprint also clamps (the setter still returns `true`).
+- In a number list, `min`, `max`, `step` and `decimals` apply to every element.
+
+### Text, tags and selections
+
+- `multiline: true` is only valid with `valueType: text`. Typing more than `maxLength` characters is
+  rejected.
+- A tag field accepts valid gameplay tag strings. With `tagRoot`, only tags below that root are
+  allowed. The tags do not need to be registered when the value is read, so a pack can offer tags
+  that its own [`gametag` document](/kdataforge/features/game-tags) registers.
+- `options` need a unique `value` of the field's `valueType` and a `label`. `default` must be one
+  of the option values (every element of it for a multi-select).
+- `minSelected` and `maxSelected` exist only with `multiple: true`. `minCount` and `maxCount` bound a
+  list.
+- Text and option values are compared **case-sensitively**: `Hard` and `hard` are different values.
+  Field ids stay unique ignoring case (`Speed` and `speed` cannot both exist).
+
+### Limits
+
+These limits keep the values small enough to be saved and sent to players. A field that breaks one
+is an error and is skipped; the rest of the pack still loads.
+
+- A field id has at most **200** characters. A pack that defines configuration needs a `ref` of at
+  most **50** characters.
+- `maxLength` is at most **1024**.
+- A list or multi-select holds at most **64** entries: `maxCount` and `maxSelected` must not be
+  above 64, and a list without `maxCount` is limited to 64 entries.
+
+### Localized names
+
+`name`, `description`, `tooltip` and option `label` accept the same localized form as any `FText`:
+
+```yaml
+name:
+  key: Config_IronSpeed_Name
+  ns: KDFSample
+  source: Iron smelting speed
+```
+
+Translate it with a [localization document](/kdataforge/features/localization#localizing-configuration-text)
+that uses the same namespace and key.
+
+## Categories
+
+Every field needs a **category**: a Blueprint-style `UFGCategory` subclass. Settings screens use it
+as a section heading and sort sections by the category's `mMenuPriority` (lower first). Define
+categories with an ordinary [`type: class` document](/kdataforge/features/custom-classes) whose
+parent is `/Script/FactoryGame.FGCategory`, as in the quick start. The `mDisplayName` and
+`mMenuPriority` of the class become the heading and its position.
+
+Where the category is written:
+
+```yaml
+# file: categories-demo.config.yml
+type: config
+category: SampleFeaturesCategory # document default
+fields:
+  - id: cat.a
+    type: boolean
+    name: Uses the document default
+    description: No category key, so SampleFeaturesCategory applies.
+    default: true
+  - id: cat.b
+    type: boolean
+    name: Uses its own category
+    description: The field level key wins over the document default.
+    category: SampleBalanceCategory
+    default: false
+```
+
+A category can be written as a bare id of a class generated in the same pack
+(`SampleBalanceCategory`), a full class path (`/Script/FactoryGame.FGCategory` itself or a Blueprint
+category), or `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>`. Generated classes exist only after the
+`Items` stage, so categories are resolved at the end of the load. An unknown or wrong class is an
+error; the field is then listed under the plain `UFGCategory` bucket so it stays reachable.
+
+## The values file
+
+Players change values in one file per pack:
+
+```text
+<GameFolder>/FactoryGame/Configs/Packs/<PackRef>.config.yml
+```
+
+It is created at the first load of a pack that has at least one field. Dotted ids become nested
+maps and lists become sequences. The generated `#` header lists every field with type, range,
+default and hot or cold.
+
+```yaml
+# KDataForge pack configuration for 'KDFSample'
+# Hot fields apply with '/kdf reload' or when applied in game; cold fields need a game restart.
+# ... one comment line per field: id, type, default, hot or cold, name ...
+
+balance:
+  ironSpeed: 2.0
+features:
+  enableBonus: true
+  tier: 1
+tags:
+  extra:
+    - KDF.Sample.Test
+texts:
+  motto: Forged from YAML. Stacks high, sinks well.
+```
+
+How the file is read and written:
+
+- A missing key uses the `default`. A value of the wrong type uses the default and logs a warning.
+  An out-of-range number is clamped with a warning. `3.0` is accepted for an integer field.
+- Keys that no field uses are kept. KDataForge rewrites the file in a canonical form, so your
+  values and unknown keys survive but the comments are regenerated.
+- The file is written atomically (temp file, then rename), as UTF-8 without BOM, and only when its
+  content changes.
+- A file that is not valid YAML is never overwritten, not even when you apply changes in a settings
+  screen or adopt host values (the apply result reports an error and the pending changes are
+  dropped). Defaults apply and a warning names the file. Fix or delete it.
+- Only your own saved choices are written. Values received from a multiplayer host or set in a UI
+  but not yet applied never end up in this file.
+- The file name uses the pack ref. If two refs differ only in letter case, the second pack's
+  settings are disabled with a warning.
+
+## Using values
+
+A field is read by its id. Inside a pack the bare id is enough. From another pack use
+`<pack>:<id>`. Three forms exist:
+
+```yaml
+# file: tuning.cdo.yml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      # 1. Typed reference: the whole unquoted scalar becomes the typed value.
+      - path: mManufactoringDuration
+        op: divide
+        value: cfg:balance.ironSpeed
+      # 2. Element condition: the op exists only while the setting is on.
+      - path: mProduct[0].Amount
+        op: multiply
+        value: 2
+        conditions:
+          config: 'features.enableBonus'
+      # 3. A list field becomes a list.
+      - path: mGameplayTags
+        op: append
+        value: cfg:tags.extra
+```
+
+```yaml
+# file: super-ingot.item.yml
+type: item
+items:
+  - id: SuperIngot
+    parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      # 4. Template: {cfg:...} inside a string is replaced by the value as text.
+      - path: mDescription
+        value: '{cfg:texts.motto} Smelts like {item:/Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C:GetItemName} at {cfg:balance.ironSpeed}x speed.'
+```
+
+Conditions can also gate a whole document. The same `config:` key works in `pack.yml` to gate a
+whole pack (use a cold field there, see [Hot and cold values](#hot-and-cold-values)):
+
+```yaml
+# file: bonus-only.cdo.yml
+type: cdo
+conditions:
+  config: 'features.enableBonus && balance.ironSpeed >= 2'
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.9
+```
+
+The [templates page](/kdataforge/features/templates) covers typed references, `{cfg:}` and
+the other template providers in detail. The [expression reference](/kdataforge/reference/config-expressions)
+covers the `config:` condition grammar.
+
+A pack that its own `config:` condition switched off keeps its settings in the list (marked as
+not active), so a player can turn it back on.
+
+## Hot and cold values
+
+Every field is **hot** or **cold**.
+
+|                                      | `apply: hot`                                                                                            | `apply: cold` (default)                                                                                     |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Changing the value                   | Saved to the values file, then KDataForge reloads and the content follows within the session.           | Saved to the values file. The running game keeps the value it loaded with and reports **restart required**. |
+| `/kdf reload` after editing the file | Applies the new value.                                                                                  | Reports restart required.                                                                                   |
+| Use it for                           | Numbers and texts that live in `properties:` of a patch: durations, amounts, stack sizes, descriptions. | Anything the game reads once: generated class ids, registrations, tiers, which documents exist.             |
+
+Value lifecycle, in the terms the Blueprint API uses: the **default** from the definition, the
+**stored** value from the file, a **pending** value (set in a UI, not yet applied), a **host**
+value (multiplayer), and the **effective** value, the one the loaded content was built with.
+`GetValue()` returns pending, else host, else stored. A cold field keeps its effective value after
+the first load, so a saved change differs from it until the next start.
+
+### Which fields may feed what
+
+A hot field only stays hot where KDataForge can re-apply it. These places can follow a hot value:
+
+- values inside `cdo`, `dataasset`, `curve`, `asset` and `localization` documents;
+- values inside `properties:` subtrees and operation lists of `item`, `resource`, `building`,
+  `unlock`, `class`, `recipe`, `schematic` and `research` documents, including element conditions
+  there.
+
+These places are **cold contexts**: ids, parents and the document structure of generating kinds,
+document-level conditions of those kinds, the `gametag`, `sublevel`, `resourcenode` and
+`sinkpoints` documents, `remove:` entries, `redirects:` and `pack.yml`. A hot field used there still
+works, but KDataForge reports it as **restart advised**. The editor warns about it while you type
+(`config.hot-in-cold-stage`, `config.hot-in-condition`). Cold fields are fine everywhere.
+
+### Restart-advised results
+
+When a hot field feeds a cold context or a cold property, the apply result lists it in
+`mRestartAdvisedKeys`, `/kdf config apply` prints `Restart advised: ...`, and `/kdf report` lists the
+places. The change is applied; the advice only says that some of its effects need a restart to be
+complete.
+
+## Cold properties
+
+Some game properties are read once and cached, or are only used when an object is created. Writing
+them while the game runs succeeds, but nothing visible changes. KDataForge ships a **cold property
+catalog** that names them, and the desktop editor uses it to warn you.
+
+| Class              | Property      | Reload | Why                                                                                                  |
+| ------------------ | ------------- | ------ | ---------------------------------------------------------------------------------------------------- |
+| `FGSchematic`      | `mUnlocks`    | cold   | Unlocks are granted when a schematic is purchased. Schematics bought earlier keep what they granted. |
+| `FGItemDescriptor` | `mStackSize`  | hot    | KDataForge resets the cached stack size after every write.                                           |
+| `FGItemDescriptor` | `mForm`       | cold   | Inventories, conveyors and pipes read the form when they are set up.                                 |
+| `FGRecipe`         | `mProducedIn` | cold   | Producer recipe lists are built when recipes become available.                                       |
+
+Matching includes subclasses. The `reload` column means:
+
+- `hot`: applies live (an explicit allow-list entry).
+- `cold`: needs a restart, or does not change existing state.
+- `newActors`: only newly spawned actors see it.
+
+Besides the table, one rule applies: a property of an `AActor` or `UActorComponent` class default is
+`newActors` unless the patch sets `applyToSpawnedActors: true` (then existing actors are patched as
+well) or the catalog lists it explicitly. Buildings that are already placed keep the value they
+were spawned with.
+
+```yaml
+# file: stack-tuning.cdo.yml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      # mStackSize is on the allow-list as hot: a hot config value is fine here.
+      - path: mStackSize
+        value: SS_HUGE
+      # mForm is cold: a restart is required, no matter what feeds it.
+      - path: mForm
+        value: RF_SOLID
+```
+
+The editor reports:
+
+| Situation                                                   | Editor diagnostic                           |
+| ----------------------------------------------------------- | ------------------------------------------- |
+| An operation `path:` targets a cold or `newActors` property | `property.cold` (information; configurable) |
+| A hot config value feeds that operation                     | `config.hot-into-cold-property` (warning)   |
+
+The reflection export carries the same classification (`kdf.reload` on every property) and the
+catalog itself (`catalog/cold_properties.json`), see
+[Reflection Export](/kdataforge/reference/reflection-export#reload-classification-and-cold-property-catalog).
+
+## Pack name, description and icon
+
+`pack.yml` accepts two optional fields that settings screens show next to the pack:
+
+```yaml
+# file: pack.yml
+ref: KDFSample
+name: KDataForge Sample Pack
+version: 1.0.0
+description: Exercises every KDataForge document type, plus pack configuration.
+icon: mod-logo.png
+```
+
+- `description` is a string or the localized form `{key, ns, source}`.
+- `icon` is a pack-relative `png`, `jpg`, `jpeg`, `tga` or `bmp` file (it must stay inside the pack
+  folder), or an object path of a `UTexture2D` that starts with `/`. Icons are decoded when a UI first
+  asks for the pack info and are skipped on dedicated servers. An icon file may be at most 16 MB and
+  4096 x 4096 pixels; larger images are rejected with a warning in the log.
+
+## Changing values
+
+| Way                                                                                                 | Who                                                      | Effect                                                      |
+| --------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | ----------------------------------------------------------- |
+| Edit the values file, then `/kdf reload` (or `KDF.Reload`)                                          | Single player, host, server admin                        | Hot values apply. Cold values report restart required.      |
+| A settings screen built with the [Blueprint Config API](/kdataforge/reference/blueprint-config-api) | Anyone allowed to edit (see [Multiplayer](#multiplayer)) | Set pending values, then apply.                             |
+| `/kdf config dump [pack]`                                                                           | Anyone                                                   | Lists fields with default, effective and pending values.    |
+| `/kdf config set <pack>:<id> <value>`                                                               | Host or dedicated-server admin                           | Sets a pending value. Arrays take comma separated elements. |
+| `/kdf config apply [pack]`                                                                          | Host or dedicated-server admin                           | Saves pending values and reloads when a hot field changed.  |
+| `KDF.Config.Dump`, `KDF.Config.Set`, `KDF.Config.Apply`                                             | Console                                                  | The same three actions.                                     |
+| `KDF.Template "<text>" [pack]`                                                                      | Console                                                  | Expands templates, to test them.                            |
+| `KDF.Config.Expr "<expression>" [pack]`                                                             | Console                                                  | Evaluates a `config:` expression.                           |
+
+```text
+/kdf config dump KDFSample
+/kdf config set KDFSample:balance.ironSpeed 3
+/kdf config set KDFSample:tags.extra KDF.Sample.Test, KDF.Sample.Plain
+/kdf config apply KDFSample
+```
+
+```text
+KDF.Template "Speed {cfg:balance.ironSpeed}x" KDFSample
+KDF.Config.Expr "balance.ironSpeed >= 2 && features.enableBonus" KDFSample
+```
+
+After `/kdf config apply`, the chat shows what was saved, whether a reload ran, and the keys that
+need a restart or advise one.
+
+## Multiplayer
+
+- **The host decides.** Standalone and the listen-server host edit their own files. A dedicated
+  server has its values file; edit it and run `/kdf reload`, or apply changes as an administrator
+  from a settings screen.
+- **Values are synchronized, files are not.** While a client is connected, the host's effective values
+  are sent to it and held in memory. A client's own values file is never written from them, and
+  leaving the session restores the local values.
+- **Hot differences just work.** If the host's hot value differs from the client's, the client uses
+  the host's value and reloads so its content matches.
+- **Cold differences warn.** A client keeps the content it loaded with. The field reports
+  `IsHostMismatch`, and the subsystem fires `On Config Host Mismatch` once per key and join. A UI
+  can offer **Adopt host values**, which writes the host's values to the local file; cold ones then
+  need a restart.
+- **Who may change values.** In a listen-server game only the host. On a dedicated server only
+  administrators, through the settings UI or `/kdf config`. Everyone else sees the host's values
+  as read-only.
+- **Invalid values.** An administrator request with a bad single value reports that error in the
+  result. The valid values in the same request are still applied.
+
+The packs themselves are still not synchronized. Install the same packs and versions on the server
+and every client; only the configuration values travel.
+
+## Limits worth knowing
+
+- `session:` and `ags:` values do not exist without a world (main menu). A document that uses one as
+  a value is deferred and applied automatically once a save is loaded. In a `config:` condition, a
+  setting that is not available yet is not an error either.
+- An element-level `hasClass` condition cannot see classes that KDataForge generates.
+- Operands of `where:` filters resolve `cfg:` references but not apply-time templates such as
+  `{item:...}`.
+- Definitions are read when KDataForge loads. Adding or removing fields needs `/kdf reload`; a field
+  that disappears is no longer listed, but its object stays alive (marked stale) so a widget that
+  still holds it does not crash.
+- Values are capped at 64 elements of 1024 characters when they are synchronized to clients.
+
+## Troubleshooting
+
+| Symptom                                     | Likely cause                                                                                                                 |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| The values file is not created              | The pack has no valid field, or another pack's ref differs only in case and took the file name.                              |
+| A reference stays text                      | It was quoted, or it is not the whole scalar. Use `cfg:id` unquoted, or `{cfg:id}` inside a string.                          |
+| `Config value 'KDFSample:x' does not exist` | A typo in the id, or the field is declared in another pack. Use `cfg:<pack>:<id>`.                                           |
+| A hot change needs a restart anyway         | The field also feeds a cold context or a cold property. See [Restart-advised results](#restart-advised-results).             |
+| A value in the file is ignored              | Wrong type, out of range, or a syntax error. The log names the key and says the default is used.                             |
+| A category shows as `FGCategory`            | The `category:` class was not found or is not a `UFGCategory`. Check the id and that the class document is in the same pack. |
+
+Run `/kdf report` for the full list of configuration diagnostics, and
+`KDF.Config.Dump <pack>` to see every value slot and the file and line of each field.
+
+## See also
+
+- [Templates and Typed References](/kdataforge/features/templates)
+- [Config Expressions](/kdataforge/reference/config-expressions)
+- [Blueprint Config API](/kdataforge/reference/blueprint-config-api)
+- [Player-Configurable Balancing](/kdataforge/tutorials/player-configurable-balancing)
+- [Conditions & Packs](/kdataforge/features/conditions-and-packs)

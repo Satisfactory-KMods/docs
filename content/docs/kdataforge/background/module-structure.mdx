@@ -103,7 +103,11 @@ folder level, not via further module splits:
 ```
 Source/KDataForge/{Public,Private}/
 ├── Reflection/       KDFPropertyPath · KDFValueCodec · KDFOpEngine · KDFVanillaCache · KDFPatchUtil
-├── Loader/           KDFPackScanner · KDFConditionEvaluator · KDFLoaderTypes
+├── Loader/           KDFPackScanner · KDFConditionEvaluator · KDFLoaderTypes · KDFPackInfo
+├── Config/            KDFConfigRegistry · KDFConfigDescription (+ per-kind subclasses) ·
+│                       KDFConfigBlueprintLibrary · KDFReloadScheduler (pack configuration)
+├── Template/          KDFTemplateEngine · KDFTemplatePrePass · KDFConfigExpression ·
+│                       KDFColdProperties · KDFWorldBoundTracker
 ├── Content/           KDFDynamicContent (class/asset generation, manifest, tombstones) ·
 │                       KDFRecipeRemoval
 ├── Subsystems/        KDFSubsystem · KDFActorPatchSubsystem · KDFStateSubsystem ·
@@ -115,7 +119,8 @@ Source/KDataForge/{Public,Private}/
 │                       KDFResourceNodeHandler
 ├── Commands/           KDFChatCommand
 ├── Module/             KDFGameInstanceModule · KDFWorldModule (SML root modules)
-├── Net/                 KDFRemoteCallObject (host-gated RPC scaffold)
+├── Net/                 KDFRemoteCallObject (host-gated RPC scaffold + admin config RPC) ·
+│                         KDFConfigSyncSubsystem (host config values → clients)
 └── EditorIntegration/   KDFEditorApply (WITH_EDITOR-gated, private-only: `KDF.ApplyToAssets`
                          console command bakes cdo documents directly onto UE-editor assets)
 ```

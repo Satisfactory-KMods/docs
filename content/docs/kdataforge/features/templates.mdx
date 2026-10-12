@@ -1,0 +1,439 @@
+---
+title: Templates and Typed References
+description: Read pack configuration, game settings and reflected game data from YAML. Typed references, {prefix:body} templates, function calls, nesting, escaping and quoting.
+sidebar:
+  order: 23
+---
+
+YAML values do not have to be literals. KDataForge can fill them with the value of a
+[pack configuration](/kdataforge/features/pack-configuration) field, a game setting, or any
+property or function result of a game class. There are two mechanisms:
+
+| Mechanism           | Looks like                                         | Where it works                                                                                    | Result                                                                                 |
+| ------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **Typed reference** | `cfg:balance.ironSpeed` (a whole, unquoted scalar) | Any value of any document                                                                         | The typed value: a number, a boolean, a list.                                          |
+| **Template**        | `{cfg:balance.ironSpeed}` inside a string          | Any string value of any document (pre-pass providers); operation arguments (apply-time providers) | The value inserted as text, or, when the string is exactly one token, the typed value. |
+
+A template is `{prefix:body}`. The **prefix** names a provider and the **body** tells it what to
+read. Providers come in two groups that run at different times:
+
+- **Pre-pass providers** (`cfg`, `session`, `ags`, `option`) run once the pack files are read and
+  before anything is applied. They work in every string of every document.
+- **Apply-time providers** (`class`, `item`, `resource`, `building`, `recipe`, `schematic`,
+  `research`, `category`, `dataasset`, `asset`) read reflected game data at the moment an
+  operation is applied. They work in the operation arguments `value`, `min` and `max`, including
+  nested maps and lists inside them.
+
+All examples on this page use the pack of the
+[Player-Configurable Balancing](/kdataforge/tutorials/player-configurable-balancing) tutorial.
+
+## Typed references
+
+A scalar that is **unquoted** and matches `cfg:`, `session:`, `ags:` or `option:` followed by a
+name is replaced by the typed value before the stages run:
+
+| Form              | Reads                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| `cfg:<id>`        | A configuration field of the **own** pack.                                                        |
+| `cfg:<pack>:<id>` | A field of another pack.                                                                          |
+| `session:<id>`    | A session setting (SML session setting, falling back to an advanced game setting of the same id). |
+| `ags:<id>`        | An advanced game setting.                                                                         |
+| `option:<id>`     | A local game option of the player.                                                                |
+
+```yaml
+# file: typed-refs.cdo.yml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      # float field -> the number 2.0
+      - path: mManufactoringDuration
+        op: divide
+        value: cfg:balance.ironSpeed
+      # list field -> a list of tags
+      - path: mGameplayTags
+        op: append
+        value: cfg:tags.extra
+  - target: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      # select field with int32 values -> the number 1, 2 or 3
+      - path: mResourceSinkPoints
+        value: cfg:features.tier
+      # QUOTED -> stays the literal text cfg:balance.ironSpeed
+      - path: mDescription
+        value: 'cfg:balance.ironSpeed'
+```
+
+How the value is inserted:
+
+| Field value type          | Inserted as                                                                 |
+| ------------------------- | --------------------------------------------------------------------------- |
+| number, boolean           | An unquoted scalar in canonical form (`2.0`, `true`).                       |
+| string, text, name, tag   | A quoted scalar.                                                            |
+| a list (`multiple: true`) | A list of scalars. This works for arrays, sets and gameplay tag containers. |
+
+Rules:
+
+- **Whole scalar only.** `cfg:balance.ironSpeed x` has a space and stays literal text. To embed a
+  value in text, use the [template form](#templates) `{cfg:balance.ironSpeed}`.
+- **Unquoted only.** A quoted `'cfg:...'` or `"cfg:..."` is always literal.
+- Names are letters, digits, `_`, `.` and `-`. The pack part of `cfg:<pack>:<id>` is the pack `ref`.
+- References are not replaced in the values of the keys `id`, `type`, `include` and `ref`, in map
+  keys, or anywhere inside a `conditions:` block. Use a `config:` [expression](/kdataforge/reference/config-expressions) there.
+  The editor reports a reference in such a place as `config.ref-not-resolved`.
+- An unknown id leaves the scalar as written and logs a warning with file and line.
+- The type has to fit the property. A number field into a text property is an error at apply time;
+  the editor checks the combination while you type (`config.type-mismatch`).
+
+### Game settings
+
+`session:`, `ags:` and `option:` read the live game settings. The ids come from the settings
+index of a [reflection export](/kdataforge/reference/reflection-export#settings-index)
+(`indexes/settings.json`); the ids below are only examples.
+
+```yaml
+# file: settings.cdo.yml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      - path: mCanBeDiscarded
+        value: ags:FG.GameRules.NoPower
+```
+
+Session and advanced settings do not exist without a world. On the main menu a document that uses
+one of them is **deferred** and applied automatically once a save is loaded. It is applied again
+when the setting changes. In a `config:` condition, an unavailable setting is not an error either.
+`option:` values exist at any time.
+
+## Templates
+
+`{prefix:body}` can sit anywhere inside a string, next to normal text or other tokens:
+
+```yaml
+# file: super-ingot.item.yml
+type: item
+items:
+  - id: SuperIngot
+    parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      - path: mDescription
+        value: '{cfg:texts.motto} Smelts like {item:/Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C:GetItemName} at {cfg:balance.ironSpeed}x speed.'
+```
+
+With the sample defaults this reads: `Forged from YAML. Stacks high, sinks well. Smelts like Iron Ingot
+at 2.0x speed.` `{cfg:...}` was replaced before the stages ran. `{item:...:GetItemName}` was read
+from the game when the property was written, in the player's language.
+
+Pre-pass templates follow the same exclusions as typed references: they are not replaced in the
+values of `id`, `type`, `include` and `ref`, in map keys, or inside `conditions:` blocks.
+
+### Providers
+
+| Prefix      | Phase    | Target                                                              | Must derive from                 | Example                                                                                                               |
+| ----------- | -------- | ------------------------------------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `cfg`       | pre-pass | A config field                                                      | none                             | `{cfg:balance.ironSpeed}`, `{cfg:Other:shared.level}`                                                                 |
+| `session`   | pre-pass | A session setting                                                   | none                             | `{session:FG.Example}`                                                                                                |
+| `ags`       | pre-pass | An advanced game setting                                            | none                             | `{ags:FG.GameRules.NoPower}`                                                                                          |
+| `option`    | pre-pass | A local game option                                                 | none                             | `{option:FG.Example}`                                                                                                 |
+| `class`     | apply    | Any class (its default object)                                      | none, function libraries allowed | `{class:/Script/Engine.KismetMathLibrary:Round(2.6)}`                                                                 |
+| `item`      | apply    | An item descriptor class                                            | `UFGItemDescriptor`              | `{item:/Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C:GetItemName}`                       |
+| `resource`  | apply    | A resource descriptor class                                         | `UFGResourceDescriptor`          | `{resource:/Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C:GetItemName}`                  |
+| `building`  | apply    | A buildable class                                                   | `AFGBuildable`                   | `{building:/Game/FactoryGame/Buildable/Factory/SmelterMk1/Build_SmelterMk1.Build_SmelterMk1_C:mPowerConsumption}`     |
+| `recipe`    | apply    | A recipe class                                                      | `UFGRecipe`                      | `{recipe:/Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C:mManufactoringDuration}`               |
+| `schematic` | apply    | A schematic class                                                   | `UFGSchematic`                   | `{schematic:/Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C:GetTechTier}`                      |
+| `research`  | apply    | A research tree class                                               | `UFGResearchTree`                | `{research:/Game/FactoryGame/Schematics/Research/BPD_ResearchTree_Mycelia.BPD_ResearchTree_Mycelia_C:GetDisplayName}` |
+| `category`  | apply    | A category class                                                    | `UFGCategory`                    | `{category:SampleBalanceCategory:mDisplayName}`                                                                       |
+| `dataasset` | apply    | A data asset **instance** (asset path or KDataForge `dataasset` id) | `UDataAsset`                     | `{dataasset:CleanerItem_SuperIngot:mProductionTime}`                                                                  |
+| `asset`     | apply    | Any asset object by path                                            | none                             | `{asset:/Game/Path/To/Asset.Asset:SomeProperty}`                                                                      |
+
+Class targets accept the same forms as any class reference: a full path, `/Script/Module.Class`, a
+Blueprint class path (`_C` is retried when missing), a bare id of content generated in the same
+pack (`SampleBalanceCategory`), or a generated class path. A target that is not of the provider's
+base class is an error: `{item:...Recipe_IngotIron_C:...}` fails.
+
+A third-party mod can add more prefixes, see [Writing a provider](#writing-a-provider).
+
+### The body: `<target>:<member>`
+
+The target never contains a colon, so the first `:` after it starts the member. A member is
+either a **property** or a **function**:
+
+```text
+{item:<class>:mDisplayName}              a property of the class default object
+{item:<class>:mStruct.Field}             a path through structs
+{item:<class>:mIngredients[0].Amount}    an array element
+{item:<class>:GetItemName}               a function, no parentheses
+{item:<class>:GetItemName()}             the same, with parentheses
+{class:<class>:FClamp(3.5, 0, 3)}        a function with arguments
+```
+
+Property paths use the same syntax as `path:` in patches and read through class defaults. A bare
+name is read as a property when the class has one with that name, otherwise it is called as a
+function. Blueprint-authored property names work as well.
+
+What you get back:
+
+| Reflected type                           | Result                                                      |
+| ---------------------------------------- | ----------------------------------------------------------- |
+| `bool`                                   | `true` or `false`, typed boolean                            |
+| integers                                 | a whole number                                              |
+| `float`, `double`                        | fixed-point text with at least one decimal (`2.0`, `0.125`) |
+| enum                                     | the value name, for example `SS_BIG`                        |
+| `FString`, `FName`                       | the string                                                  |
+| `FText`                                  | the text; keeps its localization when it is the only piece  |
+| class or object reference                | the object path                                             |
+| `FGameplayTag`                           | the tag name                                                |
+| `TArray`, `TSet`, gameplay tag container | a list                                                      |
+
+Other types (for example a struct that is not a gameplay tag) cannot be inserted as text. The
+token fails with an error that names the type.
+
+## Calling functions
+
+A function can be called when it is safe to run while content loads:
+
+- it is `Native` and either `BlueprintPure`, or a non-static `const` member;
+- it returns a value;
+- it is not a network function (`Net*`), `Exec`, delegate, or Blueprint event;
+- all its parameters are inputs. Output parameters are not supported; a `const` reference input is
+  fine;
+- parameter and return types are limited to `bool`, integers, floats, enums, `FString`, `FName`,
+  `FText`, class and soft class references, gameplay tags, and structs made of those (up to three
+  levels deep). An object reference is allowed as a parameter only, never as the return value;
+- a non-static member of an `AActor`, `UActorComponent` or `USubsystem` is not callable. Static
+  functions are allowed on any class, which is what makes function libraries usable. Property reads
+  are always fine.
+
+Non-static members run on the class default object (class targets) or on the asset (object
+targets). Every call is logged at verbose level.
+
+### Implicit and explicit arguments
+
+- **Class targets.** If the function has exactly one input and it is a class reference that fits
+  the target class, KDataForge passes the target class for you. That is why `GetItemName` needs no
+  argument although the engine function is `GetItemName(inClass)`.
+- **Object targets** (`dataasset`, `asset`). A static function with exactly one input that accepts
+  the object gets the object implicitly.
+- Every other input must be written inside the parentheses, separated by commas. The count has to
+  match exactly.
+
+### Argument literals
+
+| Literal                | Examples                                                                |
+| ---------------------- | ----------------------------------------------------------------------- |
+| number                 | `3`, `-1`, `2.5`                                                        |
+| string                 | `'text'`, `"text"` (escapes `\\`, `\'`, `\"`, `\n`, `\t`)               |
+| boolean                | `true`, `false`                                                         |
+| enum value or name     | `SS_BIG`, `EStackSize::SS_BIG`, `Tag.Name` as a string                  |
+| class, object or tag   | a string: `'/Script/FactoryGame.FGItemDescriptor'`, `'KDF.Sample.Test'` |
+| struct, in field order | `Vector{3, 4, 0}`, `{3, 4, 0}`                                          |
+| struct, by field name  | `Vector{X=3, Y=4, Z=0}`, `{X=3, Y=4, Z=0}`                              |
+
+Struct literals can be nested up to 64 levels.
+
+Commas inside quotes, brackets, parentheses and braces do not split arguments. The struct type
+name is optional and a leading `F` is ignored. Each literal is converted with the same rules as a
+`value:` in a patch, so everything on [Property Types](/kdataforge/features/property-types) applies.
+
+```yaml
+# file: function-calls.cdo.yml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      # No arguments, implicit class: the stack size of the Iron Ingot as an integer.
+      - path: mResourceSinkPoints
+        value: '{item:/Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C:GetStackSize}'
+      # Three explicit arguments, one of them a nested config token.
+      - path: mEnergyValue
+        value: '{class:/Script/Engine.KismetMathLibrary:FClamp({cfg:balance.ironSpeed}, 0.5, 3)}'
+      # A struct literal, positional and by field name. Both give 5.0.
+      - path: mRadioactiveDecay
+        value: '{class:/Script/Engine.KismetMathLibrary:VSize(Vector{3, 4, 0})}'
+      - path: mRadioactiveDecay
+        value: '{class:/Script/Engine.KismetMathLibrary:VSize({X=3, Y=4, Z=0})}'
+```
+
+Failed calls are reported with the reason:
+
+| Message                                                                    | Meaning                                   |
+| -------------------------------------------------------------------------- | ----------------------------------------- |
+| `only native functions can be called`                                      | A Blueprint function.                     |
+| `the function must be BlueprintPure or a const member`                     | It can change state.                      |
+| `output parameter X is not supported`                                      | It has an out parameter.                  |
+| `non-static members of actors, components and subsystems are not callable` | Use a property read or a static function. |
+| `X expects N argument(s) but M were given`                                 | Argument count mismatch.                  |
+
+The editor checks all of this against the reflection data of a bound `.kdfdata` archive
+(`template.member-not-callable`, `template.argument-count`, `template.argument-type`).
+
+## Nesting
+
+A token can contain other tokens. The inner ones resolve first, up to **four** levels:
+
+```yaml
+# file: nested.cdo.yml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      - path: mDescription
+        value: 'Clamped speed {class:/Script/Engine.KismetMathLibrary:FClamp({cfg:balance.ironSpeed}, 0.5, {cfg:balance.ironSpeed})}'
+```
+
+Pre-pass tokens are replaced everywhere, including inside the body of an apply-time token, so the
+config value is already in place when the function is called. Substituted values are never
+scanned again, which means a text value that happens to contain braces is safe. This includes text
+that looks like an apply-time token: a string a player types into a setting, or one sent by a
+multiplayer host, is inserted as plain text and never calls a function.
+
+## Whole-token typed values
+
+An apply-time token that is **the entire value** of `value`, `min` or `max` keeps its type
+instead of becoming text. Numbers stay numbers, lists stay lists, class and object results become
+paths, and an `FText` becomes the text itself (with its localization).
+
+```yaml
+# file: copy-values.cdo.yml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Recipes/Constructor/Recipe_IronPlate.Recipe_IronPlate_C
+    properties:
+      # The Iron Plate recipe takes exactly as long as the Iron Ingot recipe.
+      - path: mManufactoringDuration
+        value: '{recipe:/Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C:mManufactoringDuration}'
+      # A rounded, typed integer.
+      - path: mProduct[0].Amount
+        value: '{class:/Script/Engine.KismetMathLibrary:Round({cfg:balance.ironSpeed})}'
+```
+
+The same is true for list elements and members of a struct value: each one that is exactly one
+token is replaced by its typed result.
+
+If one token cannot be resolved, **that operation fails** with an error that names the token and
+the reason. Nothing is written for it, and the other operations still run. A pre-pass token that
+cannot be resolved stays in the text as written and logs a warning.
+
+## Escaping
+
+A backslash directly before `{` and a registered prefix turns the token into literal text:
+
+```yaml
+# file: escape.item.yml
+type: item
+items:
+  - id: EscapeDemo
+    parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      - path: mDescription
+        value: 'Use \{cfg:balance.ironSpeed} to read the speed, it is {cfg:balance.ironSpeed} now.'
+```
+
+This produces `Use {cfg:balance.ironSpeed} to read the speed, it is 2.0 now.` Each phase removes
+only its own escapes, so `\{item:...}` survives the pre-pass and is un-escaped when the
+operation is applied.
+
+- In a YAML **double-quoted** string a backslash is itself an escape, so write `\\{cfg:...}`.
+  Single-quoted, plain and block scalars take `\{` as written.
+- The backslash only counts directly before `{` and a registered prefix. Any other `{...}` is left
+  alone, so `{0}` and similar text-format arguments pass through untouched.
+
+## Formatting of inserted values
+
+Numbers are written in a fixed, culture-independent form so that saves and multiplayer peers agree:
+
+- integers as whole numbers;
+- floats and doubles in fixed point with the field's `decimals` (or the digits of its `step`,
+  otherwise 4 for `float` and 6 for `double`), trailing zeros removed, at least one decimal:
+  `2.0`, `0.25`, `1.5`;
+- booleans as `true` or `false`;
+- lists joined with `, ` when they end up inside text: `KDF.Sample.Test, KDF.Sample.Plain`.
+
+When the destination is an `FText` property, literal text and token results are joined as text.
+A string that consists of a single `FText` token keeps that text unchanged, including its key and
+namespace, so a translated name stays translated.
+
+## Quoting pitfalls
+
+YAML decides what a plain scalar means before KDataForge sees it:
+
+| You write                               | What happens                                                                                                                  | Write instead                                      |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `value: {cfg:texts.motto} text`         | A plain scalar starting with `{` is a flow mapping. The editor reports `template.unquoted-start` and the YAML does not parse. | `value: "{cfg:texts.motto} text"` or single quotes |
+| `value: Speed: {cfg:balance.ironSpeed}` | `: ` inside a plain scalar starts a mapping.                                                                                  | Quote the whole value                              |
+| `value: "cfg:balance.ironSpeed"`        | Quoted, so the text `cfg:balance.ironSpeed`.                                                                                  | `value: cfg:balance.ironSpeed`                     |
+| `value: cfg:balance.ironSpeed x`        | Not a whole reference; plain text.                                                                                            | `value: "{cfg:balance.ironSpeed} x"`               |
+| `value: "\{cfg:x}"`                     | `\{` is not a valid escape in a double-quoted YAML string.                                                                    | `'\{cfg:x}'` or `"\\{cfg:x}"`                      |
+| `config: !features.enableBonus`         | A leading `!` starts a YAML tag. The editor reports `config.expression-quote`.                                                | `config: '!features.enableBonus'`                  |
+| a token with a trailing ` # ...`        | Starts a YAML comment inside a plain scalar.                                                                                  | Quote it                                           |
+
+Use single quotes when the text contains `"`, double quotes when it contains `'`. Inside a
+double-quoted YAML string, use single-quoted literals in expressions and function arguments, and
+the other way round.
+
+## Writing a provider
+
+Mods can add their own prefixes through `KDataForgeApi`. A provider is a class that implements
+`IKDFTemplateProvider`:
+
+```cpp
+class FMyProvider final : public IKDFTemplateProvider
+{
+public:
+	virtual FName GetPrefix() const override { return FName(TEXT("my")); }
+	virtual EKDFTemplatePhase GetPhase() const override { return EKDFTemplatePhase::ApplyTime; }
+
+	virtual FKDFTemplateResult Resolve(const FKDFTemplateRequest& Request) override
+	{
+		FKDFTemplateResult Result;
+		Result.mStatus = EKDFTemplateStatus::Resolved;
+		Result.mValue = FKDFConfigValue::MakeScalar(EKDFConfigValueType::String, Request.mBody);
+		return Result;
+	}
+};
+
+// During CONSTRUCTION, next to handler registration:
+FKDFTemplateProviderRegistry::Register(MakeShared<FMyProvider>());
+```
+
+- The prefix must match `[A-Za-z][A-Za-z0-9_]*`. The first registration wins and the built-in
+  prefixes are reserved.
+- `Resolve` runs on the game thread. Return `Resolved` with a typed `mValue` (and `mText` with
+  `bHasText` for an `FText`), `Unavailable` when the source does not exist yet (the document is
+  deferred), `NotFound`, or `Error` with `mError`.
+- Set `bWorldBound` when the answer depends on the world or session so that it is re-read when
+  those change.
+
+See [API Design](/kdataforge/reference/api-design) for the rest of the public API.
+
+## Testing templates
+
+```text
+KDF.Template "Speed {cfg:balance.ironSpeed}x, stack {item:/Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C:GetStackSize}" KDFSample
+```
+
+`KDF.Template "<text>" [pack]` expands the text with both phases and prints the result and any
+warnings to the log. The optional pack scopes `cfg:` and bare generated ids. In Blueprint,
+`Resolve Template String` and `Resolve Template Text` do the same, see the
+[Blueprint Config API](/kdataforge/reference/blueprint-config-api#templates-and-expressions).
+
+## Editor diagnostics
+
+| Code                                                | Severity         | Meaning                                                                                          |
+| --------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------ |
+| `template.unquoted-start`                           | error            | A plain scalar starts with `{`.                                                                  |
+| `template.unbalanced`                               | error            | `{prefix:` without a closing `}`.                                                                |
+| `template.malformed`                                | error            | Empty id, bad id, a missing member, or a malformed reference.                                    |
+| `template.unknown-provider`                         | warning          | A near miss of a registered prefix such as `cfgg`. Other unknown braces stay literal and silent. |
+| `template.unknown-member`                           | warning          | The member is neither a property nor a function of the target.                                   |
+| `template.member-not-callable`                      | error            | The function violates the call rules above.                                                      |
+| `template.argument-count`, `template.argument-type` | error            | Wrong number or type of arguments.                                                               |
+| `template.class-family`                             | error            | The target is not of the provider's base class.                                                  |
+| `template.nesting-depth`                            | error            | Tokens nested deeper than four levels.                                                           |
+| `config.unknown-id`, `config.case-mismatch`         | error, warning   | The config id does not exist, or differs only in letter case.                                    |
+| `config.ref-not-resolved`                           | warning          | A reference sits where KDataForge never resolves it.                                             |
+| `config.type-mismatch`                              | error or warning | The value type does not fit the destination property.                                            |
+
+The member checks need a bound reflection archive, see
+[Desktop Pack Manager](/kdataforge/desktop-editor/editing-and-validation#configuration-references-and-templates).

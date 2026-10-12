@@ -18,11 +18,26 @@ class pickers use the bound reflection archive. Multi-document files have docume
 YAML construct cannot be represented safely in the form, the editor asks you to open **Code
 editor** and leaves source unchanged. Raw YAML remains the source of truth in both modes.
 
+For [pack configuration](/kdataforge/features/pack-configuration), choose **File → New document**
+and the type **Config**. The dialog adds the required `.config.yml` ending when it is missing (and
+refuses that ending for any other type) and starts the file from a skeleton with a slider and a
+checkbox. The **Document template** list offers **Config category class**, which creates the
+`UFGCategory` subclass that groups the fields. The Visual editor shows the `category` and `fields`
+of a config document, quotes values that start with `{`, and leaves typed references such as
+`cfg:balance.ironSpeed` unquoted. See
+[Configuration, references and templates](#configuration-references-and-templates).
+
 Both editors detect when the disk version changes after a file was opened. Compare or reload
 before overwriting it. A recoverable unsaved buffer appears under **Recovery**; see
 [Operations and releases](/kdataforge/desktop-editor/operations-and-releases).
 
 ## Validate
+
+For [Wwise sounds](/kdataforge/features/sounds), create a `sound` document or use the **Wwise sound**
+wizard. Visual editor exposes sound ID/file fields. The shared linter checks the actual recording's
+PCM16 WAV header, mono/stereo channels, sample rate, file size and pack containment. Sound IDs
+participate in definition lookup and renaming, including ADA's `mAudioEvent` references. See the
+[complete ADA voice-over pack](/kdataforge/examples/ada-voice-over).
 
 The language server reports live diagnostics while editing. Open **Problems** to filter by file,
 active pack, severity, source, or search text. Group results by file, code, or severity; select a
@@ -37,6 +52,108 @@ on installed mods and game data.
 With no bound `.kdfdata`, schema checks still work. Reflected class, property, and default-value
 checks report missing or limited metadata instead of inventing values. See
 [Datapacks and Codex](/kdataforge/desktop-editor/datapacks-and-codex).
+
+## Configuration, references and templates
+
+The editor understands [pack configuration](/kdataforge/features/pack-configuration): the
+`config` document type, `cfg:` references, `{prefix:body}` templates and `config:` conditions. It
+knows every field of your pack and every pack in the project, so it can complete, explain and check
+them while you type. Field ids, providers, keys and operators work from your files alone. Classes,
+properties, functions, assets and game settings come from a bound
+[reflection export](/kdataforge/desktop-editor/datapacks-and-codex); without one those lists stay
+empty and the editor does not guess.
+
+### Completion
+
+Completion opens as you type `:`, a space, `.`, `{`, `(`, `,` or a quote. Matches that fit the
+destination come first, then conversions, and your own pack's items before other packs'. Lists that
+could hold thousands of entries stop at 200 and refine as you keep typing.
+
+| Where the cursor is | What is offered |
+| --- | --- |
+| The value of an operation (`value`, `min`, `max`, `index`, `with`, including members nested in a struct, list or map value) or a `where:` operand | `cfg:<id>` for every field whose **type fits** the destination property (a boolean field for a `bool`, any number field for a `float`, a list field for a `set`, ...), `cfg:<Pack>:<id>` for fitting fields of other packs, and the stubs `cfg:`, `session:`, `ags:`, `option:`. Fields that would only convert lossily are not offered. When the destination is unknown, every field is listed. |
+| After `cfg:` | The fitting ids of your pack, then the other packs as `Pack:` entries. After `cfg:Pack:` the ids of that pack. |
+| After `session:`, `ags:`, `option:` | Setting ids from the settings index, filtered by the destination type. `session:` lists session settings **and** advanced game settings, `ags:` the advanced game settings, `option:` the local game options. |
+| In a string, after `{` | All 14 providers with a short description, pre-pass providers first |
+| After `{cfg:` | Field ids, then `Pack:` entries. After `{session:`, `{ags:`, `{option:` the setting ids. |
+| After `{item:`, `{resource:`, `{building:`, `{recipe:`, `{schematic:`, `{research:`, `{category:` | Concrete classes below the provider's base class, and the classes your project generates below it |
+| After `{class:` | Every class, including function libraries, and the classes your pack generates |
+| After `{dataasset:`, `{asset:` | Your project's generated assets (data assets for `dataasset`, every generated asset for `asset`) and the assets of the export's asset index |
+| After `{<provider>:<target>:` | The target's properties, with their type and a `cold` or `newActors` tag where it applies, and its **callable** functions as `Name(a: T) -> R`, marked `(implicit class)` or `(implicit object)` when KDataForge passes that argument itself. A function with parameters inserts `Name(` and opens the parameter hints. |
+| Inside `Name(` | Enum names, `true` and `false`, or class paths for the active parameter |
+| After `path:` of an operation | The properties of the patch target, and after a dot the members of a struct or object property. Top-level properties show their kind and a `cold` or `newActors` tag, see below. |
+| After `category:` in a config document | `UFGCategory` subclasses and the category classes your project generates |
+| Inside `config:` | Field ids and settings, operators, and option values (see below) |
+| Keys and values of a config document | Document keys, the keys of each field (they depend on the field's `type`), tooltip and option keys, values for `type`, `valueType`, `apply`, `display`, `multiple` and `multiline`, and for `default`: `true` and `false` for a boolean, the option values for a select |
+
+When a template is the **whole** value, members whose type does not fit the destination sort last.
+
+In a `config:` expression the editor reads the left operand and offers what can follow it.
+Operators are filtered by its type: a list offers `contains`; a boolean or string offers `==`,
+`!=` (a string also `in`); a number offers all comparisons and `in`; `&&` and `||` are always
+available. After a comparison it offers ids that fit, the option values of a select field, and
+`true` or `false` for a boolean. String literals are written with the quote that suits the YAML
+style of the value.
+
+### Hover and signature help
+
+Hover shows a card for:
+
+- a field id, in `cfg:`, `{cfg:}`, an expression, or the `id` of the field's own definition: name,
+  type and value type, hot or cold, description, tooltip, default, range, options, limits,
+  category, pack and file;
+- a setting id (`session:`, `ags:`, `option:`): display name, value type, tooltip, default, range,
+  options, whether it is session-wide and relevant for dedicated servers, and its source;
+- an operation `path:`: the property with its type, the class it is declared in, and its reload
+  classification with the reason;
+- a template provider prefix, a target class, and a member (property or function with flags and
+  whether it is callable);
+- a class in `category:`, `parent:`, `class:`, `target:`, `ofClass:` or `allAssetsOfClass:`.
+
+While you type the arguments of a template function, the signature help (opened by `(` and `,`)
+shows `Name(a: T, b: U) -> R` and highlights the active parameter. A parameter that KDataForge
+fills in for you is left out and mentioned in the note. On an `op:` value the signature help shows
+what the operation needs.
+
+### Go to definition and references
+
+**Go to definition** on a config id in a `cfg:` reference, a `{cfg:}` template or a `config:`
+expression jumps to the `fields[].id` of its `*.config.yml`, also across packs
+(`cfg:<pack>:<id>`). **Find references**, started on a reference or on the `id` of a field,
+lists every use in the project. Config ids cannot be renamed with **Rename ID**, which is only
+available for generated ids; change the definition and its uses together.
+
+### Cold properties and hot values
+
+Some properties do not update live, see [cold properties](/kdataforge/features/pack-configuration#cold-properties).
+The editor reads the classification from the reflection export and its cold-property catalog:
+
+| Situation | Diagnostic |
+| --- | --- |
+| An operation `path:` targets a `cold` or `newActors` property | `property.cold`, information by default, with the reason |
+| A hot config value (typed reference or template) feeds such an operation | `config.hot-into-cold-property` (warning) |
+| A hot field sits where only load-time values apply | `config.hot-in-cold-stage`, `config.hot-in-condition` (warnings) |
+
+A `newActors` property is not flagged when the patch sets `applyToSpawnedActors: true`, or when the
+document is not a `cdo` patch (it generates a class, so no actor exists yet). Choose how `property.cold` appears per project in `.kdf-editor.toml`:
+
+```toml
+[lint]
+coldProperties = "info" # the default; "hint" shows it as a hint, "off" hides it
+```
+
+### Quick fixes
+
+| Diagnostic | Fix offered |
+| --- | --- |
+| `template.unquoted-start`, `config.expression-quote` | **Wrap the value in quotes** |
+| `config.case-mismatch` | Change to the exact spelling of the field id |
+| `config.unknown-id` | Change to the closest existing field id (one fix per near match) |
+| `config.unknown-pack` | Change the pack to the closest pack in the project |
+| `setting.unknown-id` | Change to the closest setting id of the settings index |
+| `template.unknown-provider` | Change the provider to the registered prefix that is one edit away |
+
+The full list of diagnostics is on [Lint Your Pack](/kdataforge/lint-your-pack#configuration-template-and-cold-property-checks).
 
 ## Format and inspect
 

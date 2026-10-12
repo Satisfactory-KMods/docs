@@ -1,5 +1,5 @@
-# Render with D2 v0.7.1:
-# d2 --layout elk --theme 8 --dark-theme 200 --pad 32 architecture.d2 architecture.svg
+# Render with D2 v0.9.0:
+# d2 --layout elk --theme 8 --dark-theme 200 --pad 32 --omit-version architecture.d2 architecture.svg
 
 direction: down
 
@@ -11,7 +11,11 @@ scanner: "FKDFPackScanner\npruned recursive scan" {
   shape: hexagon
 }
 
-pack_plan: "pack.yml → FKDFPack\ndependency topology\npriority/ref tie-breaks" {
+config_registry: "UKDFConfigRegistry (loads first)\n*.config.yml definitions + Configs/Packs values file\nhot/cold values, host overrides" {
+  shape: stored_data
+}
+
+pack_plan: "pack.yml → FKDFPack\nconfig: conditions, dependency topology\npriority/ref tie-breaks" {
   shape: diamond
 }
 
@@ -19,7 +23,11 @@ node_model: "*.yml → parallel ryml parse\nFKDFNode document trees" {
   shape: stored_data
 }
 
-subsystem: "UKDFSubsystem (GameInstance)\nRunInitialLoad\nconditions → root-type detection → priority-sorted handler" {
+prepass: "Template pre-pass\ncfg: / session: / ags: / option: values\nentry conditions" {
+  shape: hexagon
+}
+
+subsystem: "UKDFSubsystem (GameInstance)\nRunInitialLoad / ReloadAll\nconditions → root-type detection → priority-sorted handler" {
   shape: rectangle
 }
 
@@ -31,7 +39,7 @@ handlers: "Built-in + third-party handlers\ncdo/sublevel, generated content, ass
   shape: rectangle
 }
 
-reflection: "Reflection engine\nFKDFOpEngine + FKDFValueCodec\n+ FKDFPropertyResolver" {
+reflection: "Reflection engine\nFKDFOpEngine + FKDFValueCodec\n+ FKDFPropertyResolver\n+ apply-time templates ({item:…})" {
   shape: rectangle
 }
 
@@ -63,11 +71,19 @@ node_purges: "UKDFResourceNodeSubsystem (per world)\ndescriptor/node-type rules 
   shape: rectangle
 }
 
+config_sync: "AKDFConfigSyncSubsystem (multiplayer)\nhost effective values → clients\nin memory, local files untouched" {
+  shape: rectangle
+}
+
 pack_files -> scanner: scan
+scanner -> config_registry: "1 · read config first"
 scanner -> pack_plan
 scanner -> node_model
+config_registry -> pack_plan: "config: conditions"
+config_registry -> prepass: effective values
+node_model -> prepass
 pack_plan -> subsystem
-node_model -> subsystem
+prepass -> subsystem: "typed refs, {cfg:}, entry conditions"
 subsystem -> stages
 stages -> handlers
 handlers -> reflection: property writes
@@ -81,3 +97,6 @@ handlers -> node_purges: node purge rules
 world_module -> objects: registry/recipe state
 actor_patches -> objects: instance writes
 node_purges -> objects: world removal
+config_registry -> config_sync: "server: rows"
+config_sync -> config_registry: "client: host overrides"
+config_registry -> subsystem: "hot change → one reload"

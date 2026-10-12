@@ -1,0 +1,68 @@
+---
+title: Built-in modules
+description: Enable bundled editor features and bind verified game-data resources.
+sidebar:
+  order: 8
+---
+
+Open **Built-in Modules** or **Settings → Plugins** to inspect providers and switch them on or off. Plugin
+preferences belong to the local application, not to a KDataForge pack or project. Providers ship
+with the editor; arbitrary executable TypeScript or Rust packages are not loaded at runtime.
+
+| Feature | Behavior |
+| --- | --- |
+| ContentLib conversion | Preview mapping and create a new pack without overwriting the source. |
+| YAML intelligence | Live diagnostics and explicit project lint use one Rust validation core. |
+| Pack export | Export a validated KDF ZIP or supported ContentLib CDO ZIP from one pack. Unsupported conversion fails explicitly. |
+| Starter projects | Preview five bundled templates; native creation writes them atomically. |
+| Datapack comparison | Compare two installed `.kdfdata` archives; incomplete records stay **Unknown**. |
+| Profile check | Compare a user-selected SMM JSON profile with pack `hasMod` requirements. |
+| Log analysis | Parse supplied KDF, SML, and Unreal log lines without owning the log file. |
+| Graph and catalog | Analyze saved YAML and annotate exact reflected class paths. |
+| Localization | Check configured cultures, keys, and placeholders in saved localization YAML. |
+| Balance and impact | Analyze progression, effects, and throughput without changing packs. |
+| Pack repair | Preview dependency fixes before the host writes them. |
+| Asset validation | Report missing, unsafe, duplicate, and orphan project assets. |
+| Migration | Preview project-wide reference and ID changes before saving. |
+| Naming policy | Preview selected generated-ID renames and full file diffs. |
+| Project inspection | Inspect unused content, profile compatibility, and Markdown changes. |
+| Release manager | Review local metadata and package inventory; remote actions need confirmations. |
+| Release checks | Correlate release evidence and compare typed remote metadata without writing. |
+| Asset instances | Browse exact reflected instances with provenance and completeness status. |
+| Runtime analysis | Simulate pack effects or KAPI delivery state without changing game state. |
+| Progression checks | Report hard softlocks, seedless cycles, and unknown blockers. |
+| KDF Assist | Use bounded project context and review model-proposed YAML before saving. |
+| Guided editors | Produce reviewable plans; host validates and saves project files. |
+| Project actions | Return allowlisted native-command plans for preview before execution. |
+| YAML formatter | Format an editor buffer through a scoped native command when configured. |
+
+Most built-ins start enabled. Specialized providers may start disabled or report limited
+availability when a declared game-mod, reflected-class, datapack, or bundled-module requirement is
+missing. **Enabled** and **available** are separate states. Switching a provider off does not
+change existing YAML or project settings.
+
+The [Module tools](/kdataforge/desktop-editor/plugin-tools) guide explains each tab and its
+preview/apply flow. [KDF Assist](/kdataforge/desktop-editor/assist) covers the assistant.
+
+## Datapack resources
+
+Install a validated `.kdfdata` reflection archive from **Datapacks** or drop one file onto the
+desktop window. Sources up to 2 GiB are accepted; stored reflection text is losslessly deflated
+when needed so the installed archive fits the 512 MiB validation reader. Entry contents and image
+bytes stay unchanged. The app stores immutable, content-addressed installed bytes and publishes
+them as `datapack:<sha256>`. A verified bundled Vanilla export appears as `datapack:vanilla`; it is
+the default only for projects without an explicit binding. Both kinds are disableable.
+
+Projects store `[datapack].pluginId`. Legacy `[datapack].path` remains readable. Disabling an
+explicitly bound datapack keeps that setting intact and makes validation schema-only until the
+resource is re-enabled or another archive is bound. The app never silently switches such a project
+to Vanilla. Only `.kdfdata` archives are accepted as game-data packs.
+
+New projects start explicitly in **Schema only** mode until an archive is bound after diagnostic
+preview. Choose **Automatic Vanilla** in project settings to opt into the bundled fallback.
+
+Shipping builds may report `metadataAvailable:false` even when class and property records are
+present. The catalog then shows **Limited** and keeps missing engine metadata unknown. Missing
+texture previews are also reported explicitly; the editor does not invent icons.
+
+For import workflow and conversion limits, see [ContentLib Import](/kdataforge/desktop-editor/contentlib-import).

@@ -1,0 +1,344 @@
+---
+title: Player-Configurable Balancing
+description: Turn fixed pack numbers into settings players can change. Config fields, typed references, templates, config conditions, hot and cold values, and testing in single player and multiplayer.
+sidebar:
+  order: 12
+---
+
+In this guide you give a pack five settings: how fast iron smelts, whether the output is doubled,
+which tier a milestone appears in, which tags a recipe carries, and a line of description text. You
+will see hot values change live and a cold value ask for a restart. The files are the
+configuration part of the `KDFSample` sample pack, so you can compare them with that pack.
+
+Read [Pack Configuration](/kdataforge/features/pack-configuration) first if you want the full rules
+behind each step. This page is the walkthrough.
+
+## What you will build
+
+| Field                  | Type                     | Apply | Used for                                      |
+| ---------------------- | ------------------------ | ----- | --------------------------------------------- |
+| `balance.ironSpeed`    | float slider 0.25 to 4   | hot   | Divides the Iron Ingot smelting time          |
+| `features.enableBonus` | boolean                  | hot   | Switches the doubled output on and off        |
+| `features.tier`        | select (`int32`, 1 to 3) | cold  | HUB tier of the Super Ingot milestone         |
+| `tags.extra`           | list of gameplay tags    | hot   | Tags added to the Iron Ingot recipe           |
+| `texts.motto`          | multiline text           | hot   | First sentence of the Super Ingot description |
+
+## Step 1: the pack
+
+Create `DataForge/pack.yml`. `description` and `icon` are shown next to the pack in settings
+screens; the icon is a file in the pack folder.
+
+```yaml
+# file: pack.yml
+ref: KDFSample
+name: KDataForge Sample Pack
+version: 1.0.0
+description: Exercises pack configuration, templates and config conditions.
+icon: mod-logo.png
+```
+
+## Step 2: the categories
+
+A settings screen groups fields by category and orders the groups by priority. Categories are
+ordinary generated classes whose parent is `FGCategory`. Create
+`DataForge/sample-config-category.class.yml`:
+
+```yaml
+# file: sample-config-category.class.yml
+type: class
+classes:
+  - id: SampleBalanceCategory
+    parent: /Script/FactoryGame.FGCategory
+    properties:
+      - path: mDisplayName
+        value:
+          key: SampleBalanceCategory_Name
+          ns: KDFSample
+          source: Sample Balance
+      - path: mMenuPriority
+        value: 10
+  - id: SampleFeaturesCategory
+    parent: /Script/FactoryGame.FGCategory
+    properties:
+      - path: mDisplayName
+        value:
+          key: SampleFeaturesCategory_Name
+          ns: KDFSample
+          source: Sample Features
+      - path: mMenuPriority
+        value: 20
+```
+
+## Step 3: the config definition
+
+Create `DataForge/kdf-sample.config.yml`. The file name ending in `.config.yml` is what makes it
+a definition. `category:` at the top is the default; `balance.ironSpeed` overrides it.
+
+```yaml
+# file: kdf-sample.config.yml
+type: config
+category: SampleFeaturesCategory
+fields:
+  - id: balance.ironSpeed
+    type: number
+    valueType: float
+    name:
+      key: Config_IronSpeed_Name
+      ns: KDFSample
+      source: Iron smelting speed
+    description: How many times faster the Iron Ingot recipe runs than in the base game.
+    tooltip:
+      title: Iron smelting speed
+      text: 1 keeps the vanilla speed, 2 halves the smelting time, 4 is the maximum.
+    category: SampleBalanceCategory
+    default: 2
+    min: 0.25
+    max: 4
+    step: 0.25
+    decimals: 2
+    display: slider
+    apply: hot
+
+  - id: features.enableBonus
+    type: boolean
+    name: Double iron ingot output
+    description: Doubles the amount of Iron Ingots one smelting cycle produces.
+    default: true
+    apply: hot
+
+  - id: features.tier
+    type: select
+    valueType: int32
+    name: Super Ingot milestone tier
+    description: HUB tier in which the Super Ingot Production milestone appears.
+    default: 1
+    options:
+      - value: 1
+        label: Tier 1
+      - value: 2
+        label: Tier 2
+      - value: 3
+        label: Tier 3
+    apply: cold
+
+  - id: tags.extra
+    type: text
+    valueType: tag
+    multiple: true
+    tagRoot: KDF.Sample
+    name: Extra recipe tags
+    description: Gameplay tags that are added to the Iron Ingot recipe.
+    default:
+      - KDF.Sample.Test
+    maxCount: 4
+    apply: hot
+
+  - id: texts.motto
+    type: text
+    valueType: text
+    multiline: true
+    maxLength: 200
+    name: Super Ingot motto
+    description: The first sentence of the Super Ingot description.
+    default: Forged from YAML. Stacks high, sinks well.
+    apply: hot
+```
+
+Every field has a `name`, a `description` and (through the field or the document) a category.
+Start the game once. KDataForge creates `FactoryGame/Configs/Packs/KDFSample.config.yml` with the
+defaults.
+
+## Step 4: use a value in a patch
+
+Typed references replace a whole, unquoted scalar with the field's typed value. Create
+`DataForge/iron-ingot-faster.cdo.yml`:
+
+```yaml
+# file: iron-ingot-faster.cdo.yml
+type: cdo
+conditions:
+  gameVersion: '>=1.0.0'
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      # 1. Typed reference: the number 2.0 by default
+      - path: mManufactoringDuration
+        op: divide
+        value: cfg:balance.ironSpeed
+      # 2. Element condition: this operation exists only while the bonus is on
+      - path: mProduct[0].Amount
+        op: multiply
+        value: 2
+        conditions:
+          config: 'features.enableBonus'
+      # 3. A list field becomes a list of tags
+      - path: mGameplayTags
+        op: append
+        value: cfg:tags.extra
+```
+
+The three operations use all three ways to read a value:
+
+- `cfg:balance.ironSpeed` fills the `value:` with the number. Because the slider's minimum is
+  0.25, the division never hits zero.
+- `conditions: { config: ... }` on the second operation takes the operation out of the list while
+  `features.enableBonus` is off. It is an
+  [element condition](/kdataforge/reference/config-expressions#where-it-works) and works on any
+  entry of any list.
+- `cfg:tags.extra` is a list field, so the reference becomes a list.
+
+## Step 5: use a value inside text
+
+Templates put values into strings. A string that starts with `{` has to be quoted. Create
+`DataForge/super-ingot.item.yml`:
+
+```yaml
+# file: super-ingot.item.yml
+type: item
+items:
+  - id: SuperIngot
+    parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+    properties:
+      - path: mDisplayName
+        value:
+          key: SuperIngot_Name
+          ns: KDFSample
+          source: Super Ingot
+      - path: mDescription
+        value: '{cfg:texts.motto} Smelts like {item:/Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C:GetItemName} at {cfg:balance.ironSpeed}x speed.'
+      - path: mStackSize
+        value: SS_HUGE
+```
+
+With the defaults the description reads: _Forged from YAML. Stacks high, sinks well. Smelts like
+Iron Ingot at 2.0x speed._
+
+- `{cfg:texts.motto}` and `{cfg:balance.ironSpeed}` are replaced before anything is applied.
+- `{item:<class>:GetItemName}` is read from the game when the property is written: the item
+  provider calls the engine function `GetItemName` on the Iron Ingot class and returns the
+  localized name. See [Templates](/kdataforge/features/templates#calling-functions).
+
+## Step 6: a cold value
+
+The milestone's tier is read when the game registers the schematic, so it is a cold value. In the
+schematic document the tier property takes the field like any other value:
+
+```yaml
+properties:
+  - path: mTechTier
+    value: cfg:features.tier
+```
+
+`features.tier` has `apply: cold`, which is also the default. Changing it in the values file
+changes the **saved** value immediately, but the running game keeps the tier it started with and
+reports _restart required_.
+
+## Step 7: test it
+
+Load a save and open the chat.
+
+```text
+/kdf config dump KDFSample
+```
+
+The fields are listed in no particular order, one line each, with the value, the default and the
+effective value:
+
+```text
+KDFSample:balance.ironSpeed [hot] = 2.0 (default 2.0, effective 2.0)
+KDFSample:features.enableBonus [hot] = true (default true, effective true)
+KDFSample:features.tier [cold] = 1 (default 1, effective 1)
+KDFSample:tags.extra [hot] = [KDF.Sample.Test] (default [KDF.Sample.Test], effective [KDF.Sample.Test])
+KDFSample:texts.motto [hot] = Forged from YAML. Stacks high, sinks well. (default Forged from YAML. Stacks high, sinks well., effective Forged from YAML. Stacks high, sinks well.)
+5 configuration field(s)
+```
+
+Change a hot value and apply it:
+
+```text
+/kdf config set KDFSample:balance.ironSpeed 3
+/kdf config apply KDFSample
+```
+
+The reply says `Saved: yes, reloaded: yes` and lists the changed key. The Iron Ingot recipe now
+takes a third of its original time, and the Super Ingot description shows `3.0x`. Turn the bonus
+off the same way (`/kdf config set KDFSample:features.enableBonus false`) and the recipe's output
+returns to normal after the apply, because the element condition removed the operation.
+
+Now the cold value:
+
+```text
+/kdf config set KDFSample:features.tier 2
+/kdf config apply KDFSample
+```
+
+The reply ends with `Restart required: KDFSample:features.tier` (in yellow). The file now says
+`tier: 2`, and `/kdf config dump` shows the value 2, `restart required`, and an effective value that
+is still 1. After the next start the milestone sits in tier 2.
+
+You can also edit `FactoryGame/Configs/Packs/KDFSample.config.yml` with a text editor and run
+`/kdf reload`: hot values apply, cold values report restart required. To try templates and
+expressions without touching any file:
+
+```text
+KDF.Template "{cfg:texts.motto} x{cfg:balance.ironSpeed}" KDFSample
+KDF.Config.Expr "features.enableBonus && balance.ironSpeed >= 2" KDFSample
+```
+
+## Step 8: validate in the editor
+
+Open the project in the desktop editor, or run `kdf lint` on the folder that contains
+`DataForge/`. The editor checks the definition (required `name` and `description`, ids, ranges,
+defaults, categories), every `cfg:` reference and `config:` expression, template syntax, and
+whether a hot value feeds a cold place. Try breaking something:
+
+| Edit                              | Diagnostic                |
+| --------------------------------- | ------------------------- |
+| `cfg:balance.ironSped`            | `config.unknown-id`       |
+| `config: !features.enableBonus`   | `config.expression-quote` |
+| `value: {cfg:texts.motto} text`   | `template.unquoted-start` |
+| remove `description` from a field | `schema.required`         |
+| `icon: nope.png`                  | `pack.icon-missing`       |
+
+See [Lint Your Pack](/kdataforge/lint-your-pack) and the
+[desktop editor](/kdataforge/desktop-editor/editing-and-validation#configuration-references-and-templates).
+
+## Step 9: let players change it in game
+
+Players can use the chat commands above, or edit the file. For a real settings screen, build a
+widget with the [Blueprint Config API](/kdataforge/reference/blueprint-config-api): list the packs
+with `Get All Pack Infos`, the fields with `Get Config Descriptions Flat`, create a slider, a
+checkbox, a dropdown and a text box per `Get Kind`, and call `Apply Config Changes` from an Apply
+button. The reference describes the full node flow.
+
+## Multiplayer
+
+- On a **listen server**, the host changes values and they are sent to the clients while connected.
+  Clients cannot edit them.
+- On a **dedicated server**, edit the server's values file and run `/kdf reload`, or change
+  values as an administrator from a settings screen or with `/kdf config set` and
+  `/kdf config apply`.
+- A client whose cold `features.tier` differs from the host's keeps its loaded content, reports a
+  host mismatch, and can adopt the host's values from the UI.
+- A client never writes the host's values to its own file, and leaving the session restores the
+  local values.
+
+All players still need the same packs installed. See
+[Pack Configuration](/kdataforge/features/pack-configuration#multiplayer).
+
+## Troubleshooting
+
+| Symptom                                         | Fix                                                                                                                               |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `/kdf config dump` lists 0 fields               | The `*.config.yml` file is outside the pack, or a field has an error. Run `/kdf report`.                                          |
+| The recipe did not change after `apply`         | The field is cold (restart), or the patch target is wrong. Check `apply: hot` and `/kdf report`.                                  |
+| The description still shows `{cfg:texts.motto}` | The scalar was not quoted, or the id is misspelled. A pre-pass token that cannot be resolved stays as written and logs a warning. |
+| `Restart advised` after applying a hot value    | The hot field also feeds a cold place. Use a cold field there, or restart.                                                        |
+| The category shows as `FGCategory`              | The category class was not found. Check the id in `category:` and that the `.class.yml` is in the same pack.                      |
+
+## Where to go next
+
+- [Templates and Typed References](/kdataforge/features/templates): all providers, function calls, nesting and escaping
+- [Config Expressions](/kdataforge/reference/config-expressions): the full `config:` grammar
+- [Blueprint Config API](/kdataforge/reference/blueprint-config-api): build the settings screen
+- [Conditions & Packs](/kdataforge/features/conditions-and-packs): where `config:` conditions can go

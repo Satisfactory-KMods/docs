@@ -13,7 +13,8 @@ copy-pasteable YAML. The pages below cover what those sections deliberately leav
 grammar, the stable C++ surface, editor tooling, and catalogs.
 
 - [YAML Schema](/kdataforge/reference/yaml-schema) is the complete, normative grammar for
-  packs, document types, property paths, all 22 operations, conditions, and includes. It's for pack
+  packs, document types, pack configuration definitions, typed references and templates, property
+  paths, all 22 operations, conditions, and includes. It's for pack
   authors who need to check the exact shape or default of a field rather than read a worked example.
 - [API Design](/kdataforge/reference/api-design) documents the public C++ API surface in
   the `KDataForgeApi` module. It's for third-party mod developers who link against KDataForge from
@@ -26,7 +27,13 @@ grammar, the stable C++ surface, editor tooling, and catalogs.
   the Unreal Editor so the changes can be saved as permanent edits. It's for mod developers working in
   editor builds, not the packaged game.
 - [Reflection Export](/kdataforge/reference/reflection-export) documents runtime type export,
-  Blueprint loading, Pack Manager bundle import, metadata supplement, and validation commands.
+  Blueprint loading, functions, the game settings index, reload classification and the
+  cold-property catalog, Pack Manager bundle import, metadata supplement, and validation commands.
+- [Blueprint Config API](/kdataforge/reference/blueprint-config-api) documents the Blueprint surface
+  of pack configuration: the config description classes per field kind, the function library,
+  apply results, multiplayer roles and events. It's for anyone building a settings screen.
+- [Config Expressions](/kdataforge/reference/config-expressions) is the grammar, type rules and
+  error codes of the `config:` condition key.
 - [Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes) catalogs
   every base-game `FGUnlock` subclass, its properties, concrete examples, and instantiation caveats.
 - [Mod Unlock Classes](/kdataforge/reference/mod-unlock-classes) does the same for the

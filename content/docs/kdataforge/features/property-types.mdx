@@ -382,3 +382,43 @@ This holds even for exotic or third-party struct types this page doesn't know ab
 - path: mSomeExoticStruct
   value: '(InnerValue=3,Flags=(bEnabled=True))'
 ```
+
+## Values from configuration, settings and templates
+
+Any `value:` (and `min:` and `max:`) can come from [pack configuration](/kdataforge/features/pack-configuration)
+or from the game itself instead of being a literal:
+
+```yaml
+- path: mManufactoringDuration
+  op: divide
+  value: cfg:balance.ironSpeed # typed reference: the whole unquoted scalar
+- path: mDescription
+  value: 'Smelts at {cfg:balance.ironSpeed}x speed' # template inside a string
+- path: mManufactoringDuration
+  value: '{recipe:/Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C:mManufactoringDuration}'
+```
+
+The first form inserts the field's typed value, the second inserts text, and the third reads a
+property or calls a function on game data and keeps the result's type because it is the whole
+value. [Templates and Typed References](/kdataforge/features/templates) covers the syntax. The
+value then goes through the codec of the destination property, so the **type of the field must fit
+the property**:
+
+| Destination property | Config field that fits |
+| --- | --- |
+| `bool` | `boolean` |
+| integer types | `number` with an integer `valueType` (within range), or a numeric `select` |
+| `float`, `double`, and the operands of `add`, `subtract`, `multiply`, `divide`, `min`, `max`, `clamp` | any `number` |
+| `FString` | any `text`, or a string `select` |
+| `FName` | `text` with `valueType` string, name or tag |
+| `FText` | `text` with `valueType` string, text or name |
+| enum | a string `select` whose option values are enum names, or a `text` field |
+| class, soft class, object, soft object | `text` (the path as a string) |
+| `FGameplayTag` | `text` with `valueType: tag` |
+| `FGameplayTagContainer` | a `multiple` tag list |
+| array or set with `set` | a `multiple` field with matching elements |
+| array or set with `append`, `prepend`, `insert`, `replace`, `remove` | a single field of the element type |
+| structs and maps as a whole | none; set the members one by one, each from its own field |
+
+A lossy match, such as a decimal number into an integer property, is a warning in the editor
+(`config.type-mismatch`); an impossible one is an error.

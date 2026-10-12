@@ -77,6 +77,59 @@ Localization changes are loaded on the next session start.
 A complete worked translation (item + schematic + German locale file, applied together) is part of
 the end-to-end pack in [End-to-End Pack](/kdataforge/examples/end-to-end-pack).
 
+## Localizing configuration text
+
+The `name`, `description`, `tooltip` and option `label` of a
+[pack configuration](/kdataforge/features/pack-configuration) field can use the localized text
+form, exactly like a text property:
+
+```yaml
+name:
+  key: Config_IronSpeed_Name
+  ns: KDFSample
+  source: Iron smelting speed
+```
+
+`source` is the text shown when no translation exists. Translate it with a localization document
+that uses the same `namespace` and key (the `source` of the map form must equal the text in the
+definition):
+
+```yaml
+# file: config-texts.localization.yml
+type: localization
+namespace: KDFSample
+culture: de
+entries:
+  Config_IronSpeed_Name:
+    source: Iron smelting speed
+    text: Eisen-Schmelzgeschwindigkeit
+```
+
+The same works for a pack's `description` in `pack.yml` and for category class names.
+
+## Config values and templates in text entries
+
+Text entries are string values, so [templates](/kdataforge/features/templates) work in them. The
+pre-pass providers (`cfg`, `session`, `ags`, `option`) are replaced before the entries are
+registered, which lets a translation show the player's current settings:
+
+```yaml
+# file: config-values.localization.yml
+type: localization
+namespace: KDFSample
+culture: en
+entries:
+  Config_Summary: 'Iron smelts at {cfg:balance.ironSpeed}x, milestone in tier {cfg:features.tier}.'
+  Config_Literal: 'Write \{cfg:balance.ironSpeed} to show the speed.'
+```
+
+`{0}`-style text arguments are not templates and pass through unchanged. Apply-time providers
+such as `{item:...}` are not expanded in localization entries; they work in operation values (an
+item description, for example), see [Templates](/kdataforge/features/templates). Localization
+documents are one of the places where a hot field is allowed
+([Hot and cold values](/kdataforge/features/pack-configuration#hot-and-cold-values)): the text is
+rebuilt every time KDataForge loads.
+
 ## Troubleshooting
 
 - **My override isn't taking effect.** This is almost always the source-hash mismatch described

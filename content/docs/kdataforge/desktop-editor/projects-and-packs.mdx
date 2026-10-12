@@ -26,8 +26,8 @@ problems. The pack list shows priority order. Select a pack to inspect these tab
 
 | Tab | Use |
 | --- | --- |
-| **Manifest** | Edit `pack.yml` fields and save them. |
-| **Documents** | Open YAML files belonging to the selected pack. |
+| **Manifest** | Edit `pack.yml` fields, including **Description** and **Icon**, and save them. |
+| **Documents** | Open YAML files belonging to the selected pack, including its `*.config.yml` configuration definitions. |
 | **Dependencies** | Inspect pack dependencies and required game mods. |
 | **Redirects** | Inspect generated-ID redirects already present in the manifest. |
 
@@ -37,8 +37,27 @@ edits before switching pack state or exporting. **Dependency graph** shows missi
 cycles, and required game mods; a pack's priority alone does not override dependency or document
 stage order. For pack syntax, see [Conditions and packs](/kdataforge/features/conditions-and-packs).
 
+**Description** and **Icon** (`description` and `icon` in `pack.yml`) are shown by pack settings
+screens in game. The icon is a path relative to the pack folder (`png`, `jpg`, `jpeg`, `tga`, `bmp`)
+or an object path that starts with `/`. A missing file, a path that leaves the pack folder, an
+unsupported format or a symlink out of the pack is reported as `pack.icon-missing`,
+`pack.icon-escape`, `pack.icon-format` or `pack.icon-symlink`. See
+[Pack Configuration](/kdataforge/features/pack-configuration#pack-name-description-and-icon).
+
+### Pack configuration documents
+
+Pack configuration is a document type of its own. **File → New document** with the type
+**Config** creates a `<name>.config.yml` definition: the dialog adds the required `.config.yml`
+ending and starts from a skeleton with a slider (hot) and a checkbox (cold). A `*.config.yml` file
+cannot hold another document type, and the `.config.yml` ending is refused for any other type. The
+**Config category class** entry of the **Document template** list creates the `UFGCategory`
+subclass (a generated `Cat_<Name>` id with a display name and a menu priority) that groups the
+fields in the in-game settings UI. Config fields, `cfg:` references, templates and `config:`
+conditions are completed, explained and validated as described in
+[Configuration, references and templates](/kdataforge/desktop-editor/editing-and-validation#configuration-references-and-templates).
+
 The **Redirects** tab displays configured redirects. It does not change a pack ref. To rename
-generated IDs and their project references, use [Plugin tools](/kdataforge/desktop-editor/plugin-tools)
+generated IDs and their project references, use [Module tools](/kdataforge/desktop-editor/plugin-tools)
 and inspect the proposed diff before applying it.
 
 ## Project settings

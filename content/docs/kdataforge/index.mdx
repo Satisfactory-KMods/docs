@@ -8,8 +8,10 @@ sidebar:
 KDataForge is a YAML-driven runtime content framework for Satisfactory. Put pack files under
 `<your-mod>/DataForge/**/*.yml` to rebalance existing content, generate new classes and assets, or
 ship integrations with other mods. Generated content has save-stable identity, and the in-game
-editor can inspect live objects and export drafts. In multiplayer, every process loads its own pack
-set. KDataForge does not negotiate checksums or stream applied operations.
+editor can inspect live objects and export drafts. Packs can expose typed settings that players
+change without touching YAML, and read them back through typed references and templates. In
+multiplayer, every process loads its own pack set. KDataForge does not negotiate checksums or
+stream applied operations; only pack configuration values are sent from the host to clients.
 
 ## For Pack Authors
 
@@ -27,7 +29,10 @@ capability and [Reference](/kdataforge/reference) for exact schema or API detail
 [Property Types](/kdataforge/features/property-types) and
 [Operations](/kdataforge/features/operations) explain the codec every patch value
 uses. [Recipes](/kdataforge/features/recipes) and
-[Items](/kdataforge/features/items) cover two common document types.
+[Items](/kdataforge/features/items) cover two common document types. To let players tune your
+pack, see [Pack Configuration](/kdataforge/features/pack-configuration),
+[Templates and Typed References](/kdataforge/features/templates) and the walkthrough
+[Player-Configurable Balancing](/kdataforge/tutorials/player-configurable-balancing).
 
 The [Examples](/kdataforge/examples) section contains complete multi-capability packs such as
 [Balancing](/kdataforge/examples/balancing) and [End-to-End Pack](/kdataforge/examples/end-to-end-pack).
@@ -48,6 +53,9 @@ The [Reference](/kdataforge/reference) section contains the normative detail.
 is a reference C++ implementation for a new handler, [API Design](/kdataforge/reference/api-design)
 covers the public API surface for third-party mods, and [Editor Integration](/kdataforge/reference/editor-integration)
 documents `KDF.ApplyToAssets` for applying YAML packs directly onto assets inside the Unreal Editor.
+The [Blueprint Config API](/kdataforge/reference/blueprint-config-api) is the surface for building a
+pack settings screen, and [Config Expressions](/kdataforge/reference/config-expressions) is the
+grammar of `config:` conditions.
 
 ## Commands
 
@@ -57,15 +65,21 @@ for inspecting and controlling a running instance without editing files:
 | Command                          | Where                               | Effect                                                                                                                                                                                                   |
 | --------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/kdf report`                    | chat                                | Prints the load report: packs, applied documents, ops, warnings, errors                                                                                                                                  |
-| `/kdf reload`                    | chat (host/server admin)            | Restores KDF property baselines, rescans all pack files, and re-applies the normal stage pipeline. See [Smart reload](/kdataforge/getting-started#smart-reload)                                            |
+| `/kdf reload`                    | chat (host/server admin)            | Restores KDF property baselines, rescans all pack files (including edited configuration values files: hot values apply, cold values report "restart required"), and re-applies the normal stage pipeline. See [Smart reload](/kdataforge/getting-started#smart-reload)                                            |
 | `KDF.Reload`                     | console (host/server)               | Same smart reload as `/kdf reload`; useful for dedicated-server consoles and launch automation                                                                                                           |
 | `/kdf editor`                    | chat (host)                         | Toggles the in-game editor: browse content, edit properties live, undo/redo, and export changes to YAML                                                                                                  |
 | `KDF.Editor`                     | console                             | Same as `/kdf editor`                                                                                                                                                                                    |
 | `/kdf debug on\|off`             | chat                                | Flips global debug logging (same switch as `KDF.Debug`). Bare `/kdf debug` toggles the current state                                                                                                     |
 | `KDF.Debug 1`                    | console (or launch arg `-KDFDebug`) | Global [debug logging](/kdataforge/getting-started#debugging): one `[KDF DEBUG]` line per applied op, including editor edits. Narrower scopes: `debug: true` per document or in `pack.yml` |
 | `KDF.ApplyToAssets [PathFilter]` | console (**UE editor builds only**) | Applies loaded YAML directly onto editor assets and marks packages dirty. See [Editor Integration](/kdataforge/reference/editor-integration)                                               |
-| `/kdf-reflection [options]`      | chat (host/server)                  | Exports reflected classes, structs, enums, defaults, Blueprint mappings, and optional assets. See [Reflection Export](/kdataforge/reference/reflection-export)                       |
-| `KDF.DumpReflection [options]`   | console (host/server)               | Same full reflection export with time-sliced game-thread work                                                                                                                         |
+| `/kdf config dump [pack]`        | chat                                | Lists the pack configuration fields with value, default and effective value. See [Pack Configuration](/kdataforge/features/pack-configuration#changing-values)                            |
+| `/kdf config set <pack>:<id> <value>` | chat (host/server admin)       | Sets a pending configuration value (lists take comma separated elements)                                                                                                                  |
+| `/kdf config apply [pack]`       | chat (host/server admin)            | Saves pending values and reloads when a hot field changed; reports keys that need a restart                                                                                              |
+| `KDF.Config.Dump`, `KDF.Config.Set`, `KDF.Config.Apply` | console              | Console versions of the three commands above                                                                                                                                              |
+| `KDF.Template "<text>" [pack]`   | console                             | Expands `{prefix:body}` templates, see [Templates](/kdataforge/features/templates#testing-templates)                                                                                      |
+| `KDF.Config.Expr "<expr>" [pack]` | console                            | Evaluates a `config:` expression, see [Config Expressions](/kdataforge/reference/config-expressions#testing)                                                                              |
+| `/kdf-reflection [options]`      | chat (host/server)                  | Exports reflected classes, structs, enums, defaults, functions, game settings, Blueprint mappings, and assets. Without options it uses the full profile. See [Reflection Export](/kdataforge/reference/reflection-export) |
+| `KDF.DumpReflection [options]`   | console (host/server)               | The same export with time-sliced game-thread work. Without options it writes **no** functions, asset indexes or flattened classes; pass `--assets --functions --flattened` for the full profile |
 | `KDF.ValidateReflection [--out]` | console                             | Runs acceptance checks against completed reflection output                                                                                                                            |
 
 ## Quick Start
