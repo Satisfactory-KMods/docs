@@ -1,0 +1,52 @@
+---
+title: Operations and Releases
+description: Use Git, game logs, settings, recovery, updates, and release preparation.
+sidebar:
+  order: 7
+---
+
+## Source control
+
+**Source control** opens as a resizable side panel from the Activity Bar on any screen, or with
+`Ctrl+Shift+G`. Select the icon or shortcut again to close it. The editor remembers whether the
+panel was open and its width. Its Activity Bar badge shows changed-file count; hiding the panel
+keeps the commit-message draft. Inspect working, staged, untracked, and conflicted files; open a
+diff in the main area while keeping the panel open; stage or unstage; preview the staged diff;
+then commit. The panel also offers branch and remote controls. **Full view** opens advanced Git
+tools. **History** shows commits, **Diff** compares file versions, and **Merge** handles conflicts.
+Git uses the selected project root and its configured credential helper. Remote operations act on
+the current repository, so inspect branch and upstream before using them.
+
+## Game logs and diagnostics
+
+**Game log** reads a chosen local game or server `.log` file. Load, follow, or pause it; filter
+by text/regex, severity, category, session, time prefix, or KDF lines. Double-click a DataForge
+file path and line number to open the editor. **KDF Analysis** uses enabled KDF, SML, and Unreal
+log parsers to summarize supplied lines. The log reader does not upload the file automatically.
+
+**Problems** is for editor and lint diagnostics; [Editing and validation](/kdataforge/desktop-editor/editing-and-validation)
+explains its filters, quick fixes, and exports.
+
+## Settings, updates, recovery
+
+**Settings** has user and project scopes. It covers editor/Prettier behavior, language server,
+plugins, datapacks, game/runtime paths, appearance, and keybindings. Its raw TOML editor reports
+syntax errors before saving. **Updates** checks configured signed channels; a download is
+verified before an explicit install. If no signed feed is configured, the page reports updates
+as disabled. **Recovery** lists unsaved snapshots, compares one with disk, and lets you restore
+or discard it. Review the disk comparison before replacing current content.
+
+## Prepare and publish a mod
+
+For one pack, use **Pack manager → Export .zip**; see
+[Projects and packs](/kdataforge/desktop-editor/projects-and-packs). For a mod release, open
+**Plugin tools → Ficsit.app**. The manager checks the local descriptor, `pack.yml`, version,
+dependencies, changelog, logo, and page metadata. Preview any local metadata edit and inspect
+its per-file diff before applying. Package preview rescans disk and matches a content-addressed
+inventory; rerun it after changing files.
+
+The manager exposes **View mod** and **Refresh remote data** for inspection. Creating a hidden
+mod page, updating page details, and uploading a release are separate remote actions with exact
+confirmation text. The session API token is held in native memory and can be cleared from the
+panel. Review the target mod ID, version, compatibility data, and package preview before each
+remote action. Packaging and publishing a full mod are separate from a KDataForge pack ZIP export.

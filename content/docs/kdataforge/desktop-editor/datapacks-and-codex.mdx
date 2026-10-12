@@ -1,0 +1,51 @@
+---
+title: Datapacks and Codex
+description: Import reflection archives, bind game data, compare versions, and inspect classes.
+sidebar:
+  order: 4
+---
+
+## Capture game data
+
+Start a Satisfactory world with KDataForge installed. In the game console, run:
+
+```text
+KDF.DumpReflection --assets --functions --flattened
+```
+
+The exporter writes a timestamped `.kdfdata` archive under
+`FactoryGame/KMods/ReflectionExport` by default. It contains reflected classes, properties, and
+other metadata from that game and mod set. Import the archive through **Datapacks → Import** or
+drop one `.kdfdata` file onto the desktop window. The app inspects it before installing a
+content-addressed resource plugin. Only `.kdfdata` is a reflection datapack; a `ContentLib/`
+folder follows the separate [ContentLib Import](/kdataforge/desktop-editor/contentlib-import)
+workflow.
+
+## Bind an archive
+
+Imported archives are available in **Datapacks**. Browse classes and properties, filter the
+library, and select **Bind to project**. Review the binding diagnostics before accepting. A
+project can also use **Schema only** under **Settings → Datapacks**. **Automatic Vanilla** opts
+into a bundled Vanilla archive if the build includes a complete verified export; new projects do
+not silently select it.
+
+An explicit binding is saved as `[datapack].pluginId` in project settings. Disabling that plugin
+keeps the binding intact but leaves validation schema-only until it is re-enabled or changed.
+Missing or partial engine metadata appears as limited or unknown. It is not proof that a class or
+property does not exist. The app reads installed archives up to its 512 MiB validation limit;
+larger source archives may be deflated during import without changing entry content.
+
+If the **Reflection Diff** plugin is enabled, choose **Compare** on an installed archive to
+compare classes, properties, structs, and enums with another archive. Unknown metadata stays
+unknown instead of being treated as a removal.
+
+## Explore in Codex
+
+Open **Codex** to search reflected classes. Filter by source mod, class kind, abstract/concrete
+state, or family, and switch between hierarchy and flat views. Select a class for its properties,
+parent chain, textures, raw metadata, and source path. When **Catalog Usage** is enabled, scan
+saved project YAML to see where a class path is referenced. An incomplete project scan is marked
+limited. Class paths from Codex can be inserted through the editors' catalog picker.
+
+The archive describes the game state at export time. Re-export and rebind after changing the
+installed game or mod set when completion and class defaults matter.

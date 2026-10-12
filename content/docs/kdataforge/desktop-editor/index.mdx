@@ -1,30 +1,41 @@
 ---
-title: Desktop Pack Manager
-description: Edit KDataForge packs, inspect reflection data, and use bundled plugins on your computer.
+title: KDataForge Editor
+description: Create packs, edit YAML, validate game data, and prepare releases in the desktop app.
 sidebar:
   order: 1
   label: Overview
 ---
 
-KDataForge Pack Manager is the desktop editor for local KDataForge projects. Open a project to edit
-pack manifests and YAML, inspect a `.kdfdata` reflection export, and run validation before testing
-in game.
+KDataForge Editor is a Windows desktop app for local KDataForge projects. It combines a pack
+manager, code and visual YAML editors, reflection browser, validation, project tools, Git, and game
+logs. A KDataForge pack still runs in the game; the editor prepares and checks its files.
 
 ## Start
 
-1. Open a project containing `DataForge/` or a pack directory with `pack.yml`.
-2. Import a `.kdfdata` reflection archive in **Datapacks** if you want class and property metadata.
-3. Edit YAML in **Code editor** or **Visual editor**. Check **Problems** for diagnostics.
-4. Choose **Lint pack** under **Settings → Language server**, then test the pack in game.
+1. Choose **Projects → Create**, **Open**, or **Clone**. Open a project containing `DataForge/` or a
+   pack directory with `pack.yml`.
+2. Import a `.kdfdata` reflection archive in **Datapacks**, then preview and bind it to the project
+   for class and property metadata. Schema-only editing also works.
+3. Open a pack in **Pack manager**. Edit YAML in **Code editor** or **Visual editor**.
+4. Review **Problems**, run a full lint, and test the enabled pack in game.
+5. Export a checked pack or prepare release metadata when ready.
 
-The language server, linter, and ContentLib importer are core
-[built-in plugins](/kdataforge/desktop-editor/plugins). Additional built-in providers handle
-templates, comparison, logs, and optional project tools. Each has local state under
-**Settings → Plugins**. Validated `.kdfdata` archives also appear as disableable resource plugins.
+## Find a workflow
 
-Already have ContentLib JSON? [Import it as a new KDataForge pack](/kdataforge/desktop-editor/contentlib-import).
-The conversion shows generated YAML and warnings before creating a pack.
+| Goal | Guide |
+| --- | --- |
+| Create, clone, duplicate, enable, or export a pack | [Projects and packs](/kdataforge/desktop-editor/projects-and-packs) |
+| Edit YAML, rename IDs, inspect classes, or fix diagnostics | [Editing and validation](/kdataforge/desktop-editor/editing-and-validation) |
+| Import reflection data and browse the Codex | [Datapacks and Codex](/kdataforge/desktop-editor/datapacks-and-codex) |
+| Generate content, audit dependencies, or compare compatibility | [Plugin tools](/kdataforge/desktop-editor/plugin-tools) |
+| Ask a project-aware assistant or connect an MCP client | [KDF Assist](/kdataforge/desktop-editor/assist) |
+| Use Git, game logs, recovery, settings, or release tools | [Operations and releases](/kdataforge/desktop-editor/operations-and-releases) |
+| Enable providers or write a bundled TypeScript plugin | [Plugins](/kdataforge/desktop-editor/plugins) and [Plugin authoring](/kdataforge/desktop-editor/plugin-authoring) |
 
-Reflection archives and ContentLib source folders serve different purposes. The **Datapacks**
-screen accepts `.kdfdata` only. The **ContentLib importer** reads a `ContentLib/` folder and writes
-new YAML pack files.
+Built-in providers have local on/off switches in **Plugins** or **Settings → Plugins**. Validated
+`.kdfdata` archives also appear there as resource plugins. [ContentLib Import](/kdataforge/desktop-editor/contentlib-import)
+converts a different source format into a new pack.
+
+Reflection archives and ContentLib source folders serve different purposes. **Datapacks** accepts
+`.kdfdata` only. **ContentLib Import** reads a `ContentLib/` folder, previews generated YAML and
+warnings, then creates a new pack.

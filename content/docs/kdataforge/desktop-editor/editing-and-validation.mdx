@@ -1,0 +1,53 @@
+---
+title: Editing and Validation
+description: Use code and visual YAML editing, class lookup, Problems, and recovery.
+sidebar:
+  order: 3
+---
+
+## Edit YAML
+
+Open **Explorer and editor** to browse project files, create a YAML document or folder, and edit
+source in the code editor. **File → New document** lists supported KDataForge document types.
+Tabs show open files and error counts. Use **Catalog** for one reflected class path or **Array
+catalog** to review a replacement for a list. **Rename ID** (`F2`) previews generated IDs and
+affected project references before applying. Save with `Ctrl+S`; **Save all** is `Ctrl+Alt+S`.
+
+**Visual editor** offers typed fields for a selected YAML document and a live YAML preview. Its
+class pickers use the bound reflection archive. Multi-document files have document tabs. If a
+YAML construct cannot be represented safely in the form, the editor asks you to open **Code
+editor** and leaves source unchanged. Raw YAML remains the source of truth in both modes.
+
+Both editors detect when the disk version changes after a file was opened. Compare or reload
+before overwriting it. A recoverable unsaved buffer appears under **Recovery**; see
+[Operations and releases](/kdataforge/desktop-editor/operations-and-releases).
+
+## Validate
+
+The language server reports live diagnostics while editing. Open **Problems** to filter by file,
+active pack, severity, source, or search text. Group results by file, code, or severity; select a
+diagnostic to jump to its source. Supported quick fixes appear on the selected diagnostic.
+
+Use **Run lint** in **Problems** for a complete project check. You can restart the language server
+there and export the displayed diagnostics as text, JSON, GitHub annotations, or SARIF. Set lint
+trigger, debounce, schema paths, and warning policy under **Settings → Language server**. A
+successful local lint is followed by an in-game test of the enabled pack; runtime behavior depends
+on installed mods and game data.
+
+With no bound `.kdfdata`, schema checks still work. Reflected class, property, and default-value
+checks report missing or limited metadata instead of inventing values. See
+[Datapacks and Codex](/kdataforge/desktop-editor/datapacks-and-codex).
+
+## Format and inspect
+
+**Edit → Format document** formats the active buffer through the enabled formatter. Configure
+Prettier and optional format-on-save under **Settings → Editor**; the Prettier provider must be
+available. The status panel checks global `prettier`, npm, Deno, and Bun. The install action uses
+one explicit global install command and asks for confirmation before running it. Format-on-save
+supports per-project **YAML-only**, **Docs-only**, and **All supported text** trust profiles. YAML
+semantic guard is enabled by default: every YAML document is parsed before and after formatting,
+and changed data or invalid output keeps the original buffer. File scope does not sandbox trusted
+workspace Prettier plugins or configuration. Formatting then saves through the normal file hash
+check; newer typed text is not overwritten by a delayed formatter result. **Codex** browses
+classes, hierarchy, properties, and references from reflection data. Its optional catalog-usage
+scan locates class paths in saved project YAML.

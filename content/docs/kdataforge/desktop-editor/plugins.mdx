@@ -1,19 +1,19 @@
 ---
 title: Plugins
-description: Built-in desktop plugins, datapack resources, and TypeScript hooks in KDataForge Pack Manager.
+description: Built-in providers, datapack resources, and TypeScript hooks in KDataForge Editor.
 sidebar:
-  order: 2
+  order: 8
 ---
 
-Open **Settings → Plugins** to inspect installed providers and switch them on or off. Plugin
+Open **Plugins** or **Settings → Plugins** to inspect providers and switch them on or off. Plugin
 preferences belong to the local application, not to a KDataForge pack or project. Providers ship
-with Pack Manager; arbitrary executable TypeScript or Rust plugins are not loaded at runtime.
+with the editor; arbitrary executable TypeScript or Rust packages are not loaded at runtime.
 
 | Feature               | IDs                                                                                            | Capability                                                    | Behavior                                                                        |
 | --------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | ContentLib conversion | `contentlib`                                                                                   | `importer`                                                    | Preview mapping and create a new pack without overwriting the source.           |
 | YAML intelligence     | `kdf-language-server`, `kdf-linter`                                                            | `languageServer`, `linter`                                    | Live diagnostics and explicit project lint use one Rust validation core.        |
-| Pack ZIP export       | `pack-zip-exporter`                                                                            | `exporter`                                                    | Native export validates one project-scoped pack and chooses the output path.    |
+| Pack export           | `pack-zip-exporter`, `contentlib-exporter`                                                     | `exporter`                                                    | Export a validated KDF ZIP or supported ContentLib CDO ZIP from one pack. Unsupported conversion fails explicitly. |
 | Starter projects      | `starter-templates`                                                                            | `templateProvider`                                            | Preview five bundled templates; native creation writes them atomically.         |
 | Datapack comparison   | `kdf-reflection-diff`                                                                          | `reflectionDiff`                                              | Compare two installed `.kdfdata` archives; incomplete records stay **Unknown**. |
 | Profile check         | `smm-profile-checker`                                                                          | `profileChecker`                                              | Compare a user-selected SMM JSON profile with pack `hasMod` requirements.       |
@@ -24,6 +24,14 @@ with Pack Manager; arbitrary executable TypeScript or Rust plugins are not loade
 | Pack repair           | `kdf-pack-dependency-repair`                                                                   | `documentBuilder`, `visualContribution`                       | Preview dependency fixes before the host writes them.                           |
 | Asset validation      | `kdf-asset-icon-validator`                                                                     | `visualContribution`                                          | Report missing, unsafe, duplicate, and orphan project assets.                   |
 | Migration             | `kdf-migration-wizard`                                                                         | `documentBuilder`, `visualContribution`                       | Preview project-wide reference and ID changes before saving.                    |
+| Naming policy         | `kdf-naming-policy-refactor`                                                                   | `documentBuilder`, `visualContribution`                       | Preview selected generated-ID renames and full file diffs.                      |
+| Project inspection    | `kdf-dead-content-cleaner`, `kdf-compatibility-matrix`, `kdf-changelog-generator`             | `visualContribution`                                          | Inspect unused content, profile compatibility, and Markdown changes.            |
+| Release manager       | `kdf-ficsit-app-manager`                                                                       | `visualContribution`                                          | Review local metadata and package inventory; remote actions need confirmations. |
+| Release checks        | `kdf-release-gate`, `kdf-ficsit-remote-diff`                                                   | `visualContribution`                                          | Correlate release evidence and compare typed remote metadata without writing.  |
+| Asset instances       | `kdf-asset-instance-browser`                                                                   | `visualContribution`                                          | Browse exact reflected instances with provenance and completeness status.       |
+| Runtime analysis      | `kdf-effective-runtime`, `kdf-delivery-runtime-simulator`                                      | `visualContribution`                                          | Simulate pack effects or KAPI delivery state without changing game state.       |
+| Progression checks    | `kdf-progression-integrity`                                                                    | `visualContribution`                                          | Report hard softlocks, seedless cycles, and unknown blockers.                   |
+| KDF Assist            | `kdf-assist`                                                                                   | `aiAssistant`                                                 | Use bounded project context and review model-proposed YAML before saving.       |
 | Guided editors        | `kdf-wizard`, `kdf-game-phases`, `kdf-research-tree`, `kdf-kapi-builders`, `kdf-delivery-tree` | `wizardProvider`, `documentBuilder`, `graphContribution`      | Produce reviewable plans; host validates and saves project files.               |
 | Project actions       | `kdf-git-actions`, `kdf-terminal-tasks`                                                        | `gitAction`, `terminalTask`                                   | Return allowlisted native-command plans for preview before execution.           |
 | YAML formatter        | `kdf-prettier`                                                                                 | `formatter`                                                   | Format an editor buffer through a scoped native command when configured.        |
@@ -32,6 +40,9 @@ Most built-ins start enabled. Specialized providers may start disabled or report
 availability when a declared game-mod, reflected-class, datapack, or plugin requirement is
 missing. **Enabled** and **available** are separate states. Switching a provider off does not
 change existing YAML or project settings.
+
+The [Plugin tools](/kdataforge/desktop-editor/plugin-tools) guide explains each tab and its
+preview/apply flow. [KDF Assist](/kdataforge/desktop-editor/assist) covers the assistant.
 
 ## Datapacks are resource plugins
 
@@ -84,7 +95,9 @@ part of that preference file.
 
 ## Adding a built-in plugin
 
-Application contributors can extend the shipped plugin set:
+Application contributors can extend the shipped plugin set with the TypeScript API and builder.
+See [Plugin authoring](/kdataforge/desktop-editor/plugin-authoring) for a runnable example,
+package commands, and host registration. The required steps are:
 
 1. Choose a stable ID, capabilities, default state, and optional requirements.
 2. Implement and register TypeScript hooks for renderer contributions. Add the same descriptor to
@@ -94,7 +107,8 @@ Application contributors can extend the shipped plugin set:
 4. Test first-run state, enable/disable behavior, native rejection while disabled, and incomplete
    data behavior. Validate matching TypeScript and native metadata.
 
-TypeScript support is part of application source and build. A pack cannot ship executable
-TypeScript plugins to another installation.
+The npm builder produces a bundle and manifest for inspection, but the desktop app does not
+install or execute third-party JavaScript from a pack or npm package. TypeScript plugins become
+available to users after they are registered and shipped with an editor build.
 
 For import workflow and conversion limits, see [ContentLib Import](/kdataforge/desktop-editor/contentlib-import).

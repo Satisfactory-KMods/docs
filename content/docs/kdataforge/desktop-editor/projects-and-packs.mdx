@@ -1,0 +1,56 @@
+---
+title: Projects and Packs
+description: Set up a project, manage pack manifests and dependencies, and export a pack.
+sidebar:
+  order: 2
+---
+
+## Set up a project
+
+Open **Projects** to return to recent, pinned, or discovered projects. **Create** builds a new
+project from a bundled starter template; **Open** uses an existing project or `DataForge/` folder;
+**Clone** copies a Git repository into a new folder. The wizard shows the exact files and location
+before it creates anything. Clone authentication uses your configured Git credential helper.
+
+For a new project, choose a direct `DataForge/pack.yml`, nested
+`DataForge/<pack>/pack.yml`, or category layout. Enter pack ref, display name, version, and
+optional contributor and description. Choose a template and optionally initialize Git. The pack
+ref is part of generated content identity: decide it before using the pack in a save. The wizard
+then offers a datapack choice and final review. See [Datapacks and Codex](/kdataforge/desktop-editor/datapacks-and-codex)
+for reflection binding.
+
+## Manage packs
+
+Open **Pack manager** after selecting a project. Filter by name, ref, mod, enabled state, or
+problems. The pack list shows priority order. Select a pack to inspect these tabs:
+
+| Tab | Use |
+| --- | --- |
+| **Manifest** | Edit `pack.yml` fields and save them. |
+| **Documents** | Open YAML files belonging to the selected pack. |
+| **Dependencies** | Inspect pack dependencies and required game mods. |
+| **Redirects** | Inspect generated-ID redirects already present in the manifest. |
+
+**New pack** creates a new ref. **Duplicate** copies an existing pack; review copied generated IDs
+before enabling it. The list switch writes `enabled` to `pack.yml`. Save or discard unsaved manifest
+edits before switching pack state or exporting. **Dependency graph** shows missing dependencies,
+cycles, and required game mods; a pack's priority alone does not override dependency or document
+stage order. For pack syntax, see [Conditions and packs](/kdataforge/features/conditions-and-packs).
+
+The **Redirects** tab displays configured redirects. It does not change a pack ref. To rename
+generated IDs and their project references, use [Plugin tools](/kdataforge/desktop-editor/plugin-tools)
+and inspect the proposed diff before applying it.
+
+## Project settings
+
+**Project settings** links to validation, editor, path, and shortcut preferences. It also shows
+active datapack binding and offers a diagnostic preview before changing archives. Advanced
+project-local TOML lives in `.kdf-editor.toml`; its save checks the current disk hash so external
+edits are not overwritten. Do not put credentials in this file.
+
+## Export
+
+Select a pack, save pending edits, choose an enabled export adapter, then select **Export .zip**
+from **Pack manager** or **File → Export pack as .zip**. The native exporter validates the selected
+project pack and asks for an output path. Exporting a pack is distinct from packaging a full mod
+release. See [Operations and releases](/kdataforge/desktop-editor/operations-and-releases).

@@ -2,12 +2,12 @@
 title: Import ContentLib
 description: Convert a ContentLib folder into a reviewable KDataForge pack.
 sidebar:
-  order: 3
+  order: 10
 ---
 
-Use **Settings → Plugins → ContentLib Importer → Import ContentLib pack** when migrating
-ContentLib JSON. Select a `ContentLib/` folder or its parent mod folder. The importer reads the
-source; it does not change or delete ContentLib files.
+Use **Pack manager → Import ContentLib** or **Settings → Plugins → ContentLib Importer** when
+migrating ContentLib JSON. Select a `ContentLib/` folder or its parent mod folder. The importer
+reads the source; it does not change or delete ContentLib files.
 
 ContentLib folder names, patch target lines, and JSON fields follow the
 [ContentLib documentation](https://docs.ficsit.app/contentlib/latest/index.html). The importer
@@ -82,3 +82,13 @@ KDataForge generates different class paths from ContentLib. Existing saves that 
 ContentLib-generated classes may need migration. Keep the original mod and pack available while
 testing a converted save. The importer does not rewrite save files or create redirects for
 ContentLib class identities.
+
+## Export a compatible CDO subset
+
+Enable the **ContentLib Exporter** plugin, select one pack in **Pack manager**, then choose
+**ContentLib CDO ZIP** from the export adapter list. The native exporter writes
+`ContentLib/CDOs/*.json` into a ZIP. It accepts only CDO documents and property `set`
+operations that ContentLib can represent. Unsupported pack options, document types, patch
+operations, or extra assets stop export with an error; they are never silently omitted. The
+selected pack needs at least one compatible CDO patch. Use **Pack ZIP** for a complete KDataForge
+pack.

@@ -1,0 +1,72 @@
+---
+title: Plugin Tools
+description: Generate content, analyze packs, and review project-wide changes with bundled tools.
+sidebar:
+  order: 5
+---
+
+Open **Plugin tools** with a project selected. Choose a tab, inspect its diagnostics, and review
+the exact preview before applying a write plan. Tabs whose provider is disabled or whose
+requirements are unavailable show that state; enable them in **Plugins**. Generated or modified
+files belong to the project and are checked again by the host before saving. Some analyses need a
+complete saved-YAML scan or bound reflection archive.
+
+## Create and edit content
+
+| Tab | What it does |
+| --- | --- |
+| **Wizard** | Guided drafts for a content chain, item, building descriptor, recipe, schematic unlock, research tree, image asset, data asset, curve, Sink points, resource-node removal, CDO patch, or localization entry. Preview generated files before applying. |
+| **Recipe graph** | Trace recipe inputs, outputs, producers, unlocks, and affected YAML, then preview direct edits from the selected node. |
+| **Unlock graph** | Trace schematic, M.A.M., recipe, and dependency links as a flow chart and preview safe YAML edits. |
+| **Game phases** | Build class-aware game-phase CDO edits from reflected phase and item records. If a bound datapack has no game-phase asset index, paste an exact phase object path and enter costs manually. |
+| **Research tree** | Inspect research nodes and links, then preview creation or edits of research YAML. |
+| **KAPI builders** | Generate KAPI data-asset documents using compatible reflected classes and properties. |
+| **Delivery Tree** | Edit KAPI delivery-task data assets and inspect their graph. Disabled by default; requires KAPI/KPrivateCodeLib data and explicit review for identity changes. |
+
+Choose an output path inside the intended pack. Review generated IDs, class paths, and unlock
+references before applying. The wizard's `resource-node-removal` rule can affect saved worlds;
+test that rule on a backed-up save. For YAML examples independent of the app, see
+[End-to-End Pack](/kdataforge/examples/end-to-end-pack).
+
+## Inspect and repair
+
+| Tab | What it does |
+| --- | --- |
+| **Balance audit** | Finds progression, cost, and reachability issues in saved project content. |
+| **Impact preview** | Shows direct and downstream effects of a selected graph change without editing files. |
+| **Production simulator** | Estimates production tree, machine totals, required inputs, and byproducts from known recipes. |
+| **Assets & icons** | Finds missing, unsafe, duplicate, or orphaned project asset references. |
+| **Asset instances** | Loads `indexes/assets.json` from bound effective `.kdfdata` (up to 8 MiB), then searches exact object paths by type, mod, and use case. Missing, oversized, invalid, or partial indexes stay visible; manual paths remain unverified. |
+| **Compatibility** | Compares pack requirements with selected mod profiles and explains each affected cell. |
+| **Effective runtime** | Simulates pack dependency order, handler stages, includes, conditions, effective CDO writes, and conflicts for loaded SMM profiles. Without a profile, mod-dependent outcomes remain unknown. |
+| **Progression integrity** | Runs bounded fixed-point reachability over items, recipes, schematics, research, and game-phase costs. Reports witness paths, blocker chains, seedless cycles, and unknown external evidence. |
+| **Delivery runtime** | Simulates KAPI delivery eligibility, parent thresholds, queues, completions, endless tasks, and cross-pack coordinate conflicts without mutating runtime state. |
+| **Dead content** | Flags definitely unused content when evidence is complete; deletion-plan preview is off by default and never deletes files. |
+| **Dependencies** | Explains pack dependency issues and previews safe manifest repairs. |
+| **Changelog** | Compares project changes and exports a generated Markdown changelog. |
+
+These analyses keep incomplete scans and missing reflection data visible. Treat a limited result
+as an open question; it must not justify deletion or a compatibility claim.
+
+## Rename and release preparation
+
+**Migration** previews generated-ID and project-reference changes across files. **Naming policy**
+offers a configurable refactor for selected generated IDs, then shows per-file diffs before
+applying. Both write through reviewed, hash-guarded project changes. Keep pack ref stable when
+renaming generated content; a generated-ID redirect cannot repair a pack-ref change.
+
+**Ficsit.app** inspects local release metadata, dependencies, logo, changelog, compatibility,
+`.uplugin`, and package contents. It can turn a pack into a mod-shaped release layout, preview
+local metadata changes, preview the native ZIP inventory, check a remote mod, and upload through
+the ficsit.app API when a session API key is configured. Tokens stay in native session memory.
+Create, page update, and release upload each require their own typed confirmation; see
+[Operations and releases](/kdataforge/desktop-editor/operations-and-releases).
+
+**Ficsit remote diff** compares credential-free local release state with a typed remote snapshot
+and advises dependency ranges. Missing descriptions, logo hashes, installed versions, or remote
+fields remain `unknown`; review plans never write or upload. **Release Gate** correlates local
+metadata, lint/build evidence, disclosures, compatibility, and a revision-bound native package
+preview. Missing or stale evidence blocks a ready result. Both plugins are disabled by default.
+
+For provider IDs, enable switches, and the TypeScript hook boundary, see
+[Plugins](/kdataforge/desktop-editor/plugins).
