@@ -117,6 +117,17 @@ Completion opens as you type `:`, a space, `.`, `{`, `(`, `,` or a quote. Matche
 destination come first, then conversions, and your own pack's items before other packs'. Lists that
 could hold thousands of entries stop at 200 and refine as you keep typing.
 
+An empty operation `value:`, `min:` or `max:` also offers every reflection template provider,
+including `{item:}`, `{recipe:}` and `{class:}`. Select one to insert a quoted template and
+continue with the target class, then its property or callable function. Existing single or
+double quotes are preserved. These entry points also work inside nested `value` maps and lists;
+they stay available when a pack has more than 200 configuration fields. Reflection templates
+are resolved only in `value`, `min` and `max`, so their entry points are not offered for `index`,
+`with` or `where` operands.
+
+In Code-OSS, clicking inside an existing template opens suggestions at the clicked provider,
+target, member or function argument.
+
 | Where the cursor is                                                                                                                               | What is offered                                                                                                                                                                                                                                                                                                                                                                                  |
 | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | The value of an operation (`value`, `min`, `max`, `index`, `with`, including members nested in a struct, list or map value) or a `where:` operand | `cfg:<id>` for every field whose **type fits** the destination property (a boolean field for a `bool`, any number field for a `float`, a list field for a `set`, ...), `cfg:<Pack>:<id>` for fitting fields of other packs, and the stubs `cfg:`, `session:`, `ags:`, `option:`. Fields that would only convert lossily are not offered. When the destination is unknown, every field is listed. |
