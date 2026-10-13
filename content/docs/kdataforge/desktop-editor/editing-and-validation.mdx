@@ -31,6 +31,54 @@ Both editors detect when the disk version changes after a file was opened. Compa
 before overwriting it. A recoverable unsaved buffer appears under **Recovery**; see
 [Operations and releases](/kdataforge/desktop-editor/operations-and-releases).
 
+## Native code suggestions
+
+In the standalone Code-OSS editor, `Ctrl+Space` opens live suggestions at the cursor. A
+property `path:` uses the current patch's target and inherited reflected fields. A target
+list offers fields with matching names and types on every selected class. Already used
+fields stay selectable, sort after unused fields and show **in use, line …** for the current
+patch. This also works while the next YAML value is incomplete.
+
+The suggestion list shows property names and C++ types. Its adjacent details panel shows the
+declaring class, exported description and units when available, supported operation chips,
+and a YAML value example. The source heading uses the bound datapack's actual name.
+Missing reflection metadata stays absent. Class lists containing more than 200 matches
+request fresh results as you refine the text.
+
+| Action                                         | Result                                                                                                                     |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `Enter`                                        | Insert the selected field                                                                                                  |
+| `Tab` on a reflected field that supports `set` | Insert the field and add `op: set` if no sibling operation exists                                                          |
+| Click an operation chip                        | Insert the field with that operation; replace an existing simple sibling operation while preserving its quotes and comment |
+| `Ctrl+Z`                                       | Undo the field and operation together                                                                                      |
+| `Ctrl+Space`                                   | Request suggestions for the current field, operation, class reference or supported value                                   |
+
+For example, open a `cdo` document and use the bound archive to select a recipe target:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Recipes/Packager/Recipe_PackagedSulfuricAcid.Recipe_PackagedSulfuricAcid_C
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.5
+      - path: m
+```
+
+Place the cursor after the final `m`, press `Ctrl+Space`, then choose `mProduct`. `Enter`
+inserts its name; `Tab` adds `op: set`; its **append** chip inserts `op: append`. Add the
+actual value before enabling the pack. The details example explains the value shape and
+is not a default copied from the class. The exported game field above is spelled
+`mManufactoringDuration`; use names from your bound archive.
+
+Inline badges show verified field types and exported units, and class references can show
+friendly names. Hover a property badge for its exported description, declaring class and
+common operations. Missing target metadata suppresses a badge, and an unresolvable nested
+path does not display the root property's type as its leaf type. A real lint error can show
+an inline quick-fix button; for example `multipy` can offer **Change to multiply**. The
+valid `multiply` operation is supported.
+
 ## Validate
 
 For [Wwise sounds](/kdataforge/features/sounds), create a `sound` document or use the **Wwise sound**
@@ -69,22 +117,22 @@ Completion opens as you type `:`, a space, `.`, `{`, `(`, `,` or a quote. Matche
 destination come first, then conversions, and your own pack's items before other packs'. Lists that
 could hold thousands of entries stop at 200 and refine as you keep typing.
 
-| Where the cursor is | What is offered |
-| --- | --- |
+| Where the cursor is                                                                                                                               | What is offered                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | The value of an operation (`value`, `min`, `max`, `index`, `with`, including members nested in a struct, list or map value) or a `where:` operand | `cfg:<id>` for every field whose **type fits** the destination property (a boolean field for a `bool`, any number field for a `float`, a list field for a `set`, ...), `cfg:<Pack>:<id>` for fitting fields of other packs, and the stubs `cfg:`, `session:`, `ags:`, `option:`. Fields that would only convert lossily are not offered. When the destination is unknown, every field is listed. |
-| After `cfg:` | The fitting ids of your pack, then the other packs as `Pack:` entries. After `cfg:Pack:` the ids of that pack. |
-| After `session:`, `ags:`, `option:` | Setting ids from the settings index, filtered by the destination type. `session:` lists session settings **and** advanced game settings, `ags:` the advanced game settings, `option:` the local game options. |
-| In a string, after `{` | All 14 providers with a short description, pre-pass providers first |
-| After `{cfg:` | Field ids, then `Pack:` entries. After `{session:`, `{ags:`, `{option:` the setting ids. |
-| After `{item:`, `{resource:`, `{building:`, `{recipe:`, `{schematic:`, `{research:`, `{category:` | Concrete classes below the provider's base class, and the classes your project generates below it |
-| After `{class:` | Every class, including function libraries, and the classes your pack generates |
-| After `{dataasset:`, `{asset:` | Your project's generated assets (data assets for `dataasset`, every generated asset for `asset`) and the assets of the export's asset index |
-| After `{<provider>:<target>:` | The target's properties, with their type and a `cold` or `newActors` tag where it applies, and its **callable** functions as `Name(a: T) -> R`, marked `(implicit class)` or `(implicit object)` when KDataForge passes that argument itself. A function with parameters inserts `Name(` and opens the parameter hints. |
-| Inside `Name(` | Enum names, `true` and `false`, or class paths for the active parameter |
-| After `path:` of an operation | The properties of the patch target, and after a dot the members of a struct or object property. Top-level properties show their kind and a `cold` or `newActors` tag, see below. |
-| After `category:` in a config document | `UFGCategory` subclasses and the category classes your project generates |
-| Inside `config:` | Field ids and settings, operators, and option values (see below) |
-| Keys and values of a config document | Document keys, the keys of each field (they depend on the field's `type`), tooltip and option keys, values for `type`, `valueType`, `apply`, `display`, `multiple` and `multiline`, and for `default`: `true` and `false` for a boolean, the option values for a select |
+| After `cfg:`                                                                                                                                      | The fitting ids of your pack, then the other packs as `Pack:` entries. After `cfg:Pack:` the ids of that pack.                                                                                                                                                                                                                                                                                   |
+| After `session:`, `ags:`, `option:`                                                                                                               | Setting ids from the settings index, filtered by the destination type. `session:` lists session settings **and** advanced game settings, `ags:` the advanced game settings, `option:` the local game options.                                                                                                                                                                                    |
+| In a string, after `{`                                                                                                                            | All 14 providers with a short description, pre-pass providers first                                                                                                                                                                                                                                                                                                                              |
+| After `{cfg:`                                                                                                                                     | Field ids, then `Pack:` entries. After `{session:`, `{ags:`, `{option:` the setting ids.                                                                                                                                                                                                                                                                                                         |
+| After `{item:`, `{resource:`, `{building:`, `{recipe:`, `{schematic:`, `{research:`, `{category:`                                                 | Concrete classes below the provider's base class, and the classes your project generates below it                                                                                                                                                                                                                                                                                                |
+| After `{class:`                                                                                                                                   | Every class, including function libraries, and the classes your pack generates                                                                                                                                                                                                                                                                                                                   |
+| After `{dataasset:`, `{asset:`                                                                                                                    | Your project's generated assets (data assets for `dataasset`, every generated asset for `asset`) and the assets of the export's asset index                                                                                                                                                                                                                                                      |
+| After `{<provider>:<target>:`                                                                                                                     | The target's properties, with their type and a `cold` or `newActors` tag where it applies, and its **callable** functions as `Name(a: T) -> R`, marked `(implicit class)` or `(implicit object)` when KDataForge passes that argument itself. A function with parameters inserts `Name(` and opens the parameter hints.                                                                          |
+| Inside `Name(`                                                                                                                                    | Enum names, `true` and `false`, or class paths for the active parameter                                                                                                                                                                                                                                                                                                                          |
+| After `path:` of an operation                                                                                                                     | The properties of the patch target, and after a dot the members of a struct or object property. Top-level properties show their kind and a `cold` or `newActors` tag, see below.                                                                                                                                                                                                                 |
+| After `category:` in a config document                                                                                                            | `UFGCategory` subclasses and the category classes your project generates                                                                                                                                                                                                                                                                                                                         |
+| Inside `config:`                                                                                                                                  | Field ids and settings, operators, and option values (see below)                                                                                                                                                                                                                                                                                                                                 |
+| Keys and values of a config document                                                                                                              | Document keys, the keys of each field (they depend on the field's `type`), tooltip and option keys, values for `type`, `valueType`, `apply`, `display`, `multiple` and `multiline`, and for `default`: `true` and `false` for a boolean, the option values for a select                                                                                                                          |
 
 When a template is the **whole** value, members whose type does not fit the destination sort last.
 
@@ -128,11 +176,11 @@ available for generated ids; change the definition and its uses together.
 Some properties do not update live, see [cold properties](/kdataforge/features/pack-configuration#cold-properties).
 The editor reads the classification from the reflection export and its cold-property catalog:
 
-| Situation | Diagnostic |
-| --- | --- |
-| An operation `path:` targets a `cold` or `newActors` property | `property.cold`, information by default, with the reason |
-| A hot config value (typed reference or template) feeds such an operation | `config.hot-into-cold-property` (warning) |
-| A hot field sits where only load-time values apply | `config.hot-in-cold-stage`, `config.hot-in-condition` (warnings) |
+| Situation                                                                | Diagnostic                                                       |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| An operation `path:` targets a `cold` or `newActors` property            | `property.cold`, information by default, with the reason         |
+| A hot config value (typed reference or template) feeds such an operation | `config.hot-into-cold-property` (warning)                        |
+| A hot field sits where only load-time values apply                       | `config.hot-in-cold-stage`, `config.hot-in-condition` (warnings) |
 
 A `newActors` property is not flagged when the patch sets `applyToSpawnedActors: true`, or when the
 document is not a `cdo` patch (it generates a class, so no actor exists yet). Choose how `property.cold` appears per project in `.kdf-editor.toml`:
@@ -144,14 +192,14 @@ coldProperties = "info" # the default; "hint" shows it as a hint, "off" hides it
 
 ### Quick fixes
 
-| Diagnostic | Fix offered |
-| --- | --- |
-| `template.unquoted-start`, `config.expression-quote` | **Wrap the value in quotes** |
-| `config.case-mismatch` | Change to the exact spelling of the field id |
-| `config.unknown-id` | Change to the closest existing field id (one fix per near match) |
-| `config.unknown-pack` | Change the pack to the closest pack in the project |
-| `setting.unknown-id` | Change to the closest setting id of the settings index |
-| `template.unknown-provider` | Change the provider to the registered prefix that is one edit away |
+| Diagnostic                                           | Fix offered                                                        |
+| ---------------------------------------------------- | ------------------------------------------------------------------ |
+| `template.unquoted-start`, `config.expression-quote` | **Wrap the value in quotes**                                       |
+| `config.case-mismatch`                               | Change to the exact spelling of the field id                       |
+| `config.unknown-id`                                  | Change to the closest existing field id (one fix per near match)   |
+| `config.unknown-pack`                                | Change the pack to the closest pack in the project                 |
+| `setting.unknown-id`                                 | Change to the closest setting id of the settings index             |
+| `template.unknown-provider`                          | Change the provider to the registered prefix that is one edit away |
 
 The full list of diagnostics is on [Lint Your Pack](/kdataforge/lint-your-pack#configuration-template-and-cold-property-checks).
 
