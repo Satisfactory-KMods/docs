@@ -216,3 +216,43 @@ workspace Prettier plugins or configuration. Formatting then saves through the n
 check; newer typed text is not overwritten by a delayed formatter result. **Codex** browses
 classes, hierarchy, properties, and references from reflection data. Its optional catalog-usage
 scan locates class paths in saved project YAML.
+
+## Affected elements
+
+Click **Affected** (crosshair icon) beside **Format** to inspect the current entry. The same
+**Affected elements** section appears at the bottom of **Inspector**. Enable the bundled
+**Affected Elements** module and bind a project `.kdfdata` archive.
+
+The list uses current unsaved YAML and cursor selection. Results show exported names, paths,
+sources and selection reasons. Icons come from the bound archive; recipes use their exported
+product icon. Missing PNGs show an explicit fallback icon. Click a row to open class information.
+The full view supports search and paged results.
+
+For example, this patch changes manufacturing duration of recipes produced in an Oil Refinery:
+
+```yaml
+type: cdo
+patches:
+  - producedIn: /Game/FactoryGame/Buildable/Factory/OilRefinery/Build_OilRefinery.Build_OilRefinery_C
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.5
+```
+
+Place the cursor inside the patch, then click **Affected**. Results are matching **recipes**.
+Exact names and counts depend on the bound game/mod export. Multiple values within `producedIn`,
+`ingredient` or `product` are alternatives; different filter keys must all match. Direct `target`
+entries are added to filtered selection. `applyToSubclasses` includes exported descendants.
+
+Preview supports CDO targets and recipe filters, `matchName`, common `where` comparisons,
+`allAssetsOfClass`, existing content `class` entries and recipe/schematic/research removal rules.
+**Possible** marks missing defaults, unresolved reference types, asset instance defaults or runtime
+conditions. Owned gameplay tags can come from runtime interfaces, so `matchTag` stays **Possible**.
+Generated content and live actor instances cannot be enumerated from an export. Syntax errors
+clear previous results. Disabled modules, missing data and unsupported entries explain their state.
+
+This previews selection against **exported defaults**. Earlier pack changes and live game state
+can change runtime selection. A confirmed empty list means no exported elements match.
+The full view initially queries up to 500 candidates, can load up to 2,000 and shows total
+matched/possible counts even when the visible list is capped.

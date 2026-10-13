@@ -9,31 +9,32 @@ Open **Built-in Modules** or **Settings → Built-in Modules** to inspect shippe
 them on or off. Module preferences belong to the local application. The editor ships a fixed
 set of bundled KDF, Git, YAML and terminal modules.
 
-| Feature | Behavior |
-| --- | --- |
-| ContentLib conversion | Preview mapping and create a new pack without overwriting the source. |
-| YAML intelligence | Live diagnostics and explicit project lint use one Rust validation core. |
-| Pack export | Export a validated KDF ZIP or supported ContentLib CDO ZIP from one pack. Unsupported conversion fails explicitly. |
-| Starter projects | Preview five bundled templates; native creation writes them atomically. |
-| Datapack comparison | Compare two installed `.kdfdata` archives; incomplete records stay **Unknown**. |
-| Profile check | Compare a user-selected SMM JSON profile with pack `hasMod` requirements. |
-| Log analysis | Parse supplied KDF, SML, and Unreal log lines without owning the log file. |
-| Graph and catalog | Analyze saved YAML and annotate exact reflected class paths. |
-| Localization | Check configured cultures, keys, and placeholders in saved localization YAML. |
-| Balance and impact | Analyze progression, effects, and throughput without changing packs. |
-| Pack repair | Preview dependency fixes before the host writes them. |
-| Asset validation | Report missing, unsafe, duplicate, and orphan project assets. |
-| Migration | Preview project-wide reference and ID changes before saving. |
-| Naming policy | Preview selected generated-ID renames and full file diffs. |
-| Project inspection | Inspect unused content, profile compatibility, and Markdown changes. |
-| Release manager | Review local metadata and package inventory; remote actions need confirmations. |
-| Release checks | Correlate release evidence and compare typed remote metadata without writing. |
-| Asset instances | Browse exact reflected instances with provenance and completeness status. |
-| Runtime analysis | Simulate pack effects or KAPI delivery state without changing game state. |
-| Progression checks | Report hard softlocks, seedless cycles, and unknown blockers. |
-| Guided editors | Produce reviewable plans; host validates and saves project files. |
-| Project actions | Return allowlisted native-command plans for preview before execution. |
-| YAML formatter | Format an editor buffer through a scoped native command when configured. |
+| Feature               | Behavior                                                                                                                                |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| ContentLib conversion | Preview mapping and create a new pack without overwriting the source.                                                                   |
+| YAML intelligence     | Live diagnostics and explicit project lint use one Rust validation core.                                                                |
+| Affected Elements     | Preview current unsaved selectors beside Format and at the bottom of Inspector, with exported game icons and explicit possible matches. |
+| Pack export           | Export a validated KDF ZIP or supported ContentLib CDO ZIP from one pack. Unsupported conversion fails explicitly.                      |
+| Starter projects      | Preview five bundled templates; native creation writes them atomically.                                                                 |
+| Datapack comparison   | Compare two installed `.kdfdata` archives; incomplete records stay **Unknown**.                                                         |
+| Profile check         | Compare a user-selected SMM JSON profile with pack `hasMod` requirements.                                                               |
+| Log analysis          | Parse supplied KDF, SML, and Unreal log lines without owning the log file.                                                              |
+| Graph and catalog     | Analyze saved YAML and annotate exact reflected class paths.                                                                            |
+| Localization          | Check configured cultures, keys, and placeholders in saved localization YAML.                                                           |
+| Balance and impact    | Analyze progression, effects, and throughput without changing packs.                                                                    |
+| Pack repair           | Preview dependency fixes before the host writes them.                                                                                   |
+| Asset validation      | Report missing, unsafe, duplicate, and orphan project assets.                                                                           |
+| Migration             | Preview project-wide reference and ID changes before saving.                                                                            |
+| Naming policy         | Preview selected generated-ID renames and full file diffs.                                                                              |
+| Project inspection    | Inspect unused content, profile compatibility, and Markdown changes.                                                                    |
+| Release manager       | Review local metadata and package inventory; remote actions need confirmations.                                                         |
+| Release checks        | Correlate release evidence and compare typed remote metadata without writing.                                                           |
+| Asset instances       | Browse exact reflected instances with provenance and completeness status.                                                               |
+| Runtime analysis      | Simulate pack effects or KAPI delivery state without changing game state.                                                               |
+| Progression checks    | Report hard softlocks, seedless cycles, and unknown blockers.                                                                           |
+| Guided editors        | Produce reviewable plans; host validates and saves project files.                                                                       |
+| Project actions       | Return allowlisted native-command plans for preview before execution.                                                                   |
+| YAML formatter        | Format an editor buffer through a scoped native command when configured.                                                                |
 
 Most built-ins start enabled. Specialized providers may start disabled or report limited
 availability when a declared game-mod, reflected-class, datapack, or bundled-module requirement is

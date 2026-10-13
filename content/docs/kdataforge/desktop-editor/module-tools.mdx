@@ -11,17 +11,21 @@ requirements are unavailable show that state; enable them in **Built-in Modules*
 files belong to the project and are checked again by the host before saving. Some analyses need a
 complete saved-YAML scan or bound reflection archive.
 
+**Affected elements** is also available as a bundled tool. It resolves the current YAML entry
+against bound game data and displays matching classes/assets with exported icons. See
+[the refinery example](/kdataforge/desktop-editor/editing-and-validation#affected-elements).
+
 ## Create and edit content
 
-| Tab | What it does |
-| --- | --- |
-| **Wizard** | Guided drafts for a content chain, item, building descriptor, recipe, schematic unlock, research tree, image asset, data asset, curve, Sink points, resource-node removal, CDO patch, or localization entry. Preview generated files before applying. |
-| **Recipe graph** | Trace recipe inputs, outputs, producers, unlocks, and affected YAML, then preview direct edits from the selected node. |
-| **Unlock graph** | Trace schematic, M.A.M., recipe, and dependency links as a flow chart and preview safe YAML edits. |
-| **Game phases** | Build class-aware game-phase CDO edits from reflected phase and item records. If a bound datapack has no game-phase asset index, paste an exact phase object path and enter costs manually. |
-| **Research tree** | Inspect research nodes and links, then preview creation or edits of research YAML. |
-| **KAPI builders** | Generate KAPI data-asset documents using compatible reflected classes and properties. |
-| **Delivery Tree** | Edit KAPI delivery-task data assets and inspect their graph. Disabled by default; requires KAPI/KPrivateCodeLib data and explicit review for identity changes. |
+| Tab               | What it does                                                                                                                                                                                                                                          |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Wizard**        | Guided drafts for a content chain, item, building descriptor, recipe, schematic unlock, research tree, image asset, data asset, curve, Sink points, resource-node removal, CDO patch, or localization entry. Preview generated files before applying. |
+| **Recipe graph**  | Trace recipe inputs, outputs, producers, unlocks, and affected YAML, then preview direct edits from the selected node.                                                                                                                                |
+| **Unlock graph**  | Trace schematic, M.A.M., recipe, and dependency links as a flow chart and preview safe YAML edits.                                                                                                                                                    |
+| **Game phases**   | Build class-aware game-phase CDO edits from reflected phase and item records. If a bound datapack has no game-phase asset index, paste an exact phase object path and enter costs manually.                                                           |
+| **Research tree** | Inspect research nodes and links, then preview creation or edits of research YAML.                                                                                                                                                                    |
+| **KAPI builders** | Generate KAPI data-asset documents using compatible reflected classes and properties.                                                                                                                                                                 |
+| **Delivery Tree** | Edit KAPI delivery-task data assets and inspect their graph. Disabled by default; requires KAPI/KPrivateCodeLib data and explicit review for identity changes.                                                                                        |
 
 Choose an output path inside the intended pack. Review generated IDs, class paths, and unlock
 references before applying. The wizard's `resource-node-removal` rule can affect saved worlds;
@@ -30,20 +34,20 @@ test that rule on a backed-up save. For YAML examples independent of the app, se
 
 ## Inspect and repair
 
-| Tab | What it does |
-| --- | --- |
-| **Balance audit** | Finds progression, cost, and reachability issues in saved project content. |
-| **Impact preview** | Shows direct and downstream effects of a selected graph change without editing files. |
-| **Production simulator** | Estimates production tree, machine totals, required inputs, and byproducts from known recipes. |
-| **Assets & icons** | Finds missing, unsafe, duplicate, or orphaned project asset references. |
-| **Asset instances** | Loads `indexes/assets.json` from bound effective `.kdfdata` (up to 8 MiB), then searches exact object paths by type, mod, and use case. Missing, oversized, invalid, or partial indexes stay visible; manual paths remain unverified. |
-| **Compatibility** | Compares pack requirements with selected mod profiles and explains each affected cell. |
-| **Effective runtime** | Simulates pack dependency order, handler stages, includes, conditions, effective CDO writes, and conflicts for loaded SMM profiles. Without a profile, mod-dependent outcomes remain unknown. |
-| **Progression integrity** | Runs bounded fixed-point reachability over items, recipes, schematics, research, and game-phase costs. Reports witness paths, blocker chains, seedless cycles, and unknown external evidence. |
-| **Delivery runtime** | Simulates KAPI delivery eligibility, parent thresholds, queues, completions, endless tasks, and cross-pack coordinate conflicts without mutating runtime state. |
-| **Dead content** | Flags definitely unused content when evidence is complete; deletion-plan preview is off by default and never deletes files. |
-| **Dependencies** | Explains pack dependency issues and previews safe manifest repairs. |
-| **Changelog** | Compares project changes and exports a generated Markdown changelog. |
+| Tab                       | What it does                                                                                                                                                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Balance audit**         | Finds progression, cost, and reachability issues in saved project content.                                                                                                                                                            |
+| **Impact preview**        | Shows direct and downstream effects of a selected graph change without editing files.                                                                                                                                                 |
+| **Production simulator**  | Estimates production tree, machine totals, required inputs, and byproducts from known recipes.                                                                                                                                        |
+| **Assets & icons**        | Finds missing, unsafe, duplicate, or orphaned project asset references.                                                                                                                                                               |
+| **Asset instances**       | Loads `indexes/assets.json` from bound effective `.kdfdata` (up to 8 MiB), then searches exact object paths by type, mod, and use case. Missing, oversized, invalid, or partial indexes stay visible; manual paths remain unverified. |
+| **Compatibility**         | Compares pack requirements with selected mod profiles and explains each affected cell.                                                                                                                                                |
+| **Effective runtime**     | Simulates pack dependency order, handler stages, includes, conditions, effective CDO writes, and conflicts for loaded SMM profiles. Without a profile, mod-dependent outcomes remain unknown.                                         |
+| **Progression integrity** | Runs bounded fixed-point reachability over items, recipes, schematics, research, and game-phase costs. Reports witness paths, blocker chains, seedless cycles, and unknown external evidence.                                         |
+| **Delivery runtime**      | Simulates KAPI delivery eligibility, parent thresholds, queues, completions, endless tasks, and cross-pack coordinate conflicts without mutating runtime state.                                                                       |
+| **Dead content**          | Flags definitely unused content when evidence is complete; deletion-plan preview is off by default and never deletes files.                                                                                                           |
+| **Dependencies**          | Explains pack dependency issues and previews safe manifest repairs.                                                                                                                                                                   |
+| **Changelog**             | Compares project changes and exports a generated Markdown changelog.                                                                                                                                                                  |
 
 These analyses keep incomplete scans and missing reflection data visible. Treat a limited result
 as an open question; it must not justify deletion or a compatibility claim.
