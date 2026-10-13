@@ -59,5 +59,28 @@ parent chain, textures, raw metadata, and source path. When **Catalog Usage** is
 saved project YAML to see where a class path is referenced. An incomplete project scan is marked
 limited. Class paths from Codex can be inserted through the editors' catalog picker.
 
+## Start a document from a class
+
+Select a class in the **Datapacks** class browser or in **Codex** and choose **CDO patch** or
+**Subclass**. **Class info** offers the same two actions. The dialog prefills every property the
+class sets itself with its exported value, so you start from the class's real state:
+
+- **CDO patch** writes a `type: cdo` document whose `target` is the class. Use it to change the
+  class in place.
+- **Subclass** writes a generated class whose `parent` is the class. The document type follows
+  the ancestry: `building` for building descriptors, then `resource`, `item`, `unlock`, `recipe`,
+  `schematic` and `research`, and `class` for everything else, such as `Build_*` actors.
+
+Choose the pack and the file path inside it. The preview shows the exact YAML before anything is
+written. **Set by class** lists the values the class overrides; **All** adds every inherited
+property that supports `set`. Select a row to edit its YAML value; editing a value includes it.
+Display texts of a subclass get their own localization key in the pack namespace, while a CDO
+patch keeps the original key so existing translations still apply.
+
+Some values are not part of the export and stay empty: string table texts (`LOCTABLE`), instanced
+subobjects such as the `mUnlocks` of a schematic, and values the exporter left blank. Enter them
+yourself or leave them out. The editor only creates new files; an existing file or an unsaved
+buffer at the same path is never overwritten.
+
 The archive describes the game state at export time. Re-export and rebind after changing the
 installed game or mod set when completion and class defaults matter.
