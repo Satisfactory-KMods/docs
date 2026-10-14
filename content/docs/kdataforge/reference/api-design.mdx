@@ -58,7 +58,8 @@ and `AddError`. Diagnostics are non-fatal. `FKDFApplyContext` adds `bDryRun`, `m
 `KDataForgeApi` also exports the extension point for `{prefix:body}`
 [templates](/kdataforge/features/templates#writing-a-provider): `IKDFTemplateProvider`
 (`GetPrefix`, `GetPhase`, `Resolve`), the request and result structs, and the thread-safe
-`FKDFTemplateProviderRegistry` (`Register`, `Unregister`, `Find`, `GetPrefixes`). The typed value
+`FKDFTemplateProviderRegistry` (`Register`, `RegisterWithSpelling`, `Unregister`, `Find`,
+`GetPrefixes`, `GetPrefixSpellings`). The typed value
 that providers return and that the Blueprint
 [Config API](/kdataforge/reference/blueprint-config-api) exchanges is `FKDFConfigValue` (with
 `EKDFConfigValueType` and `FKDFConfigKeyedValue`); both live in `KDFConfigTypes.h`.

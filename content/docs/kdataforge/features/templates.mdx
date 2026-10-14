@@ -315,6 +315,11 @@ If one token cannot be resolved, **that operation fails** with an error that nam
 the reason. Nothing is written for it, and the other operations still run. A pre-pass token that
 cannot be resolved stays in the text as written and logs a warning.
 
+Prefixes are **case-sensitive**. `{Item:...}` and `{CFG:...}` are not tokens, and a prefix that is
+one letter off (`{itm:...}`) is not either. They stay in the text as written, and the load report
+and `KDF.Template` log a warning that names the text and suggests the registered spelling. Any
+other `{...}` is left alone without a warning.
+
 ## Escaping
 
 A backslash directly before `{` and a registered prefix turns the token into literal text:
@@ -394,11 +399,15 @@ public:
 };
 
 // During CONSTRUCTION, next to handler registration:
-FKDFTemplateProviderRegistry::Register(MakeShared<FMyProvider>());
+FKDFTemplateProviderRegistry::RegisterWithSpelling(MakeShared<FMyProvider>(), TEXT("my"));
 ```
 
 - The prefix must match `[A-Za-z][A-Za-z0-9_]*`. The first registration wins and the built-in
   prefixes are reserved.
+- Documents match the prefix **case-sensitively** against the spelling you pass to
+  `RegisterWithSpelling`. Plain `Register` uses `GetPrefix().ToString()` instead, and Unreal keeps
+  the letter case of whichever spelling of a name it saw first (`item` may read back as `Item`), so
+  use `RegisterWithSpelling` to get exactly the prefix you wrote.
 - `Resolve` runs on the game thread. Return `Resolved` with a typed `mValue` (and `mText` with
   `bHasText` for an `FText`), `Unavailable` when the source does not exist yet (the document is
   deferred), `NotFound`, or `Error` with `mError`.
