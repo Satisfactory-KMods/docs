@@ -248,6 +248,15 @@ KDF.Config.Expr "features.enableBonus && balance.ironSpeed >= 2" KDFSample
 decides what a bare id means. In Blueprint use
 [`Evaluate Config Expression`](/kdataforge/reference/blueprint-config-api#templates-and-expressions).
 
+Quote expressions containing spaces. Escape double quotes inside the expression as `\"`, and
+literal backslashes as `\\`; other backslashes stay literal. The optional pack must be one
+unquoted word. Missing closing quotes or extra arguments produce a usage error. The console
+normalizes whitespace runs to a single space, including inside string literals.
+
+```text
+KDF.Config.Expr "texts.motto == \"Factory first\"" KDFSample
+```
+
 ## See also
 
 - [Pack Configuration](/kdataforge/features/pack-configuration)

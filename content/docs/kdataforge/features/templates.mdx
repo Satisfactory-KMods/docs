@@ -418,6 +418,15 @@ warnings to the log. The optional pack scopes `cfg:` and bare generated ids. In 
 `Resolve Template String` and `Resolve Template Text` do the same, see the
 [Blueprint Config API](/kdataforge/reference/blueprint-config-api#templates-and-expressions).
 
+Quote text containing spaces. Inside the quoted text, use `\"` for a literal double quote and
+`\\` for a literal backslash; other backslashes stay literal. The optional pack must be one
+unquoted word. Missing closing quotes or extra arguments produce a usage error. The console
+normalizes whitespace runs to a single space before the command receives the text.
+
+```text
+KDF.Template "Status: \"{cfg:texts.motto}\"" KDFSample
+```
+
 ## Editor diagnostics
 
 | Code                                                | Severity         | Meaning                                                                                          |
