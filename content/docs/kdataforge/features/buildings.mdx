@@ -20,9 +20,10 @@ that already exists.
 ## Read this before you start: the hard constraint
 
 A generated class copies its parent's **layout** exactly: same components, same mesh slots, same
-everything except CDO default values. `type: building` is worth reaching for when you want, say, a
-recoloured or re-tuned variant of an existing buildable that needs its own separate build-menu
-entry. That way players can have both the original and the variant at once.
+everything except CDO default values. `type: building` is worth reaching for when you want a second
+build-menu entry for an existing buildable, with its own display name and description. Players can
+then have both the original and the new entry at once. The placed building stays the parent's actor,
+unchanged.
 
 It is **not** a way to add a new mesh, a new component, or genuinely new behaviour: a generated
 class has no new reflected properties and no new components beyond what the parent already
@@ -30,38 +31,42 @@ defines. KDataForge is also 2D-only by design, so there's no way to bring in new
 a new mesh, new component, or new gameplay behaviour, you need actual C++/Blueprint content:
 `type: building` can't get you there.
 
-## Worked example: a recoloured storage variant
+## Worked example: a second Storage Container entry
 
 A `building` document's `buildings:` entries follow the same `id`/`parent`/`properties` shape as
 every other generation type. `id` names the new descriptor, `parent` is the existing descriptor
 class it clones the layout from, and `properties` applies CDO overrides to the clone. Here a plain
-Storage Container Mk1 gets a recoloured, bigger-capacity variant of its own:
+Storage Container Mk1 gets a second build-menu entry with its own name and description:
 
 ```yaml
-# file: crimson-storage.building.yml
 type: building
 buildings:
-  - id: MyCrimsonStorage
+  - id: CrimsonStorage
     parent: /Game/FactoryGame/Buildable/Factory/StorageContainerMk1/Desc_StorageContainerMk1.Desc_StorageContainerMk1_C
     properties:
       - path: mDisplayName
         value: Crimson Storage Container
-      - path: mInventorySizeX
-        value: 12
+      - path: mDescription
+        value: A second Storage Container Mk1 entry in the build menu.
 ```
 
-This generates `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_MyCrimsonStorage`, a real, separate
-buildable class with its own build-menu entry, save data, and everything else a normal buildable
-has. It inherits the parent's mesh and behaviour wholesale.
+This generates `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_CrimsonStorage`, a new `FGBuildingDescriptor`
+subclass. The `mDisplayName` and `mDescription` overrides apply to the descriptor only. The generated
+class adds no mesh, no components, and no capacity or paint change. Placing it spawns the parent's
+actor, `Build_StorageContainerMk1_C`, exactly as it is. The entry only appears in the build menu once a
+recipe and schematic unlock it (see Troubleshooting).
 
 ## Practical note: descriptor vs. buildable
 
 FactoryGame splits "the thing in your build menu" (`UFGBuildingDescriptor`, what this document
 generates) from "the thing placed in the world" (`AFGBuildable*`, the actor). Parenting a
-`building` entry off an existing descriptor (like `Desc_StorageContainerMk1` above, which points at
-the `Build_StorageContainerMk1` buildable class) is what makes the new descriptor spawn the same
-buildable actor with your CDO overrides. You're not generating a new `AFGBuildable` subclass, and
-for a simple variant you never need to.
+`building` entry must be a descriptor. `Desc_StorageContainerMk1` is an `FGBuildingDescriptor` whose
+`mBuildableClass` points at the `Build_StorageContainerMk1` actor, so the generated descriptor places
+that same actor. Giving the actor path (`Build_*_C`) as `parent:` is rejected by the base-class check.
+Your `mDisplayName` and `mDescription` overrides change the build-menu entry only. Actor-only
+properties such as `mInventorySizeX` belong to the actor (`FGBuildableStorage`) and are not valid on a
+descriptor. You're not generating a new `AFGBuildable` subclass, and for a simple variant you never
+need to.
 
 When you _do_ want a separate buildable class, with its own CDO defaults on the actor and its own
 save identity, generate one from an existing `Build_*_C` parent with `type: class` and point the
