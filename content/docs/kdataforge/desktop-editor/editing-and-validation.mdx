@@ -5,6 +5,10 @@ sidebar:
   order: 3
 ---
 
+:::note[Coming soon]
+This documentation previews the upcoming KDataForge Editor.
+:::
+
 ## Edit YAML
 
 Open **Explorer and editor** to browse project files, create a YAML document or folder, and edit
@@ -82,7 +86,8 @@ valid `multiply` operation is supported.
 ## Validate
 
 For [Wwise sounds](/kdataforge/features/sounds), create a `sound` document or use the **Wwise sound**
-wizard. Visual editor exposes sound ID/file fields. The shared linter checks the actual recording's
+wizard. Visual editor exposes sound ID/file plus optional name, description, category and subcategory
+fields for generated volume controls. The shared linter checks these fields and the actual recording's
 PCM16 WAV header, mono/stereo channels, sample rate, file size and pack containment. Sound IDs
 participate in definition lookup and renaming, including ADA's `mAudioEvent` references. See the
 [complete ADA voice-over pack](/kdataforge/examples/ada-voice-over).
@@ -219,16 +224,18 @@ scan locates class paths in saved project YAML.
 
 ## Affected elements
 
-**Implementation checkpoint:** this module is still in progress. Native verification found
-Unreal ImportText defaults that need decoding before real recipe selections can be confirmed.
-The behavior below describes the intended feature; runtime acceptance is pending.
+**Implementation checkpoint:** selector fixes have passed focused Rust checks and real-archive
+queries; native GUI confirmation for the current bundled host is pending. Exports without reflection
+metadata produce **Limited** previews even when individual matches are definite. Missing defaults,
+reference metadata or asset coverage can leave candidates **Possible**; an empty preview cannot
+prove that no runtime targets exist.
 
 Click **Affected** (crosshair icon) beside **Format** to inspect the current entry. The same
 **Affected elements** section appears at the bottom of **Inspector**. Enable the bundled
 **Affected Elements** module and bind a project `.kdfdata` archive.
 
-The list uses current unsaved YAML and cursor selection. Results show exported names, paths,
-sources and selection reasons. Icons come from the bound archive; recipes use their exported
+The list uses the current unsaved YAML entry at the cursor. Results show exported names, paths,
+sources and selection reasons. Icons come from the bound archive; recipe rows use the exported
 product icon. Missing PNGs show an explicit fallback icon. Click a row to open class information.
 The full view supports search and paged results.
 
@@ -245,9 +252,15 @@ patches:
 ```
 
 Place the cursor inside the patch, then click **Affected**. Results are matching **recipes**.
-Exact names and counts depend on the bound game/mod export. Multiple values within `producedIn`,
-`ingredient` or `product` are alternatives; different filter keys must all match. Direct `target`
-entries are added to filtered selection. `applyToSubclasses` includes exported descendants.
+Exact names and counts depend on the bound game/mod export. Multiple values in one filter such as
+`producedIn`, `ingredient` or `product` are alternatives; different filter keys must all match.
+Direct `target` entries are added to filtered selection. `applyToSubclasses` includes exported
+descendants.
+
+`matchName` filters an existing candidate scope; it does not create one. For example, pair it with
+`ofClass` to search a class family; `ofClass` alone selects nothing. Patterns containing `/` match
+object paths, while other patterns match class/object names. Matching ignores case and supports
+`*` and `?` wildcards. Arrays of patterns are alternatives.
 
 Preview supports CDO targets and recipe filters, `matchName`, common `where` comparisons,
 `allAssetsOfClass`, existing content `class` entries and recipe/schematic/research removal rules.
@@ -256,7 +269,11 @@ conditions. Owned gameplay tags can come from runtime interfaces, so `matchTag` 
 Generated content and live actor instances cannot be enumerated from an export. Syntax errors
 clear previous results. Disabled modules, missing data and unsupported entries explain their state.
 
-This previews selection against **exported defaults**. Earlier pack changes and live game state
-can change runtime selection. A confirmed empty list means no exported elements match.
-The full view initially queries up to 500 candidates, can load up to 2,000 and shows total
-matched/possible counts even when the visible list is capped.
+Earlier pack changes and runtime conditions can change selection beyond the **exported defaults**.
+The view initially queries up to 500 candidates, can load up to 2,000, and shows
+matched/possible totals when the visible list is capped.
+
+Recipe names follow the game rule: `mDisplayName` is used when `mDisplayNameOverride` is true;
+otherwise the first product's item name is used. If the export cannot resolve that name, including
+an unresolved `LOCTABLE` entry, the row falls back to its class name and keeps the class path as its
+stable identity. Native-host confirmation of the recipe-name correction is pending.

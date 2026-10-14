@@ -15,6 +15,10 @@ type: sound
 sounds:
   - id: AdaWelcome
     file: audio/welcome.wav
+    name: ADA welcome volume
+    description: Controls playback volume for the welcome message.
+    category: Voices
+    subCategory: ADA
 ```
 
 `file` starts at the directory containing this pack's `pack.yml`, not at the YAML file's directory.
@@ -32,16 +36,54 @@ file contains only one document; every document in a multi-document file needs e
 | Sample rate    | 8000–192000 Hz                                               |
 | File size      | At most 64 MiB per file                                      |
 | Playback       | Finite, once, 2D, no spatial attenuation                     |
-| Volume routing | Master Audio Bus; follows master volume                      |
+| Volume routing | Pack setting × local Audio option, then Master Audio Bus     |
 
 PCM16 WAVE_FORMAT_EXTENSIBLE files also work when their valid-bit count and channel mask match
 mono/stereo PCM. Float WAV, 8/24/32-bit PCM, MP3, OGG, compressed WAV, streaming, loops, effects
 and spatial attenuation are unsupported. Export recordings as **16-bit PCM WAV**; 48000 Hz is a
 useful choice for voice-over. Sounds are held in memory while loaded, so keep long recordings small.
 
-Sound entries accept only `id` and `file`. Document-level `conditions`, `debug` and `include` use
-their normal grammar. `id` uses the same token rules as other generated content and shares the
-generated asset namespace with images, curves and data assets. Do not reuse one ID for two assets.
+| Field         | Required | Meaning                                                          |
+| ------------- | -------- | ---------------------------------------------------------------- |
+| `id`          | Yes      | Generated event ID and stable volume-setting identity            |
+| `file`        | Yes      | Pack-relative PCM16 WAV path                                     |
+| `name`        | No       | Exact slider label; defaults to `<id> volume`                    |
+| `description` | No       | Slider help text; defaults to generated playback-volume guidance |
+| `category`    | No       | Section name; defaults to `KDataForge sound events`              |
+| `subCategory` | No       | Second grouping label; displayed as `<category> / <subCategory>` |
+
+Optional text fields must be non-empty strings when present. Document-level `conditions`, `debug`
+and `include` use their normal grammar. `id` uses the same token rules as other generated content
+and shares the generated asset namespace with images, curves and data assets. Do not reuse one ID
+for two assets.
+
+## Per-event volume
+
+Every sound that passes its document conditions automatically creates two **0–100** controls:
+
+- A pack-wide base-volume slider in KDataForge configuration.
+- A local player slider under **Options → Audio**.
+
+Both controls use the entry's `name`, `description` and grouping. FactoryGame exposes only one
+section level below **Audio**, so KDataForge flattens `category` plus optional `subCategory` into one
+heading such as **Voices / ADA**. Omitting both keeps **KDataForge sound events**. This preserves
+**Options → Audio** as the native top-level category.
+
+The effective amplitude is `pack volume × local user volume`. With both controls at `100`, the
+authored PCM level is unchanged. One control at `50` is half amplitude (about -6 dB); either at `0`
+mutes the event.
+
+Saving either control reloads the generated bank, keeps the event UObject path stable, and uses the
+new level for subsequent playback. Local Audio changes use a short debounce while dragging. A sound
+already playing may finish with its previous level. Pack values use
+`FactoryGame/Configs/Packs/<PackRef>.config.yml` and normal host synchronization/admin rules. Audio
+values persist locally in `Saved/Config/Windows/KDataForgeUserSettings.ini` and are not synchronized.
+Internally generated pack keys live below `__sounds`; pack-authored config fields must not use that
+group.
+
+Reflection exports created on a host or client include each active generated slider in
+`indexes/settings.json`, including its **Audio** category placement. Dedicated-server exports omit
+these local-only options.
 
 ## Reference an event
 
@@ -76,7 +118,8 @@ on the `FGMessage` separately. See the [complete ADA example](/kdataforge/exampl
 ## Editor authoring and preview
 
 In the desktop editor, choose **File → New document → sound**, or use the **Wwise sound** content
-wizard. In Visual editor, **Sounds** provides **New sound ID**, **New sound file**, and **Add sound**.
+wizard. In Visual editor, **Sounds** provides ID, file, name, description, category and subcategory
+fields.
 The wizard creates YAML; place the recording inside the pack yourself. Code editor offers `sound`
 completion and hover help; validation checks schema, file containment and the actual WAV header.
 Go to definition and Rename ID include sound declarations, full event paths and short
@@ -84,7 +127,7 @@ Go to definition and Rename ID include sound declarations, full event paths and 
 also understand sound documents.
 
 In the in-game editor, select `sound` when creating a pack document. Add a **Wwise sound (PCM16 WAV)**
-entry, edit `id`/`file`, save, then reload the pack. Preview locally with:
+entry, edit `id`/`file` plus optional UI metadata, save, then reload the pack. Preview locally with:
 
 ```text
 /kdf sound ADAExample AdaWelcome
@@ -105,18 +148,21 @@ Editor assets, and Unreal Editor/PIE audio import is not supported by this runti
 ## Reload, multiplayer and errors
 
 Run `/kdf reload` after changing YAML or the WAV. The event's UObject path stays stable. An unchanged
-recording keeps its existing event; a changed recording updates that object after a replacement
+recording and volume keep the existing event; changing either updates that object after a replacement
 bank loaded successfully. A missing, invalid or rejected replacement is reported and leaves the
-previously imported sound object intact. Removing a declaration requires a session restart to
-discard the generated object. Bank cache lives under `FactoryGame/Content/KDataForgeRuntimeSounds`
+previously imported sound object intact. Removing a declaration also removes its volume slider on
+reload; close and reopen Options after changing display metadata. Removing a sound requires a session
+restart to discard the generated event object. Bank cache lives under
+`FactoryGame/Content/KDataForgeRuntimeSounds`
 in the game installation; source audio stays in the pack. The cache directory must be writable.
 This cache can be cleared while the game is closed and is rebuilt on the next load.
 Incomplete or damaged cache files are replaced automatically.
 
 Install identical packs and WAV files on all multiplayer clients. Sound data is local and is not
-transferred by KDataForge's configuration synchronization. Dedicated servers validate the source
-and create event references without opening an audio device. A host reload is process-local;
-restart the session on all peers to update their audio together.
+transferred by KDataForge's configuration synchronization. Pack base volumes synchronize like other
+pack settings; each player's **Options → Audio** multiplier remains local. Dedicated servers validate
+the source and create event references without opening an audio device. A host reload is process-local;
+clients apply synchronized base values through their own generated banks.
 
 Use `/kdf report` for diagnostics. Missing files, invalid PCM headers, incomplete frames, unsupported
 formats, ID collisions and unavailable Wwise audio produce explicit errors. If Wwise rejects a

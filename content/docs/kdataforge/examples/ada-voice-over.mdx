@@ -38,6 +38,10 @@ type: sound
 sounds:
   - id: AdaWelcome
     file: audio/welcome.wav
+    name: ADA welcome volume
+    description: Controls playback volume for the welcome message.
+    category: Voices
+    subCategory: ADA
 ```
 
 ```yaml
@@ -94,7 +98,8 @@ explains sender and subtitle configuration.
 ## Author and check in the editors
 
 1. Open the pack in the desktop editor. Use **Wwise sound** wizard, or create a `sound` document and
-   add `AdaWelcome` / `audio/welcome.wav` in the **Sounds** form.
+   add `AdaWelcome` / `audio/welcome.wav` in the **Sounds** form. Optional UI metadata controls its
+   label, help text and section under **Options → Audio**.
 2. Add the recording to `audio/`, then create the `dataasset` document above. Run validation.
    Unsupported encodings and out-of-pack paths appear in Problems. Go to definition on the
    `AdaWelcome` reference should open the sound declaration.

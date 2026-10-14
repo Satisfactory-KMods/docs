@@ -146,8 +146,13 @@ A record has:
 | `default` | The default value when it can be read |
 | `range`, `displayRange` | Slider or selection bounds; `displayRange` only when it differs |
 | `options` | `{value, label}` choices of an integer selector |
+| `placements` | Options-menu locations. Each entry contains category, optional subcategory and row priority; categories include class, display name and menu priority. |
 | `sessionWide`, `dedicatedServerRelevant` | Whether the setting is stored per session and whether a dedicated server uses it |
 | `managerClass`, `mapWhitelist` | The manager that owns the setting and, for session settings, the maps it is limited to |
+
+Active runtime-generated KDataForge sound sliders are included as `option` records with stable virtual
+paths and their **Options → Audio** placement. Dedicated servers do not create local Audio settings,
+so their exports omit these runtime-only records.
 
 The editor completes setting ids from this file and reports an unknown id as `setting.unknown-id`
 when the file exists.
