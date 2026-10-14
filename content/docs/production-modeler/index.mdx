@@ -93,6 +93,17 @@ offline.
 The target becomes a limit on the root output. The solver sizes the upstream
 chain. One **Undo** removes the entire addition.
 
+Planning again in a model that already makes a part feeds the new chain from
+those machines instead of building a second chain beside them. They grow to
+cover the extra demand. Plan 30 Iron Rods, then 15 Iron Plates, and one Iron
+Ingot producer serves both. Locked machines, machines with a machine count
+limit, extractors with a fixed count and outputs that carry a limit stay as they
+are, and the target you ask for always gets a node of its own. Only machines in
+the open container are used, and a byproduct is only taken by a plan with
+**Byproduct Reuse**. **Messages** tells you how many existing nodes the plan
+used. Switch off **Use existing production** on the **Rules & review** step to keep
+a separate chain.
+
 Planning uses the loaded catalog locally. It prefers extraction for mined
 resources and avoids packaging loops as production steps. A wiki item or recipe
 can prefill the target.

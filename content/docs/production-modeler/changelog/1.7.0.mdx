@@ -1,0 +1,31 @@
+---
+title: Version 1.7.0
+description: The Auto Planner feeds new chains from machines a model already has, identical buildings merge into one node, and new extractors start at a default node purity.
+slug: production-modeler/changelog/1.7.0
+sidebar:
+  label: '1.7.0'
+  order: 1
+---
+
+## NEW FEATURES
+
+- **Auto Planner builds on your model.** Planning again in a model that already
+  makes a part feeds the new chain from those machines instead of building a
+  second chain. They grow to cover it. Switch it off with **Use existing
+  production** on the **Rules & review** step.
+  - Locked machines, machine count limits, fixed extractor counts and outputs
+    with a limit stay as they are. The target you plan always gets its own node.
+  - Messages counts the existing nodes a plan used.
+- **Merge identical buildings.** Right-click a node, or a selection, to fold
+  identical machines and extractors into one node that keeps every connection.
+  The solver sizes it to the total.
+  - Machine count limits, extractor counts and port limits add up.
+  - A group stays apart when only some of it has a limit, port limits bind
+    differently, a connection leaving it has a share, or a lock is involved.
+    The notice counts those groups.
+  - One **Undo** splits them again.
+- **Default node purity.** New **Resource nodes** card under **Machine
+  defaults** in Settings. New extractors start at the purity you pick, such as
+  Pure on a save of pure nodes.
+  - Palette, Auto Planner and Modular Miners use it. Placed extractors, pastes,
+    blueprints and imports keep theirs.

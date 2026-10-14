@@ -80,9 +80,39 @@ outputs: a prefix covers the words after it, so `in:coal out:steel ingot` finds
 what turns coal into Steel Ingots.
 
 Select a node to highlight its connected wires. Right-click it for editing,
-copying, selecting its chain, disconnecting, or deleting. Double-click a node
-to edit it in the Inspector. On narrow screens, select it and choose **Edit**
-to open the panel. Double-click a container to enter it.
+copying, selecting its chain, merging identical buildings, disconnecting, or
+deleting. Double-click a node to edit it in the Inspector. On narrow screens,
+select it and choose **Edit** to open the panel. Double-click a container to
+enter it.
+
+**Merge identical buildings** in the right-click menu folds duplicates into one
+node. It helps after you add a second output next to an existing chain and end
+up with two nodes making the same ingredient: merged, they become one node that
+feeds both products, and the solver sizes it to the total. Right-click inside a
+selection of several nodes to merge every group of identical buildings in that
+selection, or right-click a single node to merge every building in its container
+that is identical to it. The entry only shows when there is something to merge.
+
+Buildings are identical when they run the same recipe or mine the same resource
+with the same settings: machine, clock, Somersloops, purity, boosters, fuel, built
+state, and whether the building count is fixed. The first of them in the model
+stays where it is, keeps its title, and takes over every connection of the others.
+Connections that would then join the same two ports twice become one, and a
+connection between two merged buildings disappears. Connections that move lose
+their custom route, and the kept building's own connections stay first on a
+shared port. A port that was open on one building and wired on another ends up
+wired, so what the open one took from outside now comes through that connection.
+
+Limits add up exactly. Building count limits, extractor counts, and port limits
+are summed. A group stays apart when only some of its buildings have a building
+count limit or a limit on the same port, when those port limits bind differently
+(exact, at most, or at least), when a connection leaving it has a set share (the
+old percentages described a different split), or when shares of one outside port
+would end up on the same connection. Locked buildings are left as they are, and
+so are buildings connected to a locked one or wired into a port that a locked
+building's connection uses, because a lock keeps its connections in order. A
+notice tells you how many nodes were merged and how many groups stayed apart.
+**Undo** splits them again in one step.
 
 The bottom-left controls show the live zoom percentage. Use **Zoom out** and
 **Zoom in** to change it, or **Fit canvas to view** to frame your selection.
