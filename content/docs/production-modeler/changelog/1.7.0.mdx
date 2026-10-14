@@ -1,6 +1,6 @@
 ---
 title: Version 1.7.0
-description: The Auto Planner feeds new chains from machines a model already has, identical buildings merge into one node, and new extractors start at a default node purity.
+description: The Auto Planner feeds new chains from machines a model already has, identical buildings merge into one node, new extractors start at a default node purity, and large models stay smooth.
 slug: production-modeler/changelog/1.7.0
 sidebar:
   label: '1.7.0'
@@ -29,6 +29,19 @@ sidebar:
   Pure on a save of pure nodes.
   - Palette, Auto Planner and Modular Miners use it. Placed extractors, pastes,
     blueprints and imports keep theirs.
+
+## QUALITY OF LIFE
+
+- **Large models stay smooth.** Panning, zooming, selecting and solving no
+  longer redraw every card and connection, so a model with hundreds of nodes
+  no longer drops to a few frames per second.
+  - Above 120 cards, the connections of a selection stop flowing, built
+    connections lose their glow, and overclock lightning and Somersloop stripes
+    are left out. Colours still show each state.
+  - Below 35% zoom such a canvas shows card outlines and hides connection
+    labels. **Larger text when zoomed out** still shows names and figures.
+  - Closed dropdowns no longer follow every pan, and image previews and card
+    bodies are only built when they open.
 
 ## BUGFIXES
 
