@@ -458,6 +458,10 @@ items:
         value: '{cfg:texts.motto} Smelts like {item:/Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C:GetItemName} at {cfg:balance.ironSpeed}x speed.'
 ```
 
+A list field that is empty (for example `default: []`) is still a list. With `append`, `prepend` or
+`insert` an empty list adds nothing and is not an error; leaving `value` out is. See
+[append](/kdataforge/features/operations#append-array--set--map--string--tag-container--bitmask).
+
 Conditions can also gate a whole document. The same `config:` key works in `pack.yml` to gate a
 whole pack (use a cold field there, see [Hot and cold values](#hot-and-cold-values)):
 

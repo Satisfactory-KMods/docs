@@ -143,6 +143,11 @@ and KDataForge merges those key/value pairs into the existing map:
 ```
 
 For bitmasks, `append` ORs named flags into current mask. It does not accept raw integer masks.
+
+An empty list adds nothing and is not an error, so `value: cfg:tags.extra` works while the player's list
+is empty. Leaving `value` out entirely is still an error. `prepend` and `insert` treat an empty list the same
+way (`insert` still checks its `index`).
+
 For instanced `UObject` arrays, an appended value can be a `{ class, properties }` map; KDataForge
 constructs the new subobject before inserting it into the array:
 
@@ -199,8 +204,9 @@ properties }` map accepted by `set`, `append`, and `prepend`:
 
 `remove` deletes by content rather than by position. On arrays and sets, it deletes every element
 that matches `value` exactly. An array remove that matches nothing fails, rather than silently
-doing nothing. On maps, `value` is the _key_ to delete, and on tag containers, `value` is the tag
-(or list of tags) to remove. On bitmasks, it clears every named bit with AND-NOT:
+doing nothing, and that includes an empty list. On maps, `value` is the _key_ to delete, and on
+tag containers, `value` is the tag (or list of tags) to remove. On bitmasks, it clears every named
+bit with AND-NOT:
 
 ```yaml
 - path: mIngredients # removes every element equal to the value
