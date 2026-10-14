@@ -42,7 +42,7 @@ Storage Container Mk1 gets a recoloured, bigger-capacity variant of its own:
 type: building
 buildings:
   - id: MyCrimsonStorage
-    parent: /Game/FactoryGame/Buildable/Factory/StorageContainerMk1/Build_StorageContainerMk1.Build_StorageContainerMk1_C
+    parent: /Game/FactoryGame/Buildable/Factory/StorageContainerMk1/Desc_StorageContainerMk1.Desc_StorageContainerMk1_C
     properties:
       - path: mDisplayName
         value: Crimson Storage Container
@@ -58,8 +58,8 @@ has. It inherits the parent's mesh and behaviour wholesale.
 
 FactoryGame splits "the thing in your build menu" (`UFGBuildingDescriptor`, what this document
 generates) from "the thing placed in the world" (`AFGBuildable*`, the actor). Parenting a
-`building` entry off an existing descriptor (like `Build_StorageContainerMk1` above, which is
-itself the descriptor tied to the buildable) is what makes the new descriptor spawn the same
+`building` entry off an existing descriptor (like `Desc_StorageContainerMk1` above, which points at
+the `Build_StorageContainerMk1` buildable class) is what makes the new descriptor spawn the same
 buildable actor with your CDO overrides. You're not generating a new `AFGBuildable` subclass, and
 for a simple variant you never need to.
 
