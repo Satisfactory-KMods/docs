@@ -200,9 +200,11 @@ UnrealEditor-Cmd.exe FactoryGame.uproject -run=KDFReflectionMetaExport `
   -out=C:\Path\ReflectionMerged
 ```
 
-Merge records editor and game build per field and rebuilds mandatory ISO-named `.kdfdata` ZIP. Output must
-be separate from runtime export. Add `-force` only when replacing an existing merge output directory. No
-Python merge script is packaged into mod or archive.
+Merge records editor and game build per field and rebuilds mandatory ISO-named `.kdfdata` ZIP. The
+`-runtime` and `-out` directories must not overlap: they cannot be equal, and neither may contain the
+other. The `-supplement` file must be outside the `-out` directory, especially when using `-force`,
+which replaces an existing merge output directory. These path checks also apply without `-force`.
+No Python merge script is packaged into mod or archive.
 
 For full file/schema checks and deterministic comparison of two exports:
 
