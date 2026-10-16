@@ -984,6 +984,12 @@ and optionally inverted before aggregation. Invalid behavior values or malformed
 fail closed even if another OR branch matches. An empty array passes under `AND` and fails under
 `OR`.
 
+The `config:` condition accepts one expression string or a nonempty list of expression strings;
+every expression in the list must be true. At runtime, `config: []` is an error and skips the
+affected pack, document, or list element. Neither `ifNotMatch: true` nor another matching `OR`
+branch hides this error. This requirement does not change the empty outer `conditions: []` behavior
+above.
+
 Version ranges use SML's semver syntax: `>=1.2.3`, `^3.12.0`, `~1.2.0`, exact `1.2.3`, unions with
 `||`.
 

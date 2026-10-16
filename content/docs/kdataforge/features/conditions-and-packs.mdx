@@ -85,6 +85,11 @@ before OR combines the results. Invalid behavior values or malformed condition o
 closed, even when another OR object matches. With an empty condition array, `AND` passes and `OR`
 does not.
 
+For configuration checks, `config:` accepts one expression string or a nonempty list of expressions
+that must all be true. At runtime, `config: []` is an error: the affected pack, document, or list
+element is skipped, including when `ifNotMatch: true` or another matching `OR` branch is present. See
+[Config Expressions](/kdataforge/reference/config-expressions) for expression syntax.
+
 Failing conditions skip the document with an `Info`-severity diagnostic. However, `/kdf report`
 filters `Info` diagnostics out of its printed output entirely, so a condition skip is currently
 **not** visible there. The only signal is a lower-than-expected "document(s) applied" count. See
