@@ -108,7 +108,7 @@ server. Directory form is useful during editor/language-server development.
 
 With `--functions` (included in the chat default and the auto export) each class record in
 `classes.ndjson` gets a `functions` array. The desktop editor uses it to complete and check
-[template function calls](/kdataforge/features/templates#calling-functions).
+[template function calls](/kdataforge/reference/reflection-export#functions).
 
 | Field | Meaning |
 | --- | --- |
@@ -125,7 +125,7 @@ Property records use the same shape as class properties, including `authoredName
 ## Settings index
 
 `indexes/settings.json` lists the game settings that `session:`, `ags:` and `option:`
-[references](/kdataforge/features/templates#game-settings) can read. It is written by every export.
+[references](/kdataforge/reference/reflection-export#settings-index) can read. It is written by every export.
 
 | Field | Meaning |
 | --- | --- |
@@ -175,7 +175,7 @@ Every property declared directly by a class carries two extra fields under its `
 Struct members, function parameters and container elements inherit the classification of the
 class property that contains them. The editor shows the classification next to `path:`
 completions and reports operations on cold or `newActors` properties as `property.cold`, see
-[Pack Configuration](/kdataforge/features/pack-configuration#cold-properties).
+[Reload classification](/kdataforge/reference/reflection-export#reload-classification-and-cold-property-catalog).
 
 `catalog/cold_properties.json` is the catalog behind it: `version`, a `description`, and
 `entries` of `{class, property, reload, reason, verified}`. A class entry includes its subclasses
@@ -210,7 +210,28 @@ junction aliases cannot bypass either restriction. Subsequent merge reads and wr
 resolved paths. The runtime directory and supplement file must exist. A new output path may have
 missing parent directories: the commandlet resolves its nearest existing directory ancestor and
 appends the missing components. Empty, inaccessible, dangling, or otherwise unresolvable paths
-are rejected before an existing output is deleted. Unsupported platforms reject the merge.
+are rejected before an existing output is replaced. Unsupported platforms reject the merge.
+
+The commandlet prepares a complete merged export and `.kdfdata` archive in a uniquely named
+sibling directory before replacing `-out`. Copy, metadata parsing, manifest, or archive errors
+during preparation leave an existing output untouched. The runtime manifest's `generatedAt`
+must be nonempty and contain no path separators because it supplies the archive filename.
+Keep the input and output directories unchanged until the commandlet finishes; do not run
+concurrent merges into the same output.
+
+With `-force`, the previous output moves to a uniquely named sibling backup before the prepared
+export moves into place. If publication fails, the commandlet tries to restore the backup. If
+restoration also fails, the error reports the backup path containing the previous output. Resolve
+any conflicting entry at `-out`, then move that backup directory back to `-out`. A successful merge
+removes its backup; a cleanup warning reports any backup retained for manual removal. Preparation
+failures also attempt to remove their staging directory and report its path if cleanup fails.
+
+These directory moves require same-filesystem rename support without replacing an existing
+entry. Linux requires `renameat2` with `RENAME_NOREPLACE`; unsupported kernels or filesystems
+reject publication. Replacement uses two directory moves, so an interrupted process can leave
+`-out` absent with the previous export in a sibling `.<output-name>.kdf-merge-<id>.backup`
+directory. Inspect any matching `.stage` and `.backup` directories before recovering or deleting
+them; staging directories may contain incomplete exports.
 
 Before `-force` replaces an existing output directory, the commandlet inspects its contents
 without following link targets. Any nested symlink or Windows reparse point blocks replacement,
@@ -219,7 +240,7 @@ including bind mounts on the same filesystem and an output directory that is its
 The resolved output target must share its parent's mount ID, and every nested entry must share
 that same mount ID. Mount IDs must be readable through `/proc/self/fdinfo`; if they cannot be
 verified, replacement is rejected. Unreadable entries, failed directory enumeration, or more than
-1,000,000 entries also block replacement before deletion. Unmount mounted entries, remove other
+1,000,000 entries also block replacement. Unmount mounted entries, remove other
 blocked entries, or choose a new output directory, then retry.
 
 No Python merge script is packaged into mod or archive.

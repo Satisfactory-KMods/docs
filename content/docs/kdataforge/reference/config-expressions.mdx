@@ -1,0 +1,96 @@
+---
+title: Configuration Expressions
+description: Syntax, operands, evaluation, and diagnostics for `config:` conditions.
+sidebar:
+  order: 8
+---
+
+`conditions.config` tests pack settings and selected game settings. It accepts one expression string
+or a list of expression strings. A list means **all** expressions must pass. The field works in
+`pack.yml`, documents, and list-entry conditions; it is not part of a `type: config` field
+definition.
+
+## Example
+
+```yaml
+type: cdo
+conditions:
+  config: features.enableBonus && balance.ironSpeed >= 2
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.9
+```
+
+Each expression in a `config:` list must pass:
+
+```yaml
+conditions:
+  config:
+    - features.enableBonus
+    - balance.ironSpeed >= 2
+```
+
+## Operands
+
+| Form | Value |
+| --- | --- |
+| `balance.ironSpeed` | Field from this pack's configuration |
+| `cfg:balance.ironSpeed` | Same-pack field, with explicit prefix |
+| `cfg:OtherPack:shared.level` | Field from another pack |
+| `session:Setting.Id` | SML session setting |
+| `ags:Setting.Id` | Advanced game setting |
+| `option:Setting.Id` | Local game option |
+
+Configuration ids use dot-separated segments matching `[A-Za-z_][A-Za-z0-9_]*`. External pack
+references use letters, digits, `_`, `.`, and `-`. Settings ids are listed in a reflection export's
+[settings index](/kdataforge/reference/reflection-export#settings-index). Session and advanced game
+settings may be unavailable until a save is loaded.
+
+## Syntax and precedence
+
+```text
+or       := and (|| and)*
+and      := compare (&& compare)*
+compare  := unary [comparison unary]   # at most one comparison
+unary    := ! unary | primary
+primary  := (or) | [literal, ...] | literal | operand
+```
+
+`!` binds most tightly, followed by comparisons, `&&`, then `||`. Parentheses change grouping.
+Comparisons are non-associative: write `a < b && b < c`, not `a < b < c`.
+
+Literals are `true`, `false`, signed decimal numbers, and single- or double-quoted strings. Lists
+contain literals only and must use one value type. Reserved words `true`, `false`, `in`, and
+`contains` cannot be bare configuration ids. Quote the whole YAML expression when it starts with
+`!`, since YAML otherwise reads it as a tag.
+
+## Operators
+
+| Operator | Meaning |
+| --- | --- |
+| `!value` | Logical negation |
+| `left && right` | Both expressions must pass; short-circuits |
+| `left || right` | Either expression may pass; short-circuits |
+| `==`, `!=` | Compare same-typed numbers, strings, or booleans; lists cannot be compared |
+| `<`, `<=`, `>`, `>=` | Numeric comparisons |
+| `list contains value` | True when list contains value of matching type |
+| `value in list` | Same membership check with operands reversed |
+
+An expression used alone is converted to a condition: booleans keep their value, zero and empty
+strings/lists are false, and nonzero numbers and nonempty strings/lists are true. `contains` and
+`in` compare list elements by value.
+
+## Evaluation and diagnostics
+
+Inside each condition object, `config:` list entries are AND-combined with the object's other
+condition keys. `conditionBehaivor` combines condition objects and defaults to `AND`; `OR` allows
+any object to pass. `ifNotMatch: true` negates its condition object after evaluation.
+
+Expressions are evaluated before references and templates are expanded. `cfg:`, `session:`,
+`ags:`, and `option:` are expression operands here; `{cfg:...}` templates are not expanded inside
+conditions and are treated literally. Unknown ids, malformed syntax, and type mismatches produce
+diagnostics and make that condition object fail. A hot configuration field read by a load-time
+condition produces a warning because changing it requires the condition to be evaluated again.

@@ -1,0 +1,153 @@
+---
+title: Templates & Typed References
+description: Read configuration, game settings and reflected properties or functions from YAML values.
+sidebar:
+  order: 6
+---
+
+KDataForge supports two forms of value substitution: unquoted typed references such as
+`cfg:balance.ironSpeed`, and template tokens such as `{cfg:balance.ironSpeed}` inside strings.
+Configuration and game-setting reads run before document stages; reflected property reads and
+function calls run when a property operation applies.
+
+## Typed references
+
+A typed reference must occupy an entire **plain, unquoted YAML scalar**. Prefixes are
+case-sensitive. These forms are supported:
+
+| Form | Source |
+| --- | --- |
+| `cfg:<id>` | A configuration field in the current pack |
+| `cfg:<pack>:<id>` | A configuration field in another pack |
+| `session:<id>` | An SML session setting, with an advanced-game-setting fallback |
+| `ags:<id>` | An advanced game setting |
+| `option:<id>` | A local game option |
+
+The replacement keeps its type: numbers and booleans become scalar values, strings become
+string values, and a configuration field with `multiple` enabled becomes a YAML sequence.
+The resolved type must suit the destination property or operation.
+
+For example, after defining the numeric configuration field `balance.ironSpeed` in your pack,
+use its value as a divisor:
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      - path: mManufactoringDuration
+        op: divide
+        value: cfg:balance.ironSpeed
+```
+
+Writing `value: 'cfg:balance.ironSpeed'` keeps literal text. An unknown configuration id
+leaves the reference unresolved and produces a warning; it does not supply a default value.
+
+## Templates
+
+Use braces to insert a value into text:
+
+```yaml
+value: 'Smelts at {cfg:balance.ironSpeed}x speed.'
+```
+
+The pre-pass recognizes `{cfg:<id>}`, `{cfg:<pack>:<id>}`, `{session:<id>}`, `{ags:<id>}`
+and `{option:<id>}`. Lists inserted into text are joined with `, `.
+Quote YAML values that start with `{` so YAML does not parse them as mappings.
+
+The pre-pass walks document scalar values, but skips map keys, values of `id`, `type`,
+`include` and `ref`, and everything inside `conditions:`. Conditions have their own expression
+rules; a template is not a replacement for a condition expression.
+
+Tokens can nest up to four levels. Values produced by substitution are not scanned again
+as new template source.
+
+## Game settings
+
+`session:` reads SML session settings, falling back to an advanced game setting with the same
+id. `ags:` reads advanced game settings directly. Both require a loaded world: documents that
+use them are deferred on the main menu and applied again when the setting changes.
+`option:` reads local game options, which are available on the main menu as well.
+
+Each provider supports both an unquoted typed reference and a braced text token. For example,
+`ags:FG.GameRules.NoPower` is a typed value, while `'No power: {ags:FG.GameRules.NoPower}'`
+is text.
+
+Find actual ids and value types in your bound datapack's `indexes/settings.json`.
+Its `other` records are not readable through these prefixes. See
+[Reflection Export: Settings index](/kdataforge/reference/reflection-export#settings-index)
+for the record fields. A setting's exported default describes its default, not its current
+value in a running save.
+
+## Providers
+
+Apply-time tokens use `{provider:<target>:<member>}`. A member can be a reflected property
+path or a permitted function call. They work in operation operands such as `value`, `min`
+and `max`, including nested struct members and sequence elements.
+
+| Provider | Target |
+| --- | --- |
+| `class` | Any class, including a function library |
+| `item` | A class derived from `UFGItemDescriptor` |
+| `resource` | A class derived from `UFGResourceDescriptor` |
+| `building` | A class derived from `AFGBuildable` |
+| `recipe` | A class derived from `UFGRecipe` |
+| `schematic` | A class derived from `UFGSchematic` |
+| `research` | A class derived from `UFGResearchTree` |
+| `category` | A class derived from `UFGCategory` |
+| `dataasset` | A `UDataAsset` instance, by asset path or generated dataasset id |
+| `asset` | An asset instance by path |
+
+Class providers read the class default object (CDO), rather than a placed actor in the world.
+Use the matching provider for a specific class family; `building` rejects a class that does
+not derive from `AFGBuildable`. `dataasset` and `asset` read object instances.
+
+## Whole-token typed values
+
+An apply-time operand consisting of exactly one token keeps the result's type. It can copy
+a number, boolean or sequence instead of converting it into surrounding text. For example,
+this copies the Iron Ingot recipe's crafting duration:
+
+```yaml
+- path: mManufactoringDuration
+  value: '{recipe:/Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C:mManufactoringDuration}'
+```
+
+Adding surrounding text makes the result text instead. Quotes around the YAML string do not
+disable braced templates; they only disable the unbraced typed-reference form.
+
+## Calling functions
+
+Write arguments in parentheses after the function name. For example, this operation operand
+calls a math-library function:
+
+```yaml
+- path: mProduct[0].Amount
+  value: '{class:/Script/Engine.KismetMathLibrary:Round(2.6)}'
+```
+
+Arguments can include numbers, booleans, quoted strings, nested tokens and supported struct
+literals. Arguments follow the reflected declaration order. For example,
+`{class:/Script/Engine.KismetMathLibrary:VSize(Vector{3, 4, 0})}` passes a vector struct.
+
+Only permitted native functions can run. A function must return a value and be BlueprintPure
+or a non-static const member. Unsupported parameter or return types, output parameters,
+network functions, events, delegates and Exec functions are rejected. Non-static functions
+of actors, components and subsystems are also rejected; read their CDO properties instead.
+
+The editor uses exported function records to offer member completion, signatures and
+validation. Export with `--functions` to include those records; see
+[Reflection Export: Functions](/kdataforge/reference/reflection-export#functions).
+Static checks depend on the bound datapack and do not execute functions or read live settings.
+
+## Escaping
+
+A backslash immediately before a registered token's opening brace keeps it literal:
+
+```yaml
+value: 'Use \{cfg:balance.ironSpeed} to read the speed.'
+```
+
+Single-quoted, plain and block YAML scalars take `\{` as written. In a double-quoted YAML
+string, write `\\{` so YAML produces one backslash. Each expansion phase removes only
+its own escapes. Unknown prefixes and unterminated tokens remain literal text.

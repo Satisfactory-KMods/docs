@@ -1,0 +1,121 @@
+---
+title: Sounds
+description: Import pack-relative PCM16 WAV files as Wwise audio events for ADA messages and other audio consumers.
+sidebar:
+  order: 20
+---
+
+`type: sound` imports WAV files from your pack as generated `UAkAudioEvent` assets.
+Use it when an existing game or mod feature accepts an audio event, such as an ADA
+message's `mAudioEvent`. Importing an event does not play it or create a message trigger.
+
+## Declare sounds
+
+Place the WAV inside the directory containing your `pack.yml`:
+
+```text
+DataForge/
+  pack.yml                  # ref: MyPack
+  welcome.sound.yml
+  audio/
+    welcome.wav
+```
+
+```yaml
+# file: welcome.sound.yml
+type: sound
+sounds:
+  - id: AdaWelcome
+    file: audio/welcome.wav
+    name: Welcome voice line
+    description: Volume of the ADA welcome message
+    category: Voice
+    subCategory: ADA
+```
+
+`sounds:` must contain at least one entry. Every entry requires `id` and `file`;
+the four display fields are optional and must be non-empty strings when supplied.
+
+| Field | Meaning |
+| --- | --- |
+| `id` | Stable event id. Start with an ASCII letter; remaining characters may be ASCII letters, digits, `_`, `.`, or `-`. |
+| `file` | WAV path relative to the pack root, not the YAML file's directory. |
+| `name` | Sound setting label; defaults to `<id> volume`. |
+| `description` | Sound setting help text; defaults to an explanation of playback volume. |
+| `category` | Group label below the native Audio settings section. |
+| `subCategory` | Additional group label, combined with `category` into one Audio subcategory. |
+
+With both grouping fields above, the Audio subcategory is `Voice / ADA`. Without
+either field, it is `KDataForge sound events`. Each sound receives a volume setting
+with a default of 100%, where 0% mutes it. Player Audio preferences are local;
+the effective sound level combines the pack configuration percentage with the
+player's percentage. There is no `volume` field in a sound entry.
+
+## Accepted audio
+
+- Little-endian RIFF/WAVE containing uncompressed 16-bit PCM.
+- Mono or stereo, with a sample rate from 8,000 through 192,000 Hz.
+- A non-empty audio payload containing complete PCM frames; maximum file size 64 MiB.
+- A `.wav` extension, matched without regard to case.
+
+MP3, OGG, floating-point WAV and other compressed formats are unsupported. Export
+as PCM16 WAV in your audio editor. Files and any symbolic links must resolve inside
+the pack directory; absolute paths and paths escaping the pack are rejected.
+
+Generated events play once in 2D and route to the master bus. This document type
+does not author loops or spatial attenuation.
+
+## Reference an event
+
+Inside the same pack, use the bare event id in an audio event property:
+
+```yaml
+type: dataasset
+assets:
+  - id: WelcomeMessage
+    class: /Script/FactoryGame.FGMessage
+    properties:
+      - path: mAudioEvent
+        value: AdaWelcome
+```
+
+This creates a message asset with an audio reference. A separate game or mod
+workflow must trigger that message.
+
+The full event object path for `ref: MyPack` is:
+
+```text
+/KDataForge/GenAssets/MyPack.Gen_MyPack_AdaWelcome
+```
+
+Use the full path when referring to the event from another pack. Audio events are
+assets, so their paths have no `_C` suffix. Sound ids share the generated asset
+namespace with images, curves and data assets; choose distinct ids across those
+types. See [Generated Content Short Ids](/kdataforge/reference/yaml-schema#generated-content-short-ids)
+for reference resolution.
+
+## Load stage and multiplayer
+
+Sounds run in the `Assets` stage, before `dataasset` documents resolve properties
+such as `FGMessage.mAudioEvent`, and before later CDO changes. File ordering does
+not require placing a sound YAML before a data asset YAML.
+
+Install the same pack and WAV files on every multiplayer client and the server.
+Dedicated servers validate the WAV and create the event identity, but skip audio
+bank loading and playback. Clients load their own audio; importing on the server
+does not transfer WAV files to clients.
+
+## Troubleshooting
+
+- **File cannot resolve:** Check the path relative to `pack.yml`, filename case on
+  Linux, and whether a symbolic link points outside the pack.
+- **WAV rejected:** Re-export as uncompressed PCM16 mono/stereo WAV within the rate
+  and size limits above. Renaming an MP3 to `.wav` does not convert it.
+- **Generated event missing:** Check for duplicate ids, including collisions with
+  other generated assets, and confirm the sound document's conditions pass.
+- **Bank cache cannot be written:** The client must be able to write generated
+  banks under `FactoryGame/Content/KDataForgeRuntimeSounds/`.
+- **Wwise rejects the bank:** Inspect `LogAkAudio` and `LogWwiseFileHandler` alongside
+  KDataForge diagnostics.
+- **Import succeeds but nothing plays:** Confirm a consumer triggers the event and
+  check the sound's volume setting and the game's master volume.

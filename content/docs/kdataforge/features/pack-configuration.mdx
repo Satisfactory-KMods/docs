@@ -1,0 +1,203 @@
+---
+title: Pack Configuration
+description: Define typed pack settings, read their values, and choose when changes take effect.
+sidebar:
+  order: 20
+---
+
+A `*.config.yml` or `*.config.yaml` file defines settings offered by a pack. Use
+`type: config` and a non-empty `fields` list. Definitions load separately from the
+player's values, stored under `FactoryGame/Configs/Packs/<PackRef>.config.yml`.
+Keep the pack's `ref` stable; packs defining configuration need a ref of at most
+50 characters.
+
+```yaml
+# file: balance.config.yml
+type: config
+category: /Script/FactoryGame.FGCategory
+fields:
+  - id: balance.duration
+    type: number
+    valueType: float
+    name: Production duration
+    description: Recipe duration in seconds used by this pack's patches.
+    default: 1
+    min: 0.25
+    max: 4
+    step: 0.25
+    display: slider
+    apply: hot
+```
+
+The category above uses the base category. For a named settings section, use a
+category subclass as described below. A field with an error is skipped while
+other valid fields can still load. Static document `conditions` are supported;
+configuration definitions cannot depend on `config:` conditions themselves.
+
+## Field types at a glance
+
+| `type` | `valueType` choices | Default `valueType` | Shape |
+| --- | --- | --- | --- |
+| `text` | `string`, `text`, `name`, `tag` | `string` | String, or string list with `multiple: true` |
+| `number` | `int8`, `int16`, `int32`, `int64`, `uint8`, `float`, `double` | `int32` | Number, or number list with `multiple: true` |
+| `boolean` | `bool`, `uint8` | `bool` | Boolean; `multiple` is not supported |
+| `select` | All text and number types above, plus `bool` | `string` | One option value, or list with `multiple: true` |
+
+## Common field keys
+
+Every field requires `id`, `type`, `name`, `description` and `default`.
+
+| Key | Meaning |
+| --- | --- |
+| `id` | Stable dotted identifier, such as `balance.duration`; used to read the value. |
+| `type` | Control family from the table above. |
+| `valueType` | Stored element type; defaults depend on `type`. |
+| `name`, `description` | Non-empty display text, either a string or keyed localized text. |
+| `default` | Initial value satisfying the field's type and constraints; a list when `multiple: true`. |
+| `tooltip` | Optional map containing `title`, `text`, or both; each accepts localized text. |
+| `category` | Category class for this field; overrides the document category. Required at one of these levels. |
+| `apply` | `cold` by default, or `hot`; see application rules below. |
+| `order` | Integer sort position within its category; otherwise declaration order across config files sorted by path. |
+| `multiple` | Enables lists for `text` and `number`, or multi-selection for `select`; defaults to `false`. |
+
+Identifiers use ASCII segments matching `[A-Za-z_][A-Za-z0-9_]*`, separated by
+dots, and may contain at most 200 characters. They must be unique across the
+pack's config files, ignoring case. An id cannot also be the dotted prefix of
+another id: do not define both `balance` and `balance.duration`. The identifiers
+`true`, `false`, `in` and `contains` are reserved; the `__sounds` namespace is
+reserved for generated sound controls. Dotted ids become nested maps in the
+saved values file.
+
+`descriptionClass` and field-level `properties` are reserved. The schema accepts
+them, but the runtime ignores them and reports a warning. They do not create
+custom controls or patch game properties.
+
+## Categories
+
+Set `category` on the document as the default, or on individual fields. It must
+resolve to a `UFGCategory` subclass. Accepted forms include a class path, a bare
+id of a class generated in the same pack, or its full generated path:
+`/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>`.
+
+Settings sections sort by the category's `mMenuPriority`. An unresolved or
+incorrect class produces an error and falls back to the base `UFGCategory`
+bucket. Create category subclasses with [Type: class](/kdataforge/features/custom-classes).
+
+## Numbers
+
+| Key | Constraint or behavior |
+| --- | --- |
+| `min`, `max` | Optional inclusive bounds; `min` cannot exceed `max`. Values outside these bounds are clamped. |
+| `step` | Positive control increment; a whole number for integer types. |
+| `decimals` | Fractional digits shown and stored, from 0 to 9. Otherwise inferred from `step`, or defaults to 4 for `float` and 6 for `double`. |
+| `display` | `slider` or `input`. An explicit slider requires `min < max` and cannot use `multiple: true`. |
+
+Without `display`, a scalar field with both bounds and `min < max` becomes a
+slider; other number fields use an input. Integer types require integer defaults,
+bounds and steps. For lists, numeric constraints apply to each element.
+
+## Text, tags and selections
+
+Text fields accept `maxLength` from 1 to 1024, defaulting to 1024. Use
+`multiline: true` only with `type: text` and `valueType: text`. With
+`valueType: tag`, `tagRoot` restricts values to that gameplay-tag root; tags need
+not already be registered when configuration is read.
+
+Text and number lists use `minCount` and `maxCount`; lists hold at most 64
+elements, with `maxCount` defaulting to 64. These count keys require
+`multiple: true`.
+
+Select fields require a non-empty `options` list. Each option has a unique
+`value` matching the field's `valueType` and a display `label`. The default must
+be one of those values, or a list of option values for a multi-select. Text
+option values are case-sensitive.
+
+```yaml
+type: config
+category: /Script/FactoryGame.FGCategory
+fields:
+  - id: features.mode
+    type: select
+    name: Feature mode
+    description: Choose which variant the pack uses.
+    default: standard
+    options:
+      - { value: standard, label: Standard }
+      - { value: extended, label: Extended }
+```
+
+Multi-selects use `minSelected` and `maxSelected` instead of the list count keys.
+The minimum cannot exceed the number of options, and the maximum cannot be below
+the minimum or exceed 64.
+
+## Reading values
+
+Other documents can read a typed value with `cfg:<id>`, or
+`cfg:<PackRef>:<id>` to name another pack explicitly. String templates support
+`{cfg:<id>}` substitutions, and `config:` conditions can use configuration
+expressions. Configuration definitions themselves cannot use those conditions.
+
+For example, a property operation can consume the slider above directly:
+
+```yaml
+# Inside a patch's properties list:
+- path: mManufacturingDuration
+  value: cfg:balance.duration
+```
+
+This assigns the configured number to the recipe's duration property.
+
+## Hot and cold values
+
+`apply: cold` is the default. Applying a changed value saves it, but running
+content keeps the value used during its initial load. The runtime reports that
+a restart is required.
+
+`apply: hot` saves changes and triggers a KDataForge content reload when hot
+values change. The reload can update consumers during the current session.
+Whether the game actually uses a changed property immediately depends on that
+property and its consuming system. A hot field used in a cold context or cold
+property is flagged with a restart recommendation.
+
+## Cold properties
+
+Configuration application mode and property reload classification are separate.
+Reflection exports classify class properties as `hot`, `cold` or `newActors`:
+
+- `hot`: explicitly classified as applying live.
+- `cold`: read once or during object creation; changing it does not refresh existing state.
+- `newActors`: class-default changes affect newly spawned actors or components;
+  a patch can use `applyToSpawnedActors: true` to include existing actors.
+
+The editor reports cold and `newActors` operations as `property.cold`. Catalog
+entries marked `verified: false` remain assumptions awaiting game verification.
+See [Reflection Export](/kdataforge/reference/reflection-export#reload-classification-and-cold-property-catalog)
+for the `kdf.reload`, `kdf.reloadReason` and cold-property catalog fields.
+
+## Localized names
+
+Field names, descriptions, tooltip titles and texts, and select labels accept
+the keyed text form:
+
+```yaml
+name:
+  key: Config_Speed_Name
+  ns: MyPack
+  source: Production duration
+```
+
+Provide translations through [Type: localization](/kdataforge/features/localization)
+using the same namespace and key. When overriding existing source text, preserve
+the exact source string required by Unreal's source-hash matching. These display
+texts do not change field ids or stored option values.
+
+## Pack name, description and icon
+
+`pack.yml` supplies the pack's display `name`, `description` and optional `icon`.
+The runtime falls back to the pack ref when the name is absent; the editor schema
+requires a name. The description accepts either a string or keyed localized text.
+
+An icon can be a `UTexture2D` object path beginning with `/`, or a pack-relative
+`png`, `jpg`, `jpeg`, `tga` or `bmp` file. Relative files must remain inside the
+pack folder. Image-file limits are 16 MB and 4096 × 4096 pixels. Dedicated servers
+skip icon loading.
