@@ -1,0 +1,247 @@
+---
+title: Reflection Export
+description: Export runtime Unreal classes, structs, enums, defaults, functions, game settings, reload classification, Blueprint mappings, and asset indexes for Pack Manager and validation use.
+sidebar:
+  order: 9
+---
+
+KDataForge can export every reflected type loaded by running game plus Blueprint-generated classes,
+user-defined structs, and user-defined enums found through Asset Registry. Exporter runs on game
+thread in bounded slices. JSON writing runs in background.
+
+## Run
+
+Wait until world begins play, then use console:
+
+```text
+KDF.DumpReflection
+```
+
+Or chat:
+
+```text
+/kdf-reflection
+```
+
+The two commands do **not** export the same amount:
+
+| Start | Options it uses | Result |
+| --- | --- | --- |
+| Console `KDF.DumpReflection` (bare) | none | Classes, structs, enums, defaults, Blueprint mappings, textures, the settings index and the cold-property catalog in the final ZIP. **No** functions, **no** data-asset or curve indexes and **no** flattened classes. |
+| Chat `/kdf-reflection` (bare) | `--assets --functions --flattened --pack --image-max-dimension=1024` | The full profile: everything above plus functions, asset indexes and flattened classes. |
+| Launch argument `-KDFReflectionAutoExport=<dir>` | `--assets --functions --flattened` (and `--image-max-dimension` from `-KDFReflectionAutoImageMaxDimension=<n>` if given) | The same export, started automatically once a world has begun play. |
+
+For the data the desktop editor needs (function completion in templates, asset-by-class indexes,
+inherited properties) use the bare chat command, the auto export, or give the console command the
+options yourself: `KDF.DumpReflection --assets --functions --flattened`. The chat defaults apply
+only when you give **no** option at all; as soon as you pass one, exactly the options you passed
+are used.
+
+Clients do nothing unless `--force` is supplied. Server or host is normal export location. Default
+directory is `FactoryGame/KMods/ReflectionExport/`.
+
+| Option | Meaning |
+| --- | --- |
+| `--out <dir>` | Override output directory. |
+| `--mounts /Game,/Plugin` | Restrict Blueprint discovery to comma-separated mount points. |
+| `--assets` | Add asset-by-class indexes beyond textures; loading attempts still cover every selected registry asset. |
+| `--asset-cap N` | Limit assets recorded per class. |
+| `--functions` | Include reflected function signatures and flags (see [Functions](#functions)). |
+| `--flattened` | Write inherited-property view to `classes.flat.ndjson`. |
+| `--image-max-dimension N` | Largest exported texture side in pixels, `1` to `4096`; default `1024`. |
+| `--pack` | Compatibility no-op; final ZIP is always written. |
+| `--skip-widgets[=true|false]` | Skip widget Blueprints; enabled by default. |
+| `--widgets` | Shortcut that includes widget Blueprints. |
+| `--budget-ms N` | Game-thread budget per tick; default `8`. |
+| `--batch-size N` | Blueprint load batch size; garbage collection runs between batches. |
+| `--families name:path,...` | Extend linter catalog families. |
+| `--force` | Allow local client export. |
+
+Progress appears in chat and `LogKDFReflection`. Run `KDF.ValidateReflection [--out <dir>]` after
+completion. Validation checks required FactoryGame reflection shapes, native/Blueprint mapping,
+authored user-struct member names, required files, and deterministic default-value round trips.
+
+## Output
+
+- `manifest.json`: runtime engine/build, platform, options, installed mods, counts, and failed loads.
+- `classes.ndjson`, `structs.ndjson`, `enums.ndjson`: path-sorted records with inline property data.
+- `classes.flat.ndjson`: optional inherited-property view.
+- `indexes/subclasses.json`, `indexes/assets.json`: class and registry lookup indexes.
+- `indexes/settings.json`: game settings that `session:`, `ags:` and `option:` references can read, see
+  [Settings index](#settings-index).
+- `catalog/cold_properties.json`: the cold-property catalog, see
+  [Reload classification](#reload-classification-and-cold-property-catalog).
+- `indexes/textures.json`: image path, format, dimensions, export method, or per-texture failure reason.
+- `images/**`: selected texture images as PNG, proportionally limited to 1024x1024.
+- `nativeMapping.json`: native-to-Blueprint and reverse mappings.
+- `catalog/instanced_classes.json`: linter family catalog.
+- `schema/reflection.schema.json`: draft 2020-12 schema.
+- `<ISO-date>.kdfdata`: mandatory ZIP bundle containing every output file.
+
+Texture selection recursively scans reflected non-widget class defaults. This retains descriptor, item,
+recipe, and schematic icons while excluding material-only maps, widget-only decoration, unreferenced helper
+textures, dynamic render/media textures, and transient runtime textures without a portable asset identity.
+Selected textures remain uncapped and appear in `indexes/textures.json` with Asset Registry tags, source and
+exported dimensions, resize state, image path, or explicit failure details. Every successful image is PNG.
+Cooked BC/BC7 data is decoded before writing; GPU readback supplies pixels when cooked CPU data is unavailable.
+Images larger than 1024x1024 are proportionally downscaled or use a suitable cooked mip. Smaller images keep
+their dimensions. Unavailable textures remain indexed but produce no placeholder image.
+
+Exporter attempts to load every previously unloaded registry asset under configured mounts with
+quiet/no-warn flags and bounded batches. Failed loads remain in manifest. Garbage collection runs through
+engine safe points, never directly from ticker-time export code. `--assets` adds indexes for data assets,
+curves, and other classes referenced by object properties; `--asset-cap` applies only to non-texture index
+classes, not loading coverage.
+
+Native constructors sometimes generate a fresh GUID, current timestamp, seed, transient object name,
+or uninitialized byte sequence. Exporter detects volatile reflected types and values, emits reflected zero
+value, and writes `defaultVolatile: true`. Result stays valid `ImportText` input and deterministic. Stable
+constructor defaults remain unchanged. Blueprint-authored member names are emitted lowercase because Unreal's
+case-preserving `FName` display casing depends on asset load order. Lookup remains case-insensitive.
+
+To import, open desktop editor **Datapacks**, choose **Import game data**, select generated
+`.kdfdata`, then bind imported datapack to project. Pack Manager validates manifest/schema, stores
+immutable archive copy, and exposes contents as datapack `reflection` section to editor and language
+server. Directory form is useful during editor/language-server development.
+
+## Functions
+
+With `--functions` (included in the chat default and the auto export) each class record in
+`classes.ndjson` gets a `functions` array. The desktop editor uses it to complete and check
+[template function calls](/kdataforge/features/templates#calling-functions).
+
+| Field | Meaning |
+| --- | --- |
+| `name` | The function name, lowercased so exports of different runs compare equal |
+| `authoredName` | The name with its authored letter case (`GetItemName`). Editors show this one. |
+| `path` | `<ownerPath>:<name>` |
+| `ownerPath` | The class that declares the function |
+| `flags` | The function flags, for example native, `BlueprintPure`, `Const`, `Static`, net and event flags |
+| `params` | Input parameters as property records, in declaration order |
+| `return` | The return value as a property record; absent when the function returns nothing |
+
+Property records use the same shape as class properties, including `authoredName`.
+
+## Settings index
+
+`indexes/settings.json` lists the game settings that `session:`, `ags:` and `option:`
+[references](/kdataforge/features/templates#game-settings) can read. It is written by every export.
+
+| Field | Meaning |
+| --- | --- |
+| `schemaVersion`, `engineVersion` | Format and build |
+| `counts` | Number of settings per provider: `session`, `ags`, `option`, `other` |
+| `settings` | The records, sorted by provider, lowercase id and path |
+| `unresolved` | Setting assets that could not be indexed, with a `reason` (for example an empty id) |
+
+A record has:
+
+| Field | Meaning |
+| --- | --- |
+| `id` | The setting id (`StrId`), exactly what follows the prefix in `ags:<id>` |
+| `provider` | `session` (SML session setting), `ags` (advanced game settings), `option` (local game options) or `other` (not readable by a prefix) |
+| `path`, `class`, `source` | The asset, its class, and which mod or the base game provides it |
+| `displayName`, `tooltip` | The texts shown in game |
+| `valueType` | `bool`, `int`, `float`, `string`, `color` or `other` |
+| `default` | The default value when it can be read |
+| `range`, `displayRange` | Slider or selection bounds; `displayRange` only when it differs |
+| `options` | `{value, label}` choices of an integer selector |
+| `placements` | Options-menu locations. Each entry contains category, optional subcategory and row priority; categories include class, display name and menu priority. |
+| `sessionWide`, `dedicatedServerRelevant` | Whether the setting is stored per session and whether a dedicated server uses it |
+| `managerClass`, `mapWhitelist` | The manager that owns the setting and, for session settings, the maps it is limited to |
+
+Active runtime-generated KDataForge sound sliders are included as `option` records with stable virtual
+paths and their **Options → Audio** placement. Dedicated servers do not create local Audio settings,
+so their exports omit these runtime-only records.
+
+The editor completes setting ids from this file and reports an unknown id as `setting.unknown-id`
+when the file exists.
+
+## Reload classification and cold-property catalog
+
+Every property declared directly by a class carries two extra fields under its `kdf` object:
+
+| Field | Meaning |
+| --- | --- |
+| `kdf.reload` | `hot`, `cold` or `newActors` |
+| `kdf.reloadReason` | One sentence that says why, present when the classification comes from the catalog |
+
+- `hot`: a write applies live (an explicit allow-list entry).
+- `cold`: the game reads the property once or only when an object is created, so a live write does
+  not change existing state.
+- `newActors`: the class default belongs to an actor or component, so only newly spawned actors see
+  a write (the patch can set `applyToSpawnedActors: true` to include existing actors).
+
+Struct members, function parameters and container elements inherit the classification of the
+class property that contains them. The editor shows the classification next to `path:`
+completions and reports operations on cold or `newActors` properties as `property.cold`, see
+[Pack Configuration](/kdataforge/features/pack-configuration#cold-properties).
+
+`catalog/cold_properties.json` is the catalog behind it: `version`, a `description`, and
+`entries` of `{class, property, reload, reason, verified}`. A class entry includes its subclasses
+and the property name is case-insensitive. `verified: false` marks an entry that is a reasonable
+assumption not yet checked in game.
+
+## Editor Metadata Supplement
+
+Packaged game may have `WITH_METADATA` disabled. Runtime records then contain
+`metadataAvailable: false`; export still succeeds. Generate metadata in modding editor:
+
+```powershell
+UnrealEditor-Cmd.exe FactoryGame.uproject -run=KDFReflectionMetaExport -out=C:\Temp\KDFMeta
+```
+
+Merge supplement into separate copy with same native commandlet:
+
+```powershell
+UnrealEditor-Cmd.exe FactoryGame.uproject -run=KDFReflectionMetaExport `
+  -runtime=C:\Path\ReflectionExport `
+  -supplement=C:\Temp\KDFMeta\metadata.supplement.json `
+  -out=C:\Path\ReflectionMerged
+```
+
+Merge records editor and game build per field and rebuilds mandatory ISO-named `.kdfdata` ZIP. The
+`-runtime` and `-out` directories must not overlap: they cannot be equal, and neither may contain the
+other. The `-supplement` file must be outside the `-out` directory, especially when using `-force`,
+which replaces an existing merge output directory. These path checks also apply without `-force`.
+
+On Windows and Linux, checks compare normalized paths and resolved physical paths, so symlink or
+junction aliases cannot bypass either restriction. Subsequent merge reads and writes use those
+resolved paths. The runtime directory and supplement file must exist. A new output path may have
+missing parent directories: the commandlet resolves its nearest existing directory ancestor and
+appends the missing components. Empty, inaccessible, dangling, or otherwise unresolvable paths
+are rejected before an existing output is deleted. Unsupported platforms reject the merge.
+
+Before `-force` replaces an existing output directory, the commandlet inspects its contents
+without following link targets. Any nested symlink or Windows reparse point blocks replacement,
+even if its target is unrelated to the inputs. On Linux, mount points also block replacement,
+including bind mounts on the same filesystem and an output directory that is itself a mount point.
+The resolved output target must share its parent's mount ID, and every nested entry must share
+that same mount ID. Mount IDs must be readable through `/proc/self/fdinfo`; if they cannot be
+verified, replacement is rejected. Unreadable entries, failed directory enumeration, or more than
+1,000,000 entries also block replacement before deletion. Unmount mounted entries, remove other
+blocked entries, or choose a new output directory, then retry.
+
+No Python merge script is packaged into mod or archive.
+
+For full file/schema checks and deterministic comparison of two exports:
+
+```powershell
+python Mods/GameFeatures/KDataForge/Tools/validate_reflection_export.py `
+  C:\Path\ReflectionExport --compare C:\Path\SecondReflectionExport
+```
+
+Validator applies emitted draft 2020-12 schema to every JSON record and excludes only
+`manifest.generatedAt` from comparison hash. It requires Python `jsonschema`.
+
+## Limits
+
+- Blueprint load failures remain in `manifest.json.failedLoads` with reason.
+- Dedicated-server cooks or unsupported GPU formats may expose no readable pixels. Such records contain
+  failure details instead of image bytes.
+- Per-class cap applies to non-texture classes.
+- All-mount exports can be large, especially with functions, flattened records, assets, or widgets.
+- Tick budget is checked between reflected records and Blueprint loads. One synchronous Asset
+  Registry query, Blueprint load, garbage collection, or unusually large type can exceed budget by
+  its own execution time because Unreal does not expose resumable versions of those operations.
+- Output determinism assumes identical game build, mod set, options, and registered content.
