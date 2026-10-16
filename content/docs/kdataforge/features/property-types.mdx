@@ -134,6 +134,12 @@ declared bits for enums marked `Bitflags`; without that enum marker, the resulti
 match a valid enum value. Named flags must also fit the property width. These bitmask rules do not change
 the signed ranges of ordinary integer properties described above.
 
+For enums that use declared mask values (`UseEnumValuesAsMaskValuesInEditor=true`), export fails if
+the runtime value cannot be rebuilt losslessly by OR-ing declared flag values. KDataForge logs a
+`LogKDataForge` error naming the property, enum, and undeclared bits; add matching enum flags or
+correct the property value. A raw numeric `set` mask can import such a value when it fits the
+declared-bit and property-width rules, but it does not bypass the export failure.
+
 Negative enum values and values-as-masks using bit `63` are unsupported: Unreal represents
 `UEnum` values as signed `int64`. This restriction does not affect bit-index `63`, whose enum
 value is the positive integer `63`.
