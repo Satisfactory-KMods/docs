@@ -209,6 +209,11 @@ patches:
         value: 0.5
 ```
 
+An explicit `target:` accepts one non-empty scalar reference or a non-empty list of them. An
+empty or non-scalar member invalidates the entire patch entry, with a source-line diagnostic;
+other selectors on that entry do not bypass the error. See
+[target lists](/kdataforge/features/targeting#target-a-sequence-of-paths-patch-several-targets-in-one-entry).
+
 ## Sublevel Blocking (`type: sublevel`)
 
 A `sublevel` document blocks RefinedRDLib or KBFL sublevel descriptor assets during the

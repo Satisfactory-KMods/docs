@@ -35,6 +35,10 @@ and leaves everything else untouched. The `target` field resolves the same way i
 in `cdo` patches: a class path resolves to that class's CDO, and anything else is loaded as an
 object path.
 
+An invalid `target:` shape or a list containing an empty or non-scalar member skips the entire
+patch before any target is modified. The warning names the file and source line. Correct the
+target list and run the command again; valid targets in that same malformed list are not applied.
+
 Every modified package is **marked dirty**. For a Blueprint CDO, that is the generated class's
 outer package, so the standard editor save flow (Save All or source-control checkout) persists the
 changes. Your YAML pack has effectively become a set of permanent asset edits. Afterwards, a

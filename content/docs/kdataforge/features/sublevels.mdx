@@ -38,6 +38,11 @@ Exact targets use direct object loading, so they still work when the Asset Regis
 populated during early startup. A path that does not resolve produces a warning: the owning mod may
 be absent, or the object path may be wrong.
 
+In a map entry, `target:` must be one non-empty scalar reference or a non-empty list of them.
+An empty string, null, mapping, nested list or empty target list produces a source-line error and
+skips that whole `block:` entry, including its bulk or filter selectors. Other block entries still
+apply.
+
 ## Block every asset of a provider class
 
 Use `allAssetsOfClass:` for a bulk compatibility rule:

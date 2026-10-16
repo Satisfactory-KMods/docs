@@ -104,6 +104,12 @@ mixing target kinds (a class path alongside an object path) in one list is fine,
 resolved independently. Prefer `applyToSubclasses:` or `matchTag:` instead when the targets share a
 common base class or tag; reach for a `target:` list when they don't.
 
+An explicit `target:` must contain one non-empty scalar reference or a non-empty list of them.
+An empty string, null, mapping, nested list or empty target list produces a source-line error and
+skips the entire patch entry, including its other selectors. Valid entries in other patches still
+apply. `KDF.ApplyToAssets` uses the same check before changing editor assets. A well-formed
+reference that cannot resolve keeps the normal warning and runtime class-watch behavior.
+
 ## `allAssetsOfClass:` every asset of a class
 
 Patches every asset of that class (and its subclasses) found in the asset registry. This is ideal
