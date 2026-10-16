@@ -127,6 +127,11 @@ server. See [Desktop Editor & LSP](/kdataforge/reference/desktop-editor-lsp) for
 reflection requirements, and schema-only validation. Directory form is useful during
 editor/language-server development.
 
+Desktop import finds reflection data by `manifest.json` at the archive root, under `reflection/`,
+or under `kdf/reflection/`. These prefixes are case-sensitive. Exactly one supported location may
+contain a manifest, and `classes.ndjson` must be a file under that same prefix; class records at
+another prefix cannot fill the gap. Multiple supported reflection manifests are rejected.
+
 ## Runtime export publication and recovery
 
 The runtime exporter first writes loose files and the ZIP into a sibling directory named
@@ -195,6 +200,23 @@ With `--functions` (included in the chat default and the auto export) each class
 | `return` | The return value as a property record; absent when the function returns nothing |
 
 Property records use the same shape as class properties, including `authoredName`.
+
+## Integer bitmask metadata
+
+For integer properties with `Bitmask` and `BitmaskEnum` metadata, the exporter resolves only
+already-loaded enums. A full enum path must identify a loaded enum; a short name must uniquely
+match one. A resolved enum supplies its path, named `options`, `bitflags: true`, bitmask operations,
+and the named `kdf.valueForm`. For a resolved integer bitmask whose enum has `Bitflags` metadata,
+`bitmaskMode` is `maskValues` when `UseEnumValuesAsMaskValuesInEditor` metadata is present, and
+`bitIndices` otherwise. Consumers use that mode with exact option values to derive declared bits
+for raw `set` masks; without the mode, editor validation falls back to property-width checks.
+Missing metadata, an unloaded enum, or an ambiguous short name keeps the numeric fallback. Export
+does not load an enum merely to resolve this metadata. Runtime integer bitmask support also requires
+`WITH_METADATA` and retained property metadata; exported hints do not restore stripped runtime metadata.
+
+These hints describe available editor choices. Runtime value conversion still follows
+[Property Types](/kdataforge/features/property-types#bitmask-integer-properties-with-bitmaskenum-metadata),
+including its mask-value, bit-index, and numeric forms.
 
 ## Settings index
 
@@ -332,6 +354,14 @@ ZIP entries and indexed image paths must use safe relative paths contained withi
 directory; traversal paths are rejected. The Python validator rejects symlinks and Windows reparse
 points anywhere in the loose export tree, including unrelated custom entries. Regular custom files
 outside `images/` remain permitted outside the generated archive.
+
+The Python validator checks PNG signatures, chunk boundaries and CRCs, and supported non-interlaced
+pixel layouts with valid bit-depth and color-type combinations. It requires a single first `IHDR`,
+valid `PLTE` placement and size when present, a palette before indexed image data, contiguous `IDAT`
+chunks, and an empty final `IEND` with no trailing bytes. It also checks the decoded byte count,
+complete compressed stream, and row filter values. Chunk types must contain four ASCII letters
+with an uppercase third letter. Unsupported critical chunks are rejected; unknown ancillary chunks
+remain permitted. Invalid structure is rejected even when CRCs and dimensions match.
 
 Native acceptance PASS does not verify ZIP contents, loose/packed parity, image integrity, or
 schema conformance. Use the Python artifact/package validator before distributing or importing an

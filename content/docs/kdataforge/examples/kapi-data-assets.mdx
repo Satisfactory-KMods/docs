@@ -251,9 +251,16 @@ feature isn't part of Satisfactory Plus, it only needs **`KAPI` + `KPrivateCodeL
 example below is illustrative.
 
 The interesting part is `mParentTask` accepting **more than one flag at once**. Use one scalar name
-for one parent or a YAML sequence for several; KDataForge resolves and ORs names automatically.
-Scalar names, sequences, and `|`-joined strings (`"Above|Left"`) are Shipping-safe. Raw integer
-masks such as `3` remain accepted. `bRequireAllParents` then switches between AND (`true`, every
+for one parent or a YAML sequence for several. With `WITH_METADATA`, retained property metadata,
+and the enum already loaded, KDataForge resolves and ORs names or `|`-joined strings (`"Above|Left"`).
+This enum declares mask values: `Above` (`1`) and `Left` (`2`) combine to `3`. Raw integer masks such
+as `3` are accepted by `set` only; `append`/`prepend` and `remove` require named flags. Stripped
+metadata or an unresolved enum leaves ordinary integer conversion without named bitmask forms or
+mutations. Shipping builds must retain metadata for these named examples. See
+[Property Types](/kdataforge/features/property-types#bitmask-integer-properties-with-bitmaskenum-metadata)
+for mask-value versus bit-index rules and width limits.
+
+`bRequireAllParents` then switches between AND (`true`, every
 flagged parent required; default) and OR (`false`, any one is enough) semantics.
 `mRequiredParentCompletions` defaults to `1` and requires that many completed runs from each marked
 parent. Values above `1` are intended for branches behind endless tasks and count completed runs,

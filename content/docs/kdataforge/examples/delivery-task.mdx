@@ -35,8 +35,15 @@ node itself**:
 
 Every flag set on a node must point at a coordinate some other node in the tree actually occupies,
 or the node is rejected at load time. Use one flag name for one parent and a YAML sequence for
-multiple parents. KDataForge resolves and ORs names automatically. Scalar names, sequences, and
-`|`-joined strings (`"Above|Left"`) are Shipping-safe. Raw integer masks such as `3` remain accepted.
+multiple parents. When property metadata and the loaded enum are available under `WITH_METADATA`,
+KDataForge resolves and ORs scalar names, sequences, and `|`-joined strings (`"Above|Left"`).
+`EKAPIDeliveryTaskParent` declares mask values, so `Above` (`1`) and `Left` (`2`) combine to `3`.
+Raw integer masks such as `3` are accepted by `set` only; `append`/`prepend` and `remove` require
+names. If property metadata is stripped or the enum cannot be resolved, this integer property
+uses ordinary numeric conversion; named bitmask forms and mutations are unavailable. Shipping
+builds must retain metadata for these named examples. See
+[Property Types](/kdataforge/features/property-types#bitmask-integer-properties-with-bitmaskenum-metadata)
+for mask-value versus bit-index rules and width limits.
 
 `mRequiredParentCompletions` defaults to `1` and raises the completed-run threshold for every
 marked parent. This is useful behind an endless parent:

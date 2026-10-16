@@ -27,8 +27,7 @@ bare digits `1`/`0` all parse too, so you can match whichever style reads best i
 
 ## int32 / uint8 / int64 (all integer widths)
 
-Every plain integer property takes a bare number, regardless of its bit width. You never need to
-worry about the exact C++ type:
+Every plain integer property takes a decimal integer within its reflected type's range:
 
 ```yaml
 - path: mResourceSinkPoints
@@ -36,6 +35,13 @@ worry about the exact C++ type:
 - path: mMenuPriority
   value: 42
 ```
+
+Signed integers accept an optional `+` or `-` sign. `int64` accepts
+`-9223372036854775808` through `9223372036854775807`, inclusive. Values outside those bounds
+are rejected rather than clamped. Smaller signed types also enforce their own bounds; for example,
+`int32` accepts `-2147483648` through `2147483647`. Unsigned types require nonnegative values:
+`uint8` accepts `0` through `255`, and `uint64` accepts `0` through `18446744073709551615`.
+Fractions and exponent notation are not accepted as integer values.
 
 ## float / double
 
@@ -74,7 +80,7 @@ garbage at every use site that reads `mStackSize`. Always use the value name unl
 know the ordinal you want.
 :::
 
-## bitmask (`int32`/`uint8` with `BitmaskEnum` metadata)
+## bitmask (integer properties with `BitmaskEnum` metadata)
 
 Bitmask properties store several enum flags in one integer. Use a scalar for one flag and a YAML
 sequence for several flags:
@@ -88,8 +94,8 @@ sequence for several flags:
     - Left
 ```
 
-KDataForge also accepts an inline sequence, a `|`-joined string, or a raw pre-computed integer
-mask. All named forms are Shipping-safe. Names are preferred because they remain readable:
+For `set`, KDataForge also accepts an inline sequence, a `|`-joined string, or a raw pre-computed
+integer mask. `append`/`prepend` and `remove` accept named flags only. Names remain readable:
 
 ```yaml
 - path: mParentTask
@@ -103,11 +109,35 @@ mask. All named forms are Shipping-safe. Names are preferred because they remain
 ```
 
 :::caution
-Named forms require an enum whose declared values are masks
-(`UseEnumValuesAsMaskValuesInEditor=true`), as `EKAPIDeliveryTaskParent` uses. Bit-index-style enums
-need a complete numeric mask. See [Operations](/kdataforge/features/operations#bitmask-operations)
-for mutation ops and [Delivery Task Trees](/kdataforge/examples/delivery-task) for every
-`EKAPIDeliveryTaskParent` bit.
+Plain integer bitmask handling requires a build with `WITH_METADATA`, property `Bitmask` and
+`BitmaskEnum` metadata, and the referenced enum already loaded. For enums marked `Bitflags`, named
+flags support both declared mask values
+(`UseEnumValuesAsMaskValuesInEditor=true`) and bit indices. Bit indices `0` through `63`
+map to `1 << index` and must fit the reflected property width. This applies to both signed
+and unsigned properties: 8-bit properties allow `0..7`; 16-bit properties allow `0..15`;
+32-bit properties allow `0..31`; 64-bit properties allow `0..63`. `set`, export,
+`append`/`prepend`, and `remove` preserve the high bit, including bit `31` in `int32` and bit
+`63` in `int64`.
+
+For `set`, raw integer masks are nonnegative unsigned decimal bit patterns bounded by the reflected
+property width, including signed properties. `int32` accepts raw masks through `4294967295`;
+`int64` accepts raw masks through `18446744073709551615`. For example, `2147483648` sets bit
+`31` in `int32`, and `9223372036854775808` sets bit `63` in `int64`. Masks must contain only
+declared bits for enums marked `Bitflags`; without that enum marker, the resulting value must
+match a valid enum value. Named flags must also fit the property width. These bitmask rules do not change
+the signed ranges of ordinary integer properties described above.
+
+Negative enum values and values-as-masks using bit `63` are unsupported: Unreal represents
+`UEnum` values as signed `int64`. This restriction does not affect bit-index `63`, whose enum
+value is the positive integer `63`.
+
+If property metadata is stripped or the enum cannot be resolved, a plain integer property falls
+back to ordinary numeric conversion and its normal signed or unsigned range. Named bitmask forms
+and bitmask mutation operations are unavailable. Do not assume named integer bitmasks work in a
+Shipping build; check whether that build retains metadata. Enum-backed properties have their own
+conversion path; see [Enums](#enum-typed-enum-class-and-tenumasbyte). See
+[Operations](/kdataforge/features/operations#bitmask-operations) for mutation ops and
+[Delivery Task Trees](/kdataforge/examples/delivery-task) for every `EKAPIDeliveryTaskParent` bit.
 :::
 
 ## FString

@@ -65,6 +65,11 @@ location. Check language-server status and error details when results stop updat
 effective datapack and its completeness when reflected suggestions are missing. A connected
 server in schema-only mode still provides useful YAML checks.
 
+Requests through the desktop language-server bridge time out after 15 seconds. If the same project,
+connection, and server process are still active, the editor sends a best-effort `$/cancelRequest`
+notification for the expired request. Cancellation delivery can fail; the request still reports its
+original timeout error. Check server status before retrying.
+
 For configuration-driven YAML, read [Pack Configuration](/kdataforge/features/pack-configuration),
 [Templates & Typed References](/kdataforge/features/templates), and
 [Configuration Expressions](/kdataforge/reference/config-expressions). Diagnostic coverage

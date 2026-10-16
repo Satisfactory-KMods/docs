@@ -32,7 +32,11 @@ left implicit. On `mDisplayName` (an `FString`), setting a value simply replaces
 ### Bitmask operations
 
 `set` accepts one flag name or a sequence of flag names. KDataForge resolves and ORs names from the
-property's `BitmaskEnum`. Named forms are Shipping-safe. Raw numeric masks remain accepted.
+property's `BitmaskEnum`. Raw numeric masks are accepted by `set` only. Plain integer bitmask
+handling requires `WITH_METADATA`, retained property metadata, and an already-loaded enum; missing
+metadata or an unresolved enum leaves ordinary integer conversion. See
+[Property Types](/kdataforge/features/property-types#bitmask-integer-properties-with-bitmaskenum-metadata)
+for named mask/index forms, width limits, and Shipping-build limitations.
 
 ```yaml
 - path: mParentTask

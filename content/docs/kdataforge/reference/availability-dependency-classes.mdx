@@ -85,10 +85,18 @@ property path because KDataForge writes through Unreal reflection.
 | `EItemUnlockRequirement` | `Any`, `All` |
 | `EEvents` | `EV_None`, `EV_Christmas`, `EV_Birthday`, `EV_CSSBirthday`, `EV_FirstOfApril` |
 | `EGamePhase` | `EGP_EarlyGame`, `EGP_MidGame`, `EGP_LateGame`, `EGP_EndGame`, `EGP_FoodCourt`, `EGP_Victory`, `EGP_NA` |
-| `EElevatorDependencyEvent` bitmask stored in `mEvents` | `BeginMove`, `EndMove`, or a block sequence containing both; raw integer masks `0..3` also work (`None=0`, `BeginMove=1`, `EndMove=2`) |
+| `EElevatorDependencyEvent` bitmask stored in `mEvents` | With retained metadata and a loaded enum: `BeginMove`, `EndMove`, or a sequence containing both. Raw integer masks `0..3` work with `set` only (`None=0`, `BeginMove=1`, `EndMove=2`); bitmask mutations require named flags. |
 | `EResearchTreeStatus` | `ERTS_Locked`, `ERTS_Unlocked`, `ERTS_StartedResearch`, `ERTS_FinishedAllResearch` |
 | `ESchematicType` | `EST_Custom`, `EST_Cheat`, `EST_Tutorial`, `EST_Milestone`, `EST_Alternate`, `EST_Story`, `EST_MAM`, `EST_ResourceSink`, `EST_HardDrive`, `EST_Prototype`, `EST_Customization` |
 | `ETakeDamagePlayerInteraction` | `Any`, `PlayerWasDamaged`, `PlayerDealtDamage` |
+
+Plain integer bitmask names and mutation operations require `WITH_METADATA`, property `Bitmask`
+and `BitmaskEnum` metadata, and the referenced enum already loaded. If metadata is stripped or
+the enum cannot be resolved, `mEvents` follows ordinary `uint8` conversion instead. Shipping builds
+must retain metadata for named integer bitmasks. The values above are mask values; bit-index enums
+use different metadata-driven conversion. See
+[Property Types](/kdataforge/features/property-types#bitmask-integer-properties-with-bitmaskenum-metadata)
+for the full mode and width rules.
 
 No loaded mod added native `FGAvailabilityDependency` subclasses during this scan. Catalog still
 accepts known Blueprint class paths and linter warns on unknown paths instead of failing validation.
