@@ -61,8 +61,8 @@ directory is `FactoryGame/KMods/ReflectionExport/`.
 | `--force` | Allow local client export. |
 
 Progress appears in chat and `LogKDFReflection`. Run `KDF.ValidateReflection [--out <dir>]` after
-completion. Validation checks required FactoryGame reflection shapes, native/Blueprint mapping,
-authored user-struct member names, required files, and deterministic default-value round trips.
+completion for runtime acceptance checks. Use the Python artifact validator for ZIP integrity,
+file parity, images, and schema validation; see [Validation](#validation).
 
 ## Output
 
@@ -261,15 +261,38 @@ blocked entries, or choose a new output directory, then retry.
 
 No Python merge script is packaged into mod or archive.
 
-For full file/schema checks and deterministic comparison of two exports:
+## Validation
+
+Run both validators after export completes:
+
+| Validator | Checks |
+| --- | --- |
+| In-game `KDF.ValidateReflection [--out <dir>]` | Required live FactoryGame reflection shapes, authored user-struct member names, and sampled default `ExportText`/`ImportText` round trips (up to three per property kind). Checks required file presence, exactly one `.kdfdata` file, the `FGUnlockRecipe` Blueprint mapping, and basic settings, icon, and cold-property index structure when present. |
+| Python `validate_reflection_export.py <directory>` | Exported reflection contracts and records against the emitted draft 2020-12 schema; texture PNG integrity, dimensions, selection options, image/index consistency, and supported optional index/catalog checks. Requires exactly one ISO-named `.kdfdata` ZIP, sorted entries, valid ZIP CRCs, and matching loose/packed filenames and file bytes (excluding `.kdfdata` and `.tmp` files from parity). |
+
+Native acceptance PASS does not verify ZIP contents, loose/packed parity, image integrity, or
+schema conformance. Use the Python validator before distributing or importing an artifact. It
+reads an export directory containing loose files and its `.kdfdata` archive; a standalone archive
+must first be extracted into a directory alongside that archive.
+
+Install Python dependency and validate one export from the modding workspace:
+
+```powershell
+python -m pip install jsonschema
+python Mods/GameFeatures/KDataForge/Tools/validate_reflection_export.py `
+  C:\Path\ReflectionExport
+```
+
+For deterministic comparison, validate both exports with `--compare`:
 
 ```powershell
 python Mods/GameFeatures/KDataForge/Tools/validate_reflection_export.py `
   C:\Path\ReflectionExport --compare C:\Path\SecondReflectionExport
 ```
 
-Validator applies emitted draft 2020-12 schema to every JSON record and excludes only
-`manifest.generatedAt` from comparison hash. It requires Python `jsonschema`.
+Comparison hashes loose file paths and contents with SHA-256, excluding `.kdfdata` archives.
+It canonicalizes `manifest.json` and omits only its `generatedAt` field; other loose files are
+hashed as bytes. Each export must pass artifact validation before hashes are compared.
 
 ## Limits
 
