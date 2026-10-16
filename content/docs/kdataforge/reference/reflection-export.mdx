@@ -49,8 +49,9 @@ directory is `FactoryGame/KMods/ReflectionExport/`.
 | `--functions` | Include reflected function signatures and flags (see [Functions](#functions)). |
 | `--flattened` | Write inherited-property view to `classes.flat.ndjson`. |
 | `--image-max-dimension N` | Largest exported texture side in pixels, `1` to `4096`; default `1024`. |
+| `--used-textures[=true\|false]` | Select textures referenced by reflected non-widget class defaults; enabled by default. `false` selects all supported, portable texture candidates. |
 | `--pack` | Compatibility no-op; final ZIP is always written. |
-| `--skip-widgets[=true|false]` | Skip widget Blueprints; enabled by default. |
+| `--skip-widgets[=true\|false]` | Skip widget Blueprints; enabled by default. |
 | `--widgets` | Shortcut that includes widget Blueprints. |
 | `--budget-ms N` | Game-thread budget per tick; default `8`. |
 | `--batch-size N` | Blueprint load batch size; garbage collection runs between batches. |
@@ -72,20 +73,27 @@ authored user-struct member names, required files, and deterministic default-val
 - `catalog/cold_properties.json`: the cold-property catalog, see
   [Reload classification](#reload-classification-and-cold-property-catalog).
 - `indexes/textures.json`: image path, format, dimensions, export method, or per-texture failure reason.
-- `images/**`: selected texture images as PNG, proportionally limited to 1024x1024.
+- `images/**`: selected texture images as PNG, proportionally limited to the configured
+  `--image-max-dimension` cap (default `1024` pixels per side).
 - `nativeMapping.json`: native-to-Blueprint and reverse mappings.
 - `catalog/instanced_classes.json`: linter family catalog.
 - `schema/reflection.schema.json`: draft 2020-12 schema.
 - `<ISO-date>.kdfdata`: mandatory ZIP bundle containing every output file.
 
-Texture selection recursively scans reflected non-widget class defaults. This retains descriptor, item,
+By default, texture selection recursively scans reflected non-widget class defaults. This retains descriptor, item,
 recipe, and schematic icons while excluding material-only maps, widget-only decoration, unreferenced helper
 textures, dynamic render/media textures, and transient runtime textures without a portable asset identity.
 Selected textures remain uncapped and appear in `indexes/textures.json` with Asset Registry tags, source and
 exported dimensions, resize state, image path, or explicit failure details. Every successful image is PNG.
 Cooked BC/BC7 data is decoded before writing; GPU readback supplies pixels when cooked CPU data is unavailable.
-Images larger than 1024x1024 are proportionally downscaled or use a suitable cooked mip. Smaller images keep
-their dimensions. Unavailable textures remain indexed but produce no placeholder image.
+Images exceeding the configured cap are proportionally downscaled or use a suitable cooked mip.
+Smaller images keep their dimensions. Unavailable textures remain indexed but produce no placeholder image.
+
+With `--used-textures=false`, selection expands to all supported, portable texture candidates,
+including candidates not referenced by those defaults. The manifest's `options.usedTexturesOnly`
+records that choice: `true` pairs with `options.textureSelection: reflectedNonWidgetClassDefaults`,
+and `false` with `options.textureSelection: allPortableTextures`. `options.imageMaxDimension` records
+the actual image cap; consumers should read it instead of assuming every export uses 1024.
 
 Exporter attempts to load every previously unloaded registry asset under configured mounts with
 quiet/no-warn flags and bounded batches. Failed loads remain in manifest. Garbage collection runs through
@@ -102,7 +110,9 @@ case-preserving `FName` display casing depends on asset load order. Lookup remai
 To import, open desktop editor **Datapacks**, choose **Import game data**, select generated
 `.kdfdata`, then bind imported datapack to project. Pack Manager validates manifest/schema, stores
 immutable archive copy, and exposes contents as datapack `reflection` section to editor and language
-server. Directory form is useful during editor/language-server development.
+server. See [Desktop Editor & LSP](/kdataforge/reference/desktop-editor-lsp) for project binding,
+reflection requirements, and schema-only validation. Directory form is useful during
+editor/language-server development.
 
 ## Functions
 

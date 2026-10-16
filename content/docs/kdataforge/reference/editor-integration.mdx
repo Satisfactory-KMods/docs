@@ -5,10 +5,10 @@ sidebar:
   order: 5
 ---
 
-Everything else in these docs happens **at runtime**: YAML is re-applied every session and never
-touches the assets on disk. This page covers the opposite workflow, for mod developers working
-inside the **Unreal Editor**. You apply your YAML packs **directly onto the editor's assets** so
-the changes can be saved and become permanent.
+This page covers mod developers working inside the **Unreal Editor**. You apply YAML packs
+**directly onto the editor's assets** so the changes can be saved and become permanent.
+For authoring YAML in the standalone desktop application, see
+[Desktop Editor & LSP](/kdataforge/reference/desktop-editor-lsp).
 
 > Editor builds only (`WITH_EDITOR`). None of this exists in the packaged game or on dedicated
 > servers. Players keep the runtime pipeline.
@@ -47,6 +47,19 @@ does not reproduce `applyToSubclasses`, `applyToSpawnedActors`, or `deferOneGame
 conditions and `include:` ordering are also not evaluated here. Write editor-import patches with
 explicit targets and review the dirty packages before saving.
 :::
+
+### Configuration and template pre-pass
+
+Before applying each file's `cdo` documents, the command loads pack configuration into a transient
+registry with file writes disabled. It runs the [template pre-pass](/kdataforge/features/templates)
+for typed references, pre-pass string tokens, and list-entry conditions. This does not make the
+command equivalent to the runtime dispatcher: top-level document conditions and runtime ordering
+remain outside this importer.
+
+World-dependent reads such as `session:` and `ags:` cannot resolve without a running world.
+Documents deferred for those reads are skipped with a warning. A list-entry condition evaluation
+error keeps the entry and emits a diagnostic, so inspect warnings and resulting assets before
+saving. The command never creates or rewrites player configuration value files.
 
 ## In-game editor property categories
 

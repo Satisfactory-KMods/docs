@@ -21,7 +21,7 @@ field and API details, use [Reference](/kdataforge/reference).
 ## Patch mechanics
 
 `type: cdo` is the workhorse document that every other type either resembles or builds on
-internally. These five pages cover the parts that make a patch a patch: what a value looks like,
+internally. These pages cover the parts that make a patch a patch: what a value looks like,
 what an operation does to it, how a target is selected, when a document applies at all, and how
 the pieces fit together in one patch entry.
 
@@ -41,6 +41,11 @@ the pieces fit together in one patch entry.
 - [Patching (type: cdo)](/kdataforge/features/patching-cdo): how a `patches:` entry
   ties target selectors, modifiers, and a `properties:` list together, plus the current snapshot
   and restart boundaries.
+- [Templates & Typed References](/kdataforge/features/templates): typed configuration and
+  game-setting reads, string interpolation, and apply-time reflected property/function reads.
+- [Pack Configuration](/kdataforge/features/pack-configuration): `type: config` definitions,
+  player values, field controls, and when changed settings take effect. For condition syntax, see
+  [Configuration Expressions](/kdataforge/reference/config-expressions).
 
 ## Runtime documents
 
@@ -96,10 +101,10 @@ generated-class identity.
   research trees, registering existing ones, and why a schematic doesn't "point at" a tree the
   way a recipe points at a schematic.
 
-## Sink points, the escape hatch, data assets, and curves
+## Sink points, the escape hatch, data assets, sounds, and curves
 
 These pages round out the type list with a narrow registry document, a general class escape hatch,
-object-instance assets, and Unreal curves.
+object-instance assets, imported audio, and Unreal curves.
 
 - [Sink Points](/kdataforge/features/sinkpoints): setting AWESOME Sink point values
   for items, its registration timing, and why this is separate from Resource Nodes.
@@ -109,9 +114,18 @@ object-instance assets, and Unreal curves.
 - [Data Assets](/kdataforge/features/data-assets): editing every KAPI
   `PrimaryDataAsset` type, creating new instances with `type: dataasset`, loading 2D images with
   `type: asset`, and RefinedR&D (RRDA) integration.
+- [Sounds](/kdataforge/features/sounds): `type: sound` imports pack-relative PCM16 WAV files
+  as audio events for ADA messages and other consumers, including generated Audio settings.
 - [Float and Vector Curves](/kdataforge/features/curves): creating or editing
   `UCurveFloat` and `UCurveVector` assets with key interpolation, tangents, defaults, and
   extrapolation.
+
+## Authoring tools
+
+- [Desktop Editor & LSP](/kdataforge/reference/desktop-editor-lsp): bind exported game data
+  to a project for completions, hover, and diagnostics, or work with schema-only validation.
+- [Reflection Export](/kdataforge/reference/reflection-export): export the game's reflected
+  types, defaults, settings, functions, and texture previews as a `.kdfdata` archive.
 
 :::tip
 Not sure which page you need? If you already know the `type:` value from a YAML file, jump straight
