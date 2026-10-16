@@ -56,6 +56,8 @@ for inspecting and controlling a running instance without editing files:
 | Command                          | Where                               | Effect                                                                                                                                                                                                   |
 | --------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/kdf report`                    | chat                                | Prints the load report: packs, applied documents, ops, warnings, errors                                                                                                                                  |
+| `/kdf reload`                    | chat (host or dedicated-server administrator) | Rescans and reapplies YAML packs in this process after initial loading. Follow with `/kdf report` |
+| `KDF.Reload`                     | console (host/server)                | Same reload operation as `/kdf reload`; logs its summary |
 | `/kdf editor`                    | chat (host)                         | Toggles the in-game editor: browse content, edit properties live, undo/redo, and export changes to YAML                                                                                                  |
 | `KDF.Editor`                     | console                             | Same as `/kdf editor`                                                                                                                                                                                    |
 | `/kdf debug on\|off`             | chat                                | Flips global debug logging (same switch as `KDF.Debug`). Bare `/kdf debug` toggles the current state                                                                                                     |
@@ -85,6 +87,9 @@ patches:
 ```
 
 Start the game. The recipe now smelts twice as fast. Use `/kdf report` in chat to inspect the load
-report. Restart the session after changing YAML files. Prefer a UI? `/kdf editor` opens the in-game
+report. After changing YAML files, run `/kdf reload` on the host (or as a dedicated-server administrator),
+or `KDF.Reload` in the host/server console, then `/kdf report`. Reload is process-local; frozen content
+registrations, irreversible world changes, and explicitly cold or restart-bound data still require
+a session restart. Prefer a UI? `/kdf editor` opens the in-game
 editor with live property editing and YAML export. Before shipping, run
 [Lint Your Pack](/kdataforge/lint-your-pack) to catch static schema errors.

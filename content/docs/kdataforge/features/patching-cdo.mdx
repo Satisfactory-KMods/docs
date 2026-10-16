@@ -7,7 +7,8 @@ sidebar:
 
 This document type runs at the `CDOChanges` stage, after `GameTags`, `Assets`, and `Localization`,
 and before any content-generation stage. Its entries live under the `patches` key as a sequence.
-YAML changes are loaded on the next session start.
+After saving YAML changes, run `/kdf reload` on the host or `KDF.Reload` in the host/server console,
+then `/kdf report` to inspect the new load.
 
 This is the workhorse document type. It edits any reflected property on any class default object
 or object instance in the game: items, recipes, buildings, schematics, research trees, KAPI/RRDA
@@ -124,14 +125,21 @@ Two curated example galleries put all of the above together for real FactoryGame
 
 An unsupported op×type combination, an unresolvable path, or a target that matches nothing all
 produce diagnostics. The specific patch entry is skipped, but the
-rest of the document, and every other document, still applies. Run `/kdf report` after any change
+rest of the document, and every other document, still applies. Reload saved YAML changes, then run `/kdf report`
 to confirm exactly what was patched and see every warning/error in one place.
 
 ## Vanilla snapshots
 
 Before the **first** write to a property path on an object, KDataForge records its original text
-value. The in-game editor uses it for diffing, undo, and changes-only export. The YAML pipeline
-runs once during initialization and exposes no general reload or document-revert operation.
+value. The in-game editor uses it for diffing, undo, and changes-only export. After the initial
+load, `/kdf reload` (or `KDF.Reload`) restores captured reload baselines, clears derived patch state,
+and rescans and reapplies the current YAML pack set. This lets ordinary property edits be tested
+without restarting. Check `/kdf report` afterward, including any baseline-restore warnings.
+
+Reload is process-local and preserves generated object identities, redirect registrations, and
+already-frozen content registry state. Restart for frozen content registrations, irreversible
+world changes, and data explicitly documented as cold or restart-bound. See
+[loading changes](/kdataforge/getting-started#kdf-report-and-loading-changes) for command access.
 
 Runtime actor patches are a separate boundary. They apply operations directly to every matching
 instance and do not preserve player-modified or save-restored values through snapshot comparison.

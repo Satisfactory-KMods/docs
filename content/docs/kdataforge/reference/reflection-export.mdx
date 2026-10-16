@@ -95,6 +95,10 @@ records that choice: `true` pairs with `options.textureSelection: reflectedNonWi
 and `false` with `options.textureSelection: allPortableTextures`. `options.imageMaxDimension` records
 the actual image cap; consumers should read it instead of assuming every export uses 1024.
 
+Current exports containing `options.imageMaxDimension` must include both `options.usedTexturesOnly`
+and `options.textureSelection` with the consistent pairing above. If either selection field is
+present, its partner is required too. Legacy `schemaVersion: 1` exports may omit all three fields.
+
 Exporter attempts to load every previously unloaded registry asset under configured mounts with
 quiet/no-warn flags and bounded batches. Failed loads remain in manifest. Garbage collection runs through
 engine safe points, never directly from ticker-time export code. `--assets` adds indexes for data assets,

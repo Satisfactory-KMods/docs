@@ -1,6 +1,6 @@
 ---
 title: Getting Started
-description: Build the smallest possible pack, confirm it loads, and learn the report, logging, and restart workflow.
+description: Build the smallest possible pack, confirm it loads, and learn the reload, report, and logging workflow.
 sidebar:
   order: 2
 ---
@@ -70,8 +70,11 @@ The `type:` key is optional here. The `.cdo.yml` filename suffix would set the r
 ## `/kdf report` and loading changes
 
 - **`/kdf report`**: prints the load report, showing which packs and documents were found, what was applied, and every diagnostic (see below).
+- **`/kdf reload`**: rescans and reapplies YAML packs in the running host or server process. The host or a dedicated-server administrator can run it from chat; `KDF.Reload` is the host/server console equivalent.
 
-KDataForge loads YAML once during session initialization. After editing a file, restart the session and use `/kdf report` to verify the new load.
+After saving a YAML edit, run `/kdf reload` (or `KDF.Reload`), then `/kdf report` to verify the new load. Reload restores captured property baselines before scanning and applying the current pack set again. It requires the initial load to have completed.
+
+Restart the session for frozen content registrations, irreversible world changes, and data explicitly documented as cold or restart-bound. Reload is process-local: it does not synchronize connected clients.
 
 Prefer clicking over typing? **`/kdf editor`** opens the in-game editor, where you can browse content, edit properties live, and export your changes as ready-made YAML.
 

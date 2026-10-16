@@ -1,6 +1,6 @@
 ---
 title: "Debugging a Pack That Won't Apply"
-description: An ordered, top-to-bottom checklist for "my YAML file doesn't seem to be doing anything." Six checkpoints, from file discovery to session initialization.
+description: An ordered, top-to-bottom checklist for "my YAML file doesn't seem to be doing anything." Six checkpoints, from file discovery to reload verification.
 sidebar:
   order: 8
 ---
@@ -11,9 +11,11 @@ sequence you follow **top to bottom** the moment something you wrote just isn't 
 don't yet know why. Each step below rules out exactly one stage of the pipeline before you move to
 the next, so don't skip ahead.
 
-The six steps mirror the real pipeline, in the real order it runs
+The first five steps follow the pipeline
 (`Source/KDataForge/Private/Subsystems/KDFSubsystem.cpp`): scan → parse/type-detect → conditions →
-validate → apply → restart scope when testing YAML changes.
+validate → apply. Step 6 checks reload scope when testing YAML changes. After each saved edit,
+run `/kdf reload` on the host or `KDF.Reload` in the host/server console, then `/kdf report`
+before comparing diagnostics or counts.
 
 ## Step 1: is the file even being scanned?
 
@@ -104,9 +106,10 @@ There is currently no player-facing switch that surfaces `Info` diagnostics: no 
 returns a fail reason string that the framework then buries at Info severity.
 
 The only reliable way to catch this today is to **temporarily delete or comment out the document's
-`conditions:` block and restart the session.** If your document suddenly counts toward "document(s)
+`conditions:` block, save, and reload with `/kdf reload` or `KDF.Reload`, then inspect `/kdf report`.**
+If your document suddenly counts toward "document(s)
 applied" (or your op's debug line from [Step 5](#step-5-did-the-specific-op-apply) appears) with the
-block removed, the condition was the culprit. Put the block back and check it against
+block removed, the condition was the culprit. Put the block back, reload again, and check it against
 [Conditions & Packs](/kdataforge/features/conditions-and-packs) for exact key names, mod ref
 spelling, version-range syntax (`gameVersion`/`hasMod`/`modVersion` all use SML semver ranges), and
 array grouping (`ifNotMatch` negates only its containing object), and `conditionBehaivor` spelling/
@@ -159,6 +162,8 @@ still looks vanilla, turn on debug logging:
 - **Global**: console variable `KDF.Debug 1` (or launch with `-KDFDebug`), or `/kdf debug on` from
   chat. This also logs ops originating from the in-game editor.
 
+With logging enabled, run `/kdf reload` or `KDF.Reload`, then `/kdf report` to inspect the new pass.
+
 Every **successfully applied** op logs exactly one line at Log verbosity from
 `FKDFPatchUtil::LogAppliedOp`:
 
@@ -186,11 +191,16 @@ There are two outcomes here.
 The log lives at `%LOCALAPPDATA%\FactoryGame\Saved\Logs\FactoryGame.log` in a packaged game. Search
 for `[KDF DEBUG]`.
 
-## Step 6: did you restart the session?
+## Step 6: did you reload the saved changes?
 
-KDataForge performs its full scan and apply pass once at GameInstance `INITIALIZATION`. Save the file, restart the game or
-dedicated-server session, then inspect `/kdf report`. No document type is re-read while a session
-is already running.
+KDataForge first loads at GameInstance `INITIALIZATION`. After that load completes, save the file,
+run `/kdf reload` as the host or a dedicated-server administrator, or use `KDF.Reload` in the
+host/server console. Then inspect `/kdf report`. Reload restores captured property baselines,
+rescans YAML, and reruns the apply stages; check its summary for baseline-restore warnings too.
+
+Reload affects only the host/server process where it runs. It does not update connected clients.
+Restart the session for frozen content registrations, irreversible world changes, and data
+explicitly documented as cold or restart-bound.
 
 ## Quick reference
 
@@ -198,10 +208,10 @@ is already running.
 | --------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1: Scanning         | Did the pack/document count in `/kdf report` change at all?                      | Root marker (`DataForge`, `data-editor`, or direct `pack.yml`), depth ≤ 6 from the project root, not nested inside a pruned directory, file extension `.yml`/`.yaml`                                          |
 | 2: Type resolution  | Is there a `[Warning]` about no type / no handler for the type?                  | `type:` key spelling, `<name>.<type>.yml` filename convention, typo in a known type name (remember: the "no handler" warning is deduped to one per type, not one per file)                                    |
-| 3: Conditions       | Does the document have a `conditions:` block at all?                             | Comment it out and a session restart. If the document suddenly applies, the condition (not the report) was hiding the skip. `/kdf report` never shows condition-skips, they're Info-severity and filtered out |
+| 3: Conditions       | Does the document have a `conditions:` block at all?                             | Temporarily comment it out, save, reload, then run `/kdf report`. If the document applies, check the condition. Restore the block and reload again. Condition-skips are Info-severity and filtered out of the report |
 | 4: Validation/Apply | Is there an `[Error]` in `/kdf report`, with or without a line number?           | Line number present means structural (`ValidateDocument`), fix the YAML shape. No line number, naming a path/class, means semantic (`ApplyDocument`), fix the reference                                       |
 | 5: Op-level apply   | Turn on `debug: true` / `KDF.Debug 1`. Does your op's `[KDF DEBUG]` line appear? | Missing entirely means it never reached apply, back to Steps 1 to 4. Present but wrong pre/post means a property/assumption issue, not a pipeline bug                                                         |
-| 6: Session restart  | Did you restart after editing YAML?                                              | KDataForge reads every document type once during session initialization                                                                                                                                       |
+| 6: Reload scope     | Did you reload after saving YAML?                                                | Host/server: `/kdf reload` or `KDF.Reload`, then `/kdf report`. Reload is process-local. Restart for frozen registrations, irreversible world changes, or explicitly cold/restart-bound data |
 
 [Getting Started → Debugging](/kdataforge/getting-started#debugging) covers all three
 debug switches and the log location. Its [report severity table](/kdataforge/getting-started#reading-the-report)
