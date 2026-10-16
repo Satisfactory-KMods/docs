@@ -51,7 +51,9 @@ directory is `FactoryGame/KMods/ReflectionExport/`.
 | `--image-max-dimension N` | Largest exported texture side in pixels, `1` to `4096`; default `1024`. |
 | `--used-textures[=true\|false]` | Select textures referenced by reflected non-widget class defaults; enabled by default. `false` selects all supported, portable texture candidates. |
 | `--pack` | Compatibility no-op; final ZIP is always written. |
-| `--skip-widgets[=true\|false]` | Skip widget Blueprints; enabled by default. |
+| `--skip-widgets` | Skip widget Blueprints; this is the default when omitted. |
+| `--skip-widgets=true` | Skip widget Blueprints, same as `--skip-widgets`. |
+| `--skip-widgets=false` | Include widget Blueprints, same as `--widgets`. |
 | `--widgets` | Shortcut that includes widget Blueprints. |
 | `--budget-ms N` | Game-thread budget per tick; default `8`. |
 | `--batch-size N` | Blueprint load batch size; garbage collection runs between batches. |
