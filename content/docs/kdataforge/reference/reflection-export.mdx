@@ -89,7 +89,14 @@ Selected textures remain uncapped and appear in `indexes/textures.json` with Ass
 exported dimensions, resize state, image path, or explicit failure details. Every successful image is PNG.
 Cooked BC/BC7 data is decoded before writing; GPU readback supplies pixels when cooked CPU data is unavailable.
 Images exceeding the configured cap are proportionally downscaled or use a suitable cooked mip.
-Smaller images keep their dimensions. Unavailable textures remain indexed but produce no placeholder image.
+The cap does not upscale images. Missing or unreadable higher mips can produce smaller output even
+when the source fits within the cap. Source/exported dimensions and `resized` record the result.
+Cooked-decode and GPU-readback fallbacks warn when using a lower mip than requested; the raw
+`platformMipPng` path does not. Unavailable textures remain indexed but produce no placeholder image.
+
+Each encoded PNG is limited to 4 MiB (4,194,304 bytes). Larger previews are not written; their
+texture metadata remains indexed with `status: error`, `errorCode: encodedImageTooLarge`, and an
+increased image error count. Reduce `--image-max-dimension` and rerun the export to retry.
 
 With `--used-textures=false`, selection expands to all supported, portable texture candidates,
 including candidates not referenced by those defaults. The manifest's `options.usedTexturesOnly`
@@ -119,6 +126,57 @@ immutable archive copy, and exposes contents as datapack `reflection` section to
 server. See [Desktop Editor & LSP](/kdataforge/reference/desktop-editor-lsp) for project binding,
 reflection requirements, and schema-only validation. Directory form is useful during
 editor/language-server development.
+
+## Runtime export publication and recovery
+
+The runtime exporter first writes loose files and the ZIP into a sibling directory named
+`.<output-name>.kdf-export-<id>.stage`. Preparation failures leave existing output files unchanged.
+Publication then replaces generated files individually, retiring obsolete generated files and
+publishing the new `.kdfdata` archive last. Do not read, import, edit, or start another export into
+that destination until completion. The whole directory is not replaced atomically.
+
+Before publication, the exporter preserves affected existing files under
+`.<output-name>.kdf-export-<id>.stage.backup/previous/`. Its `recovery.json` records the absolute
+`destination`, new `archive` filename, `previousFiles`, `newFiles`, and `newDirectories`. Paths in
+these three lists are relative to `destination`. A publication error attempts rollback and reports
+whether it completed; the recovery directory remains available even after a completed rollback.
+
+After every new file, including the archive, has been published, the exporter writes a sibling
+`.<output-name>.kdf-export-<id>.stage.backup.committed` file containing the same journal. It removes
+that marker only after removing the backup directory. A retained marker therefore records completed
+publication, possibly with interrupted cleanup; it does not prove artifact validity or that every
+backup file remains available. If writing the marker fails, publication can still succeed with a
+warning and retained recovery directory. **An absent marker does not prove that publication failed.**
+
+A process crash can interrupt publication or rollback. There is no automatic restart recovery.
+If output is incomplete or its state is uncertain:
+
+1. Stop the exporting game process and any other writer to that destination. Copy the destination,
+   matching staging directory, recovery directory, and commit marker, if present, to a safe location.
+   Keep these copies unchanged until recovery is verified.
+2. Inspect the journal and logs to identify the transaction and its exact destination. Confirm that
+   every listed relative path stays inside that destination and that no affected path traverses a
+   symlink, junction, reparse point, or nested mount. Do not combine journals from different exports.
+3. If a commit marker exists, validate the published output first (see [Validation](#validation)).
+   A valid completed export needs cleanup only. Without a marker, also check logs and validate before
+   deciding to roll back: the marker write itself may have failed after successful publication.
+4. To restore the previous files, first check that **every** `previousFiles` entry exists under
+   `backup/previous/`. If any is missing, stop; interrupted cleanup may have removed part of the
+   backup. Recover from the safe copies or another known-good export instead of using a partial backup.
+5. Remove only the destination files listed in `newFiles`, if present. Remove only empty directories
+   listed in `newDirectories`, deepest first; preserve directories containing other files. Copy each
+   `previousFiles` entry from `backup/previous/` back to the same relative destination path, creating
+   parent directories as needed and overwriting the affected file. Restore any previous `.kdfdata`
+   archive last. **Copy**, rather than move, so recovery sources stay intact.
+6. Check restored files against the saved `previous/` bytes and verify that `newFiles` are absent.
+   Validate a restored complete export with both validators below. If no previous complete export
+   existed, verify the restored prior state and generate a fresh export into a new empty directory.
+   Retain the journals, staging files, backup, marker, and safe copies until these checks succeed.
+
+These names belong to **runtime export**. The metadata-merge commandlet uses separate
+`.<output-name>.kdf-merge-<id>.stage` and `.backup` sibling directories and directory-move recovery,
+explained under [Editor Metadata Supplement](#editor-metadata-supplement). Do not apply runtime
+`recovery.json` steps to a metadata-merge backup.
 
 ## Functions
 
@@ -268,12 +326,20 @@ Run both validators after export completes:
 | Validator | Checks |
 | --- | --- |
 | In-game `KDF.ValidateReflection [--out <dir>]` | Required live FactoryGame reflection shapes, authored user-struct member names, and sampled default `ExportText`/`ImportText` round trips (up to three per property kind). Checks required file presence, exactly one `.kdfdata` file, the `FGUnlockRecipe` Blueprint mapping, and basic settings, icon, and cold-property index structure when present. |
-| Python `validate_reflection_export.py <directory>` | Exported reflection contracts and records against the emitted draft 2020-12 schema; texture PNG integrity, dimensions, selection options, image/index consistency, and supported optional index/catalog checks. Requires exactly one ISO-named `.kdfdata` ZIP, sorted entries, valid ZIP CRCs, and matching loose/packed filenames and file bytes (excluding `.kdfdata` and `.tmp` files from parity). |
+| Python `validate_reflection_export.py <directory>` | Exported reflection contracts and records against the emitted draft 2020-12 schema; texture PNG integrity, dimensions, selection options, image/index consistency, and supported optional index/catalog checks. Requires exactly one ISO-named `.kdfdata` ZIP, sorted entries, valid ZIP CRCs, every generated file in the ZIP, and byte-for-byte agreement between each packed entry and its loose file. Unrelated regular custom files outside `images/` may remain outside the archive. Also checks numeric integer `schemaVersion: 1` and mirrors the editor's archive inspection gates: source archive at most 2 GiB, at most 20,000 entries, at most 4 GiB expanded, `manifest.json` at most 1 MiB, and each PNG within the 4 MiB preview limit. |
+
+ZIP entries and indexed image paths must use safe relative paths contained within the export
+directory; traversal paths are rejected. The Python validator rejects symlinks and Windows reparse
+points anywhere in the loose export tree, including unrelated custom entries. Regular custom files
+outside `images/` remain permitted outside the generated archive.
 
 Native acceptance PASS does not verify ZIP contents, loose/packed parity, image integrity, or
-schema conformance. Use the Python validator before distributing or importing an artifact. It
-reads an export directory containing loose files and its `.kdfdata` archive; a standalone archive
-must first be extracted into a directory alongside that archive.
+schema conformance. Use the Python artifact/package validator before distributing or importing an
+artifact. The editor can compact source archives larger than 512 MiB and rejects installed output
+that still exceeds its 512 MiB cache cap. Python PASS does not predict compacted-cache success or
+prove every desktop editor import gate. Confirm acceptance through **Import game data** in the desktop
+editor. The Python validator reads an export directory containing loose files and its
+`.kdfdata` archive; a standalone archive must first be extracted into a directory alongside that archive.
 
 Install Python dependency and validate one export from the modding workspace:
 
