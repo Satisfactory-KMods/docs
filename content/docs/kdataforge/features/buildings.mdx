@@ -62,7 +62,8 @@ FactoryGame splits "the thing in your build menu" (`UFGBuildingDescriptor`, what
 generates) from "the thing placed in the world" (`AFGBuildable*`, the actor). Parenting a
 `building` entry must be a descriptor. `Desc_StorageContainerMk1` is an `FGBuildingDescriptor` whose
 `mBuildableClass` points at the `Build_StorageContainerMk1` actor, so the generated descriptor places
-that same actor. Giving the actor path (`Build_*_C`) as `parent:` is rejected by the base-class check.
+that same actor. Giving the actor path (`Build_*_C`) as `parent:` is an error: `kdf lint` reports it and
+suggests the matching `Desc_*_C`, and the game refuses the entry when the pack loads.
 Your `mDisplayName` and `mDescription` overrides change the build-menu entry only. Actor-only
 properties such as `mInventorySizeX` belong to the actor (`FGBuildableStorage`) and are not valid on a
 descriptor. You're not generating a new `AFGBuildable` subclass, and for a simple variant you never

@@ -204,6 +204,20 @@ Merge records editor and game build per field and rebuilds mandatory ISO-named `
 `-runtime` and `-out` directories must not overlap: they cannot be equal, and neither may contain the
 other. The `-supplement` file must be outside the `-out` directory, especially when using `-force`,
 which replaces an existing merge output directory. These path checks also apply without `-force`.
+
+On Windows and Linux, checks compare normalized paths and resolved physical paths, so symlink or
+junction aliases cannot bypass either restriction. Subsequent merge reads and writes use those
+resolved paths. The runtime directory and supplement file must exist. A new output path may have
+missing parent directories: the commandlet resolves its nearest existing directory ancestor and
+appends the missing components. Empty, inaccessible, dangling, or otherwise unresolvable paths
+are rejected before an existing output is deleted. Unsupported platforms reject the merge.
+
+Before `-force` replaces an existing output directory, the commandlet inspects its contents
+without following link targets. Any nested symlink or Windows reparse point blocks replacement,
+even if its target is unrelated to the inputs. Unreadable entries, failed directory enumeration,
+or more than 1,000,000 entries also block replacement before deletion. Remove those entries or
+choose a new output directory, then retry.
+
 No Python merge script is packaged into mod or archive.
 
 For full file/schema checks and deterministic comparison of two exports:

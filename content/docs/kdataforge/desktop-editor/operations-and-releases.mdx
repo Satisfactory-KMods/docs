@@ -40,6 +40,17 @@ verified before an explicit install. If no signed feed is configured, the page r
 as disabled. **Recovery** lists unsaved snapshots, compares one with disk, and lets you restore
 or discard it. Review the disk comparison before replacing current content.
 
+For the same project root and normalized file path, Recovery shows the newest local or native
+snapshot; native wins equal timestamps. Refresh keeps that file selected when a newer snapshot
+replaces its ID. Restoring targets the snapshot's own file and its unsaved editor buffer; review
+the recovered text before saving. It does not silently write disk. A changed disk baseline is
+flagged as a conflict. A missing, mismatched, or unreadable snapshot reports an error; if the disk
+version opens instead, it is not a successful recovery.
+
+Discard requires confirmation. For the active project, it removes local and native recovery
+copies for that file; a native failure keeps the local copy and reports the error. If a focused
+snapshot row disappears, focus moves to the selected surviving row or the empty-state heading.
+
 ## Prepare and publish a mod
 
 For one pack, use **Pack manager → Export .zip**; see

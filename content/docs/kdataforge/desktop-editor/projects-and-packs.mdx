@@ -30,10 +30,21 @@ problems. The pack list shows priority order. Select a pack to inspect these tab
 
 | Tab | Use |
 | --- | --- |
-| **Manifest** | Edit `pack.yml` fields, including **Description** and **Icon**, and save them. |
-| **Documents** | Open YAML files belonging to the selected pack, including its `*.config.yml` configuration definitions. |
-| **Dependencies** | Inspect pack dependencies and required game mods. |
-| **Redirects** | Inspect generated-ID redirects already present in the manifest. |
+| **Manifest** | Edit ref, name, version, description, priority, and enabled state. |
+| **Conditions** | Edit pack conditions and condition behavior. |
+| **Contributors** | Edit contributor entries. |
+| **Icon** | Set the pack icon. |
+| **Debug** | Set the pack debug flag. |
+| **Documents** | Edit pack files inline, including YAML and `*.config.yml` configuration definitions. |
+| **Dependencies** | Edit pack dependencies and inspect required game mods. |
+| **Redirects** | Edit generated-ID redirects within the pack. |
+| **pack.yml** | Edit the raw manifest YAML. |
+
+Manifest sections are separate tabs with one shared draft. Moving between them preserves edits.
+Choose **Review exact text before save** to compare **Loaded text** with **Proposed**, then
+**Save manifest** to write the draft or **Revert draft** to restore the loaded text. External
+changes are checked before saving. Changing the persistent ref requires acknowledging that
+existing saves can break; redirects within a pack cannot repair a ref change.
 
 **New pack** creates a new ref. **Duplicate** copies an existing pack; review copied generated IDs
 before enabling it. The list switch writes `enabled` to `pack.yml`. Save or discard unsaved manifest
@@ -47,6 +58,33 @@ or an object path that starts with `/`. A missing file, a path that leaves the p
 unsupported format or a symlink out of the pack is reported as `pack.icon-missing`,
 `pack.icon-escape`, `pack.icon-format` or `pack.icon-symlink`. See
 [Pack Configuration](/kdataforge/features/pack-configuration#pack-name-description-and-icon).
+
+### Edit pack documents inline
+
+Select a `.yml` or `.yaml` file in **Documents** to use the inline Monaco editor. It opens the
+file's actual native URI and shares its unsaved buffer with the full code editor. Existing dirty
+text appears when you open the file. Typing updates that buffer in memory; **Save** (`Ctrl+S`)
+writes the file explicitly. **Open file in editor** transfers the latest text to the full editor
+and leaves unsaved changes dirty.
+
+**Revert** restores the text loaded when the inline document was opened, including any unsaved
+native edits already present at that point. It does not save the file. After a successful **Save**,
+the saved text becomes the new **Revert** baseline. When leaving inline edits
+unsaved, choose **Leave** to keep them in the native editor; use **Revert** first to discard your
+inline changes.
+
+If another editor changes the buffer or disk content no longer matches the saved baseline,
+the editor retains your local draft and blocks conflicting operations.
+Compare your changes before choosing **Reload from editor**. Language suggestions and live
+diagnostics depend on the existing language-server module and its readiness; disabling it still
+allows text editing. See [Editing and Validation](/kdataforge/desktop-editor/editing-and-validation).
+
+Switching the project, pack, or datapack ends the inline editing session and clears its selection.
+Unsaved text already synchronized to the native buffer stays there; an ordinary confirmed
+**Leave** flushes your latest edits before switching.
+
+Other supported text files (`json`, `txt`, `md`, `toml`, `ini`, `cfg`, and `csv`) keep their simple
+inline text editor and guarded Save workflow. They do not use the YAML language bridge.
 
 ### Pack configuration documents
 

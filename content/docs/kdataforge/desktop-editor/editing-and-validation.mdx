@@ -35,6 +35,23 @@ Both editors detect when the disk version changes after a file was opened. Compa
 before overwriting it. A recoverable unsaved buffer appears under **Recovery**; see
 [Operations and releases](/kdataforge/desktop-editor/operations-and-releases).
 
+When opening a Visual editor link or switching projects, the requested file is checked against
+the current project's refreshed file list. A missing file or folder target falls back to the
+first YAML file; a project without YAML opens no document. Project-bound Code and Visual views
+accept existing files only when their resolved physical paths stay inside the project root.
+Symlinks and junctions pointing inside that root are supported; outside or unresolved targets
+are refused.
+
+**Pack manager → Documents** also edits YAML inline with Monaco, using the file's actual native
+URI and the same dirty buffer as the full editor. **Save** writes explicitly; **Revert** returns
+to the current loaded baseline, which advances to the saved text after a successful **Save**.
+**Open file in editor** keeps the latest changes
+unsaved. See [Projects and Packs](/kdataforge/desktop-editor/projects-and-packs#edit-pack-documents-inline)
+for conflict handling and other supported text files. Inline YAML reuses completion, hover,
+signature help, definitions, semantic highlighting, and diagnostics from the existing language
+server. These results require the enabled, ready language-server module. Text editing remains
+available when it is disabled; the enabled linter module provides explicit lint runs.
+
 ## Native code suggestions
 
 In the standalone Code-OSS editor, `Ctrl+Space` opens live suggestions at the cursor. A
@@ -83,6 +100,23 @@ path does not display the root property's type as its leaf type. A real lint err
 an inline quick-fix button; for example `multipy` can offer **Change to multiply**. The
 valid `multiply` operation is supported.
 
+### Browse a class reference
+
+In the full native code editor, a **Catalog** chip appears beside supported class-reference
+values when Catalog and the language server are enabled and current metadata is available.
+This includes scalar or list `target` values, `ofClass`, `allAssetsOfClass`, generated-class
+`parent` values, and reflected class properties such as `mProducedIn` array entries.
+Click the chip to browse classes appropriate to that value and review insertion. `Ctrl+Space`
+uses the same class constraints for completion; inserting a match replaces the current value.
+Moving the cursor alone does not request suggestions.
+
+The destination determines the class family: a building's inheritance parent uses a building
+descriptor, while a recipe's `mProducedIn` uses a buildable actor. Abstract inheritance parents
+remain selectable; fields requiring concrete classes exclude them. Missing or conflicting
+reflection metadata does not create a guessed picker or class constraint. Bind the correct
+datapack before relying on these results. The Pack Documents inline view does not promise
+Catalog chips, rename, or code actions.
+
 ## Validate
 
 For [Wwise sounds](/kdataforge/features/sounds), create a `sound` document or use the **Wwise sound**
@@ -95,6 +129,11 @@ participate in definition lookup and renaming, including ADA's `mAudioEvent` ref
 The language server reports live diagnostics while editing. Open **Problems** to filter by file,
 active pack, severity, source, or search text. Group results by file, code, or severity; select a
 diagnostic to jump to its source. Supported quick fixes appear on the selected diagnostic.
+
+**Quick fix** in Problems requests a fix for the selected diagnostic and previews the exact YAML
+change. Choose **Apply** to update the buffer, then save explicitly. Changing the selected
+diagnostic cancels a pending fix or review. A changed project, file, or source text invalidates
+the preview; run **Quick fix** again. Fixes touching multiple files require review in Code editor.
 
 Use **Run lint** in **Problems** for a complete project check. You can restart the language server
 there and export the displayed diagnostics as text, JSON, GitHub annotations, or SARIF. Set lint
