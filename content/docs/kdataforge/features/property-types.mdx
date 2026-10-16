@@ -80,6 +80,13 @@ garbage at every use site that reads `mStackSize`. Always use the value name unl
 know the ordinal you want.
 :::
 
+Enums marked `Bitflags` also constrain enum-backed properties: a numeric value must contain only
+declared bits, and a named value must resolve to one enum entry accepted by that same check. This
+remains the enum import path: use one name or one numeric value. Pipe-joined names, name sequences,
+and bitmask `append`/`prepend`/`remove` operations apply to plain integer properties with
+`BitmaskEnum` metadata, not enum-backed properties. Reflection exports `bitmaskMode` for these
+records so editor validation can derive declared bits from exact enum option values.
+
 ## bitmask (integer properties with `BitmaskEnum` metadata)
 
 Bitmask properties store several enum flags in one integer. Use a scalar for one flag and a YAML

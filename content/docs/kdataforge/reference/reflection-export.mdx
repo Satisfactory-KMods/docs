@@ -205,14 +205,17 @@ Property records use the same shape as class properties, including `authoredName
 
 For integer properties with `Bitmask` and `BitmaskEnum` metadata, the exporter resolves only
 already-loaded enums. A full enum path must identify a loaded enum; a short name must uniquely
-match one. A resolved enum supplies its path, named `options`, `bitflags: true`, bitmask operations,
-and the named `kdf.valueForm`. For a resolved integer bitmask whose enum has `Bitflags` metadata,
-`bitmaskMode` is `maskValues` when `UseEnumValuesAsMaskValuesInEditor` metadata is present, and
-`bitIndices` otherwise. Consumers use that mode with exact option values to derive declared bits
-for raw `set` masks; without the mode, editor validation falls back to property-width checks.
-Missing metadata, an unloaded enum, or an ambiguous short name keeps the numeric fallback. Export
-does not load an enum merely to resolve this metadata. Runtime integer bitmask support also requires
-`WITH_METADATA` and retained property metadata; exported hints do not restore stripped runtime metadata.
+match one. A resolved enum supplies its path, named `options`, and `bitflags` metadata. Plain
+integer bitmask properties also advertise bitmask operations and the named `kdf.valueForm`. A
+resolved enum with `Bitflags` metadata supplies
+`bitmaskMode` on both integer-bitmask and enum-backed property records: `maskValues` when
+`UseEnumValuesAsMaskValuesInEditor` metadata is present, and `bitIndices` otherwise. Consumers use
+that mode and exact option values to derive declared bits. Enum-backed properties keep enum import
+syntax; they do not get the pipe/sequence flag syntax or bitmask mutation operations used by plain
+integer `BitmaskEnum` properties. Without `bitmaskMode`, editor validation falls back to
+property-width checks. Missing metadata, an unloaded enum, or an ambiguous short name keeps the
+numeric fallback. Export does not load an enum merely to resolve this metadata. Runtime support
+requires `WITH_METADATA` and retained metadata; exported hints do not restore stripped runtime metadata.
 
 These hints describe available editor choices. Runtime value conversion still follows
 [Property Types](/kdataforge/features/property-types#bitmask-integer-properties-with-bitmaskenum-metadata),

@@ -330,7 +330,11 @@ For bitmasks whose enum has `Bitflags` metadata, available enum metadata disting
 If metadata is stripped or the enum cannot be resolved, conversion falls back to ordinary integer
 rules, including normal signed ranges; named bitmask forms and mutation operations are unavailable.
 Shipping builds must retain that metadata to use these forms. Enum-backed properties follow their
-separate enum conversion path.
+separate enum conversion path: set one enum name or numeric value, with `Bitflags` values limited
+to declared bits. Pipe-joined names, sequences of flag names, and bitmask mutation operations are
+not supported for enum-backed properties. Reflection exports `bitmaskMode` for resolved enums with
+`Bitflags` metadata, including enum-backed property records, so editor validation can check their
+declared bits.
 
 Raw masks are accepted by `set` only; `append`/`prepend` and `remove` require named flags. Raw masks
 must contain only declared bits when the enum has `Bitflags` metadata; otherwise the resulting
