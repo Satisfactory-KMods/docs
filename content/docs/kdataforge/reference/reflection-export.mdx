@@ -212,8 +212,10 @@ resolved enum with `Bitflags` metadata supplies
 `UseEnumValuesAsMaskValuesInEditor` metadata is present, and `bitIndices` otherwise. Consumers use
 that mode and exact option values to derive declared bits. Enum-backed properties keep enum import
 syntax; they do not get the pipe/sequence flag syntax or bitmask mutation operations used by plain
-integer `BitmaskEnum` properties. Without `bitmaskMode`, editor validation falls back to
-property-width checks. Missing metadata, an unloaded enum, or an ambiguous short name keeps the
+integer `BitmaskEnum` properties. Without `bitmaskMode`, enum-backed properties use exact enum
+membership when complete option values are available. For plain integer bitmasks, an absent mode
+limits editor checks; runtime still requires a valid enum result and a value that fits the property.
+Missing metadata, an unloaded enum, or an ambiguous short name keeps the
 numeric fallback. Export does not load an enum merely to resolve this metadata. Runtime support
 requires `WITH_METADATA` and retained metadata; exported hints do not restore stripped runtime metadata.
 

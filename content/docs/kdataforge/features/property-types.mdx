@@ -86,6 +86,8 @@ remains the enum import path: use one name or one numeric value. Pipe-joined nam
 and bitmask `append`/`prepend`/`remove` operations apply to plain integer properties with
 `BitmaskEnum` metadata, not enum-backed properties. Reflection exports `bitmaskMode` for these
 records so editor validation can derive declared bits from exact enum option values.
+Without `Bitflags` metadata, enum-backed values must match a declared enum value, even if the enum
+carries Unreal's flags marker.
 
 ## bitmask (integer properties with `BitmaskEnum` metadata)
 

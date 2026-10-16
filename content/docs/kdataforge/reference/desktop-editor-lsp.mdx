@@ -65,6 +65,11 @@ location. Check language-server status and error details when results stop updat
 effective datapack and its completeness when reflected suggestions are missing. A connected
 server in schema-only mode still provides useful YAML checks.
 
+For enum-backed `Bitflags` properties, completion and Class Info omit named choices that available
+reflection proves invalid. Missing `bitmaskMode`, exact option values, or property width limits those
+checks; suggestions are not proof that every offered value is valid at runtime. Use one enum name
+or numeric value, as described in [Property Types](/kdataforge/features/property-types#enum-typed-enum-class-and-tenumasbyte).
+
 Requests through the desktop language-server bridge time out after 15 seconds. If the same project,
 connection, and server process are still active, the editor sends a best-effort `$/cancelRequest`
 notification for the expired request. Cancellation delivery can fail; the request still reports its
