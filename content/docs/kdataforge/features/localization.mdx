@@ -113,6 +113,9 @@ and compiles by default. To reuse an existing manifest without gathering, reques
 run the normal sync without `-SkipUpload` separately to make those keys available in Tolgee.
 After gathering/exporting, the current native English PO is retained when copying pulled
 translations, so a Tolgee download cannot replace freshly gathered YAML source keys.
+With `-SkipUpload`, only cloud translations matching the current exported source are imported.
+Retired cloud keys are excluded; new or untranslated entries keep the native-language fallback.
+Normal upload sync retains strict source-parity checks.
 
 ### Gather diagnostics
 
