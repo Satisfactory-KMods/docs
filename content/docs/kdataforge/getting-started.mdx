@@ -76,6 +76,10 @@ After saving a YAML edit, run `/kdf reload` (or `KDF.Reload`), then `/kdf report
 
 Restart the session for frozen content registrations, irreversible world changes, and data explicitly documented as cold or restart-bound. Reload is process-local: it does not synchronize connected clients.
 
+When a pack generates [native CDO helper assets](/kdataforge/features/data-assets#native-cdo-helpers-and-blueprint-requirements),
+manual and automatic pack reload are refused before restoring any properties. Restart the game
+after changing, disabling or removing such a pack; its native callbacks and caches cannot be reset live.
+
 Prefer clicking over typing? **`/kdf editor`** opens the in-game editor, where you can browse content, edit properties live, and export your changes as ready-made YAML.
 
 ## Reading the report

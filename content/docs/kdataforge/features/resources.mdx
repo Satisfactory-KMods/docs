@@ -17,13 +17,16 @@ The similar names hide four separate systems:
 | ---------------------------- | ------------------------------------ | ------------------------------------------------------------------------ |
 | Resource definition          | `UFGResourceDescriptor`              | `type: resource` generates a new descriptor class                        |
 | Resource Node removal        | `AFGResourceNodeBase` and subclasses | `type: resourcenode` destroys matches by descriptor and optional node type |
+| Resource Node placement      | `AFGResourceNode` and `AFGNodeMeshActor` | `resourcenode.add` creates/reuses nodes; `replace` changes nearby eligible nodes |
 | Resource Node property patch | `AFGResourceNodeBase` and subclasses | A `cdo` actor patch modifies a node class and all matching instances      |
 | Scanner visibility           | `UFGUnlockScannableResource`         | A schematic `unlocks:` entry registers descriptor and node-type pairs    |
 | AWESOME Sink value           | `AFGResourceSinkSubsystem` data      | `type: sinkpoints` sets item scores and has no node-placement behavior   |
 
 `type: resource` does not spawn, place, move, or remove Resource Node actors. A generated
 descriptor becomes mineable only when a map or another mod assigns it to a compatible node.
-Removal is a separate, destructive capability under `type: resourcenode`.
+Placement and replacement are separate capabilities under
+[`type: resourcenode`](/kdataforge/features/resource-node-placement).
+Its `remove:` list remains a destructive capability.
 
 ## Generate a resource descriptor
 

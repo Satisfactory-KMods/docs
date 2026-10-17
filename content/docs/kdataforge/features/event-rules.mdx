@@ -1,0 +1,118 @@
+---
+title: Event rules
+description: Run bounded server-side actions when a world starts or a schematic is purchased, with optional once-per-save execution.
+sidebar:
+  order: 35
+---
+
+Use `type: eventrule` to connect a gameplay event to a schematic grant or a diagnostic log entry.
+Rules run on the host or dedicated server. Clients do not execute the actions independently;
+schematic changes use the game's existing unlock and replication path.
+
+## First rule
+
+Place this document in a pack YAML file:
+
+```yaml
+type: eventrule
+rules:
+  - id: world-start-log
+    event: worldReady
+    actions:
+      - log: Factory rules are active in this save.
+```
+
+The message appears in the game log once for this pack and save. It does not create a toast or
+player-facing message. `log` is diagnostic text, not localized UI text.
+
+## React to a schematic purchase
+
+```yaml
+type: eventrule
+rules:
+  - id: progression-followup
+    event: schematicPurchased
+    schematic: /Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C
+    actions:
+      - unlockSchematic: /Game/FactoryGame/Schematics/Progression/Schematic_2-3.Schematic_2-3_C
+      - log: Follow-up schematic granted.
+```
+
+Replace the class references with schematics appropriate for your progression. `unlockSchematic`
+grants access without paying its material cost; choose this action only for an intended reward.
+The game must allow the grant when the event occurs. This rule does not bypass a mod's
+`CanGiveAccessToSchematic` restrictions. An already purchased schematic is a successful no-op.
+
+The `schematic` filter is optional. Omitting it listens to every future schematic purchase.
+Schematics bought before the rules subscribed are not replayed. Use `worldReady` with
+`requiresSchematics` when you explicitly want to check progress already stored in a save.
+
+## Conditions and repetition
+
+```yaml
+type: eventrule
+rules:
+  - id: log-existing-progress
+    event: worldReady
+    once: false
+    requiresSchematics:
+      - /Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C
+    actions:
+      - log: Required progression is present at world start.
+```
+
+Every `requiresSchematics` entry must already be purchased when the event is handled. The list is
+an AND condition; an empty or omitted list imposes no condition. A failed condition performs no
+actions and does not mark the rule completed. Conditions are evaluated at events, not every frame.
+
+`once` defaults to `true`: a successful rule's identity is stored in the save. Its identity is the
+pack `ref` plus rule `id`, compared without case. Reloading YAML, changing action contents, moving
+the document, or removing and later restoring the rule does not reset that history. Give an
+intentional new rule a new `id`. Keep a stable pack `ref`.
+
+With `once: false`, the rule may run again on later events. Within one originating event and all
+schematic purchases triggered by its actions, each matching rule is attempted at most once.
+This bounds feedback loops even for repeating rules. A dispatch cascade accepts at most 128
+events; excess nested events are dropped with a warning.
+
+## Fields and limits
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `rules` | Yes | Sequence of 1–256 rules per document. |
+| `id` | Yes | 1–128 ASCII letters, digits, `.`, `_`, or `-`; unique across the pack, ignoring case. |
+| `event` | Yes | Exactly `worldReady` or `schematicPurchased`. |
+| `schematic` | No | Schematic class filter; only valid with `schematicPurchased`. |
+| `once` | No | Boolean, default `true`. |
+| `requiresSchematics` | No | Sequence of up to 64 schematic class references. |
+| `actions` | Yes | Sequence of 1–32 actions. |
+
+Each action is a map containing exactly one key: `unlockSchematic` with a concrete schematic class,
+or `log` with nonblank text up to 2,048 characters. Unknown rule and action fields are errors.
+Field names and event names use the exact case shown above. Class references support the usual
+KDataForge class resolver, including generated content already created by earlier loader stages.
+
+The entire document is rejected if any rule is malformed, a class reference cannot resolve, or
+its rule IDs collide with rules already registered by another document. No actions run while
+loading or dry-running a document; validation and loading only register rules.
+
+## World lifecycle and reload
+
+`worldReady` fires after gameplay actors have begun play and the schematic manager is available.
+It is a world-load event. It does not fire again when YAML reload completes. Therefore a new
+`worldReady` rule added by live reload starts on the next world load. Updated purchase rules
+handle subsequent purchase events immediately after reload; earlier purchases are not replayed.
+
+On world travel or shutdown, subscriptions and pending events are removed. Once-per-save history
+belongs to the save, not the local configuration. On a client, these rules do not produce an
+independent reward or separate completion history.
+
+All schematic grants are checked before any action in a rule executes. If a grant cannot start,
+the rule logs a warning, executes no actions, and remains incomplete. If the game unexpectedly
+rejects a grant after the checks, earlier actions remain applied, later actions stop, and the rule
+remains incomplete. It may retry on a later matching event; already purchased grants are skipped.
+This is not an atomic rollback mechanism. Arrange dependent schematic grants as separate rules
+when the second grant only becomes valid after the first succeeds.
+
+The supported events are world start and schematic purchase. Delivery completion, arbitrary
+function calls, timers, continuous factory scans, and UI popups are not event-rule actions.

@@ -1,6 +1,6 @@
 ---
 title: Operations
-description: What each of the 22 property operations does, which property kinds support it, and one working example apiece.
+description: What each of the 23 property operations does, which property kinds support it, and one working example apiece.
 sidebar:
   order: 3
 ---
@@ -10,7 +10,7 @@ Every entry in a `type: cdo` patch's `properties:` list names a target `path` an
 currently stored at that path. If you leave `op:` out, it defaults to `set`, a plain overwrite.
 That is why most of the simple examples elsewhere in these docs never mention an op at all.
 
-This page walks through all 22 operations the engine recognizes. They are grouped by the kind of
+This page walks through all 23 operations the engine recognizes. They are grouped by the kind of
 property they act on: numeric math and clamping, container mutation for arrays, sets, maps, and
 tag containers, string concatenation, array reordering and deduplication, and cross-property copy
 or move.
@@ -18,6 +18,55 @@ or move.
 See [Patching (type: cdo)](/kdataforge/features/patching-cdo) for the full patch
 structure these entries live inside. See [Property Types](/kdataforge/features/property-types)
 for what each underlying property looks like in YAML.
+
+## Select every gameplay tag container
+
+Use the quoted operation path `'@tagContainers'` to apply the same operation to every
+top-level `FGameplayTagContainer` on each target. Inherited fields are included. With
+`applyToSubclasses: true`, KDF selects fields again for each subclass, including
+additional fields on classes loaded later. An object without matching fields is a no-op.
+
+```yaml
+type: cdo
+patches:
+  - target: /Script/FactoryGame.FGResourceDescriptor
+    applyToSubclasses: true
+    properties:
+      - path: '@tagContainers'
+        op: append
+        value: [KMods.PlannerResource]
+```
+
+Register tags before using them, for example through a `type: gametag` document.
+Supported operations are `set` (also the default), `append`, `prepend`, `remove` and
+`clear`. Tag containers are sets: adding an existing tag does not create duplicates.
+Each selected field gets its own normal snapshot and patch record for rollback.
+Use consecutive `remove` and `append` entries to replace one set of tags with another.
+
+The selector does not recurse into nested structs, objects or arrays and cannot be
+combined with a suffix such as `.Child` or `[0]`. It is only an operation destination,
+not a concrete property path for `where`, `from`, templates or single-property
+read/edit APIs. Use an actual field name in those contexts. Keep quotes: YAML does
+not allow an unquoted scalar starting with `@`.
+
+## append_unique: array
+
+Appends each incoming value only if no equal element is already present. Existing duplicates and
+their order stay unchanged; repeated incoming values are added at most once. This matches a
+MergeUnique-style update without deduplicating the destination array:
+
+```yaml
+- path: mAllowedResourceForms
+  op: append_unique
+  value: [RF_GAS]
+```
+
+For example, `[RF_LIQUID, RF_LIQUID]` becomes `[RF_LIQUID, RF_LIQUID, RF_GAS]`. Applying the same
+operation again leaves it unchanged. `value` accepts one element or a sequence; an empty sequence
+is a successful no-op. Equality uses the reflected element type, including enum, struct and object
+identity. Arrays only: use ordinary `append` for sets/maps. Inline `{class, properties}` subobject
+creation is rejected; reference an existing object or use `append` to create a new instance.
+Malformed operands fail without leaving a partial array edit.
 
 ## set (default): everything
 

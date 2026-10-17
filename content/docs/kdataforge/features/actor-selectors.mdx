@@ -1,0 +1,120 @@
+---
+title: Actor instance selectors
+description: Patch selected live actors by ordinary actor tags, world bounds, and their current production recipe.
+sidebar:
+  order: 8
+---
+
+Use `actorSelector:` inside a `type: cdo` patch to change selected actor instances without changing
+their class defaults. For example, change the power consumption of iron-ingot smelters inside a
+particular factory area while leaving other smelters alone.
+
+The same predicates can accompany an [`actorAction`](/kdataforge/features/targeting#actor-lifecycle-actions)
+to destroy or dismantle selected actors instead of writing properties. Omit `properties` in that
+case. Predicates remain server-only, even though unfiltered lifecycle actions also support local
+non-replicated client actors.
+
+```yaml
+type: cdo
+patches:
+  - target: /Script/FactoryGame.FGBuildableManufacturer
+    applyToSubclasses: true
+    applyToSpawnedActors: true
+    actorSelector:
+      sphere:
+        center: [120000, -40000, 15000]
+        radius: 25000
+      currentRecipe: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      - path: mPowerConsumption
+        op: multiply
+        value: 0.75
+```
+
+Replace the bounds with coordinates from your world. Coordinates and distances use Unreal world
+centimetres: `100` is one metre. The selector checks the actor origin, not its mesh or collision box.
+Use properties available on the target class in your game's reflection data. Property operations
+have the same constraints as ordinary CDO patches; changing a property does not automatically call
+a machine-specific setter or rebuild derived state.
+
+## Fields and matching
+
+At least one selector field is required. Every supplied field must match.
+
+| Field | Accepted value | Match |
+| --- | --- | --- |
+| `tags` | Non-empty string or non-empty list of non-empty strings | Actor has every listed ordinary `AActor.Tags` tag. |
+| `sphere` | Map with finite `center: [x, y, z]` and finite positive `radius` | Actor origin lies inside or on the sphere. |
+| `box` | Map with finite `min: [x, y, z]` and `max: [x, y, z]` | Actor origin lies inside or on the axis-aligned box. Each minimum must be smaller than its maximum. |
+| `currentRecipe` | Recipe class reference or non-empty list of recipe classes | Actor's current recipe equals any listed class. Subclasses do not match automatically. |
+
+`tags` uses ordinary actor tags, not gameplay tags. Tags must already exist on the instance; the
+selector does not add them. Tag names follow Unreal `FName` matching. Empty entries and `None` are
+rejected. Recipe references must resolve to `FGRecipe` subclasses. Actors without a compatible
+`mCurrentRecipe` class property, or without a selected recipe, do not match `currentRecipe`.
+
+Recipe classes must be available when the entry registers. If another document generates the
+recipe during this same load, add `deferOneGameTick: true` beside `applyToSpawnedActors: true`.
+This delays recipe resolution until after content generation, then visits existing actors too.
+
+This patch requires both actor tags and a box match:
+
+```yaml
+type: cdo
+patches:
+  - target: /Script/FactoryGame.FGBuildableManufacturer
+    applyToSubclasses: true
+    applyToSpawnedActors: true
+    actorSelector:
+      tags: [FactoryNorth, PowerBudget]
+      box:
+        min: [100000, -50000, 0]
+        max: [140000, -10000, 30000]
+    properties:
+      - path: mPowerConsumption
+        value: 2
+```
+
+## Required patch settings
+
+- `target:` must resolve to an actor class, or a non-empty list of actor classes. Direct object and
+  asset targets are rejected. All targets must resolve before the entry is registered.
+- `applyToSpawnedActors: true` is required.
+- `applyToSubclasses` defaults to `false`; enable it when targeting a native base class.
+- `properties:` must contain the operations to apply.
+- `allAssetsOfClass`, `ofClass`, `matchAssets`, `tagProperty`, and the CDO/asset filters cannot be
+  combined with `actorSelector`. Use separate patch entries for CDO changes.
+- Unknown selector and bounds fields, malformed vectors, non-finite numbers, empty lists, and
+  invalid bounds are rejected. Inspect `/kdf report` for diagnostics.
+
+## When changes apply
+
+Selectors run for actors already present when the world starts, actors spawned afterwards, and
+actors present after `/kdf reload`. Instance matching waits until the actor has begun play, so
+construction and save restoration finish before tags, location, and recipe are read.
+
+This is a lifecycle selector, not continuous monitoring. Moving an actor into a region, adding a
+tag, or selecting a different recipe later does not automatically apply or remove a patch.
+Reload to re-evaluate existing actors. A freshly built machine without a selected recipe cannot
+match a recipe selector at spawn; select the recipe, then reload.
+
+Each matching entry is applied at most once per actor between reloads. Repeated visits do not
+compound `multiply`, `append`, or similar operations. Different entries can still apply to the
+same actor, in pack/document order. Reload restores KDataForge's captured property baselines
+before matching and applying the current entries again. Removing an entry therefore restores
+its captured values on surviving actors during reload; this can also overwrite gameplay changes
+made to those same properties since the snapshot.
+
+If `deferOneGameTick: true` is present, deferred registration also visits existing actors without
+repeating entries already applied to them. Starting another reload cancels deferred work from
+the previous load, so a removed or edited entry cannot run afterwards from an old queue.
+
+## Multiplayer
+
+Selected actor operations run on the authoritative host or dedicated server. Clients receive
+changes only through replication already provided by the target actor/property. A selector does
+not make an unreplicated property replicate or add a client RPC. Use identical packs on host and
+clients, and verify the chosen property in multiplayer when its client presentation matters.
+
+See [Targeting](/kdataforge/features/targeting) for class and asset selection, and
+[Operations](/kdataforge/features/operations) for the property-operation syntax.

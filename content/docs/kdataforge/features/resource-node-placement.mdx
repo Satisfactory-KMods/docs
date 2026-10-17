@@ -1,0 +1,73 @@
+---
+title: Resource node placement and replacement
+description: Add ordinary resource nodes or safely reuse nearby nodes with range and overlap checks.
+---
+
+`type: resourcenode` supports `add`, `replace`, and the existing `remove` rules. Positions and distances use **Unreal centimetres**. Coordinates are world coordinates; rotation order is pitch, yaw, roll in degrees.
+
+```yaml
+type: resourcenode
+add:
+  - id: northern-iron
+    resource: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
+    position: [10000, 20000, 1200]
+    purity: Pure
+    checkRange: 500
+    reuseExisting: true
+    allowToMove: true
+    preventOverlap: true
+    overlapClass: /Script/FactoryGame.FGResourceNodeBase
+replace:
+  - id: nearby-copper
+    resource: /Game/FactoryGame/Resource/RawResources/OreCopper/Desc_OreCopper.Desc_OreCopper_C
+    fromResource: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
+    position: [30000, 20000, 1200]
+    checkRange: 500
+    allowToMove: false
+    purity: Normal
+```
+
+Use stable, unique `id` values across all `add` and `replace` entries in a pack. Identity combines pack reference and entry ID. Changing either creates a different placement.
+
+## Adding nodes
+
+`add` first looks for a nearby ordinary node when `reuseExisting: true`. A matching node is updated in place. Otherwise KDataForge creates an infinite ordinary node with replicated resource and purity, using the game's resource mesh/decal data. Every added node owns a separate actual `AFGNodeMeshActor`; each peer creates its local mesh actor and links it to the resource node. Use descriptors with suitable node visuals. Existing extractor restrictions still apply; adding a node does not automatically grant scanner unlocks or permit new resources in an extractor.
+
+| Field | Default | Meaning |
+| --- | --- | --- |
+| `id` | Required | Stable identity, unique within pack. |
+| `resource` | Required | Resource descriptor class. |
+| `position` | Required | Three finite coordinates `[x, y, z]`. |
+| `rotation` | `[0, 0, 0]` | Finite `[pitch, yaw, roll]`. |
+| `purity` | `Normal` for additions | `Impure`, `Normal`, or `Pure`. Replacement/reuse preserves existing purity when omitted from `replace`. |
+| `checkRange` | `500` | Search and optional overlap radius. Greater than zero, at most `100000` cm. |
+| `reuseExisting` | `true` | For `add`, reuse nearest ordinary node instead of creating a duplicate. |
+| `allowToMove` | `true` | Move a reused/replaced node and its linked mesh to requested transform. |
+| `preventOverlap` | `false` | For newly created nodes, reject location when an actor of `overlapClass` is in range. |
+| `overlapClass` | `/Script/FactoryGame.FGResourceNodeBase` | Actor class for overlap prevention. |
+| `fromResource` | Any | Restrict replacement/reuse selection to an existing resource descriptor. |
+| `mesh` | Resource default | Optional cooked `UStaticMesh` asset path. |
+| `material` | Resource default | Optional material/material-instance asset path overriding slot 0. Mutually exclusive with `materials`. |
+| `materials` | Resource defaults | Optional list of up to 64 material asset paths or `null`, indexed by material slot. `null` clears that slot override. |
+
+Range checks follow the KBFL spawner pattern: reuse an existing node first, then optionally check whether the new spawn area is free. Overlap prevention uses collision overlaps plus a distance fallback for actors without suitable collision. KDataForge chooses nearest ordinary node deterministically; equal distances use actor path order. It does not remove unrelated nodes outside configured locations.
+
+## Replacing nodes
+
+`replace` requires an existing ordinary node within `checkRange`. It updates that node in place; it never deletes the node or transfers an extractor to another actor. Linked mesh/materials update on every peer. If no mesh actor exists, KDataForge creates and links an `AFGNodeMeshActor`. No match means no node is created. Streamed-in nodes are checked when their level or actor becomes available.
+
+`radius` is accepted as a replacement-only alias for `checkRange`. Do not provide both. `reuseExisting`, `preventOverlap`, and `overlapClass` control additions; they do not change explicit replacement selection.
+
+Occupied nodes and nodes with unresolved extractor links are preserved. Nodes with saved resource or purity overrides are also preserved: these include nodes modified by the game's resource randomization. Such targets produce a warning. Configure placement on a world without randomized overrides, or use `add` with an unoccupied location and `reuseExisting: false`.
+
+Fracking cores, satellites, geysers, and resource deposits cannot be created or replaced by these fields. The existing `remove` syntax retains its own node-type filters and occupancy options.
+
+## Reload, saves, and multiplayer
+
+Newly created nodes are saved with their pack/entry identity and are reused on later loads. Repeated loading does not intentionally create duplicate nodes. Removing an addition retains its occupied node. Unoccupied obsolete additions are removed at the next world load before the game's node manager initializes; hot reload retains them until then.
+
+For an unoccupied reused/replaced node, hot reload restores its previous descriptor, purity, transform, and linked mesh before applying new rules. If an extractor occupies that node, restoration is deferred; a warning explains why it remains unchanged. Replacement ownership and original descriptor, purity, transform, mesh, and materials are stored in a server-side save record. Resource/purity overrides persist and replicate. Reloading the same rule can restore its owned replacement even when an extractor was installed afterwards; that extractor is never moved. Removing or changing the rule restores original values when the node is unoccupied. Keep KDataForge installed while removing a replacement pack so its saved restoration record can be processed.
+
+New actors spawn only on authority and replicate their initialization to clients. Every peer must load the same pack for replacement of existing level nodes and local mesh/scanner updates. This feature does not distribute pack files or provide a pack checksum handshake. Scanner caches and radar scans refresh after placement processing; standard research controls whether a resource can be selected in the scanner.
+
+Avoid combining contradictory purge and placement rules for the same resource. Review warnings after changing IDs, moving occupied locations, or editing packs used by an existing save.

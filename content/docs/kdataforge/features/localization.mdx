@@ -1,9 +1,144 @@
 ---
-title: 'Type: localization'
-description: Runtime text entries per namespace and culture, overriding existing texts by source string, and culture matching.
+title: 'Localization and compiled translations'
+description: Gather keyed YAML texts through the Unreal Localization Dashboard, compile mod translations, or inject runtime translations per culture.
 sidebar:
   order: 8
 ---
+
+KDataForge supports both the standard Unreal `.po` / `.locres` workflow for keyed YAML text and
+runtime translation documents (`type: localization`).
+
+## Compile YAML texts with the Localization Dashboard
+
+Use this workflow when a mod already has a Localization Target and you want YAML-authored names,
+descriptions, or other keyed `FText` values included in its normal translation pipeline:
+
+```yaml
+type: cdo
+conditions:
+  hasMod: [SatisfactoryPlus, KLib]
+patches:
+  - target: /KLib/Assets/Buildings/PressureRegulatorValve/Build_PressureRegulatorValve.Build_PressureRegulatorValve_C
+    properties:
+      - path: mDisplayName
+        value:
+          key: 895CFBF74588721183546EBD628AA06D
+          ns: ST_Klib
+          source: Pressure Trigger Valve
+```
+
+The gather integration preserves `ns`, `key`, and the decoded `source` string, including line breaks,
+quotes, backslashes, Unicode, `{VarName}` placeholders, and literal percent characters. Keep these
+fields literal; the gather does not evaluate templates or execute runtime patches. A plain scalar
+`value: Pressure Trigger Valve` has no stable localization key and is not gathered by this integration.
+An omitted `ns` uses an empty namespace, matching the runtime text conversion.
+
+### Required Dashboard settings
+
+1. Enable the **KDataForge** plugin in the Unreal Editor and build its editor modules. Restart the
+   editor after installing or updating the plugin so **KDataForgeLocalization** is loaded. This is
+   an editor module, including commandlet support; it is not needed in the packaged game.
+2. Open **Window → Localization Dashboard**, then select the mod's Localization Target.
+3. Enable **Gather from Text Files**. Keep at least one **Search Directory**, such as the mod's
+   `Config` directory, and include **`h`** in **File Extensions**. Existing `cpp` / `ini` filters can
+   remain. Gathering only from packages will not collect YAML texts.
+4. Keep the usual native language and translated languages configured, then run **Gather Text**,
+   **Export Text**, translate/import the PO files, and **Compile Text**. Existing Tolgee workflows
+   can use the same exported PO files. Do not enable placeholder conversion.
+5. Package and load the mod's Localization Target as usual. The resulting `.locres` translates the
+   keyed `FText` that KDataForge creates at runtime.
+
+The target name must match either the plugin name or a target declared in that plugin's
+`.uplugin` `LocalizationTargets`. Each matching target gathers the plugin's own pack texts. The
+YAML's namespace does **not** select its owning mod or target: in the example, a file shipped inside
+SatisfactoryPlus is gathered into the **SatisfactoryPlus** target even though its namespace is
+`ST_Klib` and its patch changes a KLib class. Use manifest dependencies if several targets share texts
+and you want Unreal to exclude already gathered entries.
+
+The integration discovers `DataForge`, legacy `data-editor`, and directories containing `pack.yml`
+under the owning plugin, and reads their `.yml` and `.yaml` files recursively, including nested packs,
+multi-document streams, and keyed text in `pack.yml`. Initial root discovery uses a recursion limit
+of six and skips engine/build directories such as `Content`, `Source`, `Config`,
+`Intermediate`, and `Saved`. Pack `enabled` flags, mod conditions, and runtime dependencies do not
+filter localization gathering: optional compatibility content needs translations even when its
+target mod is absent in the editor. YAML outside that plugin is not included.
+
+No custom Dashboard step or manually generated header is required. The integration supplies
+temporary gather sources automatically; adding `yaml` as a text-file extension alone is insufficient.
+The existing SF+ target already enables text gathering with the required `h` filter.
+
+### Commandlet configuration
+
+The same integration runs during `UnrealEditor-Cmd -run=GatherText`. For an existing target, retain
+its normal manifest/archive/language settings and ensure its source gather step includes:
+
+```ini
+[GatherTextStep0]
+CommandletClass=GatherTextFromSource
+SearchDirectoryPaths=%LOCPROJECTROOT%Mods/GameFeatures/SatisfactoryPlus/Config
+FileNameFilters=*.h
+ShouldGatherFromEditorOnlyData=false
+```
+
+Run the usual manifest/archive/export steps after gathering and the normal import/compile steps
+after translation. `ManifestName=SatisfactoryPlus.manifest` identifies the SatisfactoryPlus target.
+The plugin must be enabled for this commandlet process, just as it must be enabled in the editor.
+
+### KMods CI/CD translation script
+
+The KMods workspace script includes YAML text gathering in its normal translation flow:
+
+```powershell
+# Same local stages as CI; pull translations without uploading or deleting Tolgee keys
+.\translation-scripts\sync_translation.ps1 -Plugins SatisfactoryPlus -SkipUpload
+
+# Local gather/export check without contacting Tolgee
+.\translation-scripts\sync_translation.ps1 -Plugins SatisfactoryPlus -LocalizationSteps "Gather,Export" -SkipTolgee
+```
+
+Build `FactoryEditor` and the `KDataForgeLocalization` editor module before running the script.
+CI does this before translation sync. The gather command enables KDataForge explicitly and uses
+an effective config at `exports/<Mod>/<Mod>_Gather.ini`. The script ensures source gathering,
+an `h` filter, and a search directory; existing manifest identity, languages, dependencies, and
+asset gathering stay intact. It does not rewrite the mod's saved gather settings, so the required
+Dashboard settings above still apply when gathering directly from the editor.
+
+The script verifies the YAML bridge log and fails on missing bridge output, YAML errors, or failed
+gather/export/import/compile commands. CI stops before packaging when translation sync fails.
+Stage logs are under `exports/`, for example `exports/SatisfactoryPlus_gather.log`.
+
+`-SkipUpload` skips only the Tolgee upload and cleanup. It still gathers, exports, pulls, imports,
+and compiles by default. To reuse an existing manifest without gathering, request
+`-LocalizationSteps "Import,Compile"` explicitly. CI does not upload newly gathered source keys;
+run the normal sync without `-SkipUpload` separately to make those keys available in Tolgee.
+After gathering/exporting, the current native English PO is retained when copying pulled
+translations, so a Tolgee download cannot replace freshly gathered YAML source keys.
+
+### Gather diagnostics
+
+The log category **LogKDFLocalization** reports how many YAML files supplied text for each target.
+An entry such as `Target 'SatisfactoryPlus': injected localization sources from 1 YAML file(s)`
+confirms that the YAML bridge ran. Check the exported PO for your namespace/key before uploading it
+for translation. Source references end in the original YAML path followed by `.h`; these refer to
+temporary gather sources, not files you need to ship or edit.
+
+Malformed/unreadable YAML and conflicting source strings for the same namespace/key produce
+errors. Resolve these before importing or compiling translations. Conflicts with gathered asset or
+C++ texts also use Unreal's normal conflict reporting. Empty source strings are not gathered.
+If no bridge log appears, check that the plugin/editor module is loaded, text-file gathering is
+enabled, a search directory exists in the configuration, and the target name belongs to the mod.
+If the bridge runs but exported texts are missing, check the `h` filter and any exclusion wildcards
+that could also exclude temporary gather sources.
+
+Changing a source string can invalidate an older translation because Unreal checks the source
+hash. Re-gather and translate the changed source. Avoid reusing another mod's namespace/key for
+different text unless you deliberately intend to override that shared identity.
+
+## Runtime translation documents
+
+`type: localization` injects translations directly into the running localization manager without
+compiling `.locres`. These translation documents are not gathered as native texts by the Dashboard
+integration; use keyed `FText` maps in your content documents for the compiled workflow above.
 
 The `Localization` stage runs after `GameTags`/`Assets` and before `CDOChanges`. Its entries key is
 `entries`, a map from key to either a scalar or a block map with `source` and `text` fields.

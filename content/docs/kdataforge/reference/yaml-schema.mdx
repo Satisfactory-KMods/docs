@@ -1,6 +1,6 @@
 ---
 title: YAML Schema
-description: Complete grammar for packs, document types, property paths, all 22 operations, conditions, and includes.
+description: Complete grammar for packs, document types, property paths, all 23 operations, conditions, and includes.
 sidebar:
   order: 2
 ---
@@ -153,6 +153,7 @@ examples:
 | `research` / `mam`   | Research         | [Research Trees](/kdataforge/features/research-trees)     |
 | `sinkpoints`         | SubsystemMods    | [Sink Points](/kdataforge/features/sinkpoints)            |
 | `resourcenode`       | SubsystemMods    | [Resources](/kdataforge/features/resources#removing-resource-nodes-type-resourcenode) |
+| `eventrule`          | RuntimePatches   | [Event Rules](/kdataforge/features/event-rules) |
 | custom (third-party) | handler-declared | registered via `RegisterHandler`, no page, it's yours                   |
 
 > All class **generation** types (`item`, `resource`, `building`, `unlock`, and the generic
@@ -161,6 +162,23 @@ examples:
 > later stages (`recipe`, `schematic`, `research`) can reference every generated class.
 
 ## Property Patches (`type: cdo`)
+
+Use [`actorSelector:`](/kdataforge/features/actor-selectors) with explicit actor targets and
+`applyToSpawnedActors: true` for instance-only tag, sphere, box and current-recipe selection.
+These entries never modify class defaults and cannot combine with asset/class scope filters.
+
+Alternatively, [`actorAction: destroy | dismantle`](/kdataforge/features/targeting#actor-lifecycle-actions)
+removes matching live actors. It requires explicit actor targets and `applyToSpawnedActors: true`;
+omit `properties`. The action runs after BeginPlay on a subsequent timer tick, is authority-only
+(including local non-replicated actors), and supports optional server-only `actorSelector` predicates.
+Reload cancels pending actions but does not restore destroyed actors.
+
+[`inventoryRemap:`](/kdataforge/features/targeting#player-inventory-remapping) replaces player
+inventory contents at startup and on inventory changes. Explicit `FGCharacterPlayer` targets
+and `applyToSpawnedActors: true` are required; omit `properties` and `actorAction`. Each entry
+contains item classes `from`, `to` and optional positive integer `multiplier` (default `1`).
+Sources must be unique and cannot also be destinations. Conversion runs only when complete
+output fits; otherwise original items remain. This is a server-only operation.
 
 A `cdo` document patches properties on something that **already exists**: a class's default
 object, a live `UObject` such as a `UDataAsset` instance, or every asset matching a class/tag scan. It does not
@@ -185,6 +203,8 @@ patches:
     matchTag: KMods.AlternateRecipe # scalar or sequence (all must match)
     tagProperty: mGameplayTags # optional explicit tag container property
     matchAssets: true # also match data-asset instances (default true)
+    classType: blueprint # any (default), blueprint, native; real class flags, not class names
+    excludeClasses: [/Game/Example/Excluded.Excluded_C] # exact classes only; descendants remain eligible
     matchName: Recipe_Alternate_* # wildcard on the class name (full path when it contains '/');
     #   scalar or sequence (any may match)
     producedIn: /Script/FactoryGame.FGBuildableManufacturer # recipes whose mProducedIn
@@ -241,6 +261,13 @@ The provider mods are optional soft integrations. Full behavior and diagnostics:
 
 ## Property Paths
 
+In a `properties:` operation, the quoted selector `path: '@tagContainers'` selects
+all top-level `FGameplayTagContainer` fields on each actual target, including inherited
+fields and fields declared by late-loaded subclasses. It supports `set` (default),
+`append`, `prepend`, `remove` and `clear`. No matching fields is a no-op. It does not
+select nested fields and is invalid in `where`, `from`, templates and single-property
+read/edit APIs. See [tag-container selection](/kdataforge/features/operations#select-every-gameplay-tag-container).
+
 `path:` addresses a single property, or a nested member reached through arrays, sets, maps, or
 object references. It uses a small path grammar shared by every operation below:
 
@@ -270,6 +297,7 @@ names never appear in YAML.
 | `add`, `subtract`, `multiply`, `divide`, `min`, `max` | numeric                                                       | `value`                                                             |
 | `clamp`                                               | numeric                                                       | `min`, `max`                                                        |
 | `append`                                              | array, set, map, string/name/text, tag container, bitmask     | `value` (map for map; scalar or sequence otherwise)                 |
+| `append_unique` | array | `value` (one element or sequence); append only missing values, preserving existing duplicates |
 | `prepend`                                             | array, set, string/name/text, tag container, bitmask          | `value` (scalar or sequence)                                        |
 | `insert`                                              | array                                                         | `index`, `value`                                                    |
 | `remove`                                              | array (by value), set (by value), map (by key), tag container, bitmask | `value`                                                     |
@@ -315,7 +343,7 @@ to accepted YAML form:
 | enum                               | value name (`RF_SOLID`, `EResourceForm::RF_SOLID`) or numeric value (must be a valid ordinal, rejected otherwise)                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | bitmask (`int32`/etc. with `meta=(Bitmask, BitmaskEnum=...)`) | one flag name (`Above`), a YAML sequence of names, an `"Above\|Left"` string, or, for `set` only, a nonnegative unsigned decimal mask bounded by the property width. Named forms require available property metadata and a loaded enum, supporting declared mask values and bit indices. Export emits a name sequence. `append`/`prepend` OR-add flags, `remove` clears bits, and `clear` writes zero. See rules below. |
 | `FString`, `FName`                 | string scalar                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| `FText`                            | string scalar (culture-invariant) **or** block map with `key`, `ns`, and `source` fields (localized); `key` is mandatory in map form, so a `source`-only map is invalid                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `FText`                            | string scalar, null (empty), localized `{key, ns, source}`, or StringTable reference `{stringTable, key}`; both table fields must be non-empty and must not mix with `ns` or `source`                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | object reference                   | full object path; a bare **generated-content id** (e.g. `SuperIngotIcon` for a `dataasset`/`asset` entry, see [Generated Content Short Ids](#generated-content-short-ids)); `""`/`none` → null                                                                                                                                                                                                                                                                                                                                                                                           |
 | class reference                    | class path (`/Script/Module.Class` or `/Game/....Asset_C`; `_C` auto-retried), or a bare **generated-content id** (e.g. `MySuperIngot` for an `item`/`resource`/`building`/`class`/... entry, see [Generated Content Short Ids](#generated-content-short-ids)), or, as a last resort, a **bare class name** (`Desc_Water`) resolved by name against every class currently loaded in memory; ambiguous bare-name forms log an error (`LogKDataForge`, listing every match) and use the first match (sorted by full class path), so prefer full paths in published packs when it matters |
 | `TSoftObjectPtr` / `TSoftClassPtr` | path string (not loaded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -850,9 +878,13 @@ expand against the item descriptor classes loaded when the document applies.
 
 **Not live-reloadable** (registry freeze): sinkpoint changes need a session restart.
 
-## Resource Node Removal (`type: resourcenode`)
+## Resource Nodes (`type: resourcenode`)
 
-A `resourcenode` document requires a non-empty `remove:` sequence. A scalar is shorthand for a map
+A `resourcenode` document requires at least one non-empty `remove:`, `add:` or `replace:` sequence.
+For placement identities, KBFL-style range checks, node reuse, replacement, mesh/material overrides
+and save/occupied-node constraints, see [Resource Node Placement](/kdataforge/features/resource-node-placement).
+
+Within `remove:`, a scalar is shorthand for a map
 with only `resource:`. Valid entries still apply when another entry reports an error:
 
 ```yaml

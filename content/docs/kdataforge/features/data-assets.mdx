@@ -17,6 +17,66 @@ fresh instance rather than an edit to an existing one. This page also covers the
 document, `type: asset`, which loads [2D images](#2d-image-assets-type-asset) from your pack folder
 into real textures that you can point icon properties at.
 
+## Native CDO helpers and Blueprint requirements
+
+Use `type: dataasset` to move a KBFL CDO helper's **configuration** into YAML while keeping its
+native helper class and Blueprint requirement classes installed. This preserves the native
+requirement predicates, `OnModify`, `OnModified`, deferred and `OnFinishedAll` callbacks. World
+helpers retain their native world registration and tick behavior. Specialized DataAsset, tag,
+category, cache and recipe-mover helpers also keep their native implementation.
+
+Create an asset of the original concrete helper class. Copy its settings, priority and complete
+`mRequirements` class list. For `KBFLCDOOverwrite`, also copy `mNativeClass`, targeting flags,
+property descriptors and the effective values inside `mPropertyContainer`. The container uses
+the existing instanced-object `{class, properties}` form. KDataForge duplicates its class defaults,
+including inherited subobjects; abstract classes are supported for this helper container.
+For example, this standalone helper
+sets an iron descriptor's energy value:
+
+```yaml
+type: dataasset
+assets:
+  - id: IronEnergyHelper
+    class: /Script/KBFL.KBFLCDOOverwrite
+    properties:
+      - path: mCallPrio
+        value: 100
+      - path: mTargetClass
+        value: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
+      - path: mNativeClass
+        value: /Script/FactoryGame.FGResourceDescriptor
+      - path: mRequirements
+        value: [] # Migration: retain the original requirement classes here.
+      - path: mManuelPropertiesOverwrite
+        value:
+          - mPropertyName: mEnergyValue
+            mPropertyType: Float
+            mNumericBehavior: Replace
+      - path: mPropertyContainer
+        value:
+          class: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
+          properties:
+            - path: mEnergyValue
+              value: 10
+```
+
+These assets are configured during the initial Assets stage and published to the asset registry
+only after their property operations succeed. A failed helper configuration is not published.
+Each helper must have a unique pack/id definition. KBFL discovers the generated instance through
+its normal startup pass; KDataForge does not call callbacks a second time.
+
+**Restart required:** once a generated native CDO helper is active, `/kdf reload` and automatic
+pack reload are refused before restoring properties. Restart after changing, disabling or
+removing such a pack. The in-game editor refuses live edits to native helpers and their owned
+subobjects. Desktop completion and property details mark helper settings as requiring restart.
+
+For migration, compare the complete helper, requirement callbacks, selected targets, priority and
+resulting runtime values before archiving its original asset. Keep required classes and referenced
+assets available. Generated assets have new object paths and primary-asset names: update any
+references to the original helper and check callbacks that inspect its identity. Equal native
+priorities still have undefined order; YAML does not resolve an existing conflict automatically.
+Remove the original active helper when activating its replacement to avoid duplicate callbacks.
+
 ## Editing KAPI data assets
 
 KAPI is the biggest single consumer of PrimaryDataAsset instances in the mod ecosystem. It drives

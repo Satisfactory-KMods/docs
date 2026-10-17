@@ -6,7 +6,9 @@ sidebar:
 ---
 
 Every `properties:` entry inside a `type: cdo` patch (see [Patching](/kdataforge/features/patching-cdo))
-targets one reflected UE property, and the `value:` you write has to match that property's kind.
+normally targets one reflected UE property, and the `value:` you write has to match that property's kind.
+The operation selector [`'@tagContainers'`](/kdataforge/features/operations#select-every-gameplay-tag-container)
+applies to every top-level gameplay tag container on each target.
 KDataForge's value codec recognizes each UE property class in turn: bool, enum, numeric, string,
 object/class reference, struct, container. It only falls through to raw UE text-import for
 anything it doesn't special-case. This page walks through every kind it handles, in the order the
@@ -200,6 +202,26 @@ same runtime-safe construction path the localization system relies on:
     ns: MyPack
     source: Better Iron Ingot
 ```
+
+## FText: StringTable references
+
+Use `stringTable` and `key` to retain an existing Unreal StringTable entry, including its
+translations and table identity. Use the table's registered ID or its full asset object path:
+
+```yaml
+- path: mDisplayName
+  value:
+    stringTable: /SatisfactoryPlus/ST_SatisfactoryPlus.ST_SatisfactoryPlus
+    key: CDOBuilding_MiniExtractior.PropertyContainer_0.mDisplayName
+```
+
+Both fields must be non-empty strings. Do not combine `stringTable` with `ns` or `source`.
+The table belongs to its original mod and must remain available. A missing table or key uses
+Unreal's missing-text diagnostic/placeholder; this form does not create tables or entries.
+Exporting a StringTable text produces this same map; copying, reverting and re-exporting retain
+its table identity instead of the currently displayed language. The in-game inspector edits table
+ID and key separately from the resolved text. A raw scalar containing `LOCTABLE(...)` remains a
+literal; convert native exports to the map above. Use `value: null` to clear an FText.
 
 ## Object reference (hard)
 

@@ -47,7 +47,7 @@ summary line is logged with the number of ops applied, assets touched, and packa
 :::caution
 This command is a narrow importer, not the runtime document dispatcher. It reads explicit
 `target:` paths and `properties:` only. It does not expand `allAssetsOfClass` or `matchTag`, and it
-does not reproduce `applyToSubclasses`, `applyToSpawnedActors`, or `deferOneGameTick`. Document
+does not reproduce `applyToSubclasses`, `applyToSpawnedActors`, `actorAction`, `inventoryRemap`, or `deferOneGameTick`. Document
 conditions and `include:` ordering are also not evaluated here. Write editor-import patches with
 explicit targets and review the dirty packages before saving.
 :::
