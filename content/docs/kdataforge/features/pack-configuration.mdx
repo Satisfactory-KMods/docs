@@ -34,6 +34,122 @@ category subclass as described below. A field with an error is skipped while
 other valid fields can still load. Static document `conditions` are supported;
 configuration definitions cannot depend on `config:` conditions themselves.
 
+## Blueprint pack lists
+
+For settings widgets, `Get All Pack Infos` returns only packs with at least one
+authored configuration field. Sound-volume controls belong only to the local
+Audio settings and do not make a pack appear in this list.
+Packs with no valid fields are omitted. Active packs appear in load order,
+with the first loaded pack first. Dependencies load before their dependents;
+among packs ready to load, higher priority comes first, then `ref` alphabetically.
+Inactive packs follow the active entries, sorted by `ref`. Filter on `mState`
+when the widget should display only active packs, and keep the returned array
+order rather than sorting it again.
+
+`Get Pack Info(PackRef)` can still look up a specific pack without configuration fields.
+
+## Ready-made Blueprint settings widgets
+
+Enable the **KUI** dependency alongside KDataForge. KDataForge's runtime UI module
+provides native C++ widgets using FactoryGame's options-row, checkbox, slider,
+dropdown, font and status-icon assets.
+
+Rows keep the original 300-pixel control column. Checkbox and slider rows use
+the 33-pixel baseline; text and number inputs use 40 pixels. Text inputs use
+FactoryGame's dark input background, left-aligned font and orange hover/focus
+border. Apply, Discard, Add and Remove use FactoryGame's standard buttons,
+including their native interaction states. Reset retains the compact options icon.
+Multiline text, tags and collections expand vertically. Use an automatically
+sized panel slot; a fixed 33-pixel slot would clip these controls. Tooltips use
+KUI's tooltip asset.
+
+In a Widget Blueprint:
+
+```text
+Get Config Descriptions Flat (PackRef)
+  → For Each
+  → Create Config Widget (Description = Array Element)
+  → Add Child to your panel
+```
+
+`Create Config Widget` automatically chooses the matching class. You can also use
+`Create Widget` with a specific class and connect its exposed **Description** pin:
+
+| Description kind | Widget class |
+| --- | --- |
+| Text, including multiline text | `KDFConfigTextWidget` |
+| Gameplay tag | `KDFConfigTagWidget` |
+| Number input | `KDFConfigNumberWidget` |
+| Slider | `KDFConfigSliderWidget` |
+| Boolean | `KDFConfigBooleanWidget` |
+| Select | `KDFConfigSelectWidget` |
+| Multi-select | `KDFConfigMultiSelectWidget` |
+| Text, number or tag list | `KDFConfigListWidget` |
+
+The row manages its label, tooltip, current value, validation errors, default reset,
+pending-change indicator and restart notices. Multiplayer clients without edit
+permission see disabled controls. Tags offer registered-tag suggestions and an
+editable path; lists support adding, removing and editing entries within their
+configured limits.
+
+Edits remain pending. **Reset to default** also creates a pending change.
+**Apply pack changes** saves all pending edits of the description's pack;
+**Discard pack changes** discards that pack's pending edits. These actions include
+edits in sibling rows. Hot settings follow the normal KDataForge reload rules;
+cold settings show the restart requirement. Dedicated-server admin requests keep
+the pack's controls disabled until all request chunks finish, including errors
+and timeouts.
+
+For a menu with one shared footer, pass **Show Apply Discard = false**, or call
+`Set Show Actions(false)` on its rows. Connect the menu's buttons to
+`Apply Changes` and `Discard Changes` on any row belonging to that pack. The
+widget checks validation errors in the pack's other visible rows before applying.
+Calling the lower-level `Apply Config Changes(PackRef)` directly does not inspect
+unfinished widget input.
+
+For a shared Reset All button, call `Reset Pack Config To Default(PackRef)`.
+It stages each editable field's default without saving or reloading. Pass an
+empty `PackRef` to reset all packs. Read-only fields remain unchanged; an unknown
+pack or unavailable subsystem does nothing. Apply or discard the staged reset
+through the same menu actions as other pending edits.
+
+Use the pure Blueprint node `Is Pack Config Dirty(PackRef)` to enable a shared
+Apply button. It returns whether that pack has unsaved pending values; an empty
+`PackRef` checks all packs. An unknown pack or unavailable subsystem returns false.
+`Has Pending Config Changes` remains available with the same behavior.
+
+For updates without polling, call `Get KDataForge Subsystem` and bind to
+`On Pack Config Changed`. The event supplies `Pack Ref` and `Is Dirty`; filter
+the reference for the pack displayed by your menu. It fires on configuration
+value or state changes, including edits, reset, apply, discard and reload, even
+when the dirty flag stays unchanged. Deferred load events are grouped per pack.
+After binding, read `Is Pack Config Dirty` once to initialize the button.
+Unbind your listener when the menu closes. For a menu spanning all packs, query
+`Is Pack Config Dirty` with an empty reference after each event.
+
+The row also exposes `Apply Changes`, `Discard Changes`, `Reset to Default`,
+`Get Validation Error` and `On Applied`. `On Applied` reports the initial pending
+result for an admin request, then the combined result after every chunk completes.
+Keep the row's `Description` reference instead of copying configuration values
+into unrelated widget variables.
+
+Reloads refresh labels, constraints and values. Removed fields disable their rows.
+If an author changes a field's kind during development, rebuild the menu with
+`Create Config Widget` to obtain the new matching widget class.
+
+### Preview in the Unreal Editor
+
+With the KDataForge UI module loaded, use the editor console to preview config
+definitions from a pack directory without starting PIE or writing saved values:
+
+```text
+KDF.Config.PreviewWidgets "C:/MyMod/DataForge"
+```
+
+The preview allows pending-value edits and resets, but omits Apply/Discard because
+it does not represent a running pack. Actual saving, hot reload and multiplayer
+permissions must be checked in a game session.
+
 ## Field types at a glance
 
 | `type` | `valueType` choices | Default `valueType` | Shape |
@@ -65,7 +181,7 @@ dots, and may contain at most 200 characters. They must be unique across the
 pack's config files, ignoring case. An id cannot also be the dotted prefix of
 another id: do not define both `balance` and `balance.duration`. The identifiers
 `true`, `false`, `in` and `contains` are reserved; the `__sounds` namespace is
-reserved for generated sound controls. Dotted ids become nested maps in the
+reserved for compatibility with older sound controls. Dotted ids become nested maps in the
 saved values file.
 
 `descriptionClass` and field-level `properties` are reserved. The schema accepts

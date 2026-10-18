@@ -5,6 +5,9 @@ description: Add ordinary resource nodes or safely reuse nearby nodes with range
 
 `type: resourcenode` supports `add`, `replace`, and the existing `remove` rules. Positions and distances use **Unreal centimetres**. Coordinates are world coordinates; rotation order is pitch, yaw, roll in degrees.
 
+For appearance rules on existing and streamed node meshes, use
+[Resource node appearance](/kdataforge/features/resource-node-visuals).
+
 ```yaml
 type: resourcenode
 add:
@@ -71,3 +74,6 @@ For an unoccupied reused/replaced node, hot reload restores its previous descrip
 New actors spawn only on authority and replicate their initialization to clients. Every peer must load the same pack for replacement of existing level nodes and local mesh/scanner updates. This feature does not distribute pack files or provide a pack checksum handshake. Scanner caches and radar scans refresh after placement processing; standard research controls whether a resource can be selected in the scanner.
 
 Avoid combining contradictory purge and placement rules for the same resource. Review warnings after changing IDs, moving occupied locations, or editing packs used by an existing save.
+
+Resource changes refresh existing radar towers after their initial startup scan.
+Loading a save with radar towers requires no special pack settings.

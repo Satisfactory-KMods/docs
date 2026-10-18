@@ -13,8 +13,12 @@ to reason about. This page shows all selectors and the modifiers that widen a se
 
 Filtered scopes accept `classType: any` (default), `blueprint`, or `native`. This tests Unreal's
 `CLASS_CompiledFromBlueprint` flag; it does not guess from class names. `excludeClasses` accepts
-one full class path or a non-empty list. It excludes those exact classes while their subclasses
-remain eligible. Both filters also run for classes loaded later.
+one class reference or a non-empty list. Exact references exclude those classes while their
+subclasses remain eligible. Full class-path patterns starting with `/` also accept `*` and `?`
+wildcards, matched case-insensitively against each candidate's own class path. For example,
+`excludeClasses: ['/KLib/*', '/SatisfactoryPlus/*']` leaves those namespaces untouched while
+selecting other mods' recipes. A subclass outside an excluded namespace remains eligible;
+patterns do not expand through ancestry. Both filters also run for classes loaded later.
 
 ```yaml
 type: cdo
@@ -35,6 +39,9 @@ patches:
 Combine with `ofClass`, or a recipe shortcut that supplies a scope. These scope filters do not
 narrow separately listed `target` or `allAssetsOfClass` selections. Other filters are AND-combined.
 For data-asset candidates they test the asset's class. Set `matchAssets: false` for CDOs only.
+Consequently, exclusion patterns match a data asset's class path, not its individual object path.
+Wildcard exclusions must start with `/`; a short pattern such as `Recipe_*` is rejected. Quote
+patterns in YAML, especially patterns containing `*` or `?`.
 Explicit `classType: any` selects every class in an `ofClass` scope without another predicate.
 
 ## `target:` class path: the class default object (CDO)

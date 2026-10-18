@@ -1,0 +1,64 @@
+---
+title: Resource node appearance
+description: Maintain material slots and hidden mesh actors on existing resource nodes, including streamed nodes and local client meshes.
+---
+
+Use `type: resourcenode` with `visuals` to override existing nodes' mesh materials, or
+`hideMeshes` to hide selected static mesh assets and disable collision on their mesh actors.
+These rules run independently on server and clients. They also handle nodes and mesh actors
+that appear later or stream into the world. They do not create or destroy resource nodes.
+
+Save the configuration as `node_appearance.resourcenode.yml` in your pack. Replace the example
+material with an asset shipped by your mod:
+
+```yaml
+type: resourcenode
+visuals:
+  - resource: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
+    materials:
+      - slot: 0
+        material: /MyMod/Materials/MI_Node.MI_Node
+meshActorsPerTick: 1
+```
+
+`resource` names an exact resource descriptor class. Its subclasses are not included.
+Material mappings skip resource deposit actors. `materials` is a non-empty list of
+`slot`/`material` records. Slots are zero-based integers from 0 through 63; each slot may
+occur only once per resource. Unlisted slots remain unchanged. Write numbers as numbers,
+not quoted strings. Material paths name material or material-instance objects, without `_C`.
+
+Descriptors and assets must be cooked and available in installed mods on every peer.
+Invalid visual entries or unresolved material/mesh references reject that resource-node
+document. Keep independent placement and appearance edits in separate files.
+
+## Hide meshes
+
+```yaml
+type: resourcenode
+hideMeshes:
+  - /MyMod/ResourceNodes/SM_OldNode.SM_OldNode
+```
+
+Every entry must resolve to a static mesh asset. Matching uses exact mesh identity.
+The matching mesh actor and its static mesh component become hidden; actor collision is
+disabled. Hiding takes precedence over material assignments, works without a linked node,
+and also applies to matching meshes linked to deposits. The resource node itself remains.
+
+## Timing, overrides and reload
+
+`meshActorsPerTick` defaults to `1` and accepts integers from `1` through `1024`. It limits
+pending mesh resolutions and round-robin maintenance separately; one pending node lookup
+is also processed each tick. Larger budgets catch up faster at higher per-frame cost.
+The field requires `visuals` or `hideMeshes` in the same document. Mesh actors whose node
+link is not ready are retried. Rules continue enforcing configured appearance afterwards.
+
+Later applied documents replace earlier material mappings for the same resource descriptor.
+Repeated resources in a single document are rejected. Hide lists from active documents are
+combined. The last explicitly configured maintenance budget wins.
+
+Reloading or disabling a pack restores saved instance materials, visibility and collision
+before the remaining rules are applied again. Restoring does not replace a current value
+that another system changed away from the last value applied by these rules.
+
+The editor's Affected Elements preview reports these rules as requiring live world state.
+A descriptor export cannot identify paired mesh actors or streamed instances.

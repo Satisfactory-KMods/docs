@@ -47,9 +47,15 @@ the four display fields are optional and must be non-empty strings when supplied
 
 With both grouping fields above, the Audio subcategory is `Voice / ADA`. Without
 either field, it is `KDataForge sound events`. Each sound receives a volume setting
-with a default of 100%, where 0% mutes it. Player Audio preferences are local;
-the effective sound level combines the pack configuration percentage with the
-player's percentage. There is no `volume` field in a sound entry.
+with a default of 100%, where 0% mutes it. These controls appear only under
+**Options → Audio**, never in KDataForge pack configuration. Audio preferences
+are local to each player and are not synchronized by the host. There is no
+`volume` field in a sound entry.
+
+Existing local Audio preferences keep their values. Older `__sounds.*.volume`
+entries in pack configuration files no longer affect playback; they can be removed.
+To group all ADA sounds together, use the same `category` and `subCategory` on
+every sound entry.
 
 ## Accepted audio
 
@@ -100,10 +106,22 @@ Sounds run in the `Assets` stage, before `dataasset` documents resolve propertie
 such as `FGMessage.mAudioEvent`, and before later CDO changes. File ordering does
 not require placing a sound YAML before a data asset YAML.
 
-Install the same pack and WAV files on every multiplayer client and the server.
-Dedicated servers validate the WAV and create the event identity, but skip audio
-bank loading and playback. Clients load their own audio; importing on the server
-does not transfer WAV files to clients.
+Install the same pack definitions on every multiplayer client and the server.
+Every client, including a listen-server host, also needs the referenced WAV files.
+Dedicated servers do not need WAV files: they validate the relative path syntax
+and create placeholder events at the same generated asset paths, without opening
+audio files, creating bank caches or loading Wwise banks. Messages, subtitles and
+server-side triggers remain available. WAV contents and symbolic-link containment
+are checked on clients, where the audio files exist. Importing on the server does
+not transfer WAV files to clients.
+
+The workspace's Alpakit `PackagePlugin` automatically excludes raw `.wav` files
+from dedicated-server staging for WindowsServer and LinuxServer. This also applies
+to the server directories inside merged bundles and direct server deployments;
+the Windows client directory retains its audio. No YAML conditions or extra
+pack settings are needed. Keep the sound YAML and its message references in server
+packages. When packaging with an older Alpakit, WAV files can remain in server
+packages harmlessly; older KDataForge versions still require them during import.
 
 ## Troubleshooting
 

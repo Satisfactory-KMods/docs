@@ -1,6 +1,6 @@
 ---
 title: 'Type: resource and Resource Nodes'
-description: Generate resource descriptors, remove matching world Resource Nodes, unlock scanner visibility, and patch node actor classes.
+description: Generate resource descriptors, place or remove world resource nodes, maintain node appearance, unlock scanner visibility, and patch node actor classes.
 sidebar:
   order: 10
 ---
@@ -11,13 +11,14 @@ The `resource` type runs in the `Items` stage at priority `25`, after `item` (`3
 entries use `id:`. YAML files are scanned once during GameInstance initialization. Restart the
 session after changing them.
 
-The similar names hide four separate systems:
+These names refer to separate systems:
 
 | Concept                      | FactoryGame type                     | What KDataForge does                                                     |
 | ---------------------------- | ------------------------------------ | ------------------------------------------------------------------------ |
 | Resource definition          | `UFGResourceDescriptor`              | `type: resource` generates a new descriptor class                        |
 | Resource Node removal        | `AFGResourceNodeBase` and subclasses | `type: resourcenode` destroys matches by descriptor and optional node type |
 | Resource Node placement      | `AFGResourceNode` and `AFGNodeMeshActor` | `resourcenode.add` creates/reuses nodes; `replace` changes nearby eligible nodes |
+| Resource Node appearance     | `AFGNodeMeshActor` and its mesh component | `resourcenode.visuals` maintains material slots; `hideMeshes` hides matching meshes and disables their collision |
 | Resource Node property patch | `AFGResourceNodeBase` and subclasses | A `cdo` actor patch modifies a node class and all matching instances      |
 | Scanner visibility           | `UFGUnlockScannableResource`         | A schematic `unlocks:` entry registers descriptor and node-type pairs    |
 | AWESOME Sink value           | `AFGResourceSinkSubsystem` data      | `type: sinkpoints` sets item scores and has no node-placement behavior   |
@@ -27,6 +28,8 @@ descriptor becomes mineable only when a map or another mod assigns it to a compa
 Placement and replacement are separate capabilities under
 [`type: resourcenode`](/kdataforge/features/resource-node-placement).
 Its `remove:` list remains a destructive capability.
+For material slots and hidden mesh instances, see
+[Resource node appearance](/kdataforge/features/resource-node-visuals).
 
 ## Generate a resource descriptor
 
