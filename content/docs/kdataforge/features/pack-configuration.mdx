@@ -11,6 +11,28 @@ player's values, stored under `FactoryGame/Configs/Packs/<PackRef>.config.yml`.
 Keep the pack's `ref` stable; packs defining configuration need a ref of at most
 50 characters.
 
+## Removing obsolete configuration
+
+After a successful definition load, KDataForge rewrites the pack's values file
+using its current fields. Values of remaining fields are retained; removed fields
+and their empty groups disappear, including legacy `__sounds` entries. Renaming a
+field creates a new key and removes the old key; migrate any values you need before
+renaming it.
+
+Generated `FactoryGame/Configs/Packs/<PackRef>.config.yml` files are removed when
+their pack is no longer installed or no longer defines configuration. This happens
+after pack discovery and definition processing, including on reload. Installed
+packs that are disabled or skipped because of dependencies remain known and keep
+their files. Configuration documents skipped by conditions retain their stored
+keys rather than being mistaken for removed fields.
+
+Deletion only targets direct `*.config.yml` files carrying the generated
+`# KDataForge pack configuration` header and containing valid YAML mappings.
+Unmarked or unreadable files are left untouched. Discovery warnings or errors
+prevent file deletion for that load. Invalid or partially skipped definitions
+prevent obsolete-field pruning for their pack. Read-only editor registries never
+write or delete values files. Host-replicated values do not trigger local cleanup.
+
 ```yaml
 # file: balance.config.yml
 type: config

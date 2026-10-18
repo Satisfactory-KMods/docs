@@ -40,22 +40,30 @@ the four display fields are optional and must be non-empty strings when supplied
 | --- | --- |
 | `id` | Stable event id. Start with an ASCII letter; remaining characters may be ASCII letters, digits, `_`, `.`, or `-`. |
 | `file` | WAV or FLAC path relative to the pack root, not the YAML file's directory. |
-| `name` | Sound setting label; defaults to `<id> volume`. |
-| `description` | Sound setting help text; defaults to an explanation of playback volume. |
+| `name` | Sound setting label; defaults to `<id> volume`. Unused for ADA's shared native control. |
+| `description` | Sound setting help text; defaults to an explanation of playback volume. Unused for ADA's shared native control. |
 | `category` | Group label below the native Audio settings section. |
-| `subCategory` | Additional group label, combined with `category` into one Audio subcategory. |
+| `subCategory` | Additional Audio group label. `ADA` selects the game's native Dialogue Volume instead of a separate sound slider. |
 
-With both grouping fields above, the Audio subcategory is `Voice / ADA`. Without
-either field, it is `KDataForge sound events`. Each sound receives a volume setting
-with a default of 100%, where 0% mutes it. These controls appear only under
-**Options → Audio**, never in KDataForge pack configuration. Audio preferences
-are local to each player and are not synchronized by the host. There is no
-`volume` field in a sound entry.
+Set `subCategory: ADA` on every ADA sound, as in the example above. This value is
+case-insensitive and trims surrounding whitespace. These events route through
+Satisfactory's native VO audio bus and use **Options → Audio → Dialogue Volume**,
+including changes made during playback. They do not create individual KDataForge
+volume sliders or a separate ADA volume control. Their `category`, `name` and
+`description` remain accepted metadata but do not create an Audio row.
 
-Existing local Audio preferences keep their values. Older `__sounds.*.volume`
-entries in pack configuration files no longer affect playback; they can be removed.
-To group all ADA sounds together, use the same `category` and `subCategory` on
-every sound entry.
+Other sounds keep their individual volume sliders, defaulting to 100%, where 0%
+mutes them. Their `category` and `subCategory` combine into one Audio subcategory;
+without either field, it is `KDataForge sound events`. These events route to the
+master audio bus. All volume controls appear only under **Options → Audio**,
+never in KDataForge pack configuration. Audio preferences are local to each
+player and are not synchronized by the host. There is no `volume` field.
+
+Existing individual ADA preferences are removed during Audio settings synchronization
+once an entry uses `subCategory: ADA`; stale per-message menu registrations are
+removed too. The existing native Dialogue Volume becomes authoritative. Other sounds'
+local Audio preferences retain their values. Older `__sounds.*.volume` entries
+in pack configuration files no longer affect playback; they can be removed.
 
 ## Accepted audio
 
@@ -77,7 +85,8 @@ FLAC packs require a KDataForge build with FLAC support; keep WAV when supportin
 older builds. The editor checks FLAC structure and format limits; the game importer
 also decodes frames and verifies the supplied PCM checksum.
 
-Generated events play once in 2D and route to the master bus. This document type
+Generated events play once in 2D and route to the master bus, or the native VO bus
+for `subCategory: ADA`. This document type
 does not author loops or spatial attenuation.
 
 ## Reference an event
