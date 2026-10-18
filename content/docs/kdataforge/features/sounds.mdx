@@ -1,24 +1,24 @@
 ---
 title: Sounds
-description: Import pack-relative PCM16 WAV files as Wwise audio events for ADA messages and other audio consumers.
+description: Import pack-relative PCM16 WAV or lossless FLAC files as Wwise audio events for ADA messages and other audio consumers.
 sidebar:
   order: 20
 ---
 
-`type: sound` imports WAV files from your pack as generated `UAkAudioEvent` assets.
+`type: sound` imports WAV or FLAC files from your pack as generated `UAkAudioEvent` assets.
 Use it when an existing game or mod feature accepts an audio event, such as an ADA
 message's `mAudioEvent`. Importing an event does not play it or create a message trigger.
 
 ## Declare sounds
 
-Place the WAV inside the directory containing your `pack.yml`:
+Place the audio file inside the directory containing your `pack.yml`:
 
 ```text
 DataForge/
   pack.yml                  # ref: MyPack
   welcome.sound.yml
   audio/
-    welcome.wav
+    welcome.flac
 ```
 
 ```yaml
@@ -26,7 +26,7 @@ DataForge/
 type: sound
 sounds:
   - id: AdaWelcome
-    file: audio/welcome.wav
+    file: audio/welcome.flac
     name: Welcome voice line
     description: Volume of the ADA welcome message
     category: Voice
@@ -39,7 +39,7 @@ the four display fields are optional and must be non-empty strings when supplied
 | Field | Meaning |
 | --- | --- |
 | `id` | Stable event id. Start with an ASCII letter; remaining characters may be ASCII letters, digits, `_`, `.`, or `-`. |
-| `file` | WAV path relative to the pack root, not the YAML file's directory. |
+| `file` | WAV or FLAC path relative to the pack root, not the YAML file's directory. |
 | `name` | Sound setting label; defaults to `<id> volume`. |
 | `description` | Sound setting help text; defaults to an explanation of playback volume. |
 | `category` | Group label below the native Audio settings section. |
@@ -59,14 +59,23 @@ every sound entry.
 
 ## Accepted audio
 
-- Little-endian RIFF/WAVE containing uncompressed 16-bit PCM.
+- Little-endian RIFF/WAVE containing uncompressed 16-bit PCM, or native lossless FLAC containing 16-bit PCM.
 - Mono or stereo, with a sample rate from 8,000 through 192,000 Hz.
-- A non-empty audio payload containing complete PCM frames; maximum file size 64 MiB.
-- A `.wav` extension, matched without regard to case.
+- A non-empty audio payload containing complete PCM frames; maximum 64 MiB for both the encoded file and decoded PCM.
+- A `.wav` or `.flac` extension, matched without regard to case.
+- FLAC must declare its nonzero total frame count in STREAMINFO. Decoding verifies the declared frame count and PCM MD5 when supplied.
 
-MP3, OGG, floating-point WAV and other compressed formats are unsupported. Export
-as PCM16 WAV in your audio editor. Files and any symbolic links must resolve inside
+MP3, OGG (including Ogg FLAC), 24-bit FLAC and floating-point WAV are unsupported. Export
+as PCM16 WAV or native 16-bit FLAC in your audio editor. Files and any symbolic links must resolve inside
 the pack directory; absolute paths and paths escaping the pack are rejected.
+
+Existing WAV packs continue to work. To reduce download size without changing audio,
+convert PCM16 WAV to FLAC without resampling, mixing channels or changing bit depth,
+then update only `sounds[].file`. Keep the sound ID and message references unchanged.
+FLAC is decoded to the same PCM for playback, so runtime audio memory does not shrink.
+FLAC packs require a KDataForge build with FLAC support; keep WAV when supporting
+older builds. The editor checks FLAC structure and format limits; the game importer
+also decodes frames and verifies the supplied PCM checksum.
 
 Generated events play once in 2D and route to the master bus. This document type
 does not author loops or spatial attenuation.
@@ -107,21 +116,25 @@ such as `FGMessage.mAudioEvent`, and before later CDO changes. File ordering doe
 not require placing a sound YAML before a data asset YAML.
 
 Install the same pack definitions on every multiplayer client and the server.
-Every client, including a listen-server host, also needs the referenced WAV files.
-Dedicated servers do not need WAV files: they validate the relative path syntax
+Every client, including a listen-server host, also needs the referenced audio files.
+Dedicated servers do not need WAV or FLAC files: they validate the relative path syntax
 and create placeholder events at the same generated asset paths, without opening
 audio files, creating bank caches or loading Wwise banks. Messages, subtitles and
-server-side triggers remain available. WAV contents and symbolic-link containment
+server-side triggers remain available. Audio contents and symbolic-link containment
 are checked on clients, where the audio files exist. Importing on the server does
-not transfer WAV files to clients.
+not transfer audio files to clients.
 
-The workspace's Alpakit `PackagePlugin` automatically excludes raw `.wav` files
+The workspace's Alpakit `PackagePlugin` automatically excludes raw `.wav` and `.flac` files
 from dedicated-server staging for WindowsServer and LinuxServer. This also applies
 to the server directories inside merged bundles and direct server deployments;
 the Windows client directory retains its audio. No YAML conditions or extra
 pack settings are needed. Keep the sound YAML and its message references in server
-packages. When packaging with an older Alpakit, WAV files can remain in server
+packages. When packaging with an older Alpakit, audio files can remain in server
 packages harmlessly; older KDataForge versions still require them during import.
+
+An Alpakit filter that excludes only `.wav` keeps `.flac` files in dedicated-server
+packages. Extend that filter to both formats to obtain the same server size savings;
+keep client audio and server YAML definitions.
 
 ## Troubleshooting
 
@@ -129,6 +142,7 @@ packages harmlessly; older KDataForge versions still require them during import.
   Linux, and whether a symbolic link points outside the pack.
 - **WAV rejected:** Re-export as uncompressed PCM16 mono/stereo WAV within the rate
   and size limits above. Renaming an MP3 to `.wav` does not convert it.
+- **FLAC rejected:** Export native 16-bit FLAC with a known frame count, within both size limits. Re-export files with checksum failures; renaming another format does not convert it.
 - **Generated event missing:** Check for duplicate ids, including collisions with
   other generated assets, and confirm the sound document's conditions pass.
 - **Bank cache cannot be written:** The client must be able to write generated
