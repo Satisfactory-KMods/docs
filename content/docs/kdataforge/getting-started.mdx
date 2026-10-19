@@ -32,7 +32,14 @@ several documents when separated with `---`. See
 
 Detected roots may nest. A YAML file belongs only to its deepest enclosing root, so a nested pack
 is not also loaded by its parent. Heavy engine directories such as `Content`, `Saved`, `Plugins`,
-and `Source` are pruned during root discovery.
+and `Source` are pruned during root discovery. Directories named `Docs` or `Scripts`, and any
+directory whose name starts with `.`, are ignored during root discovery and while collecting
+documents inside a detected root. Keep authored packs and their documents outside those
+development, documentation, and cache directories.
+
+The desktop editor and linter use the same exclusions for project indexes and unsaved buffers.
+Checking an excluded file directly reports `root.ignored-directory`; validating its YAML does not
+make the runtime load it.
 
 ## pack.yml
 

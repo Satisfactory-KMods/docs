@@ -16,7 +16,9 @@ Authors use `<your-mod>/DataForge/**/*.yml`. The scanner itself starts at the Un
 which is `FactoryGame/` in a packaged game. It recognizes directories named `DataForge`, the legacy
 name `data-editor`, and any directory containing `pack.yml`. Roots may nest, and each YAML file is
 assigned only to its deepest enclosing root. An implicit pack ref and name come from the detected
-root's parent directory, so an explicit stable `ref` is recommended.
+root's parent directory, so an explicit stable `ref` is recommended. Directories named `Docs` or
+`Scripts`, and dot-prefixed directories, are excluded from root discovery and document collection
+so documentation examples and cached backups cannot become active packs.
 
 ![KDataForge runtime architecture from pack discovery through staged reflection operations and per-world actor patches](../../../assets/kdataforge/architecture.svg)
 

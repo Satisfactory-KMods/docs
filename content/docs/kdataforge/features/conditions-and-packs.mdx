@@ -103,6 +103,12 @@ The implicit ref and name come from the detected root's parent directory. The ma
 group of documents a stable identity across saves, a load-order priority relative to other packs,
 and dependency ordering. The fields below are read directly by the pack scanner:
 
+`name` and `description` accept either a plain string or a localized text map with `ns`, `key`,
+and `source`. Use keyed maps for translated pack labels. The native source remains the readable
+fallback in logs; `ref` stays the unchanged technical/save identity. Existing scalar manifests
+remain supported. The desktop manifest editor displays the source and preserves namespace/key
+when editing a keyed name or description.
+
 ```yaml
 ref: MyOverhaul # stable ref the save-persistence and conflict-report contract
 name: My Overhaul Pack

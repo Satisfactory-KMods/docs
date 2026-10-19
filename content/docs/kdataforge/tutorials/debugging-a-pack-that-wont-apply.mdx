@@ -24,9 +24,11 @@ up to **6 levels deep**. A directory becomes a pack root when it is named `DataF
 legacy name `data-editor`, or directly contains `pack.yml`. Names are case-insensitive. While
 walking, the scanner prunes `Content`, `Saved`, `Intermediate`, `Binaries`, `DerivedDataCache`,
 `Plugins`, `Source`, and `Config`, so a root nested inside one of those directories is never found.
+It also ignores directories named `Docs` or `Scripts` and all directories whose names start with `.`,
+both during root discovery and inside detected packs. Keep authored YAML outside these directories.
 
-Everything below a detected root is scanned for `*.yml` and `*.yaml`. The one exception is
-`pack.yml`, which is read separately as the manifest. Roots may nest; each file belongs to its
+Outside those ignored development directories, files below a detected root are scanned for
+`*.yml` and `*.yaml`. `pack.yml` is read separately as the manifest. Roots may nest; each file belongs to its
 deepest enclosing root, never both the child and parent pack.
 
 Run `/kdf report`. The first line is always:

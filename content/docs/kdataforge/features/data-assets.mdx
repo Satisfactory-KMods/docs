@@ -371,6 +371,24 @@ Remember: `dataasset` is only for **creating** new instances. Existing data asse
 `UPrimaryDataAsset` or plain `UDataAsset`, are already editable via the `cdo` selectors shown
 above. There's no need to "recreate" one just to change a value on it.
 
+### Generated ADA messages and automatic triggers
+
+Generated `/Script/FactoryGame.FGMessage` data assets join the host/server's native Story message
+list when the gameplay world starts. Their existing `mTrigger` and `mConditions` properties use
+normal game event handling, including schematic-purchase triggers. No additional event-rule or
+manual playback binding is required for a schematic-triggered message.
+
+Only successfully configured, active, non-legacy messages are included. Files ending in
+`.yml.disabled` remain inactive. `KDF.Reload` reconciles active generated messages without adding
+duplicates or resetting played-message history. Removing a definition removes its automatic
+trigger registration; previously played messages remain in history.
+
+Triggers react to new events: loading a save with an already purchased milestone does not replay
+its message. Keep message IDs stable to preserve normal once-only playback. To diagnose discovery,
+check the `Story message synchronization` log entry and use
+`getall FGStorySubsystem mAllMessages` in the game console. Verify playback with a fresh purchase
+of the target schematic.
+
 ## 2D image assets: `type: asset`
 
 Generated items and buildings need icons, and those icons have to come from somewhere. Your pack
