@@ -39,7 +39,7 @@ the four display fields are optional and must be non-empty strings when supplied
 | Field | Meaning |
 | --- | --- |
 | `id` | Stable event id. Start with an ASCII letter; remaining characters may be ASCII letters, digits, `_`, `.`, or `-`. |
-| `file` | WAV or FLAC path relative to the pack root, not the YAML file's directory. |
+| `file` | WAV, FLAC or Ogg Vorbis path relative to the pack root, not the YAML file's directory. |
 | `name` | Sound setting label; defaults to `<id> volume`. Unused for ADA's shared native control. |
 | `description` | Sound setting help text; defaults to an explanation of playback volume. Unused for ADA's shared native control. |
 | `category` | Group label below the native Audio settings section. |
@@ -67,14 +67,14 @@ in pack configuration files no longer affect playback; they can be removed.
 
 ## Accepted audio
 
-- Little-endian RIFF/WAVE containing uncompressed 16-bit PCM, or native lossless FLAC containing 16-bit PCM.
+- Little-endian RIFF/WAVE containing uncompressed 16-bit PCM, native lossless FLAC containing 16-bit PCM, or Ogg Vorbis (decoded to PCM16).
 - Mono or stereo, with a sample rate from 8,000 through 192,000 Hz.
 - A non-empty audio payload containing complete PCM frames; maximum 64 MiB for both the encoded file and decoded PCM.
-- A `.wav` or `.flac` extension, matched without regard to case.
+- A `.wav`, `.flac` or `.ogg` extension, matched without regard to case.
 - FLAC must declare its nonzero total frame count in STREAMINFO. Decoding verifies the declared frame count and PCM MD5 when supplied.
 
-MP3, OGG (including Ogg FLAC), 24-bit FLAC and floating-point WAV are unsupported. Export
-as PCM16 WAV or native 16-bit FLAC in your audio editor. Files and any symbolic links must resolve inside
+MP3, Opus, Ogg FLAC, chained/multiplexed Ogg streams, 24-bit FLAC and floating-point WAV are unsupported. Export
+as PCM16 WAV, native 16-bit FLAC or Ogg Vorbis in your audio editor. Files and any symbolic links must resolve inside
 the pack directory; absolute paths and paths escaping the pack are rejected.
 
 Existing WAV packs continue to work. To reduce download size without changing audio,
@@ -84,6 +84,19 @@ FLAC is decoded to the same PCM for playback, so runtime audio memory does not s
 FLAC packs require a KDataForge build with FLAC support; keep WAV when supporting
 older builds. The editor checks FLAC structure and format limits; the game importer
 also decodes frames and verifies the supplied PCM checksum.
+
+Ogg Vorbis is lossy and requires a KDataForge build with OGG support. For example:
+
+```sh
+ffmpeg -i input.wav -c:a libvorbis -b:a 96k output.ogg
+```
+
+Set `sounds[].file` to `audio/output.ogg`; keep the event ID unchanged. OGG reduces
+source/download size, but KDataForge decodes it to PCM16 and writes an uncompressed
+Wwise bank cache. Bank size and decoded audio memory do not shrink. Keep original
+WAV/FLAC masters. The editor checks Ogg structure and limits; the game also decodes audio.
+Current server packaging filters cover WAV/FLAC; OGG files may remain in server
+packages harmlessly unless the packaging filter also excludes `.ogg`.
 
 Generated events play once in 2D and route to the master bus, or the native VO bus
 for `subCategory: ADA`. This document type
@@ -126,7 +139,7 @@ not require placing a sound YAML before a data asset YAML.
 
 Install the same pack definitions on every multiplayer client and the server.
 Every client, including a listen-server host, also needs the referenced audio files.
-Dedicated servers do not need WAV or FLAC files: they validate the relative path syntax
+Dedicated servers do not need WAV, FLAC or Ogg Vorbis files: they validate the relative path syntax
 and create placeholder events at the same generated asset paths, without opening
 audio files, creating bank caches or loading Wwise banks. Messages, subtitles and
 server-side triggers remain available. Audio contents and symbolic-link containment
