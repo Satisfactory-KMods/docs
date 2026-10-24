@@ -1,0 +1,193 @@
+---
+title: Integrate KDataForge
+description: Add a native KDataForge dependency, register a document handler, and verify runtime and server builds.
+sidebar:
+  order: 2
+---
+
+This guide adds a native YAML document type to an SML mod. If built-in `cdo` patches can already
+reach your reflected classes or assets, skip the handler and ship YAML under your mod's
+`DataForge/` directory.
+
+## Add the plugin dependency
+
+Declare KDataForge in your mod's `.uplugin`. Use the version range that matches the public API you
+build against. For the current released API:
+
+```json
+{
+	"Name": "KDataForge",
+	"SemVersion": "^2026.4.582",
+	"bIsOptional": false,
+	"bIsBasePlugin": false,
+	"Enabled": true
+}
+```
+
+Add the two native modules to the module that owns your handler:
+
+```csharp
+PublicDependencyModuleNames.AddRange(new[]
+{
+	"KDataForgeApi",
+	"KDataForge"
+});
+```
+
+`KDataForgeApi` supplies the handler types. `KDataForge` supplies `UKDFSubsystem` for
+registration and the supported runtime integration methods. A handler receives parsed
+`FKDFNode` values, so it does not need a `KDataForgeYaml` dependency.
+
+## Implement one root type
+
+Derive from `UKDFHandlerBase`. Set a lowercase root type, a fixed stage, and its priority in the
+constructor. Validate user input before applying it.
+
+```cpp
+// MyDataForgeHandler.h
+#pragma once
+
+#include "KDFHandlerBase.h"
+#include "MyDataForgeHandler.generated.h"
+
+UCLASS()
+class MYMOD_API UMyDataForgeHandler : public UKDFHandlerBase
+{
+	GENERATED_BODY()
+
+public:
+	UMyDataForgeHandler();
+	virtual bool ValidateDocument(const FKDFNode& Document, FKDFValidationContext& Context) override;
+	virtual bool ApplyDocument(const FKDFNode& Document, FKDFApplyContext& Context) override;
+};
+```
+
+```cpp
+// MyDataForgeHandler.cpp
+#include "MyDataForgeHandler.h"
+
+UMyDataForgeHandler::UMyDataForgeHandler()
+{
+	mRootType = TEXT("mymod_data");
+	mStage = EKDFStage::RuntimePatches;
+	mPriority = 0;
+}
+
+bool UMyDataForgeHandler::ValidateDocument(
+	const FKDFNode& Document,
+	FKDFValidationContext& Context)
+{
+	if (Document.Find(TEXT("entries")) == nullptr)
+	{
+		Context.AddError(TEXT("mymod_data requires an 'entries' field"));
+		return false;
+	}
+	return true;
+}
+
+bool UMyDataForgeHandler::ApplyDocument(
+	const FKDFNode& Document,
+	FKDFApplyContext& Context)
+{
+	if (Context.bDryRun)
+	{
+		return true;
+	}
+
+	// Apply validated entries and add diagnostics or patch records here.
+	return true;
+}
+```
+
+`mStage` controls the handler's position in the global pipeline. `mPriority` orders handlers only
+when stage and root type match. The full [handler template](/kdataforge/reference/handler-template)
+shows operation records, snapshots, object retention, exports, and per-entry diagnostics.
+
+## Register before the initial load
+
+Register from your game-instance module during `ELifecyclePhase::CONSTRUCTION`. KDataForge runs
+its initial scan and apply pass during `INITIALIZATION`, so later registration misses that pass.
+
+```cpp
+#include "Module/GameInstanceModuleManager.h"
+#include "MyDataForgeHandler.h"
+#include "Subsystems/KDFSubsystem.h"
+
+void UMyModGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
+{
+	Super::DispatchLifecycleEvent(Phase);
+
+	if (Phase != ELifecyclePhase::CONSTRUCTION)
+	{
+		return;
+	}
+
+	UGameInstanceModuleManager* Modules =
+		GetGameInstance()->GetSubsystem<UGameInstanceModuleManager>();
+	if (Modules == nullptr)
+	{
+		return;
+	}
+
+	Modules->EnsureSubsystemInitialized(UKDFSubsystem::StaticClass());
+	if (UKDFSubsystem* KDF = UKDFSubsystem::Get(GetGameInstance()))
+	{
+		KDF->RegisterHandler(NewObject<UMyDataForgeHandler>(KDF));
+	}
+}
+```
+
+The subsystem retains the handler against garbage collection. More than one handler may claim a
+root type; KDataForge runs all matching handlers in priority order.
+
+## Follow the handler contract
+
+- Report invalid input through `Context.AddError`, `AddWarning`, or `AddInfo`. One bad document
+  must not stop other packs from loading.
+- Honor `Context.bDryRun`. Resolve and validate during a dry run without changing game state.
+- Add applied operations to `Context.mPatchRecord` when the change should appear in reports or
+  editor history.
+- Record a vanilla snapshot before a direct reflected write, and retain modified objects that
+  must survive garbage collection.
+- Keep generated class and asset identity stable when saves may reference it. Use KDataForge's
+  dynamic-content registry instead of inventing another transient path scheme.
+- Treat main-module details absent from [API design](/kdataforge/reference/api-design) as internal.
+
+## Keep the server path clean
+
+The handler is runtime code. It can run in a client, listen server, or dedicated server process.
+Avoid client UI, local-player, and rendering assumptions in validation and apply code. Put optional
+presentation work behind the relevant runtime checks.
+
+Depend on `KDataForgeApi` and `KDataForge`, not `KDataForgeEditorUI` or the editor-only
+`KDataForgeLocalization` module. Package and link a Shipping build because a development editor
+build can hide missing runtime module dependencies. Also verify the dedicated-server target when
+the handler performs world or authority-side work.
+
+Every multiplayer process loads its own pack set. KDataForge does not transfer documents or reject
+pack mismatches, so distribute the same definitions and versions to the server and every client.
+
+## Verify the integration
+
+1. Build your normal editor target to catch header and Unreal reflection errors.
+2. Package a Shipping build to verify runtime module links.
+3. Package the dedicated-server target if your mod supports it.
+4. Add this document under your mod's `DataForge/` directory:
+
+   ```yaml
+   type: mymod_data
+   entries: []
+   ```
+
+5. Start a session and run `/kdf report`. Confirm that KDataForge found the document and recorded
+   your handler's diagnostics and applied operations.
+6. Add one invalid field or omit `entries`. Confirm that the document reports an error while the
+   rest of the load continues.
+7. Run `/kdf reload` after changing a reload-safe field. Confirm that your handler replaces or
+   clears prior registrations instead of accumulating duplicates.
+8. Test one host and one client with matching packs when the handler affects replicated gameplay or
+   client presentation.
+
+Use [Debugging a pack that won't apply](/kdataforge/tutorials/debugging-a-pack-that-wont-apply)
+when discovery or validation fails. Use [Architecture](/kdataforge/background/architecture) when
+the problem depends on stage, world, save, or reload timing.

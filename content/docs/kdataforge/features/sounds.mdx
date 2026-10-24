@@ -1,11 +1,11 @@
 ---
 title: Sounds
-description: Import pack-relative PCM16 WAV or lossless FLAC files as Wwise audio events for ADA messages and other audio consumers.
+description: Turn pack-relative PCM16 WAV, lossless FLAC, or Ogg Vorbis files into Wwise audio events for ADA messages and other audio consumers.
 sidebar:
   order: 20
 ---
 
-`type: sound` imports WAV or FLAC files from your pack as generated `UAkAudioEvent` assets.
+`type: sound` imports WAV, FLAC, or Ogg Vorbis files from your pack as generated `UAkAudioEvent` assets.
 Use it when an existing game or mod feature accepts an audio event, such as an ADA
 message's `mAudioEvent`. Importing an event does not play it or create a message trigger.
 
@@ -154,9 +154,9 @@ pack settings are needed. Keep the sound YAML and its message references in serv
 packages. When packaging with an older Alpakit, audio files can remain in server
 packages harmlessly; older KDataForge versions still require them during import.
 
-An Alpakit filter that excludes only `.wav` keeps `.flac` files in dedicated-server
-packages. Extend that filter to both formats to obtain the same server size savings;
-keep client audio and server YAML definitions.
+An Alpakit filter that excludes only `.wav` keeps `.flac` and `.ogg` files in dedicated-server
+packages. Extend custom filters to every source format you use to obtain the same server size
+savings; keep client audio and server YAML definitions.
 
 ## Troubleshooting
 

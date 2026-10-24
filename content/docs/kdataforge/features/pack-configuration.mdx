@@ -1,6 +1,6 @@
 ---
-title: Pack Configuration
-description: Define typed pack settings, read their values, and choose when changes take effect.
+title: Pack configuration
+description: Define typed pack settings, read player values, and control when a changed setting takes effect.
 sidebar:
   order: 20
 ---
@@ -72,8 +72,8 @@ order rather than sorting it again.
 
 ## Ready-made Blueprint settings widgets
 
-Enable the **KUI** dependency alongside KDataForge. KDataForge's runtime UI module
-provides native C++ widgets using FactoryGame's options-row, checkbox, slider,
+KDataForge's runtime UI module provides native C++ widgets using FactoryGame's
+options-row, checkbox, slider,
 dropdown, font and status-icon assets.
 
 Rows keep the original 300-pixel control column. Checkbox and slider rows use
@@ -82,8 +82,11 @@ FactoryGame's dark input background, left-aligned font and orange hover/focus
 border. Apply, Discard, Add and Remove use FactoryGame's standard buttons,
 including their native interaction states. Reset retains the compact options icon.
 Multiline text, tags and collections expand vertically. Use an automatically
-sized panel slot; a fixed 33-pixel slot would clip these controls. Tooltips use
-KUI's tooltip asset.
+sized panel slot; a fixed 33-pixel slot would clip these controls.
+
+The released `2026.4.582` settings page requires KUI. The upcoming development release moves the
+category, empty-state, and styled tooltip visuals into KDataForge itself and removes that runtime
+KUI requirement.
 
 In a Widget Blueprint:
 

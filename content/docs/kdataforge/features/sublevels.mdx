@@ -1,6 +1,6 @@
 ---
 title: 'Type: sublevel'
-description: Block RefinedRDLib or KBFL sublevel assets before they stream into a game world.
+description: Prevent selected RefinedRDLib or KBFL sublevels from streaming into the world.
 sidebar:
   order: 20
 ---
@@ -104,5 +104,5 @@ instead when the assets must always be blocked.
   `/kdf report` for an unresolved target or an empty Asset Registry scan.
 - **Target is rejected as the wrong kind:** only `RRDLSublevelAsset` and `KBFLSubLevelSpawning`
   instances are supported. Patch other asset types with `type: cdo`.
-- **Level was already present:** KDataForge loads once during GameInstance initialization. Restart
+- **Level was already present:** Sublevel blocking must run before that level streams in. Restart
   instead of expecting an in-session unload.

@@ -1,0 +1,93 @@
+---
+title: Install, update, or remove a pack
+description: Manage KDataForge packs safely and verify that the game loaded them.
+sidebar:
+  order: 2
+---
+
+Follow the pack author's instructions when they name an installer, mod manager, required mod, or
+specific folder. The manual steps below apply to packs distributed as ordinary folders containing
+`pack.yml` and one or more YAML documents.
+
+## Before changing a pack
+
+1. Close Satisfactory and any dedicated server that uses the pack.
+2. Back up the save you intend to load.
+3. Record the installed pack version and its requirements.
+4. In multiplayer, prepare the same pack version for the host or server and every client.
+
+A backup matters most for packs that move, replace, or remove world content. Resource Node removal
+can leave saved destruction records after the pack is gone. Other packs may also change recipes,
+inventories, progression, or generated content referenced by a save.
+
+## Install a managed pack
+
+1. Install KDataForge and the content pack with the method named by the pack author.
+2. Install every dependency listed for the pack.
+3. Start the game and load the intended save.
+4. Run `/kdf report` in chat.
+5. Check that the report has no errors. Warnings describe a tolerated problem or a skipped pack and
+   still need review.
+6. Confirm the pack's advertised change in game.
+
+KDataForge reports totals for loaded packs, applied documents, operations, actor patches, errors,
+and warnings. It omits informational skips, including conditions that intentionally do not match.
+
+## Install a manual pack
+
+A manual pack with its own `pack.yml` belongs here:
+
+```text
+<GameFolder>/FactoryGame/DataForge/<PackFolder>/
+  pack.yml
+  <pack documents>.yml
+```
+
+1. Close the game.
+2. Create `<GameFolder>/FactoryGame/DataForge/` if it does not exist.
+3. Extract the supplied pack folder below `DataForge` without renaming its files.
+4. Check that `pack.yml` sits directly inside `<PackFolder>`, not beside the archive or one level
+   above the other pack files.
+5. Start the game and run `/kdf report`.
+6. Review errors and warnings, then confirm the expected change in game.
+
+KDataForge scans from `FactoryGame/` and recognizes directories named `DataForge`, the legacy name
+`data-editor`, and directories that directly contain `pack.yml`. It ignores development and engine
+directories such as `Docs`, `Scripts`, `Content`, `Config`, `Plugins`, `Source`, `Saved`, and folders
+whose names begin with a dot. Do not store a manual pack under one of those directories.
+
+## Update a pack
+
+1. Close the game and back up the save.
+2. Keep a copy of the currently working pack folder and version.
+3. Update a managed pack with the same tool that installed it. For a manual pack, replace the old
+   pack folder with the new release instead of merging both folders.
+4. Keep KDataForge installed and do not change the pack's `ref` in `pack.yml`.
+5. Start the game. If the release notes require a restart, do not rely on live reload.
+6. Run `/kdf report` and check errors and warnings.
+7. Load the backed-up save and verify the pack's affected systems.
+
+Replacing the folder avoids leaving documents that the new release removed. Pack configuration
+values remain tied to the pack `ref`; changing that value also changes generated class identities
+used by saves.
+
+## Remove a pack
+
+1. Close the game and back up the save.
+2. Read the pack's removal or migration instructions.
+3. Remove the pack with its installer. For a manual pack, move its folder out of
+   `FactoryGame/DataForge`.
+4. Keep KDataForge installed.
+5. Start the game and load the save once so KDataForge can process the missing pack and any stored
+   restoration data.
+6. Run `/kdf report`, then inspect the save before overwriting your backup.
+
+Generated classes missing from the current pack set return as hidden, deprecated tombstones. This
+lets old saves resolve their class paths, but it does not make removed items, recipes, or buildings
+available for normal play. Recipe removals usually repair themselves on a later load without the
+pack. Removed schematic and research listings return, while completed purchases and research remain
+in the save. Resource Node destruction may survive removal, so restore the backup if the world does
+not return to the expected state.
+
+Do not remove KDataForge at the same time as a content pack when a save has used generated content.
+KDataForge owns the manifest that recreates missing generated classes.

@@ -1,12 +1,12 @@
 ---
-title: Adding KAPI Data Assets
-description: 'Real, copy-pasteable "type: dataasset" examples for every KAPI data asset type air collector, cleaner, modular miner, slug breeding, extractor/resource allow-lists, and delivery-task tree nodes.'
+title: Adding KAPI data assets
+description: 'Copy-pasteable "type: dataasset" examples for air collectors, cleaners, modular miners, slug breeding, extractor and resource allow lists, and delivery-task nodes.'
 sidebar:
   order: 7
 ---
 
-This page is worked `type: dataasset` examples, creating brand-new instances, for every KAPI data
-asset type. Editing *existing* instances via `type: cdo` is already covered on
+These `type: dataasset` examples create new instances for every KAPI data asset type. To edit
+*existing* instances through `type: cdo`, see
 [Data Assets](/kdataforge/features/data-assets). Four of the five examples below use real property
 values from actual shipped Satisfactory Plus / KLib content, so the numbers are realistic, not
 placeholders. The fifth (extractor/resource allow-lists) is illustrative since no shipped instance
@@ -18,7 +18,7 @@ Each Air Collector resource is its own `UKAPIAirCollectorData` instance the Data
 new gas/resource the Air Collector can extract, it does not patch an existing one. See the
 [full property reference](/satisfactory-plus/kdataforge/air-collector/) for every field; the example
 below mirrors Satisfactory Plus's own shipped "Air Collector extract Toxic Air via Resource Nodes"
-asset. Note `bUseHightBasesdProduction` selects one of two mutually exclusive production models —
+asset. Note `bUseHightBasesdProduction` selects one of two mutually exclusive production models.
 here it's `false`, so `mMaxHit`/`mProductionPerHit` are the active fields and
 `mProduceItemCountMin`/`Max`/`Base` (the other model) are omitted entirely, not just left at
 defaults.

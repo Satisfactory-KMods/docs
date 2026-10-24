@@ -23,8 +23,8 @@ Every element, whatever its type, has these in the **Element** panel:
 | **Color tint**      | Multiplies the element's colour. White leaves it untouched.          |
 
 :::note
-Positions are always in the sign's own pixel space, never in screen pixels. Zooming
-the canvas changes what you see, never the numbers that get saved.
+Positions use the sign's own pixel space, not screen pixels. Zooming the canvas
+changes the view but leaves saved values unchanged.
 :::
 
 ## The three types
@@ -39,7 +39,7 @@ Draws a line of text.
 | **Text content**                   | What it says. Line breaks are kept.                              |
 | **Text type**                      | *Normal* draws the glyphs alone; *Background* fills a plate behind them. |
 | **Background color**               | The plate colour, used by *Background* type.                     |
-| **Font variant**                   | Weight and italics Light through ExtraBold.                    |
+| **Font variant**                   | Weight and italics from Light through ExtraBold.               |
 | **Font size**, **Letter spacing**, **Line height** | Standard type controls.                          |
 | **Alignment**                      | Left, center or right.                                           |
 | **Bold**, **Uppercase**            | Quick toggles on top of the chosen variant.                      |
@@ -52,7 +52,7 @@ one family, so any other font would fall back to something you did not pick.
   </TabItem>
   <TabItem label="Image">
 
-Draws a texture a mod icon, an RSS sign texture, or one of your own images.
+Draws a texture: a mod icon, an RSS sign texture, or one of your own images.
 
 | Setting                       | Notes                                                        |
 | ----------------------------- | ------------------------------------------------------------ |
@@ -64,14 +64,14 @@ Use **Icon & image browser** in the inspector to swap the texture on an image
 element that is already placed. See [Images & icons](/sign-editor/images/).
 
 :::note
-9-slice is passed straight through to the mod and is **not** previewed in the
-editor the canvas shows the plain texture.
+The editor passes 9-slice settings straight to the mod and does **not** preview
+them. Its canvas shows the plain texture.
 :::
 
   </TabItem>
   <TabItem label="Effect">
 
-Scrolls a texture across the sign the RSS "panner".
+Scrolls a texture across the sign with the RSS "panner".
 
 | Setting             | Notes                                                                 |
 | ------------------- | --------------------------------------------------------------------- |
@@ -89,8 +89,8 @@ is available for it too.
 ## Selecting and arranging
 
 Click an element on the canvas, or a row in the **Layers** list, to select it.
-The inspector then switches to that element's settings the whole-sign settings
-stay available below them.
+The inspector then shows that element's settings. Whole-sign settings remain
+available below them.
 
 The layer list draws **bottom-last**: the row at the bottom of the list is drawn
 on top on the canvas. Drag a row's handle to reorder, or use the action bar's

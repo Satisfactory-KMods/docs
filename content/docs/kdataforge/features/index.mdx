@@ -1,22 +1,18 @@
 ---
-title: Features
-description: One page per capability KDataForge supports, the value you put after `type:` in a YAML document, plus the cross-cutting mechanics every document shares.
+title: Document types and features
+description: Understand each YAML document type and the mechanics shared across KDataForge packs.
 sidebar:
   order: 1
 ---
 
-Every KDataForge YAML document starts with a `type:` field, and that single field decides which of
-the pages below covers it. `type: item` behaves nothing like `type: gametag`: each has its own
-entries key, its own load stage, and its own session-start behavior. This section gives every one of
-those `type:` values its own page, plus a handful of pages for mechanics that cut across all of
-them. Those cross-cutting pages cover the property codec every `value:` is parsed through, the 22
-operations a patch can apply, the selectors that pick what gets patched, and the
-conditions/pack-manifest options that sit above any single document.
+Use this section to understand how KDataForge packs work. Most YAML documents declare a `type:`
+that selects a handler and its load stage. Each document type has a page below. Shared concepts
+cover the property codec, all 25 patch operations, target selection, conditions, pack manifests,
+templates, settings, and reload behavior.
 
-Read a page here to understand **what a capability does and why it is shaped the way it is**. For
-complete packs that combine several capabilities, use [Examples](/kdataforge/examples).
-[Task Guides](/kdataforge/tutorials) walk specific goals step by step. For normative
-field and API details, use [Reference](/kdataforge/reference).
+For a procedure, use the [How-to guides](/kdataforge/tutorials). For complete packs, use
+[Examples](/kdataforge/examples). The [Reference](/kdataforge/reference) holds exact syntax,
+defaults, constraints, and public API contracts.
 
 ## Patch mechanics
 
@@ -29,7 +25,7 @@ the pieces fit together in one patch entry.
   property codec accepts, including bool, all numeric widths, enums, strings, `FText` (plain and
   localized), object/class/soft references, all three struct forms, arrays, sets, maps, and
   gameplay tags.
-- [Operations](/kdataforge/features/operations): what each of the 22 `op:` values
+- [Operations](/kdataforge/features/operations): what each of the 25 `op:` values
   does and which property kinds accept it, covering numeric math and clamping, container
   mutation, string concatenation, array reordering, and cross-property copy/move.
 - [Targeting](/kdataforge/features/targeting): every way to select what a patch
@@ -49,7 +45,7 @@ the pieces fit together in one patch entry.
 - [Category Ordering](/kdataforge/features/category-reorder): assign categories and deterministic
   one-based menu order to items, recipes, schematics, and user settings.
 
-## Runtime documents
+## Runtime registration
 
 Two document types register something into a global engine system rather than patching an object
 directly. Both are unusual enough about _when_ they take effect to deserve their own page.
@@ -63,12 +59,19 @@ directly. Both are unusual enough about _when_ they take effect to deserve their
 
 ## World and startup control
 
-Two root types affect world content without generating a class. Both must run from matching packs
-on every multiplayer process.
+These root types affect world content or react to world events without
+generating a class. Their multiplayer execution rules differ; check the linked
+page before shipping a pack.
 
 - [Resources and Resource Nodes](/kdataforge/features/resources#removing-resource-nodes-type-resourcenode):
   `type: resourcenode` removes matching world nodes by effective resource descriptor and optional
   node type, with explicit save-persistence and occupied-node safeguards.
+- [Resource Node Appearance](/kdataforge/features/resource-node-visuals): override node materials
+  or hide selected mesh actors, including streamed and client-side instances.
+- [Resource Node Placement](/kdataforge/features/resource-node-placement): add nodes from explicit
+  transforms or replace matching existing nodes.
+- [Event Rules](/kdataforge/features/event-rules): run bounded server-side actions at world start
+  or after schematic purchases, optionally once per save.
 - [Sublevels](/kdataforge/features/sublevels): `type: sublevel` blocks selected
   RefinedRDLib or KBFL sublevel descriptor assets before their levels stream in.
 - [Removing Content](/kdataforge/features/removing-content): `remove:` on `recipe`,
@@ -77,10 +80,8 @@ on every multiplayer process.
 
 ## Content creation
 
-These seven types generate a brand-new class at runtime, or, for the last three, register an
-existing one you didn't generate. This is the actual "add new stuff to the game" side of
-KDataForge. All seven share the same id/parent/properties shape and the same save-stable
-generated-class identity.
+These seven types generate a class at runtime or register an existing class. They share the
+`id`/`parent`/`properties` shape and KDataForge's save-stable generated-class identity.
 
 - [Items](/kdataforge/features/items): generating new `FGItemDescriptor` classes,
   the parent/required-base rules, and the generated-class identity every other content-creation
@@ -103,10 +104,10 @@ generated-class identity.
   research trees, registering existing ones, and why a schematic doesn't "point at" a tree the
   way a recipe points at a schematic.
 
-## Sink points, the escape hatch, data assets, sounds, and curves
+## Other content and assets
 
-These pages round out the type list with a narrow registry document, a general class escape hatch,
-object-instance assets, imported audio, and Unreal curves.
+These pages cover a narrow registry document, the general class handler, object-instance assets,
+imported audio, and Unreal curves.
 
 - [Sink Points](/kdataforge/features/sinkpoints): setting AWESOME Sink point values
   for items, its registration timing, and why this is separate from Resource Nodes.
@@ -116,7 +117,7 @@ object-instance assets, imported audio, and Unreal curves.
 - [Data Assets](/kdataforge/features/data-assets): editing every KAPI
   `PrimaryDataAsset` type, creating new instances with `type: dataasset`, loading 2D images with
   `type: asset`, and RefinedR&D (RRDA) integration.
-- [Sounds](/kdataforge/features/sounds): `type: sound` imports pack-relative PCM16 WAV or FLAC files
+- [Sounds](/kdataforge/features/sounds): `type: sound` imports pack-relative PCM16 WAV, lossless FLAC, or Ogg Vorbis files
   as audio events for ADA messages and other consumers, including generated Audio settings.
 - [Float and Vector Curves](/kdataforge/features/curves): creating or editing
   `UCurveFloat` and `UCurveVector` assets with key interpolation, tangents, defaults, and
@@ -129,9 +130,5 @@ object-instance assets, imported audio, and Unreal curves.
 - [Reflection Export](/kdataforge/reference/reflection-export): export the game's reflected
   types, defaults, settings, functions, and texture previews as a `.kdfdata` archive.
 
-:::tip
-Not sure which page you need? If you already know the `type:` value from a YAML file, jump straight
-to its page above. If you're starting from a goal instead ("I want players to unlock a new item"),
-[Task Guides](/kdataforge/tutorials) walks the whole chain instead of making you piece
-it together from several of these pages yourself.
-:::
+If you know the YAML `type:`, open its page above. If you are starting from a goal, such as making
+a new item obtainable, follow the [How-to guides](/kdataforge/tutorials) instead.

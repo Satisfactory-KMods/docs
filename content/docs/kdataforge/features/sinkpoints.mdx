@@ -1,6 +1,6 @@
 ---
 title: 'Type: sinkpoints'
-description: Set AWESOME Sink point values for items, understand registration timing, and keep sink scoring separate from Resource Nodes.
+description: Set AWESOME Sink values, account for registration timing, and distinguish sink scoring from resource nodes.
 sidebar:
   order: 16
 ---
@@ -9,8 +9,7 @@ This document type runs in the `SubsystemMods` stage, after all content-generati
 restart is required to pick up changes. Its entries key is `entries`, and the `track:` field accepts
 `Default` or `Exploration`, defaulting to `Default`.
 
-This one's simple in shape but strict about timing: it sets how many AWESOME Sink points an item is
-worth.
+Each entry sets an item's AWESOME Sink point value. Registration timing is strict.
 
 ```yaml
 type: sinkpoints
@@ -59,11 +58,11 @@ Filter entries expand against the descriptor classes loaded when the document ap
 report warns when a filter matched nothing. A later explicit `item:` row for the same descriptor in
 the same document wins, because rows are keyed by class name.
 
-## Registration timing and Resource Node boundary
+## Registration timing and resource node boundary
 
 KDataForge queues sink point tables during initialization and registers them per world before SML's
-content registry freezes. YAML is scanned once per GameInstance, so changes require a session
-restart. The runtime exposes no live YAML rescan command.
+content registry freezes. `/kdf reload` rescans the YAML, but it cannot rewrite a frozen Sink table
+for the current world. Restart the session after changing sink point documents.
 
 Sink points only control item scoring in the AWESOME Sink. They do not place Resource Nodes, change
 purity, or grant scanner visibility. See

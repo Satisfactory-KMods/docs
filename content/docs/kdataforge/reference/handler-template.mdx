@@ -1,13 +1,13 @@
 ---
-title: Handler Template
+title: Handler template
 description: Reference C++ implementation for creating a new document handler (worked RecipeHandler example).
 sidebar:
   order: 4
 ---
 
 A handler owns one YAML root type and runs in one fixed `EKDFStage`. It receives parsed `FKDFNode`
-documents and never sees raw YAML text directly. Third-party mods write handlers when they want
-KDataForge's validation, dry-run preview, diagnostics, and patch records applied to a new root type.
+documents and never sees raw YAML text directly. Third-party mods use handlers to give a new root
+type KDataForge validation, dry-run previews, diagnostics, and patch records.
 
 Every handler normally derives from `UKDFHandlerBase`, which lives in the `KDataForgeApi` module.
 Registration uses `UKDFSubsystem` from the main `KDataForge` module, so the registering mod links
@@ -17,7 +17,7 @@ boundary exists and what else lives on either side of it. See
 [API Design](/kdataforge/reference/api-design) for the rest of the public contract
 surface.
 
-## Minimal Skeleton
+## Minimal skeleton
 
 A handler is normally two files: a header declaring the `UCLASS` and overrides, and a `.cpp`
 implementing them. The example below is a `UMyRecipeHandler` that owns a `type: recipe` document
@@ -49,7 +49,7 @@ public:
 The constructor sets the three identity fields that `UKDFHandlerBase` exposes: `mRootType`,
 `mStage`, and `mPriority`. `ValidateDocument` does cheap structural checks before anything is
 written, and `ApplyDocument` does the actual work. Only `ApplyDocument` is mandatory.
-`UKDFHandlerBase`'s default `ValidateDocument` simply returns `true`:
+`UKDFHandlerBase`'s default `ValidateDocument` returns `true`:
 
 ```cpp
 // MyRecipeHandler.cpp
@@ -112,8 +112,9 @@ A handler object is useless until KDataForge knows about it. Registration has a 
 requirement: it must happen during the `CONSTRUCTION` lifecycle phase, because KDataForge's own
 `RunInitialLoad()` (scan, parse, validate, apply) runs at the later `INITIALIZATION` phase.
 
-Register too late and your handler simply never sees any documents. Do it from your own game
-instance module's lifecycle dispatch:
+Late registration misses the initial pass. Matching documents can run on a later `/kdf reload`,
+but cold registrations may still need the next session. Register from your own game-instance
+module's lifecycle dispatch:
 
 ```cpp
 #include "Module/GameInstanceModuleManager.h"
@@ -141,7 +142,7 @@ void UMyModGameInstanceModule::DispatchLifecycleEvent(ELifecyclePhase Phase)
 Add `KDataForgeApi` and `KDataForge` to your module dependencies. The explicit initialization is
 required because SML may dispatch lifecycle phases before custom GameInstance subsystems exist.
 
-## Contract Checklist
+## Contract checklist
 
 `UKDFHandlerBase` is forgiving about what you override, but diagnostics, dry-run preview, reports,
 and editor history depend on a few contracts. Run through these before shipping a handler:

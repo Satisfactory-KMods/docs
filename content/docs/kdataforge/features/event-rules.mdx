@@ -1,6 +1,6 @@
 ---
 title: Event rules
-description: Run bounded server-side actions when a world starts or a schematic is purchased, with optional once-per-save execution.
+description: Run bounded server-side actions at world start or after a schematic purchase, optionally once per save.
 sidebar:
   order: 35
 ---
@@ -11,7 +11,7 @@ schematic changes use the game's existing unlock and replication path.
 
 ## First rule
 
-Place this document in a pack YAML file:
+Place this document in a [pack YAML file](/kdataforge/features/conditions-and-packs/#packyml-the-pack-manifest):
 
 ```yaml
 type: eventrule
@@ -66,7 +66,8 @@ an AND condition; an empty or omitted list imposes no condition. A failed condit
 actions and does not mark the rule completed. Conditions are evaluated at events, not every frame.
 
 `once` defaults to `true`: a successful rule's identity is stored in the save. Its identity is the
-pack `ref` plus rule `id`, compared without case. Reloading YAML, changing action contents, moving
+pack [`ref`](/kdataforge/features/conditions-and-packs/#packyml-the-pack-manifest) plus rule `id`,
+compared without case. Reloading YAML, changing action contents, moving
 the document, or removing and later restoring the rule does not reset that history. Give an
 intentional new rule a new `id`. Keep a stable pack `ref`.
 
@@ -79,18 +80,19 @@ events; excess nested events are dropped with a warning.
 
 | Field | Required | Meaning |
 | --- | --- | --- |
-| `rules` | Yes | Sequence of 1–256 rules per document. |
-| `id` | Yes | 1–128 ASCII letters, digits, `.`, `_`, or `-`; unique across the pack, ignoring case. |
+| `rules` | Yes | Sequence of 1 to 256 rules per document. |
+| `id` | Yes | 1 to 128 ASCII letters, digits, `.`, `_`, or `-`; unique across the pack, ignoring case. |
 | `event` | Yes | Exactly `worldReady` or `schematicPurchased`. |
 | `schematic` | No | Schematic class filter; only valid with `schematicPurchased`. |
 | `once` | No | Boolean, default `true`. |
 | `requiresSchematics` | No | Sequence of up to 64 schematic class references. |
-| `actions` | Yes | Sequence of 1–32 actions. |
+| `actions` | Yes | Sequence of 1 to 32 actions. |
 
 Each action is a map containing exactly one key: `unlockSchematic` with a concrete schematic class,
 or `log` with nonblank text up to 2,048 characters. Unknown rule and action fields are errors.
 Field names and event names use the exact case shown above. Class references support the usual
-KDataForge class resolver, including generated content already created by earlier loader stages.
+KDataForge [class resolver](/kdataforge/features/property-types/#object-reference-hard),
+including generated content already created by earlier loader stages.
 
 The entire document is rejected if any rule is malformed, a class reference cannot resolve, or
 its rule IDs collide with rules already registered by another document. No actions run while

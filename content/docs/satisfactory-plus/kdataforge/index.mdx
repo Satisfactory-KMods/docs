@@ -1,6 +1,6 @@
 ---
-title: "Compatibility via KDataForge (soft dependency)"
-description: Ship a DataForge folder with your mod and add KAPI DataAssets like miners and resources from plain YAML, no KAPI build dependency required.
+title: "KDataForge compatibility (soft dependency)"
+description: Ship KAPI DataAssets such as miners and resources as YAML without adding a KAPI build dependency.
 category: Compatibility with KDataForge
 sidebar:
   order: 0
@@ -8,10 +8,16 @@ sidebar:
 
 import { CardGrid, LinkCard } from "@astrojs/starlight/components";
 
-If you don't want (or don't need) to link against [KAPI](/satisfactory-plus/kapi/) directly, you can still add compatible content (new resources, miners, and other KAPI DataAssets) by shipping a **`DataForge/` folder** inside your mod with YAML packs. [KDataForge](/kdataforge/) resolves KAPI at runtime through Unreal reflection, so it works whether or not KAPI is even installed.
+You can add new resources, miners and other KAPI DataAssets without linking
+directly against [KAPI](/satisfactory-plus/kapi/). Ship YAML packs in a
+**`DataForge/` folder** inside your mod. [KDataForge](/kdataforge/) resolves KAPI
+at runtime through Unreal reflection and also works when KAPI is absent.
 
 :::note
-This page describes the general pattern any mod (Satisfactory Plus included) can use. It does not mean SF+ currently ships a `DataForge/` folder itself. The worked example below is [KDataForge's own reference sample pack](/kdataforge/getting-started/), which demonstrates exactly this pattern against real KAPI DataAsset classes.
+This pattern works for any mod, including Satisfactory Plus. SF+ does not
+currently ship its own `DataForge/` folder. The example below comes from
+[KDataForge's reference sample pack](/kdataforge/getting-started/) and uses real
+KAPI DataAsset classes.
 :::
 
 ## Why this is a _soft_ dependency
@@ -36,32 +42,34 @@ if (UClass* KAPIClass = FindObject<UClass>(nullptr, TEXT("/Script/KAPI.KAPIDataA
 }
 ```
 
-This compiles and loads fine even with KAPI completely absent. The class lookup just returns null and the block is skipped. That's what makes it a true soft dependency rather than an optional-at-compile-time hard one.
+This code compiles and loads when KAPI is absent. The class lookup returns null,
+and execution skips the block. KDataForge therefore remains a soft dependency
+instead of an optional-at-compile-time hard dependency.
 
 <CardGrid>
   <LinkCard
-    title="Adding new Extractors / Resources"
+    title="Allow or disallow extractors and resources"
     href="/satisfactory-plus/kdataforge/extractors"
-    description="How to add new Extractor, Remove Extractor, or Resource DataAssets to Satisfactory Plus through KAPI. To allow / disallow them in SF+ gameplay."
+    description="Allow or disallow extractor and resource DataAssets in Satisfactory Plus."
   />
   <LinkCard
-    title="Adding new Recipes to Filtrator"
+    title="Add Filtrator recipes"
     href="/satisfactory-plus/kdataforge/filtrator"
-    description="How to add new Recipe DataAssets to the Filtrator in Satisfactory Plus through KAPI. To allow them in SF+ gameplay."
+    description="Add Filtrator recipe DataAssets to Satisfactory Plus."
   />
   <LinkCard
-    title="Adding new Resources to the Air Collector"
+    title="Add Air Collector resources"
     href="/satisfactory-plus/kdataforge/air-collector"
-    description="How to add new Resource DataAssets to the Air Collector in Satisfactory Plus through KAPI. To allow them in SF+ gameplay."
+    description="Add Air Collector resource DataAssets to Satisfactory Plus."
   />
   <LinkCard
-    title="Adding new Slug / Breeding Recipes"
+    title="Add slug breeding recipes"
     href="/satisfactory-plus/kdataforge/slug-breeding"
-    description="How to add new Slug or Breeding Recipe DataAssets to Satisfactory Plus through KAPI. To allow them in SF+ gameplay."
+    description="Add slug breeding DataAssets to Satisfactory Plus."
   />
   <LinkCard
-    title="Adding new Ore to Modular Miner"
+    title="Add ore to the Modular Miner"
     href="/satisfactory-plus/kdataforge/modular-miner"
-    description="How to add new Ore DataAssets to the Modular Miner in Satisfactory Plus through KAPI. To allow them in SF+ gameplay."
+    description="Add Modular Miner ore DataAssets to Satisfactory Plus."
   />
 </CardGrid>

@@ -1,13 +1,13 @@
 ---
-title: API Design
+title: API design
 description: Public C++ handler contract in KDataForgeApi and the KDataForge registration surface used by third-party mods.
 sidebar:
   order: 3
 ---
 
-Third-party handler types derive against `KDataForgeApi`. Registering those handlers calls
-`UKDFSubsystem`, which lives in the main `KDataForge` module, so a registering mod links both
-modules. Other implementation details may change between versions.
+Third-party handler types derive from `KDataForgeApi`. Handler registration calls `UKDFSubsystem`
+in the main `KDataForge` module, so a registering mod links both modules. Other implementation
+details may change between versions.
 
 ## Stability guarantees
 
@@ -53,8 +53,8 @@ Contexts carry `mGameInstance`, `mSourceFile`, and a diagnostic sink with `AddIn
 and `AddError`. Diagnostics are non-fatal. `FKDFApplyContext` adds `bDryRun`, `mPatchRecord`, and
 `mAppliedOpCount`.
 
-There is no `bLiveReload` flag in the current API. YAML is scanned once during GameInstance
-initialization.
+There is no `bLiveReload` flag in the current API. The same handler contexts are used during the
+initial pass and `/kdf reload`; a handler cannot distinguish those passes through a context flag.
 
 ## Registration
 
@@ -81,7 +81,9 @@ if (Modules != nullptr)
 - Add `KDataForgeApi` for handler types and `KDataForge` for registration to your module
   dependencies.
 - The subsystem retains handler objects against garbage collection.
-- Registration after the initial load logs a warning. The documents apply on the next session.
+- Registration after the initial load logs a warning. Matching documents can apply on the next
+  successful `/kdf reload` or the next session. Register during `CONSTRUCTION` so the initial pass
+  sees the handler and so cold registrations are available before world initialization.
 - Multiple handlers may claim the same root type. They all run in priority order.
 
 ## Optional soft integration

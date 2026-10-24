@@ -1,13 +1,12 @@
 ---
-title: 'Item + Icon + Recipe + Tier-1 Unlock'
+title: 'Item, icon, recipe, and Tier 1 unlock'
 description: The most common first pack, a new item with a placeholder icon, a recipe that produces it, and a Tier-1 schematic that actually makes it obtainable in a fresh game.
 sidebar:
   order: 2
 ---
 
-If you've generated an item and can't find it anywhere in-game, this tutorial is almost certainly
-the fix. It walks through the **complete, minimum chain**: item, icon, recipe, schematic, end to
-end. Every snippet below is a complete, working example, not a hypothetical fragment.
+This tutorial builds the minimum complete chain for an obtainable item: item, icon, recipe, and
+schematic. Each snippet is a complete working example.
 
 ## The mistake this tutorial fixes
 
@@ -157,7 +156,7 @@ HUB milestone. Purchasing it unlocks `Recipe_SuperIngot` for the player to build
 - **Icon shows as a checkerboard/missing texture**: check that `file:` is spelled exactly right and
   is relative to the **pack root** (the directory containing `pack.yml`), not the mod's own folder.
 - **Recipe exists but isn't selectable at the smelter**: the recipe needs the schematic's unlock
-  applied. In a fresh save that means actually purchasing "Super Ingot Production" in the HUB.
+  applied. In a fresh save that means purchasing "Super Ingot Production" in the HUB.
 - **Want to unlock a NEW recipe from a schematic that already exists** (vanilla or another mod's,
   instead of generating your own): that's a slightly different shape, covered in
   [Adding a Recipe to an Existing Schematic](/kdataforge/tutorials/existing-schematic-unlock).

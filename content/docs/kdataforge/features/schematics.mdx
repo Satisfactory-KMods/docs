@@ -1,6 +1,6 @@
 ---
 title: 'Type: schematic'
-description: Generating new schematics/milestones, registering existing ones, the instanced unlocks list that's the normal way to hook up a recipe, and gating a schematic on prerequisites.
+description: Generate or register schematics and milestones, connect recipes through instanced unlocks, and add prerequisite dependencies.
 sidebar:
   order: 14
 ---
@@ -257,8 +257,7 @@ content, pair schematic removal with
 - **Two mods both try to unlock the same recipe**: that's fine. `FGUnlockRecipe` instances are
   additive, and duplicate unlocks of an already-unlocked recipe are a no-op in the base game.
 - **Want to unlock a recipe from a schematic you didn't generate** (vanilla, another mod's, or your
-  own from an earlier pack): `unlocks:` works in register-only (`class:`) mode too, it's just easy
-  to miss. See
+  own from an earlier pack): `unlocks:` also works in register-only (`class:`) mode. See
   [Adding a Recipe to an Existing Schematic](/kdataforge/tutorials/existing-schematic-unlock).
 - **A schematic with `dependencies:` is purchasable even though its prerequisite isn't met**:
   `dependencies:` alone only registers the check; you also need

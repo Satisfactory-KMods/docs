@@ -1,12 +1,12 @@
 ---
-title: UE Editor Integration
+title: UE Editor integration
 description: Applying YAML cdo patches directly onto assets inside the Unreal Editor with KDF.ApplyToAssets, turning runtime patches into permanent asset edits (WITH_EDITOR builds only).
 sidebar:
   order: 5
 ---
 
-This page covers mod developers working inside the **Unreal Editor**. You apply YAML packs
-**directly onto the editor's assets** so the changes can be saved and become permanent.
+Mod developers can apply YAML packs **directly to Unreal Editor assets**, then save those assets to
+make the changes permanent.
 For authoring YAML in the standalone desktop application, see
 [Desktop Editor & LSP](/kdataforge/reference/desktop-editor-lsp).
 
@@ -70,7 +70,7 @@ saving. The command never creates or rewrites player configuration value files.
 The in-game `/kdf editor` groups reflected fields by their Unreal `Category` metadata. Categories
 are collapsed by default so large CDOs remain navigable. Reflected fields without `CPF_Edit` are
 placed in a separate **Non-UPROPERTY / Internal** category. Despite that UI label, they are still
-reflected `FProperty` fields; they simply lack the normal edit flag or category metadata. They
+reflected `FProperty` fields; they lack the normal edit flag or category metadata. They
 remain available for inspection and editing through the same reflection operation pipeline.
 
 CDO exports include these non-edit reflected fields as well.

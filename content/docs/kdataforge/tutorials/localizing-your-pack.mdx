@@ -1,16 +1,13 @@
 ---
-title: 'Localizing Your Pack'
+title: 'Localizing your pack'
 description: Shipping new text in multiple languages, overriding existing vanilla or modded strings without retyping them, and iterating with translators live with session restarts, without breaking on the next game update.
 sidebar:
   order: 5
 ---
 
-Two different jobs hide under `type: localization`. One is adding brand-new text for content
-you're creating. The other is overriding text that already exists: vanilla FactoryGame strings,
-another mod's, or your own from an earlier pack version. These two jobs use different YAML
-shapes, and confusing them is the single most common localization bug. This tutorial walks
-through both, the one-file-per-culture pattern for shipping several languages at once, and the
-restart-based workflow that makes translator iteration painless.
+`type: localization` can add text for generated content or override an existing FactoryGame, mod,
+or earlier pack string. These jobs use different YAML shapes. This tutorial covers both forms, the
+one-file-per-culture layout for multiple languages, and the restart-based translation workflow.
 
 ## The two entry forms
 
@@ -91,7 +88,7 @@ language, so shipping a dozen languages is a dozen small files, not one giant on
 you from grouping several keys from several items into one per-culture file either, once your
 pack grows past a single item. The namespace/culture gate is per-document, not per-file.
 
-## Step 3: overriding an EXISTING text
+## Step 3: override existing text
 
 **Overriding your own earlier text** is trivial: you already know the exact `namespace:`/key,
 because you're the one who chose them in Step 1. Want to retcon the German name later without
@@ -111,7 +108,7 @@ entries:
 namespace/key.** They belong to whatever FText the target already carries, and you have to go
 find them:
 
-- **Use `/kdf editor`** (works in a normal running game, not just the UE editor). Browse to the
+- **Use `/kdf editor`** in a normal running game or in the UE editor. Browse to the
   target object (a vanilla schematic, another mod's item, anything KDataForge can resolve) and
   use **Export**. If `mDisplayName` exports as a map containing `key`, `ns`, and `source`, that map _is_
   the real address. Copy it verbatim, keep `key`/`ns`/`source` identical, and only change `text:`.
@@ -154,7 +151,7 @@ showing its untranslated name.
 > **Recipes are a special case.** `FGRecipe::mDisplayName` is only shown if the recipe's own
 > `mDisplayNameOverride` flag is `true`. Otherwise the UI shows the **first product's item name**
 > instead, and a recipe-name translation you write will never be visible no matter how correct it
-> is. If you want a recipe-specific name (and its translations) to actually appear, set
+> is. If you want a recipe-specific name (and its translations) to appear, set
 > `mDisplayNameOverride: true` alongside `mDisplayName` in the recipe's own `properties:`.
 > Otherwise, translate the produced item's name instead.
 

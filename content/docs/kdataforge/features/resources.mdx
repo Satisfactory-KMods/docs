@@ -1,6 +1,6 @@
 ---
-title: 'Type: resource and Resource Nodes'
-description: Generate resource descriptors, place or remove world resource nodes, maintain node appearance, unlock scanner visibility, and patch node actor classes.
+title: 'Type: resource and resource nodes'
+description: Generate resource descriptors, manage world nodes and their appearance, unlock scanner visibility, and patch node actors.
 sidebar:
   order: 10
 ---
@@ -8,8 +8,8 @@ sidebar:
 The `resource` type runs in the `Items` stage at priority `25`, after `item` (`30`) and before
 `building` (`20`). Its entries key is `resources`. The default and required base class is
 `/Script/FactoryGame.FGResourceDescriptor`. Register-only mode (`class:`) is not supported, so
-entries use `id:`. YAML files are scanned once during GameInstance initialization. Restart the
-session after changing them.
+entries use `id:`. `/kdf reload` rescans YAML, but generated resource registration is cold. Restart
+the session after changing generated resource entries or other frozen content.
 
 These names refer to separate systems:
 
@@ -81,7 +81,7 @@ tags remain available through the same `properties:` grammar.
 liquid descriptor does not create a pipe-compatible producer or a world node. KDataForge validates
 the enum and property types, but it cannot validate the rest of your gameplay chain.
 
-## Removing Resource Nodes (`type: resourcenode`)
+## Removing resource nodes (`type: resourcenode`)
 
 `resourcenode` runs in the `SubsystemMods` stage, after generated resource descriptors exist. Its
 `remove:` sequence registers world-purge rules. A scalar entry removes every node whose effective
@@ -156,7 +156,7 @@ can leave a dangling manager entry for the rest of that session. Test these inte
 world and on a dedicated server before shipping.
 :::
 
-## Patching Resource Node actor classes (`type: cdo`)
+## Patching resource node actor classes (`type: cdo`)
 
 The built-in `cdo` handler selects classes, standalone asset objects, asset families, or gameplay
 tags. Runtime actor patches then match actors by class. Unlike `resourcenode`, property patches have
@@ -239,7 +239,7 @@ and the [Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classe
 This unlock is additive. To remove a descriptor from scanner data while purging its nodes, keep
 `removeFromScanner: true` on the corresponding `type: resourcenode` rule.
 
-## Advanced Resource Node visual metadata
+## Advanced resource node visual metadata
 
 FactoryGame stores randomized-node mesh overrides in `UFGResourceNodeData`. This
 `UPrimaryDataAsset` contains `mResourceDescriptor` and an `mNodeMeshOverrides` map keyed by

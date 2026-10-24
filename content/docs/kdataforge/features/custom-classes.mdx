@@ -1,6 +1,6 @@
 ---
 title: 'Type: class'
-description: Generating classes of any kind from YAML, any parent (C++ or Blueprint), optional content registration via registerAs, and where the preset types stop and this escape hatch begins.
+description: Generate a class from any C++ or Blueprint parent and optionally register it with registerAs.
 sidebar:
   order: 17
 ---
@@ -12,7 +12,7 @@ initialization, so restart after editing YAML. Its entries key is `classes`.
 
 There is no default `parent`, so every entry must set `parent:` explicitly. There is no required base class either: every parent works, whether native C++ or Blueprint. Register-only mode (`class:`) is not supported; use `id:` instead, and register existing classes via [Type: recipe](/kdataforge/features/recipes), [schematic](/kdataforge/features/schematics), or [research](/kdataforge/features/research-trees).
 
-The preset types (`item`, `resource`, `building`, `unlock`, `recipe`, `schematic`, `research`) remain the recommended, ergonomic forms. They pick the right parent, stage priority, and registration for you. `class` is the escape hatch for everything else: equipment descriptors, vehicle descriptors, item and schematic categories, `FGUnlock` subclasses, custom classes from other mods gated behind `hasMod`, reparented buildables, and any other class kind KDataForge has no preset for.
+Use the preset types (`item`, `resource`, `building`, `unlock`, `recipe`, `schematic`, `research`) when one fits. They select the parent, stage priority, and registration. Use `class` for everything else: equipment descriptors, vehicle descriptors, item and schematic categories, `FGUnlock` subclasses, custom classes from other mods gated behind `hasMod`, reparented buildables, and any class kind without a KDataForge preset.
 
 ```yaml
 type: class

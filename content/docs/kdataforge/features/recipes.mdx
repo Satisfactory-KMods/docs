@@ -1,14 +1,15 @@
 ---
 title: 'Type: recipe'
-description: Generating new recipes from YAML, registering existing recipe classes, and how registration into SML's content registry actually happens.
+description: Generate recipes, register existing recipe classes, and control SML content-registry registration.
 sidebar:
   order: 13
 ---
 
 The `recipe` type runs in the `Recipes` stage, which comes after the whole `Items` stage. That
 means a recipe can freely reference anything `item`/`resource`/`building`/`unlock` you just
-generated. It loads changes only during session initialization, so a change here needs a restart. Its entries key is
-`recipes`, its default `parent` is `/Script/FactoryGame.FGRecipe`, and its required base class is
+generated. `/kdf reload` rescans the document, but recipe registration is frozen for the session,
+so changes need a restart. Its entries key is `recipes`, its default `parent` is
+`/Script/FactoryGame.FGRecipe`, and its required base class is
 `/Script/FactoryGame.FGRecipe` (or a subclass of it). It is also the first type to support
 register-only mode via `class:`.
 
@@ -165,7 +166,7 @@ copyable examples.
 - **"My new item has no recipe in a fresh save"**: check that _something_ registers the recipe.
   Either `register: true` here (the default), or a schematic that unlocks it, whose own
   registration auto-propagates down to this recipe, will do it. A recipe that's generated but never
-  registered anywhere simply never reaches `UModContentRegistry`, and the game won't know it
+  registered anywhere never reaches `UModContentRegistry`, and the game won't know it
   exists.
 - **"class: gave me an error about register-only mode"**: `class:` (register-only) is only valid
   for `recipe`, `schematic`, and `research` documents. `item`/`resource`/`building`/`unlock` can

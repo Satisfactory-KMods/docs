@@ -1,13 +1,13 @@
 ---
-title: 'Renaming Content Safely'
+title: 'Renaming content safely'
 description: What you can rename in a pack for free, what needs a redirects entry, and the one rename redirects genuinely can't fix.
 sidebar:
   order: 9
 ---
 
-Sooner or later you'll want to rename something in a pack that's already shipped. Three different
-things can be "renamed," and only one of them is free. This walks through all three, the exact
-mechanism behind the safe one, and a worked before/after so you can copy-paste the real fix.
+A shipped pack can rename a file, a generated content `id`, or its pack `ref`. Each affects saved
+content differently. This guide explains all three cases and includes a complete before-and-after
+example for the supported redirect workflow.
 
 ## The three renames
 
@@ -23,7 +23,7 @@ naming is deterministic and built from `PackRef` + `id`, never from a file path
 That's why the file is free and the other two aren't: the file was never part of the identity to
 begin with.
 
-## What `redirects:` actually does
+## How `redirects:` works
 
 Syntax, in `pack.yml`:
 
@@ -122,7 +122,7 @@ that builds an old path from one `ref` and a new path from a different `ref`.
 Since a `ref` rename changes `/KDataForge/Gen/<PackRef>` for every single generated class in the pack
 simultaneously, there's no mechanism, `redirects:` or otherwise, that bridges an old ref's package to
 a new ref's package. Every id in the pack would need its own cross-package redirect, and the feature
-simply doesn't build one.
+does not build one.
 
 Treat `ref:` as permanent once you've shipped a version with real players. If you genuinely need a
 different display name, change `name:` instead. `ref:` is the save-persistence contract, and `name:`
@@ -138,7 +138,7 @@ is cosmetic.
   first. The map is `OldId: NewId`, not the reverse, and both sides are the raw `id:` value (not the
   display name), matched exactly. `SanitizeToken` only swaps non-alphanumeric characters for
   underscores, so it doesn't fix a typo or a case mismatch.
-- **How to verify a redirect actually took effect:** `ApplyRedirects` logs one line per entry to
+- **How to verify a redirect took effect:** `ApplyRedirects` logs one line per entry to
   the game log at `Log` severity (visible without enabling `KDF.Debug`):
   `[LogKDataForge] Redirect: /KDataForge/Gen/MyPack.Gen_MyPack_OldId -> /KDataForge/Gen/MyPack.Gen_MyPack_NewId`.
   `/kdf report` shows load diagnostics (errors/warnings/tombstones) but doesn't list applied

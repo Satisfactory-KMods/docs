@@ -5,8 +5,9 @@ sidebar:
   order: 5
 ---
 
-The palette offers routing, storage, extractors, generators and special
-assemblies. Available buildings and settings depend on your model's game data.
+The palette contains routing and storage nodes, extractors, generators and
+special assemblies. Your model's [game data](/production-modeler/game-data/)
+determines which buildings and settings are available.
 
 - **Open palette:** double-click or right-click empty canvas. **A** or **Insert**
   opens it near the view centre. There is no **+ Add** toolbar button.
@@ -15,8 +16,8 @@ assemblies. Available buildings and settings depend on your model's game data.
 - **Find an entry:** search names, inputs or outputs. Switch between grid and
   detailed list. Recipe filters cover mods, tiers, progression and alternates.
   Search and filters reset when the palette reopens.
-- **Read a special node before placing it:** hover it in the palette for what
-  it is, how it is used and why it exists.
+- **Read a special node before placing it:** hover over it in the palette to
+  see what it is, how to use it and why it exists.
 
 | Special node | Purpose |
 | --- | --- |
@@ -46,7 +47,8 @@ a shared port. Older priority nodes still work but are no longer palette entries
 Storage does not simulate filling time or stock depletion.
 
 **Extractors:** set resource, available purity, node count and clock in the
-inspector. Automatic calculation may grow an unfixed count to meet demand.
+[inspector](/production-modeler/panels/#inspector). Automatic calculation may
+grow an unfixed count to meet demand.
 **Keep this count fixed** prevents growth. In automatic modes this is a capacity
 ceiling, not a fixed output rate. Clock bounds depend on the building.
 
@@ -70,7 +72,9 @@ Changing fuel removes incompatible fuel connections while keeping recipe
 connections. Switching to an electric producer removes the fuel input. Both
 changes can be undone. Import fresh game data from KModelerExporter if your
 catalog does not contain the machine's burner profile. Missing fuel or power
-data prevents a supported calculation.
+data prevents a supported calculation. See
+[Import a pack](/production-modeler/game-data/#import-a-pack) for the update
+workflow.
 
 ## Refined Power
 

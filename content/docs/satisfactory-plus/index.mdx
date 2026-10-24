@@ -1,26 +1,59 @@
 ---
-title: Satisfactory Plus Compatibility
-description: How Satisfactory Plus integrates with the k-mods tooling, with a hard dependency on KAPI and a soft dependency on KDataForge.
+title: Satisfactory Plus
+description: Player guides for Satisfactory Plus buildings, progression, systems, and mod compatibility.
 sidebar:
   order: 1
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-Satisfactory Plus (SF+) is a large content mod. To stay maintainable alongside the rest of the k-mods ecosystem (and to let other mods extend or rebalance it without needing SF+'s own source), it plugs into two different k-mods tools, at two different levels of coupling:
+Satisfactory Plus rebuilds factory progression around longer production chains,
+new resources, specialized machines, and rebalanced power and logistics. It is
+an overhaul, not a content pack designed to drop into an established vanilla
+factory.
 
-- **KAPI** is a **hard dependency**, compiled and linked directly into SF+'s C++. Used to _create_ the mod's own data-driven content (new miners, cleaners, air collectors, ...) as real `UPrimaryDataAsset` instances that any other KAPI-aware mod can discover and read.
-- **KDataForge** is a **soft dependency**, resolved at runtime via Unreal reflection with no build-time link at all. Used by _third-party pack authors_ to patch or extend SF+'s (and any other mod's) KAPI data assets from plain YAML, without writing any C++.
+Start a new save for clean progression. Existing SF+ saves can continue across
+updates when release notes say so, but a vanilla factory should not be treated
+as an SF+ migration target.
 
 <CardGrid>
   <LinkCard
-    title="KAPI, creating DataAssets"
-    href="/satisfactory-plus/kapi/"
-    description="The hard dependency SF+ itself compiles against."
+    title="Getting started"
+    href="/satisfactory-plus/getting-started/"
+    description="Save expectations, progression, resources, compatibility, and current multiplayer limits."
   />
   <LinkCard
-    title="KDataForge, soft-dependency packs"
+    title="Buildings"
+    href="/satisfactory-plus/buildings/"
+    description="How extraction, production, power, fluid, and storage buildings work."
+  />
+  <LinkCard
+    title="Systems and upcoming release"
+    href="/satisfactory-plus/systems/"
+    description="Current systems plus clearly separated previews for the next major release."
+  />
+</CardGrid>
+
+## For mod authors
+
+SF+ uses two KMods tools for data-driven integrations:
+
+- [KAPI](/satisfactory-plus/kapi/) is a compiled dependency. Its DataAssets
+  define supported miner resources, Filtrator recipes, Air Collector resources,
+  slug breeding data, and other extensible content.
+- [KDataForge](/satisfactory-plus/kdataforge/) applies readable YAML patches at
+  runtime. Compatibility packs can change supported DataAssets without linking
+  against SF+ C++.
+
+<CardGrid>
+  <LinkCard
+    title="KAPI DataAssets"
+    href="/satisfactory-plus/kapi/"
+    description="Create content through the API SF+ compiles against."
+  />
+  <LinkCard
+    title="KDataForge packs"
     href="/satisfactory-plus/kdataforge/"
-    description="How anyone can extend SF+ content with a YAML pack, no C++ required."
+    description="Patch and extend SF+ through YAML without writing C++."
   />
 </CardGrid>

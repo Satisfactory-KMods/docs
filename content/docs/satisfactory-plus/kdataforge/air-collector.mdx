@@ -1,18 +1,20 @@
 ---
-title: 'Adding new Resources to the Air Collector'
-description: How to add new Resource DataAssets to the Air Collector in Satisfactory Plus through KAPI. To allow them in SF+ gameplay.
+title: 'Add Air Collector resources'
+description: Define Satisfactory Plus Air Collector resource DataAssets in KDataForge YAML.
 sidebar:
   order: 4
 ---
 
-Add the Air Collector resource as a `KAPIAirCollectorData` instance with a `type: dataasset`
-document instead of creating it in the Unreal Editor. See the
+Define an Air Collector resource as a `KAPIAirCollectorData` instance in a
+`type: dataasset` document. This replaces creating the asset in Unreal Editor.
+See the
 [full property reference](/satisfactory-plus/kapi/air-collector/) for every field.
 
-The example below mirrors Satisfactory Plus's own shipped "Air Collector extract Toxic Air via
-Resource Nodes" asset. `bUseHightBasesdProduction` selects one of two mutually exclusive
-production models here it's `false`, so `mMaxHit`/`mProductionPerHit` are the active fields and
-`mProduceItemCountMin`/`Max`/`Base` (the other model) are omitted entirely, not just left at
+This example mirrors Satisfactory Plus's shipped "Air Collector extract Toxic
+Air via Resource Nodes" asset. `bUseHightBasesdProduction` selects one of two
+mutually exclusive production models. Here it is `false`, so
+`mMaxHit`/`mProductionPerHit` are active. The other model's
+`mProduceItemCountMin`/`Max`/`Base` fields are omitted instead of left at their
 defaults:
 
 ```yaml
@@ -43,5 +45,5 @@ assets:
         value: 6000
 ```
 
-See [Adding KAPI Data Assets](/kdataforge/examples/kapi-data-assets/) for every KAPI type's
-`type: dataasset` example in one place.
+See [Adding KAPI Data Assets](/kdataforge/examples/kapi-data-assets/) for a
+`type: dataasset` example of every KAPI type.

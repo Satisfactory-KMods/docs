@@ -1,13 +1,14 @@
 ---
-title: Reflection Export
+title: Reflection export
 description: Export runtime Unreal classes, structs, enums, defaults, functions, game settings, reload classification, Blueprint mappings, and asset indexes for Pack Manager and validation use.
 sidebar:
   order: 9
 ---
 
-KDataForge can export every reflected type loaded by running game plus Blueprint-generated classes,
-user-defined structs, and user-defined enums found through Asset Registry. Exporter runs on game
-thread in bounded slices. JSON writing runs in background.
+KDataForge exports every reflected type loaded by the running game. The export also includes
+Blueprint-generated classes and the user-defined structs and enums found through the Asset
+Registry. The exporter works on the game thread in bounded slices and writes JSON in the
+background.
 
 ## Run
 
@@ -283,7 +284,7 @@ completions and reports operations on cold or `newActors` properties as `propert
 and the property name is case-insensitive. `verified: false` marks an entry that is a reasonable
 assumption not yet checked in game.
 
-## Editor Metadata Supplement
+## Editor metadata supplement
 
 Packaged game may have `WITH_METADATA` disabled. Runtime records then contain
 `metadataAvailable: false`; export still succeeds. Generate metadata in modding editor:

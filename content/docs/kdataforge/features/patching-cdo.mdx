@@ -1,6 +1,6 @@
 ---
 title: 'Patching (type: cdo)'
-description: The property-patch document type. Covers how patches, target selectors, and modifiers fit together, plus where the deep-dive pages live.
+description: 'Patch reflected properties with `type: cdo`, target selectors, and modifiers.'
 sidebar:
   order: 6
 ---
@@ -10,7 +10,7 @@ and before any content-generation stage. Its entries live under the `patches` ke
 After saving YAML changes, run `/kdf reload` on the host or `KDF.Reload` in the host/server console,
 then `/kdf report` to inspect the new load.
 
-This is the workhorse document type. It edits any reflected property on any class default object
+Use this document type to edit any reflected property on any class default object
 or object instance in the game: items, recipes, buildings, schematics, research trees, KAPI/RRDA
 data assets, your own generated content, anything. Everything else this framework does (content
 creation, data assets, sink points) either patches through this same mechanism internally or exists
@@ -113,7 +113,7 @@ the property's type, and how to address nested/array/map properties in the path 
 | Concern                                                                                                                                                                        | Page                                                                                           |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
 | **Selecting what to patch**: class path, object path, `allAssetsOfClass:`, `ofClass:` scope filters (`matchTag:`, `matchName:`, `producedIn:`/`ingredient:`/`product:`, `where:`), `applyToSubclasses:`, `applyToSpawnedActors:`, the bare class-name shortcut | [Targeting](/kdataforge/features/targeting)                                      |
-| **What you can do to a value**: all 22 operations and which property kinds accept them                                                                                         | [Operations](/kdataforge/features/operations)                                    |
+| **What you can do to a value**: all 25 operations and which property kinds accept them                                                                                         | [Operations](/kdataforge/features/operations)                                    |
 | **How to write a value**: every property kind's YAML form (bool, numerics, enums, strings, FText, object/class/soft refs, structs, arrays/sets/maps, gameplay tags)            | [Property Types](/kdataforge/features/property-types)                            |
 | **The path grammar**: array indices, map keys, struct/object dereference, authored-name matching                                                                               | [YAML Schema → Property Paths](/kdataforge/reference/yaml-schema#property-paths) |
 
@@ -139,7 +139,7 @@ without restarting. Check `/kdf report` afterward, including any baseline-restor
 Reload is process-local and preserves generated object identities, redirect registrations, and
 already-frozen content registry state. Restart for frozen content registrations, irreversible
 world changes, and data explicitly documented as cold or restart-bound. See
-[loading changes](/kdataforge/getting-started#kdf-report-and-loading-changes) for command access.
+[reload an edit](/kdataforge/getting-started#5-reload-an-edit) for command access.
 
 Runtime actor patches are a separate boundary. They apply operations directly to every matching
 instance and do not preserve player-modified or save-restored values through snapshot comparison.
@@ -148,6 +148,6 @@ instance and do not preserve player-modified or save-restored values through sna
 
 - **A patch "did nothing" and there's no error**: check `matchTag`/`where`/`producedIn`/`allAssetsOfClass` selectors
   first. A selector that matches zero objects only warns (`/kdf report`). It doesn't fail the
-  document, and it's an easy typo to miss because nothing looks broken until you actually check.
+  document. The typo is visible only after checking the report.
 - **Not sure which of the three target selectors to reach for?** [Targeting → Choosing a
   selector](/kdataforge/features/targeting#choosing-a-selector) has a quick lookup table.

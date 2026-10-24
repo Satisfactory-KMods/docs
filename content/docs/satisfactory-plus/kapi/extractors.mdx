@@ -1,13 +1,18 @@
 ---
-title: "Adding new Extractors / Remove Extractors"
-description: How to allow or disallow Extractor and Resource DataAssets in Satisfactory Plus through KAPI, including new Resources / Resource Nodes from other mods.
+title: "Allow or disallow extractors"
+description: Allow or disallow extractor and resource DataAssets in Satisfactory Plus through KAPI.
 sidebar:
   order: 1
 ---
 
-## The DataAsset
+## Create the DataAsset
 
-For adding Extractors or Remove Extractors to Satisfactory Plus, you need to create a new DataAsset of type `KAPIExtractorAllowList` the header can be found [HERE](https://github.com/Satisfactory-KMods/public-source/blob/main/KAPI/Source/KAPI/Public/DataAssets/KAPIExtractorAllowList.h).
+Create a `KAPIExtractorAllowList` DataAsset to allow or disallow extractors and
+resources in Satisfactory Plus. See the
+[`KAPIExtractorAllowList` header](https://github.com/Satisfactory-KMods/public-source/blob/main/KAPI/Source/KAPI/Public/DataAssets/KAPIExtractorAllowList.h)
+for its class definition.
+
+Prefer YAML? Follow the matching [KDataForge extractor allow-list guide](/satisfactory-plus/kdataforge/extractors/).
 
 ![KAPIExtractorAllowList DataAsset properties in the editor](../../../assets/satisfactory-plus/kapi/extractor-asset.png)
 
@@ -21,9 +26,9 @@ For adding Extractors or Remove Extractors to Satisfactory Plus, you need to cre
 | `mDisallowResources`  | `TArray<TSubclassOf<UFGResourceDescriptor>>`             | The list of resource classes that are disallowed.                                                 |
 | `mPriority`           | `int32`                                                  | Sort rank of this DataAsset. See _How the lists are resolved_ below for what it actually does.    |
 
-### Inherited from `KAPIDataAssetBase`
+### Properties inherited from `KAPIDataAssetBase`
 
-Every KAPI DataAsset also carries these:
+Every KAPI DataAsset also has these properties:
 
 | Property       | Type                     | Description                                                                                  |
 | -------------- | ------------------------ | -------------------------------------------------------------------------------------------- |
@@ -40,8 +45,8 @@ All `KAPIExtractorAllowList` assets in the game are collected, sorted by `mPrior
 first, ties broken by asset path), and then applied one after another. Each asset adds its
 `mAllowed*` entries to the running set and removes its `mDisallow*` entries from it.
 
-Because the lists are applied in sequence, **the last asset to touch an entry decides it** — with
-the sort above that is the lowest-priority asset. `mPriority` defaults to `-MAX_int32`, so an asset
+Because the lists are applied in sequence, **the last asset to touch an entry decides it**. With
+the sort above, that is the lowest-priority asset. `mPriority` defaults to `-MAX_int32`, so an asset
 that never sets it is applied last and wins over one that does.
 
 :::caution

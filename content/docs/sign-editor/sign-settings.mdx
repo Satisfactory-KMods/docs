@@ -7,9 +7,8 @@ sidebar:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-These apply to the whole sign rather than one element. They live at the bottom
-of the right-hand inspector and stay available even while an element is
-selected.
+Sign settings affect the whole sign. They stay available at the bottom of the
+right-hand inspector while an [element](/sign-editor/elements/) is selected.
 
 ## Size
 
@@ -20,7 +19,8 @@ until you do.
 :::caution
 Changing size after you have placed elements does **not** move them. They keep
 their pixel positions, so some may end up outside the new canvas. Anything
-hanging over the edge is drawn faded in the editor and cropped in game.
+hanging over the edge follows the [canvas overhang preview](/sign-editor/canvas/#overhang):
+it is drawn faded in the editor and cropped in game.
 :::
 
 ## Sign type
@@ -81,7 +81,7 @@ files the export dialog tells you how many were dropped.
 bands. `-1` means "use the mod's own default ratio", not a scale of one.
 
 :::note
-A hologram ignores both effects. If you switch a sign that had them enabled over
-to hologram, the toggles disappear and nothing of them is previewed or exported —
-the mod would ignore them anyway.
+A hologram ignores both effects. If you switch a sign that had them enabled to
+hologram, the toggles disappear. The editor no longer previews or exports those
+effects because the mod would ignore them.
 :::

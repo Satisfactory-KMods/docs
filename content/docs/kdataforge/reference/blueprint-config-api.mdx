@@ -1,0 +1,257 @@
+---
+title: Blueprint configuration API
+description: Query, edit, apply, synchronize, and observe KDataForge pack settings from Blueprint.
+sidebar:
+  order: 7
+---
+
+`UKDFConfigBlueprintLibrary` exposes pack configuration to Blueprint. Use it when a mod needs its
+own settings screen or reacts to settings without using KDataForge's generated widgets.
+
+The API works with three main types:
+
+- `FKDFPackInfo` describes a pack and its configuration state.
+- `UKDFConfigDescription` describes one field and owns its current value state.
+- `FKDFConfigApplyResult` reports what happened when values were saved or synchronized.
+
+An empty `PackRef` means all packs for calls that accept a pack filter.
+
+## Query packs and fields
+
+| Blueprint node | Result |
+| --- | --- |
+| `Get All Pack Infos` | Packs with at least one registered configuration field. Active packs use load order; skipped packs follow in ref order. |
+| `Get Pack Info` | One pack by ref, including packs without fields. Returns false when no matching ref exists. An active duplicate wins over inactive duplicates. |
+| `Get Pack Config Descriptions` | Map from category class to descriptions. Map order is undefined; descriptions inside each category use `order`, then field key. |
+| `Get Sorted Config Categories` | Category classes ordered by `UFGCategory` menu priority. |
+| `Get Config Descriptions Flat` | Fields ordered by category priority, then field `order`, then key. This is the usual source for a custom list UI. |
+| `Get All Config Descriptions` | Every non-stale field from every pack in registry order. |
+| `Find Config Description` | One field by the full `<pack>:<id>` key. |
+| `Find Config Description By Id` | One field by separate pack ref and id. |
+
+`FKDFPackInfo` supplies `mRef`, localized name and description, version, priority, icon, pack state,
+state reason, field count, pending-change state, and restart-required state. Dedicated servers do
+not decode pack icons.
+
+`EKDFPackState` distinguishes active packs from disabled manifests, duplicate refs, missing
+dependencies, dependency cycles, failed pack conditions, and skipped dependencies.
+
+## Read a field
+
+Every `UKDFConfigDescription` exposes identity, display metadata, type information, values, state,
+and source location.
+
+| Group | Getters |
+| --- | --- |
+| Identity | `Get Pack Ref`, `Get Id`, `Get Key` |
+| Display | `Get Display Name`, `Get Description Text`, `Get Tooltip`, `Has Tooltip`, `Get Category Class` |
+| Shape | `Get Apply Mode`, `Get Value Type`, `Is Array`, `Get Kind`, `Get Order` |
+| Source | `Get Source File`, `Get Source Line`, `Is Pack Active` |
+| Values | `Get Value`, `Get Effective Value`, `Get Default Value`, `Get Stored Value`, `Get Host Value` |
+| Presentation | `Get Value As String`, `Get Value As Display Text` |
+| State | `Is Dirty`, `Is Default`, `Is Restart Required`, `Is Restart Advised`, `Is Read Only`, `Is Host Override`, `Is Host Mismatch`, `Is Stale` |
+
+The value slots have separate meanings:
+
+1. Default comes from the field definition.
+2. Stored comes from `FactoryGame/Configs/Packs/<PackRef>.config.yml`.
+3. Pending contains an unsaved UI edit.
+4. Host contains the multiplayer server override received by a client.
+5. Effective is the value used by the currently loaded content.
+
+`Get Value` returns pending, host, or stored value in that order. A field can therefore display a
+new pending value while `Get Effective Value` still reports the value used by the current load.
+
+Reload keeps description object identity stable. A removed definition remains alive as stale but no
+longer appears in normal description lists. Do not keep stale descriptions in a settings panel.
+
+## Value types
+
+`FKDFConfigValue` stores a type, an array flag, and canonical text elements. Its
+`EKDFConfigValueType` is `None`, `Bool`, `Int`, `Float`, `String`, `Text`, `Name`, or `Tag`.
+Scalars contain one element. Fields with `multiple: true` use arrays and may contain any permitted
+number of elements.
+
+Canonical values use `true` or `false` for booleans, a whole decimal for integers, and fixed-point
+text without an exponent for floats. String-like values and gameplay tags keep their text.
+Comparison is case-sensitive.
+
+Use the Blueprint library helpers to build and read values:
+
+- `Make Config Value Bool`, `Int`, `Float`, `String`, `Text`, `Name`, or `Tag`
+- `Make Config Value Array`
+- `Config Value To Bool`, `Int`, `Float`, `String`, `Text`, or `Tag`
+- `Config Values Equal`
+
+`FKDFConfigKeyedValue` pairs a full `<pack>:<id>` key with a value. KDataForge uses this struct for
+configuration RPCs and replicated rows.
+
+The remaining supporting types are small value carriers:
+
+| Type | Values or fields |
+| --- | --- |
+| `EKDFConfigApplyMode` | `Cold`, `Hot` |
+| `EKDFConfigFieldKind` | `Text`, `Tag`, `Number`, `Slider`, `Boolean`, `Select`, `MultiSelect`, `List` |
+| `EKDFConfigNumberKind` | `Int8`, `Int16`, `Int32`, `Int64`, `UInt8`, `Float`, `Double` |
+| `EKDFConfigTextKind` | `String`, `Text`, `Name` |
+| `FKDFConfigTooltip` | Localized title and body text |
+| `FKDFConfigOption` | Typed value and localized label |
+| `FKDFConfigDescriptionList` | Description array used as the value in the category map |
+
+## Field-specific nodes
+
+Cast the base description when a UI needs constraints or a typed setter.
+
+| Description class | Field-specific Blueprint API |
+| --- | --- |
+| `KDFConfigTextDescription` | Text kind, multiline flag, maximum length, string/text/name access, string and text setters |
+| `KDFConfigTagDescription` | Current tag, tag setter, tag root, selectable child tags |
+| `KDFConfigNumberDescription` | Number kind, integer flag, integer/float access, bounds, step, decimals |
+| `KDFConfigSliderDescription` | Normalized `0..1` value and normalized setter |
+| `KDFConfigBooleanDescription` | Boolean getter, setter, and toggle |
+| `KDFConfigSelectDescription` | Options, selected index, and index setter |
+| `KDFConfigMultiSelectDescription` | Per-option state, selected indices, and selection-count limits |
+| `KDFConfigListDescription` | Element access, add/set/remove operations, and list-count limits |
+
+All setters create a pending value. They return false with an error when the value is invalid or the
+field is read-only. Numeric setters clamp accepted values to the field's bounds.
+
+## Edit and apply values
+
+A custom settings screen normally follows this flow:
+
+```text
+Get Config Descriptions Flat (PackRef)
+  -> For Each Description
+  -> Read typed value and state
+  -> Typed setter or Set Value
+  -> Is Pack Config Dirty (PackRef)
+  -> Apply Config Changes (PackRef)
+  -> Inspect Config Apply Result
+```
+
+`Set Value` accepts a complete `FKDFConfigValue`. `Set Value From String` parses one canonical
+scalar; for an array field it parses one element, so use `Set Value` to replace a complete array.
+
+`Reset To Default` and `Reset Pack Config To Default` stage default values. They do not write the
+file until `Apply Config Changes` runs. `Discard Pending Change` affects one description, while
+`Discard Pending Config Changes` discards a pack or every pack.
+
+`Is Pack Config Dirty` and `Has Pending Config Changes` are equivalent pack-level checks.
+
+## Interpret the apply result
+
+`Apply Config Changes` saves pending values that the caller may edit. Hot changes request a
+KDataForge reload. Cold changes remain saved and report that a restart is required.
+
+| Result field | Meaning |
+| --- | --- |
+| `bSaved` | At least one value was written to a configuration file. |
+| `bReloaded` | A KDataForge reload ran during this call. |
+| `bReloadScheduled` | A reload was queued because another reload or debounce window was active. |
+| `bRestartRequired` | At least one saved cold value needs a restart. |
+| `bPending` | A dedicated-server administrator request was sent and has not returned yet. |
+| `mRequestId` | Correlates an administrator request with its later result. Local results use `0`. |
+| `mChangedKeys` | Saved field keys. |
+| `mRestartRequiredKeys` | Cold fields that need a restart. |
+| `mRestartAdvisedKeys` | Hot fields that also feed a cold context or property. They work live, but a restart is advised. |
+| `mErrors` | Save, validation, permission, or reload errors. |
+
+`Is Config Restart Required` checks whether a pack, or any pack for an empty ref, currently has a
+saved cold change that differs from its effective value.
+
+## Reload or adopt values
+
+`Reload Config From Disk` re-reads stored value files. It keeps unsaved pending edits and reloads
+KDataForge when a hot stored value differs from the effective value. It does not write a file.
+
+`Adopt Host Values` is a multiplayer-client action. It writes the current host values into the
+client's local configuration files. Use it when the player wants the next standalone session to
+start with the server's settings.
+
+## Resolve templates and expressions
+
+`Resolve Template String` and `Resolve Template Text` expand the same `{prefix:body}` tokens used
+by pack documents. Both functions run pre-pass providers first, followed by apply-time providers.
+Pass the pack ref so pack-local `cfg:` references resolve in the expected scope. `OutError` is empty
+on success and combines provider failures with template diagnostics otherwise. The returned text
+still contains the best result produced by the two passes, so check `OutError` before using it as a
+validated value.
+
+`Evaluate Config Expression` evaluates the expression grammar used by `conditions.config`. The
+function return value reports whether parsing and evaluation succeeded. `bOutResult` contains the
+expression result only on success; `OutError` explains a parse or evaluation failure.
+
+See [Templates and typed references](/kdataforge/features/templates) and
+[Configuration expressions](/kdataforge/reference/config-expressions) for supported operands and
+prefixes.
+
+## Multiplayer roles and permissions
+
+`Get Config Net Role` returns one of these roles:
+
+| Role | Behavior |
+| --- | --- |
+| `Local` | Standalone game. Edits write local files. |
+| `ListenHost` | Listen-server host. Edits write host files and synchronize effective values to clients. |
+| `DedicatedServer` | Server process. Files and server commands control values. |
+| `RemoteClient` | Client sees synchronized host values and cannot edit server configuration. |
+| `RemoteAdmin` | Authenticated dedicated-server administrator. Apply sends changes through a server RPC. |
+
+Use `Can Local Player Edit Config` before enabling controls. `UKDFConfigDescription.Is Read Only`
+uses the same permission state for one field. The server accepts configuration writes from the
+listen host and authenticated dedicated-server administrators. A plain remote client is read-only.
+
+The administrator RPC accepts at most 512 changes. Keys are limited to 256 characters. Each value
+can carry at most 64 elements, with at most 4,096 characters per element. The RPC validation rejects
+larger payloads before the permission and field checks run.
+
+The server replicates effective values, not pack files. A hot difference schedules a debounced
+reload on the client. A cold difference sets host-mismatch state and raises the mismatch event once
+per field and join. Synchronized values remain in memory and do not overwrite a client's local
+file unless the player calls `Adopt Host Values`.
+
+A synchronized value may contain at most 64 elements and 1,024 characters per element. The server
+skips an oversized field and logs a warning; clients keep their local value for that key. These
+replication limits are narrower than the administrator write-RPC limit.
+
+### Dedicated-server administrator results
+
+`Apply Config Changes` returns immediately for a remote administrator. That first result has
+`bPending: true` and a nonzero request id. The server validates permissions and values, saves the
+accepted changes, and reloads for hot fields. The final `FKDFConfigApplyResult` arrives through
+`UKDFSubsystem.mOnConfigApplied` with the same request id.
+
+Keep the Apply button in a pending state until the matching event arrives. Handle errors from the
+final result instead of treating the initial pending result as success.
+
+## Observe changes
+
+Bind these Blueprint events on `UKDFSubsystem`:
+
+| Event | When it fires |
+| --- | --- |
+| `On Config Applied` | Local apply completion and final dedicated-server administrator response. Carries `FKDFConfigApplyResult`. |
+| `On Pack Config Changed` | A pack's values or state changed, including pending edits. Carries pack ref and dirty state. Load-time events are coalesced per pack. |
+| `On Config Host Mismatch` | A cold host value differs from the value this client loaded with. Fires once per key and join. |
+| `On Reload Completed` | A KDataForge reload finished. |
+
+Each description also exposes `On Value Changed` and `On State Changed`. KDataForge queues events
+while a load runs and broadcasts them afterward, so UI callbacks never observe a half-rebuilt
+registry.
+
+## Verify a custom screen
+
+1. Query one pack and confirm its state, field count, and icon fallback.
+2. Build rows from `Get Config Descriptions Flat` and reject stale descriptions.
+3. Test one valid and one invalid setter. Display the returned error.
+4. Stage a value, discard it, stage it again, and apply it.
+5. Check hot, cold, restart-advised, and queued-reload results separately.
+6. Join a listen server as a normal client and confirm the fields are read-only.
+7. Test the administrator path on a dedicated server and match the final event by request id.
+8. Leave the server and confirm local values return after host synchronization ends.
+
+For YAML field definitions and ready-made widgets, see
+[Pack configuration](/kdataforge/features/pack-configuration). For the player-facing settings and
+multiplayer workflow, see
+[Settings and multiplayer](/kdataforge/players/settings-and-multiplayer).

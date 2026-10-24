@@ -1,13 +1,18 @@
 ---
-title: "Adding new Ore to Modular Miner"
-description: How to add new Ore DataAssets to the Modular Miner in Satisfactory Plus through KAPI. To allow them in SF+ gameplay.
+title: "Add ore to the Modular Miner"
+description: Add ore DataAssets to the Satisfactory Plus Modular Miner through KAPI.
 sidebar:
   order: 2
 ---
 
-## The DataAsset
+## Create the DataAsset
 
-For adding new Ore to the Modular Miner in Satisfactory Plus, you need to create a new DataAsset of type `KAPIModularMinerDescription` the header can be found [HERE](https://github.com/Satisfactory-KMods/public-source/blob/main/KAPI/Source/KAPI/Public/DataAssets/KAPIModularMinerDescription.h).
+Create a `KAPIModularMinerDescription` DataAsset for each ore you want the
+Satisfactory Plus Modular Miner to handle. See the
+[`KAPIModularMinerDescription` header](https://github.com/Satisfactory-KMods/public-source/blob/main/KAPI/Source/KAPI/Public/DataAssets/KAPIModularMinerDescription.h)
+for its class definition.
+
+Prefer YAML? Follow the matching [KDataForge Modular Miner guide](/satisfactory-plus/kdataforge/modular-miner/).
 
 ![KAPIModularMinerDescription DataAsset properties in the editor](../../../assets/satisfactory-plus/kapi/miner-asset.png)
 
@@ -26,9 +31,9 @@ For adding new Ore to the Modular Miner in Satisfactory Plus, you need to create
 | `mResourceClass`        | `TSubclassOf<UFGResourceDescriptor>`                          | The ore resource this entry applies to.                                                        |
 | `mDrillTier`            | `int`                                                         | The minimum drill tier required to mine this ore.                                              |
 
-### Inherited from `KAPIDataAssetBase`
+### Properties inherited from `KAPIDataAssetBase`
 
-Every KAPI DataAsset also carries these:
+Every KAPI DataAsset also has these properties:
 
 | Property       | Type                     | Description                                                                                  |
 | -------------- | ------------------------ | -------------------------------------------------------------------------------------------- |
@@ -76,7 +81,7 @@ is decided solely by `mNeededModules`:
 | Yes                                            | The ore cannot be mined at all without a fluid module and one of its fluids. |
 
 `AKLMMBuildableMiner::HasAllNeededModules` enforces this at runtime: the miner refuses to produce
-until every entry of `mNeededModules` is attached. The wiki export follows the same rule — a
+until every entry of `mNeededModules` is attached. The wiki export follows the same rule. A
 fluid-gated ore has **no** plain "extract \<ore\>" recipe, only its per-fluid recipes.
 
 In the shipped SF+ data, Coal accepts water as an optional boost, while Sulfur, Time Crystal and

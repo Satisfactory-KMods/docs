@@ -1,18 +1,18 @@
 ---
 title: 'Type: building'
-description: Generating new building/buildable descriptor classes from YAML, covering what you actually get and the hard limits on what a generated building can be.
+description: Generate building descriptor classes from YAML and understand what generated buildings can and cannot do.
 sidebar:
   order: 11
 ---
 
 This is the `Items` stage, at priority `20`, the last of the five generation types
-(`class` → `unlock` → `item` → `resource` → `building`). It loads changes only during session initialization, so changes need a
-restart. The entries key is `buildings`, and the default `parent` is
+(`class` → `unlock` → `item` → `resource` → `building`). `/kdf reload` rescans the document, but
+generated building registration is frozen for the session, so changes need a restart. The entries
+key is `buildings`, and the default `parent` is
 `/Script/FactoryGame.FGBuildingDescriptor`, which is also the required base class (or a subclass of
 it). Register-only mode (`class:`) is not supported here, use `id:` instead.
 
-Don't confuse this with editing an _existing_ buildable's stats. That's a plain `cdo` patch, and
-it's the far more common thing to want (see [Power & Machines](/kdataforge/examples/power-and-machines) and
+Use a plain `cdo` patch to edit an _existing_ buildable's stats (see [Power & Machines](/kdataforge/examples/power-and-machines) and
 [Type: cdo](/kdataforge/features/patching-cdo)). `type: building` is specifically for creating a **new**
 `FGBuildingDescriptor`-derived class: a genuinely new entry in the build menu, not a tweak to one
 that already exists.

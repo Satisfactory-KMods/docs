@@ -1,13 +1,13 @@
 ---
 title: Targeting
-description: Every way to select targets, including class CDOs, asset instances, all assets of a class, tag / name / property filters, recipe shortcuts (producedIn, ingredient, product), subclasses, spawned actors, and the same filters in remove:, block:, and sinkpoints entries.
+description: Select class CDOs, asset instances, every asset of a class, subclasses, or spawned actors by class, tag, name, property, or recipe shape; reuse the filters in remove:, block:, and sinkpoints entries.
 sidebar:
   order: 4
 ---
 
 Every `type: cdo` patch needs at least one target selector. The current validator accepts multiple
 selectors and `GatherTargets` accumulates their matches, but one clear selector per patch is easier
-to reason about. This page shows all selectors and the modifiers that widen a selection.
+to reason about. The sections below cover every selector and the modifiers that widen a selection.
 
 ## Class identity filters
 
@@ -307,7 +307,7 @@ where result. Each map names a `path:` (the same
 | `matches`                                                  | everything                                       | the display text matches a wildcard pattern (`*Alternate*`); references use their path                              |
 | `isEmpty: true/false`                                      | containers, text, references                     | the container/text is empty, or the reference is null                                                               |
 
-A candidate that does not have the property at all simply does not match. A comparison that cannot
+A candidate that does not have the property does not match. A comparison that cannot
 apply to the property's type (`greaterThan` on an array, `[*]` on a float, …) is reported **once**
 per patch entry as a warning naming the path. Remember that the scope class's **own** CDO is a
 candidate as well, and it only holds default values: `isEmpty: true` on `mProducedIn` matches

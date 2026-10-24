@@ -1,13 +1,18 @@
 ---
-title: 'Adding new Slug / Breeding Recipes'
-description: How to add new Slug or Breeding Recipe DataAssets to Satisfactory Plus through KAPI. To allow them in SF+ gameplay.
+title: 'Add slug breeding recipes'
+description: Add slug breeding DataAssets to Satisfactory Plus through KAPI.
 sidebar:
   order: 5
 ---
 
-## The DataAsset
+## Create the DataAsset
 
-For adding new Slug or Breeding Recipes to Satisfactory Plus, you need to create a new DataAsset of type `KAPISugHatchingData` the header can be found [HERE](https://github.com/Satisfactory-KMods/public-source/blob/main/KAPI/Source/KAPI/Public/DataAssets/KAPISugHatchingData.h).
+Create a `KAPISugHatchingData` DataAsset for each slug or breeding recipe you
+want to add to Satisfactory Plus. See the
+[`KAPISugHatchingData` header](https://github.com/Satisfactory-KMods/public-source/blob/main/KAPI/Source/KAPI/Public/DataAssets/KAPISugHatchingData.h)
+for its class definition.
+
+Prefer YAML? Follow the matching [KDataForge slug breeding guide](/satisfactory-plus/kdataforge/slug-breeding/).
 
 One DataAsset configures a single slug species: its identity, how it's incubated from an egg, and how it breeds.
 

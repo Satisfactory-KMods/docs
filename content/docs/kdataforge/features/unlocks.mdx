@@ -1,6 +1,6 @@
 ---
 title: 'Type: unlock'
-description: Generating a standalone, reusable FGUnlock subclass from YAML, and why most people actually want the schematic-level unlocks list instead.
+description: Generate a reusable FGUnlock subclass, or use a schematic's inline unlock list for ordinary recipe unlocks.
 sidebar:
   order: 12
 ---
@@ -12,9 +12,8 @@ entries key is `unlocks`. There is no default `parent`; provide a concrete `FGUn
 derives from `/Script/FactoryGame.FGUnlock`. Register-only entries (`class:`) are not supported, so
 use `id:`.
 
-Read this carefully before reaching for it: **most packs never need this document type.** If you
-just want a schematic to unlock a recipe, which is the overwhelmingly common case, use the
-schematic's own inline `unlocks:` list instead. See
+Most packs do not need this document type. To make a schematic unlock a recipe, use the
+schematic's inline `unlocks:` list. See
 [Schematics → Instanced unlocks](/kdataforge/features/schematics#instanced-unlocks-the-normal-way-to-wire-up-a-recipe).
 That creates an unlock instance directly on the schematic's CDO with no separate class needed.
 

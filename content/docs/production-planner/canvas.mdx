@@ -11,8 +11,8 @@ Production Modeler, which covers the same factory planning and more. Get it at
 [k-mods.com/production-modeler/download](https://k-mods.com/production-modeler/download).
 :::
 
-The canvas is your workspace. Everything you build lives here as draggable
-blocks (**nodes**) connected by resource flows (**edges**).
+The canvas contains draggable blocks (**nodes**) connected by resource flows
+(**edges**).
 
 ## Moving around
 
@@ -102,13 +102,12 @@ leftover surplus) to open a menu of actions just for that item:
 - Trim the node's clock/building count down to only what's actually used
 - Highlight every other place that item flows through the diagram
 
-This menu works on raw-resource and byproduct nodes too, not just recipe
-blocks so a byproduct that has collected somewhere with nothing consuming
-it can be dealt with right where you see it.
+This menu also works on raw-resource and byproduct nodes. You can handle an
+unconsumed byproduct where it appears.
 
-A suggested consuming recipe becomes a real part of the plan: the planner
-recalculates with it, produces its other ingredients for you, and counts its
-consumption in the material balance. It is not just a drawn-on connection.
+A suggested consuming recipe becomes part of the calculated plan. The planner
+produces its other ingredients and includes its consumption in the material
+balance.
 
 Right-clicking anywhere on a recipe node also offers node-level actions like
 duplicating it.
@@ -138,9 +137,9 @@ downstream instead of an unrouted surplus. Removing shards scales it back up
 the same way.
 
 :::note
-Shards raise a building's **output-per-input** ratio, not the input rate
-itself the input rate a recipe needs stays what it was; only the building
-count/clock speed needed to reach the same routed output goes down.
+Shards raise a building's **output-per-input** ratio. The recipe's input rate
+stays unchanged; only the building count or clock speed needed for the same
+routed output decreases.
 :::
 
 ## Marking blocks as built
@@ -180,15 +179,15 @@ Use the line-style button in the toolbar to switch connections between 90°
 ## Switching views
 
 The buttons in the top-right of the workspace switch between three ways to
-look at the same calculated plan everything described on this page is the
-**Flow** view; the others read better for different purposes.
+look at the same calculated plan. This page describes the **Flow** view; the
+other views present the same plan for different tasks.
 
-- **Flow** the canvas: a draggable diagram you can rearrange, connect, and
+- **Flow:** the canvas, a draggable diagram you can rearrange, connect, and
   edit by hand.
-- **Text** a flat checklist grouped by build stage, with the same role colors,
+- **Text:** a flat checklist grouped by build stage, with the same role colors,
   animations, rates, raw-resource totals, and built/not-built checkbox as the
   canvas.
-- **Tree** the production chain as an expandable table, indented from your
+- **Tree:** the production chain as an expandable table, indented from your
   final outputs down to raw resources, with rate, building count, and clock
   speed as columns. Recipe and extractor buildings are resolved to their
   catalog names, images, and wiki links. It fills the available workspace over

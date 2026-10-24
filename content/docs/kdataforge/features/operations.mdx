@@ -1,6 +1,6 @@
 ---
 title: Operations
-description: What each of the 25 property operations does, which property kinds support it, and one working example apiece.
+description: Choose among 25 property operations, check supported property kinds, and follow a working example for each operation.
 sidebar:
   order: 3
 ---
@@ -10,7 +10,7 @@ Every entry in a `type: cdo` patch's `properties:` list names a target `path` an
 currently stored at that path. If you leave `op:` out, it defaults to `set`, a plain overwrite.
 That is why most of the simple examples elsewhere in these docs never mention an op at all.
 
-This page walks through all 25 operations the engine recognizes. They are grouped by the kind of
+The 25 operations are grouped by the kind of
 property they act on: numeric math and clamping, container mutation for arrays, sets, maps, and
 tag containers, string concatenation, array reordering and deduplication, and cross-property copy
 or move.
@@ -135,7 +135,7 @@ are validated before writing; a failure keeps original values.
 ## set (default): everything
 
 `set` overwrites the property outright. It works on any property type, which is why it can be
-left implicit. On `mDisplayName` (an `FString`), setting a value simply replaces the string:
+left implicit. On `mDisplayName` (an `FString`), setting a value replaces the string:
 
 ```yaml
 - path: mDisplayName
@@ -403,7 +403,7 @@ with a follow-up `replace`:
 
 `sort` reorders an array in ascending order. Numeric and string inner types sort by their actual
 value. Anything else, such as structs or object references, sorts by its exported text form.
-`reverse` simply flips the current order of every element:
+`reverse` flips the current order of every element:
 
 ```yaml
 - path: mRelevantEvents # numeric/string inner types sort by value; others by text form
@@ -440,7 +440,7 @@ can still work, as long as the text parses back cleanly for the destination type
 
 ## move: copy, then reset the source to its default
 
-`move` performs the exact same copy as `copy`, then additionally clears the source property back
+`move` performs the exact same copy as `copy`, then clears the source property back
 to its default value. This makes it the right choice when a value should live at the new path
 _instead of_ the old one, rather than in both places:
 

@@ -1,20 +1,20 @@
 ---
-title: Internals & Architecture
-description: Runtime pipeline, C++ module organization, persistence, and contributor-facing design contracts.
+title: Contributor internals
+description: Understand KDataForge's runtime pipeline, persistence model, multiplayer boundaries, and modules.
 sidebar:
   order: 1
 ---
 
-This section is background reading, not a prerequisite. You can write a YAML pack, load it, and
-balance a recipe without knowing any of it. It's here for the curious. It's also here for anyone
-extending KDataForge itself with a new handler, who wants to understand the data flow, the
-subsystems, and the module boundaries before touching code.
+This section explains why KDataForge behaves as it does and how its runtime modules work together.
+Pack authors do not need it for routine YAML work. Read it when you are designing around load order,
+save identity, reload limits, or multiplayer, or when you are adding a native handler.
 
-- [Architecture](/kdataforge/background/architecture) walks through the full pipeline.
-  It covers the filesystem scan, YAML parsing, the fixed stage order, the reflection engine that
-  turns a property path into a live edit, savegame persistence for generated content, and
-  the current multiplayer boundaries.
-- [Module Structure](/kdataforge/background/module-structure) covers how the plugin's
-  four runtime modules (`KDataForgeApi`, `KDataForgeYaml`, `KDataForge`, `KDataForgeEditorUI`) are
-  laid out on disk. It explains why they're split that way, and the dependency rules that keep the
-  public API tiny and the dedicated-server build lean.
+- [Architecture](/kdataforge/background/architecture) follows a document from filesystem discovery
+  through YAML parsing, fixed-stage application, reflection-based property edits, generated-content
+  persistence, reload, and the current multiplayer boundary.
+- [Module structure](/kdataforge/background/module-structure) maps the runtime modules, their source
+  layout, and their dependency rules. Those boundaries keep public integration contracts separate
+  from parsing, reflection export, runtime application, and user-interface code.
+
+Use [API design](/kdataforge/reference/api-design) for the supported native integration surface and
+the [handler template](/kdataforge/reference/handler-template) when implementing a document type.

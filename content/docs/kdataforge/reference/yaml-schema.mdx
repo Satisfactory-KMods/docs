@@ -1,14 +1,14 @@
 ---
-title: YAML Schema
+title: YAML schema
 description: Complete grammar for packs, document types, property paths, all 25 operations, conditions, and includes.
 sidebar:
   order: 2
 ---
 
-> This document is normative. Every construct here is implemented and covered by an example in
+> This is the normative schema. Every construct is implemented and covered by an example in
 > [Examples](/kdataforge/examples).
 
-## File Discovery
+## File discovery
 
 - Author root: `<your-mod>/DataForge/`.
 - Author glob: `<your-mod>/DataForge/**/*.yml` (and `*.yaml`).
@@ -23,7 +23,7 @@ sidebar:
   [Multiple Documents Per File](#multiple-documents-per-file) below.
 - Malformed YAML produces an Error and that file is skipped. The rest of the load continues.
 
-## Pack Manifest (`pack.yml`)
+## Pack manifest (`pack.yml`)
 
 Optional, at the pack root. Files without a manifest form an implicit pack whose ref and name come
 from the detected root's parent directory. Prefer an explicit stable `ref`; moving the root can
@@ -32,6 +32,8 @@ otherwise change its implicit identity.
 ```yaml
 ref: MyBalancePack # stable pack reference (save-persistence contract) required if present
 name: My Balance Pack # display name (default: ref)
+description: Rebalances early-game production. # string or localized FText map
+icon: icons/my-pack.png # UTexture2D object path or pack-relative image
 version: 1.2.0 # semver, informational + used by conflict reports
 priority: 100 # higher applies earlier within each stage (default 100)
 enabled: true # false disables the whole pack (default true)
@@ -65,7 +67,12 @@ packs whose dependencies are ready, higher `priority` runs first and `ref` ascen
 `FCoreRedirects` so class paths in existing saves resolve to the renamed class. Renaming a _file_
 never needs a redirect. Only `id` renames do.
 
-## Document Structure
+`name` and `description` accept a plain string or localized `{ key, ns, source }` text. `icon`
+accepts a cooked `UTexture2D` object path beginning with `/`, or a pack-relative PNG, JPG, JPEG,
+TGA, or BMP file inside the pack directory. Relative icons are limited to 16 MiB and 4096 by 4096
+pixels. Dedicated servers skip icon loading.
+
+## Document structure
 
 Every document is a YAML map with a root type:
 
@@ -90,7 +97,7 @@ Root type detection order: `type:` key → filename convention (`iron.recipe.yml
 Unknown types warn once and are skipped (they may belong to a handler from another mod or a later
 phase).
 
-### Multiple Documents Per File
+### Multiple documents per file
 
 A file can hold more than one document by separating them with a `---` line (the same convention
 Kubernetes multi-manifest YAML files use). This lets a small, self-contained pack live in one file
@@ -130,18 +137,21 @@ entries:
 
 ### Root types
 
-Each root type is dispatched to its own stage-specific handler. The table below lists every
-built-in type, the stage it runs in during a load, and the page with its full grammar and worked
-examples:
+Most root types are dispatched to a stage-specific handler. Configuration definitions are read
+before staged document application. The table lists every built-in type, when it runs, and the
+page with its full grammar and worked examples:
 
 | Type                 | Stage            | Detailed page                                                           |
 | --------------------- | ---------------- | ----------------------------------------------------------------------- |
+| `config`             | Configuration    | [Pack Configuration](/kdataforge/features/pack-configuration) |
 | `gametag`            | GameTags         | [Game Tags](/kdataforge/features/game-tags)               |
 | `asset`              | Assets           | [Data Assets](/kdataforge/features/data-assets)           |
+| `sound`              | Assets           | [Sounds](/kdataforge/features/sounds)                     |
 | `dataasset`          | Assets           | [Data Assets](/kdataforge/features/data-assets)           |
 | `curve`              | Assets           | [Float and Vector Curves](/kdataforge/features/curves)    |
 | `localization`       | Localization     | [Localization](/kdataforge/features/localization)         |
 | `cdo`                | CDOChanges       | [Patching (type: cdo)](/kdataforge/features/patching-cdo) |
+| `category_reorder`   | CDOChanges       | [Category Ordering](/kdataforge/features/category-reorder) |
 | `sublevel`           | CDOChanges       | [Sublevels](/kdataforge/features/sublevels)                |
 | `item`               | Items            | [Items](/kdataforge/features/items)                       |
 | `resource`           | Items            | [Resources](/kdataforge/features/resources)               |
@@ -161,7 +171,7 @@ examples:
 > (`class` → `unlock` → `item` → `resource` → `building`), so
 > later stages (`recipe`, `schematic`, `research`) can reference every generated class.
 
-## Property Patches (`type: cdo`)
+## Property patches (`type: cdo`)
 
 Use [`actorSelector:`](/kdataforge/features/actor-selectors) with explicit actor targets and
 `applyToSpawnedActors: true` for instance-only tag, sphere, box and current-recipe selection.
@@ -235,7 +245,33 @@ empty or non-scalar member invalidates the entire patch entry, with a source-lin
 other selectors on that entry do not bypass the error. See
 [target lists](/kdataforge/features/targeting#target-a-sequence-of-paths-patch-several-targets-in-one-entry).
 
-## Sublevel Blocking (`type: sublevel`)
+### Actor-instance selection and actions
+
+An `actorSelector` requires explicit actor-class `target` values and
+`applyToSpawnedActors: true`. At least one field is required, and every supplied field must match:
+
+| Field | Value |
+| --- | --- |
+| `tags` | Non-empty actor tag, or non-empty list; the actor needs every tag |
+| `sphere` | `{ center: [x, y, z], radius: positive-number }` |
+| `box` | `{ min: [x, y, z], max: [x, y, z] }`, with every minimum below its maximum |
+| `currentRecipe` | Recipe class, or non-empty list; any exact class may match |
+
+Selectors are evaluated after actor begin play for existing actors, later spawns, and actors present
+after reload. They are lifecycle checks, not continuous queries. Changing an actor's location, tags,
+or recipe does not re-evaluate it until reload. Full timing, multiplayer, and diagnostics:
+[Actor Instance Selectors](/kdataforge/features/actor-selectors).
+
+Use `actorAction: destroy` or `actorAction: dismantle` instead of `properties` to remove matching
+actors. `dismantle` uses the normal dismantle path where supported. Reload cancels pending actions
+but cannot restore an actor already removed. Use `inventoryRemap` instead of `properties` to convert
+player inventory stacks; each entry requires `from` and `to` item classes and accepts a positive
+integer `multiplier` that defaults to 1. Source items must be unique and cannot also be destinations.
+The complete action and inventory contracts are under
+[Targeting](/kdataforge/features/targeting#actor-lifecycle-actions) and
+[Player Inventory Remapping](/kdataforge/features/targeting#player-inventory-remapping).
+
+## Sublevel blocking (`type: sublevel`)
 
 A `sublevel` document blocks RefinedRDLib or KBFL sublevel descriptor assets during the
 `CDOChanges` stage. `block:` must be a non-empty sequence. Each entry is an exact asset object path,
@@ -260,7 +296,148 @@ Asset Registry being populated. Other asset families warn and must be patched th
 The provider mods are optional soft integrations. Full behavior and diagnostics:
 [Sublevels](/kdataforge/features/sublevels).
 
-## Property Paths
+## Pack settings (`type: config`)
+
+A `config` document defines typed settings for its pack. Its filename must end in `.config.yml` or
+`.config.yaml`; configuration definitions are collected separately from ordinary documents.
+KDataForge stores player values in
+`FactoryGame/Configs/Packs/<PackRef>.config.yml`; the authored document contains definitions, not
+saved values. A pack that defines settings needs a stable `ref` of at most 50 characters.
+
+```yaml
+type: config
+category: /Script/FactoryGame.FGCategory
+fields:
+  - id: balance.duration
+    type: number
+    valueType: float
+    name: Production duration
+    description: Recipe duration in seconds used by this pack.
+    default: 1
+    min: 0.25
+    max: 4
+    step: 0.25
+    display: slider
+    apply: hot
+```
+
+`fields` must be a non-empty sequence. Each field requires `id`, `type`, `name`, `description`, and
+`default`. Set `category` on the document or on every field. Field IDs are case-insensitively unique
+within the pack, use dotted ASCII identifiers, and cannot exceed 200 characters. One ID cannot also
+be another ID's dotted prefix.
+
+| Field `type` | Accepted `valueType` | Default | Multiple values |
+| --- | --- | --- | --- |
+| `text` | `string`, `text`, `name`, `tag` | `string` | `multiple: true` |
+| `number` | `int8`, `int16`, `int32`, `int64`, `uint8`, `float`, `double` | `int32` | `multiple: true` |
+| `boolean` | `bool`, `uint8` | `bool` | No |
+| `select` | Every text and number type above, plus `bool` | `string` | `multiple: true` |
+
+Common optional fields are `tooltip`, `order`, `multiple`, and `apply`. `apply` defaults to `cold`;
+`hot` requests a content reload after a saved value changes. Number fields accept `min`, `max`,
+`step`, `decimals`, and `display: input | slider`. Text fields accept `maxLength`, `multiline`, and
+`tagRoot`. Lists use `minCount` and `maxCount`; multi-selects use `minSelected` and `maxSelected`.
+Select fields require non-empty `options` entries with `value` and `label`.
+
+Configuration definitions cannot use `config:` conditions. Other documents read values through
+`cfg:<id>` or `cfg:<PackRef>:<id>`. For the exact identifier grammar, localized display-text forms,
+constraint interactions, cleanup rules, generated UI, and hot/cold behavior, use
+[Pack Configuration](/kdataforge/features/pack-configuration). That page is the canonical contract
+for `type: config` fields.
+
+## Category ordering (`type: category_reorder`)
+
+`category_reorder` assigns a category and one-based menu order after ordinary CDO patches have run:
+
+```yaml
+type: category_reorder
+subType: items
+category: /Game/MyMod/Categories/Cat_Pipelines.Cat_Pipelines_C
+subCategory: /Game/MyMod/Categories/SC_SpecialPipes.SC_SpecialPipes_C
+categoryPriority: 4
+subCategoryPriority: 2
+order:
+  - /Game/MyMod/Pipes/Desc_PipeMk1.Desc_PipeMk1_C
+  - /Game/MyMod/Pipes/Desc_PipeMk2.Desc_PipeMk2_C
+```
+
+`subType`, `category`, and a non-empty `order` sequence are required. Every order entry must be
+unique. `categoryPriority` and `subCategoryPriority` accept fractional values. The latter requires
+`subCategory`.
+
+| `subType` | `order` values | `subCategory` |
+| --- | --- | --- |
+| `items` | `UFGItemDescriptor` class paths | Optional `UFGCategory` |
+| `recipe` | `UFGRecipe` class paths | Rejected |
+| `schematic` | `UFGSchematic` class paths | Optional `UFGSchematicCategory` |
+| `settings` | `UFGUserSetting` asset paths | Optional `UFGUserSettingCategory` |
+
+Class targets may load later; unresolved `settings` assets are immediate errors. See
+[Category Ordering](/kdataforge/features/category-reorder) for the exact properties changed for
+each subtype and the rules for settings with several menu placements.
+
+## Runtime sounds (`type: sound`)
+
+A `sound` document creates generated `UAkAudioEvent` assets from pack-relative audio files:
+
+```yaml
+type: sound
+sounds:
+  - id: AdaWelcome
+    file: audio/welcome.flac
+    name: Welcome voice line
+    description: Volume of the ADA welcome message
+    category: Voice
+    subCategory: ADA
+```
+
+`sounds` must be a non-empty sequence. Each entry requires a stable `id` and `file`. IDs start with
+an ASCII letter and continue with ASCII letters, digits, `_`, `.`, or `-`. `file` is relative to the
+pack root and must remain inside it. Supported inputs are PCM16 WAV, native lossless 16-bit FLAC,
+and Ogg Vorbis; audio must be mono or stereo at 8,000 through 192,000 Hz. Encoded and decoded data
+are each limited to 64 MiB.
+
+`name`, `description`, `category`, and `subCategory` are optional non-empty strings. Setting
+`subCategory: ADA` uses Satisfactory's Dialogue Volume and does not create an individual slider.
+Other sounds receive local Audio settings; no `volume` document field exists. Generated event path:
+`/KDataForge/GenAssets/<PackRef>.Gen_<PackRef>_<Id>`. Sound IDs share this asset namespace with
+images, curves, and data assets. See [Sounds](/kdataforge/features/sounds) for format checks,
+dedicated-server behavior, Wwise bank caching, and troubleshooting.
+
+## Event rules (`type: eventrule`)
+
+Event rules register bounded, server-side reactions to world startup or schematic purchases:
+
+```yaml
+type: eventrule
+rules:
+  - id: progression-followup
+    event: schematicPurchased
+    schematic: /Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C
+    once: true
+    requiresSchematics:
+      - /Game/FactoryGame/Schematics/Progression/Schematic_0-1.Schematic_0-1_C
+    actions:
+      - unlockSchematic: /Game/FactoryGame/Schematics/Progression/Schematic_2-3.Schematic_2-3_C
+      - log: Follow-up schematic granted.
+```
+
+| Field | Required | Contract |
+| --- | --- | --- |
+| `rules` | Yes | 1 to 256 rules per document |
+| `id` | Yes | 1 to 128 ASCII letters, digits, `.`, `_`, or `-`; case-insensitively unique in the pack |
+| `event` | Yes | `worldReady` or `schematicPurchased` |
+| `schematic` | No | Concrete schematic filter, valid only with `schematicPurchased` |
+| `once` | No | Defaults to `true`; successful completion is stored in the save by pack ref and rule ID |
+| `requiresSchematics` | No | Up to 64 schematic classes; all must already be purchased |
+| `actions` | Yes | 1 to 32 maps containing exactly one `unlockSchematic` or `log` action |
+
+`log` accepts nonblank text up to 2,048 characters. The full document is rejected when any rule is
+invalid or when IDs collide. `worldReady` does not fire again after `/kdf reload`; reloaded purchase
+rules handle only later purchases. See [Event Rules](/kdataforge/features/event-rules) for cascade
+limits, grant failure behavior, once-per-save persistence, and reload timing.
+
+## Property paths
 
 In a `properties:` operation, the quoted selector `path: '@tagContainers'` selects
 all top-level `FGameplayTagContainer` fields on each actual target, including inherited
@@ -332,7 +509,7 @@ A few properties need more than a plain reflected write. KDataForge handles them
   stack sizes, don't patch the same descriptor from both sides. Example with the full caveat:
   [Balancing → Items](/kdataforge/examples/balancing#items-ufgitemdescriptor).
 
-## Value Forms (by property type)
+## Value forms by property type
 
 Each reflected property type accepts its own YAML shape when used as an operation's `value:` (or
 `min`/`max`/`with` argument). The table below is the authoritative mapping from UE property type
@@ -382,7 +559,7 @@ supported. Ordinary integer properties retain their normal signed ranges. See
 [Property Types](/kdataforge/features/property-types#bitmask-integer-properties-with-bitmaskenum-metadata)
 for examples and high-bit behavior.
 
-## Gameplay Tag Registration (`type: gametag`)
+## Gameplay tag registration (`type: gametag`)
 
 A `gametag` document registers new `FGameplayTag` names with the engine's gameplay tag tree before
 any other document type runs. This matters because tags referenced from `cdo` targeting
@@ -401,7 +578,7 @@ written to config files, with a tag-tree rebuild when needed. This is the only r
 that survives the engine's own tree reconstructs. Register tags **before** using them in cdo
 documents: the GameTags stage always runs first.
 
-## Content Creation (`item`, `resource`, `building`, `recipe`, `schematic`, `research`, `unlock`)
+## Content creation (`item`, `resource`, `building`, `recipe`, `schematic`, `research`, `unlock`)
 
 These seven root types **generate new classes at runtime**. All share the same entry grammar. Only
 the plural list key and the default parent differ:
@@ -441,7 +618,7 @@ items: # plural key per type see table below
 - **Constraint**: generated classes have the parent's layout, with no new reflected properties or
   components. All variation lives in CDO defaults (which is exactly what `properties:` sets).
 
-### Generated Content Short Ids
+### Generated content short IDs
 
 Anywhere a class or object reference is accepted (`parent:`, `properties:` values, `target:`,
 `item:` on sinkpoints, `class:`, …), a bare id (just the `id:` a document gave the content, e.g.
@@ -488,8 +665,8 @@ recipes:
 These three document types also accept a document-level `remove:` sequence. It may be the whole
 document or appear beside the normal entries list. An entry is either a bare class reference (full
 path, bare class name, or generated-content short id) that removes exactly that class, or a **filter
-map** using the [scope filters](#property-patches-type-cdo) — `matchTag:`, `matchName:`,
-`producedIn:`, `ingredient:`, `product:`, `where:`, optional `ofClass:` — that removes every class of
+map** using the [scope filters](#property-patches-type-cdo): `matchTag:`, `matchName:`,
+`producedIn:`, `ingredient:`, `product:`, `where:`, and optional `ofClass:`. This removes every class of
 the type passing all of them:
 
 ```yaml
@@ -638,7 +815,7 @@ resolved `parents:` relationships. To move a node, select and re-add the same sc
 coordinate. `nodes:` remains a legacy alias. If both keys exist,
 `addNodes:` wins and KDataForge warns that `nodes:` was ignored.
 
-### Instanced Dependencies on Research Trees
+### Instanced dependencies on research trees
 
 Research entries accept `unlockDependencies:` and `visibilityDependencies:`. Both use the
 block maps containing `class:` and `properties:` in the instanced `FGAvailabilityDependency` shape; they append to
@@ -660,11 +837,11 @@ research:
             value: EGP_EarlyGame
 ```
 
-### Instanced Unlocks on Schematics (`unlocks:`)
+### Instanced unlocks on schematics (`unlocks:`)
 
 Schematic entries accept an `unlocks:` list. Each entry creates an **instanced** `FGUnlock`
-subobject on the schematic's CDO. This works with any concrete `FGUnlock` subclass the base game
-ships, not just `FGUnlockRecipe`; see the
+subobject on the schematic's CDO. This works with every concrete `FGUnlock` subclass shipped by the
+base game, including `FGUnlockRecipe`; see the
 [Base-Game Unlock Classes](/kdataforge/reference/base-game-unlock-classes) for the full list:
 
 ```yaml
@@ -694,7 +871,7 @@ classes), `schematics:` (sequence of `UFGSchematic` classes), positive-integer `
 `nodeType: Node` by default). Each shortcut creates the corresponding normal `FGUnlock` instance;
 class references resolve exactly like every other generated, vanilla, or mod class reference.
 
-### Instanced Dependencies on Schematics (`dependencies:`)
+### Instanced dependencies on schematics (`dependencies:`)
 
 Schematic entries also accept a `dependencies:` list (the same instanced-object mechanism as
 `unlocks:`), targeting `mSchematicDependencies` instead of `mUnlocks`. Each entry creates an
@@ -723,7 +900,7 @@ until the dependency is met. See
 [Type: schematic → Gating a schematic on prerequisites](/kdataforge/features/schematics#gating-a-schematic-on-prerequisites)
 for the full worked example and other `FGAvailabilityDependency` subclasses worth knowing about.
 
-## Generic Class Generation (`type: class`)
+## Generic class generation (`type: class`)
 
 The seven preset types above are the recommended, ergonomic forms. `class` is the **escape hatch
 for everything else**: it generates a new class from **any** parent, whether native C++
@@ -760,7 +937,7 @@ Worked examples (equipment descriptor, category, modded parent behind `hasMod`) 
 as part of a complete building, see
 [A Complete Building](/kdataforge/examples/building-chain).
 
-## 2D Image Assets (`type: asset`)
+## 2D image assets (`type: asset`)
 
 Loads image files from the pack and turns them into real, referenceable `UTexture2D` assets:
 
@@ -782,7 +959,7 @@ assets:
 Icon usage example (item `mSmallIcon` / `mPersistentBigIcon`):
 [Data Assets → 2D image assets](/kdataforge/features/data-assets#2d-image-assets-type-asset).
 
-## Dynamic DataAsset Instances (`type: dataasset`)
+## Dynamic DataAsset instances (`type: dataasset`)
 
 Creates real `UDataAsset` **instances** (not classes) at runtime, using package
 `/KDataForge/GenAssets/<PackRef>` and name `Gen_<PackRef>_<Id>`. It announces them to the asset
@@ -822,7 +999,7 @@ objects to `mUnlocks` and `mTaskDependencies` when selected class exposes those 
 intended for `UKAPIDeliveryTask`; incompatible classes report missing array at runtime. Entry shape
 and native-to-Blueprint remapping match schematic lists.
 
-## Float and Vector Curve Assets (`type: curve`)
+## Float and vector curve assets (`type: curve`)
 
 Creates new or edits existing `UCurveFloat` and `UCurveVector` assets. `keys:` replaces complete
 key set on each entry.
@@ -856,7 +1033,7 @@ and tangent fields accept an X/Y/Z map or three-number sequence. Generated curve
 [Float and Vector Curves](/kdataforge/features/curves) for full examples and
 troubleshooting.
 
-## AWESOME Sink Point Values (`type: sinkpoints`)
+## AWESOME Sink point values (`type: sinkpoints`)
 
 A `sinkpoints` document sets the AWESOME Sink point value for one or more items on a named track.
 The `FGResourceSinkSubsystem` consults this whenever it looks up how many points an item is worth:
@@ -881,11 +1058,48 @@ expand against the item descriptor classes loaded when the document applies.
 
 **Not live-reloadable** (registry freeze): sinkpoint changes need a session restart.
 
-## Resource Nodes (`type: resourcenode`)
+## Resource nodes (`type: resourcenode`)
 
 A `resourcenode` document requires at least one non-empty `remove:`, `add:` or `replace:` sequence.
-For placement identities, KBFL-style range checks, node reuse, replacement, mesh/material overrides
-and save/occupied-node constraints, see [Resource Node Placement](/kdataforge/features/resource-node-placement).
+`add` creates or reuses an ordinary resource node. `replace` requires an existing ordinary node in
+range and changes that actor in place. Positions and distances use Unreal centimetres; rotations use
+pitch, yaw, and roll in degrees.
+
+```yaml
+type: resourcenode
+add:
+  - id: northern-iron
+    resource: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
+    position: [10000, 20000, 1200]
+    purity: Pure
+    checkRange: 500
+    reuseExisting: true
+    allowToMove: true
+replace:
+  - id: nearby-copper
+    resource: /Game/FactoryGame/Resource/RawResources/OreCopper/Desc_OreCopper.Desc_OreCopper_C
+    fromResource: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
+    position: [30000, 20000, 1200]
+    checkRange: 500
+    allowToMove: false
+```
+
+Stable `id` values are required and must be unique across every `add` and `replace` entry in the
+pack. Both forms require `resource` and a finite three-number `position`. Their shared optional
+fields are `rotation`, `purity`, `checkRange`, `allowToMove`, `fromResource`, `mesh`, `material`, and
+`materials`. `material` and `materials` are mutually exclusive. `checkRange` defaults to 500 and
+must be greater than zero and no more than 100000.
+
+`add` also accepts `reuseExisting` (default `true`), `preventOverlap` (default `false`), and
+`overlapClass` (default `FGResourceNodeBase`). `replace` accepts `radius` as an alias for
+`checkRange`, but not together with it. An addition defaults to `Normal` purity; replacement and
+reuse preserve the existing purity when it is omitted. Placement and replacement support ordinary
+nodes only. Occupied nodes, unresolved extractor links, and nodes with saved randomization
+overrides are preserved.
+
+For save ownership, restoration, actor replication, node meshes, overlap checks, and reload limits,
+see [Resource Node Placement](/kdataforge/features/resource-node-placement). That page is the
+canonical contract for `add` and `replace` entries.
 
 Within `remove:`, a scalar is shorthand for a map
 with only `resource:`. Valid entries still apply when another entry reports an error:
@@ -921,7 +1135,27 @@ restore those actors. Back up the save and read the full persistence and deferre
 under [Resources and Resource Nodes](/kdataforge/features/resources#removing-resource-nodes-type-resourcenode).
 :::
 
-## Runtime Text Entries (`type: localization`)
+The same document type accepts `visuals`, `hideMeshes`, and `meshActorsPerTick` for node appearance:
+
+```yaml
+type: resourcenode
+visuals:
+  - resource: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
+    materials:
+      - slot: 0
+        material: /MyMod/Materials/MI_Node.MI_Node
+hideMeshes:
+  - /MyMod/ResourceNodes/SM_OldNode.SM_OldNode
+meshActorsPerTick: 1
+```
+
+Each visual entry requires one exact resource descriptor and a non-empty `materials` list. Material
+records require a unique zero-based `slot` from 0 through 63 and a material or material-instance
+object path. `hideMeshes` contains exact static-mesh object paths. `meshActorsPerTick` defaults to 1,
+accepts 1 through 1024, and requires `visuals` or `hideMeshes` in the document. Full precedence,
+streaming, client, and restoration behavior: [Resource Node Appearance](/kdataforge/features/resource-node-visuals).
+
+## Runtime text entries (`type: localization`)
 
 A `localization` document injects or overrides `FText` string table entries at runtime. It is
 scoped to a namespace and optionally a single culture, and it needs no separate localization asset
@@ -945,7 +1179,7 @@ entries:
   **existing** texts by their original source string.
 - Localization documents apply during GameInstance initialization. Restart the session after edits.
 
-## Debug Logging
+## Debug logging
 
 Every applied op can be traced. Three levels, from narrow to global:
 
@@ -962,7 +1196,7 @@ Log lines go to the game log at Log verbosity, one per applied op:
 ```
 
 Walkthrough (where the log file lives, reading the lines):
-[Getting Started → Debugging](/kdataforge/getting-started#debugging).
+[Create your first pack: trace an operation](/kdataforge/getting-started#trace-an-applied-operation).
 
 ## Conditions
 
@@ -1028,7 +1262,7 @@ above.
 Version ranges use SML's semver syntax: `>=1.2.3`, `^3.12.0`, `~1.2.0`, exact `1.2.3`, unions with
 `||`.
 
-## Dependency Ordering (`include:`)
+## Dependency ordering (`include:`)
 
 `include:` lists relative file paths (same pack) whose documents must **apply before** this one
 within the same stage. It is ordering, not textual inclusion. Cycles fall back to path order with a

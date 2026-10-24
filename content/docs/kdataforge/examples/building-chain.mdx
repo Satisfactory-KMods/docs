@@ -1,12 +1,12 @@
 ---
-title: A Complete Building
-description: The full reference chain for a dynamically created building (buildable class, building descriptor, build recipe, production recipes, schematic, and sinkpoints), in dependency order, in one pack.
+title: A complete building
+description: Create a building, its build and production recipes, schematic, and sink points in dependency order within one pack.
 sidebar:
   order: 4
 ---
 
-This page walks the **full reference chain** for dynamically created content, in dependency order,
-with copy-pasteable YAML. Everything lives in one pack:
+This example builds the **full reference chain** for dynamic content in dependency order. All
+copy-pasteable YAML belongs to one pack:
 
 ```yaml
 # file: pack.yml
@@ -232,7 +232,7 @@ have read the walkthrough above:
 | 3                  | `3-build-recipe.recipe.yml`         | build recipe                                                            | step 2 as `mProduct`, `FGBuildGun` in `mProducedIn` |
 | 4                  | `4a`/`4b`                           | output item + production recipe                                         | step 1 in `mProducedIn`, item in `mProduct`         |
 | 5                  | `5-schematic.schematic.yml`         | schematic                                                               | steps 3+4 via `FGUnlockRecipe`                      |
-| 6: Session restart | Did you restart after editing YAML? | KDataForge reads every document type once during session initialization |
+| 6: Session restart | Did you restart after editing generated content? | `/kdf reload` rescans YAML, but frozen content registrations and cold changes still need a new session |
 
 Ids are the contract. You can rename any **file** freely, but renaming an **id** needs a
 `redirects:` entry in `pack.yml`

@@ -1,6 +1,6 @@
 ---
-title: Building Plans
-description: Pick recipes, configure miners, add notes, and group sub-assemblies.
+title: Building plans
+description: Choose recipes, configure miners, add notes and group sub-assemblies.
 sidebar:
   order: 3
 ---
@@ -68,7 +68,7 @@ Recipes you can only craft by hand never appear at all. Anything whose only
 producer is the build gun, a workbench, a workshop or the automated workbench is
 left out of the catalogs and out of the solve, because the planner plans
 automated production. A recipe that a machine can also make keeps that machine
-and simply loses the by-hand option.
+and omits the by-hand option.
 
 If no permitted dependency route remains, the planner reports the unresolved
 item instead of silently using an excluded resource or invalid fallback.
@@ -130,8 +130,7 @@ feed another recipe or appear as surplus.
 
 :::note
 Purity comes from the actual node in the game world (impure, normal or pure).
-It is not something you choose freely, so set it to match the node you actually
-plan to build on.
+Set it to match the node where you plan to build.
 :::
 
 ## Notes
@@ -151,7 +150,7 @@ Under **Settings → Optimization & byproducts** you can control alternate
 recipes, overclocking, compact recipes, circular-route avoidance, and what to
 do with surplus. Route priorities include depth, raw resources, power,
 balance, and byproducts; select up to two in the creation wizard. Automatic
-selection ranks the complete dependency route, not just the final recipe, and
+selection ranks the complete dependency route, including the final recipe, and
 remains deterministic when scores tie. A manually selected route stays
 selected while the other ranked options remain available. Identical recipe
 executions are aggregated only after their complete material flows have been
@@ -186,5 +185,5 @@ instead of leaving the material as free surplus.
 Raw resources resolve through real extraction routes where the catalog
 provides them. Ores use the Modular Miner, while Oil, Air, and similar resources
 use their matching extractor or collector. These extraction rates are included
-in the Text view and exported text's **Raw resources** section, not just raw
+in the Text view and exported text's **Raw resources** section alongside raw
 materials imported as external inputs.

@@ -1,0 +1,136 @@
+---
+title: Systems and progression
+description: Understand current SF+ progression, production pressure, FaxIT behavior, balance packs, and announced 1.4 mechanics.
+sidebar:
+  order: 3
+---
+
+SF+ systems overlap. A HUB milestone may unlock a machine, a MAM node may unlock its treatment, and a world discovery may reveal the research needed to connect both. The factory then has to keep every resulting material stream moving.
+
+## Unlock state and recipe availability
+
+Progression records completed milestones and research as unlocks. A machine menu
+includes recipes already purchased or awarded in the current save. A recipe can
+exist in SF+ data, the wiki, or the planner before it becomes selectable.
+
+The HUB handles the main tier sequence. MAM handles specialist branches and many alternate recipes. Discovery can expose a branch or scanner target. A resource can therefore appear before the player can process every product from it, with later research opening more uses.
+
+Unlocks also determine the available producer. Some late-game recipes use the KMods Particle Accelerator in place of the vanilla machine, and an alternate route can move a processing step into another building. When a recipe appears after research, check its producer and all of its outputs again.
+
+## Resource replacement and world filtering
+
+SF+ changes resource identities at the world level as well as in recipes. Caterium nodes are replaced by Aurovite, while Aurovite research provides routes into the electronics chain. Other SF+ ores enter different crushing, washing, sorting, and refining paths as progression develops.
+
+Resource randomization excludes resources named in SF+ exclusion data or marked for exclusion from node randomization. A third-party mod can therefore load while one of its resources never enters the SF+ node pool. A compatibility pack can supply the intended descriptors, recipes, or exclusions for that combination.
+
+A missing node may be a deliberate replacement, a gated scanner unlock, or a compatibility gap. Check the SF+ resource name, MAM branch, and KPatchwork pack before searching the map longer.
+
+## Backpressure across solids, fluids, and gases
+
+A production cycle commits all its outputs together. If one destination cannot accept material, the machine cannot finish the cycle. This applies even when the blocked material is described as waste or a byproduct.
+
+The Crusher exposes this rule with ore and Gangue. The Wet Washer adds a fluid outlet to the same planning problem. Oil, chemical, and power chains can combine belts with several pipe networks. A reliable line gives each stream a consumer, treatment process, or monitored buffer.
+
+A buffer changes the timing without changing the average balance. If a line creates ten units per minute and the downstream process consumes six, storage gains four per minute until production stops. A stable factory must match the rates, schedule downtime, or expand the consumer capacity.
+
+Recipe changes need the same care. The Filtrator clears its stored input and output when the treatment changes. Finish the current material, isolate the pipes if needed, then select the new treatment. Material left inside the machine is lost during the switch.
+
+## Current FaxIT network
+
+FaxIT moves existing stock through its own connected network. The Storage Nexus is the network core. Data Cables connect upload and download buildings through Telecom infrastructure. A Solid Scanner puts items into shared storage, and a Solid Copier requests selected items from it. The Fluid Scanner and Fluid Copier perform the same roles for pipe contents.
+
+A Copier transfers stored material. Every download reduces network stock, and several Copiers requesting the same item compete for the stored supply and configured transfer capacity.
+
+The current public system uses installed drives to expand storage and network limits. Capacity covers more than the raw item count: stored item types, available stacks, and connected buildings each have limits. A new production endpoint can therefore fail to connect while the storage still has free item space.
+
+Topology matters too. A building must belong to the intended cable network. Long connections can add a power cost beyond the network's safe radius. When a transfer building has power but moves nothing, check its network selection, cable path, filter, available stock or storage, drive limits, and unlocked transfer speed.
+
+FaxIT Terminal provides remote access to its connected Storage Nexus. It does
+not hold a second copy of network inventory. The terminal must be operating and
+connected through the data-cable network before it can open the Nexus controls.
+If it reports no core, trace its cable path and network selection first. Moving
+out of interaction range before the Nexus state arrives cancels the open action.
+
+The next release replaces the current drive settings with byte allocation. Those controls do not apply to the public build yet.
+
+## KDataForge and compatibility packs
+
+KDataForge applies content changes while the game loads. Players see the
+resulting recipes, items, buildings, research unlocks, and balance even if they
+never open the data files. KPatchwork uses this layer to activate compatibility
+work for matching combinations of installed mods.
+
+A recipe can change because SF+ changed, a compatibility pack changed, or an
+optional mod version selected a different patch. The existing world then uses
+the newly loaded rules. Stored items remain stored, but a machine may have a
+different recipe, cost, description, or allowed resource after the update.
+
+Removing an optional mod or pack can remove a route that the factory depended on. Before changing the mod set, note which machines and recipes came from compatibility. After an update, inspect affected unlocks and stopped production before dismantling the line. The source mod may still contain a recipe after the SF+ integration which made it usable has stopped loading.
+
+KPatchwork support is specific to a named mod and version. Other installed mods still need their own SF+ support. Upcoming 1.4 moves more SF+ gameplay and balance changes into readable KDataForge files, so the same loading model will cover more of the overhaul itself.
+
+## Saved and shared world state
+
+SF+ saves machine selections, inventories, network identities, drive settings, custom day and night lengths, and other subsystem state alongside milestone completion. Some updates include explicit converters for old state, while others affect only new content. The release notes state whether an old save can migrate safely.
+
+Host applies shared values such as day and night length. Current multiplayer
+remains experimental despite those shared settings. Dedicated servers are
+unsupported in the public release.
+
+## Upcoming 1.4 mechanics
+
+:::caution[Development content]
+Everything below belongs to the upcoming 1.4 release. The current public build does not use these rules, and their balance or wording can still change.
+:::
+
+### Game Mode multipliers change different sides of equation
+
+1.4 gives cost, throughput, and power separate controls.
+
+Recipe Parts Cost changes ingredient quantities. Production Output changes recipe products but excludes buildings and vehicles. Using both at the same factor preserves the approximate input-to-output ratio while scaling the batch size; changing only one alters resource efficiency. Power Consumption changes factory demand. Power Production changes generator output, including Refined Power generators, while generator fuel use stays unchanged. The same fuel supply can therefore support more or less grid capacity.
+
+Cleaner Speed changes the processing rate and material consumption with it. Air Collector Speed changes the collection rate. Pipe capacity and output handling remain unchanged, so a faster machine still stalls against a full destination.
+
+Research Duration applies when MAM or Hard Drive research starts. Research already running keeps its existing timer. HUB, MAM, Space Elevator, and Delivery contracts have separate cost multipliers, so inexpensive milestones can coexist with expensive research or contracts.
+
+Renewable limits are world caps. Lowering a cap leaves existing buildings in place but blocks additional placement once the cap is reached. A value of `0` means unlimited. The Slug Environment Randomizer is off by default; when enabled, it generates requirements which remain stable for that world and are shared through the host's multiplayer settings.
+
+### Delivery contracts create parallel progression loop
+
+Deliveries begin in Tier 1 and form tier-based trees beside the HUB and MAM. A sixteen-step tutorial teaches contract activation, the queue, reward inventory, FaxIT storage, solid transfer, and fluid transfer. The tutorial follows MAM research, so completing its contract does not grant an equipment recipe which still belongs to MAM.
+
+A contract consumes the requested materials and places its rewards in the Delivery reward inventory. Queue capacity controls how many tasks can wait, while reward capacity controls how many completed rewards can remain uncollected. Later branches add slots, player upgrades, Coupons, and optional FaxIT upgrades. Optional recipe research costs one recovered Hard Drive plus materials and grants a normal recipe unlock.
+
+Endless contracts give an established factory a repeatable load. Each tier asks for the Space Elevator parts unlocked through that tier, plus sampled normal or MAM materials from recent tiers. Repeated completions increase demand within configured caps, which keeps the target moving as the factory expands.
+
+FaxIT can automate hand-in after the relevant equipment and destination are unlocked. A Delivery Adapter needs its Delivery destination enabled and enough Delivery Speed capacity. HUB supply becomes available later than basic contracts, and Space Elevator automation arrives later still. Earlier contracts continue to use manual delivery and reward collection.
+
+### FaxIT bytes couple capacity to power
+
+Each drive supplies a byte budget. The player assigns those bytes to storage space, connected-building capacity, the number of different item types, and Delivery speed. Unallocated bytes do nothing, while allocated bytes consume power. Expanding the logical network therefore adds an ongoing load to the power grid.
+
+Every allocation competes for the same budget. More item variety can leave too few bytes for another building. More Delivery speed can reduce storage headroom or force a power expansion. Buffer upgrades on upload and download buildings smooth belt or pipe flow without bypassing the Nexus allocation.
+
+Wireless and cabled transfer retain different maximum rates, so topology still matters after the byte migration. Delivery buildings also need a Delivery Speed allocation before they can feed enabled HUB or Space Elevator destinations.
+
+### Save migration preserves stock, then converts controls
+
+Loading an older SF+ save converts its legacy drive settings into the byte system. Stored items and storage rules are preserved. Old global FaxIT building-limit upgrades disappear because connected-building capacity moves into byte allocation.
+
+The migration preserves resources, while the network controls change. After the first 1.4 load, inspect the Nexus allocation, available power, connected-building capacity, item variety, and Delivery speed before expecting the old throughput.
+
+### KDataForge becomes main balance layer
+
+1.4 migrates more gameplay and balance changes into KDataForge. Players still receive ordinary recipes, costs, unlocks, and building behavior in game, while those changes move into readable data loaded with SF+.
+
+A changed pack can affect an existing factory on the next load because machine
+rules changed. This kind of balance update needs no save conversion. Migration
+is required when saved settings need a new format, as they do for FaxIT drive
+settings.
+
+### Multiplayer target
+
+The next major release targets supported multiplayer play. The 1.4 work makes
+everyone use host's world settings, shares slug requirements, fixes clients
+attaching Modular Miner modules, and keeps FaxIT network selection consistent.
+Dedicated-server support remains unannounced.

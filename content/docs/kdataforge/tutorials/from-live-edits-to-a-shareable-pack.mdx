@@ -1,185 +1,211 @@
 ---
-title: 'From Live Editor Edits to a Shareable Pack'
-description: You tweaked values in /kdf editor to see what feels right. Now turn that into a real YAML pack that survives a restart and that you can hand to other people.
+title: 'From live edits to a shareable pack'
+description: Test a change in the in-game editor, move it into the Packs workspace, and verify the saved YAML.
 sidebar:
   order: 11
 ---
 
-You opened `/kdf editor`, found a recipe or item, dragged a slider, and typed a new number. It felt
-right immediately. That said, nothing you just did is saved anywhere yet. This tutorial covers the
-one step between "it works right now" and "it still works next time I launch the game" (or "my
-friend can install it too"): **exporting**.
+`/kdf editor` has two workspaces. **Runtime** inspects loaded objects and applies property edits to
+the current process. **Packs** creates and edits YAML files on disk. A live edit lasts only for the
+current session, while a saved pack can be reloaded, restarted, versioned, and distributed.
 
-## Export Diff vs. Export Full
+This guide retunes a recipe in Runtime, exports the change, and places it in a pack created through
+the Packs workspace.
 
-Both buttons sit in the editor's inspector panel, and both call the same underlying export,
-`ExportObjectToYaml`. They differ in a single flag, `bDiffOnly`, and that flag changes what ends up
-in the file.
+## Before you start
 
-Export Diff includes only the properties that have a vanilla snapshot recorded during this session
-for the selected object, so the resulting file stays small: just what you actually touched.
-Because untouched properties are simply absent, there's no risk. They keep tracking vanilla, or
-whatever other patches already apply to them.
+You need a running game with KDataForge and a recipe you can test. In multiplayer, use the same pack
+files on the host or dedicated server and every client. KDataForge does not transfer files or live
+editor operations between processes.
 
-Export Full includes every reflected property on the class that is not deprecated, transient, or
-editor-only. This is broader than the normal Unreal "editable" surface: fields without
-`EditDefaultsOnly`/`EditAnywhere` can still be exported if they are reflected `FProperty` members.
-The file is large: the reflected surface of the class, frozen at its current value. The risk is that
-any vanilla default you never meant to touch gets written into your pack at today's value. If the
-base game changes that default later, your pack silently overrides the update.
+Open the editor with `/kdf editor`. The top toolbar switches between **Runtime** and **Packs**.
 
-Use **Export Diff** almost always. The "diff" here really means "session-changed," not
-"changed-vs-file-on-disk". A property counts as changed the moment any op, whether a live edit or
-an earlier-loaded YAML patch, first touches it in the current session. That's because this is when
-`FKDFVanillaCache::RecordSnapshot` fires, since the first write wins. Properties you only looked at
-in the inspector never get a snapshot and never show up in a Diff export.
+## Test the change in Runtime
 
-Both buttons write to the same place:
+1. Select **Runtime**.
+2. Choose **Recipes**, then search for the recipe you want to change.
+3. Select the recipe and find `mManufactoringDuration` in the inspector.
+4. Commit a new value. The editor applies the change through the same operation pipeline used by
+   YAML patches.
+5. Craft the recipe and check its duration.
 
-```
+Runtime keeps an undo and redo history for the current session. The side panel also shows YAML,
+the recorded diff, references, and applied operations for the selected object.
+
+## Export the tested change
+
+Use **Export Diff** for a focused patch. When the selected object has active live-editor operations,
+the export writes those operations with their arguments. If it has none, the handler falls back to
+the top-level properties that received a first-write snapshot in the current session. An earlier
+YAML operation can create such a snapshot. Opening a property without writing it does not.
+
+**Export Full** writes every reflected property that is not deprecated, transient, or editor-only.
+This can freeze unrelated defaults at their current values, so use it only when you intend to own
+the full reflected state.
+
+1. Keep the edited recipe selected.
+2. Select **Export Diff**.
+3. Read the status line for the written path.
+
+The editor creates the destination directory when needed and writes:
+
+```text
 <ProjectDir>/DataForge/exported/<ObjectName>.cdo.yml
 ```
 
-This is a source-hardcoded editor staging path. Create the `DataForge/exported/` directory first;
-the editor reports an error if the directory does not exist. `<ProjectDir>` is Unreal's project
-directory, which is the `FactoryGame/` project directory in a packaged game.
+For a class default object, `<ObjectName>` is usually an Unreal name such as
+`Default__Recipe_IngotIron_C`. The filename does not determine the target. The YAML inside the file
+contains the target path.
 
-`<ObjectName>` is `Selected->GetName()`. For the common case of editing a recipe, item, or
-schematic **class** (its CDO), that name is the engine's synthetic default-object name. A patch to
-`Recipe_IngotIron_C`'s CDO therefore exports as `Default__Recipe_IngotIron_C.cdo.yml`, not
-`Recipe_IngotIron.cdo.yml`. You don't need to rename it: KDataForge doesn't care what the file is
-called, only what's inside it.
-
-## Moving the export into a real pack
-
-`<ProjectDir>/DataForge/exported/` sits under a scanner-recognized `DataForge` root, so a freshly
-exported file can be discovered on the next session start.
-
-That's not a reason to leave it there, though. `exported/` is a scratch folder the editor writes
-into every time you click the button, so exports from unrelated sessions and experiments pile up
-there with no grouping and no `ref:`. Handing a file to someone else means handing them something
-self-contained: its own folder, its own `pack.yml` with a stable `ref:` (the save-persistence
-contract), not your personal working directory.
-
-Before shipping, create a proper author pack and move the file into it:
-
-```
-<your-mod>/DataForge/
-  pack.yml
-  Default__Recipe_IngotIron_C.cdo.yml   <-- moved from <ProjectDir>/DataForge/exported/
-```
+A one-property export looks like this:
 
 ```yaml
-# file: pack.yml
-ref: MyTweaks
-name: My Tweaks
-version: 1.0.0
+type: cdo
+patches:
+  - target: /KDataForge/Gen/KDFSample.Gen_KDFSample_Recipe_SuperIngot
+    properties:
+      - path: mManufactoringDuration
+        op: set
+        value: 2.0
 ```
 
-The exported file is already valid `type: cdo` YAML. For the common case of one specific class and
-one specific patch, you don't need to touch it at all. You'd hand-edit it when you want to
-**broaden** what it applies to:
+## Create the destination pack
 
-- Swap `target: /Game/.../Recipe_IngotIron.Recipe_IngotIron_C` for
-  `allAssetsOfClass: /Game/.../Recipe_IngotIron.Recipe_IngotIron_C` if you want the patch to also
-  reach subclasses or every asset resolving to that class, not just the one CDO you had selected.
-- Add `applyToSubclasses: true` alongside `target:` for the same broadening effect without
-  switching selector kind.
-- Add `applyToSpawnedActors: true` if this is a buildable and you also want already-placed
-  instances (not just newly spawned ones) to pick up the change. See
-  [Targeting](/kdataforge/features/targeting) for the full selector/modifier reference, and
-  [Patching (type: cdo)](/kdataforge/features/patching-cdo) for the patch shape.
+1. Switch to **Packs**.
+2. Under **New Pack**, enter a name containing letters, numbers, `_`, or `-`.
+3. Select **Create**.
 
-## The Create panel: drafting new content instead of hand-writing YAML
+The editor creates this folder and manifest:
 
-The editor's **CREATE** section, below the YAML preview, drafts brand-new content: item, resource,
-building, recipe, schematic, research, unlock, dataasset, or a generic `class`, without you typing
-a document by hand. Pick a kind, type an `Id`, pick a parent class (or `class:` for `dataasset`),
-optionally pick a `registerAs:` target for generic `class` drafts, and click **Create**.
-
-This writes a starting-point document to:
-
+```text
+<ProjectDir>/Mods/DataForge/<pack-name>/
+  pack.yml
 ```
+
+The manifest starts with a stable `ref`, the same display name, version `1.0.0`, a placeholder
+description, priority `100`, `enabled: true`, and `debug: false`. Edit the description and version
+before distribution. Treat `ref` as permanent after players have used generated content from the
+pack.
+
+If you already have a pack, select it in **Pack Browser** instead of creating another one.
+
+## Put the export in the pack
+
+You can move the exported `.cdo.yml` file into the new pack directory with a file manager. Select
+**Refresh** in Pack Browser after moving it.
+
+You can also create the destination file in the editor:
+
+1. Select the pack in **Pack Browser**.
+2. Under **New Document**, choose `cdo`.
+3. Enter a filename without an extension and select **Create document**. The editor adds
+   `.cdo.yml` automatically.
+4. Open the exported file in a text editor and copy its YAML.
+5. In KDataForge, select **Raw YAML** and replace the generated skeleton with the exported YAML.
+6. Switch to **Form**. The editor parses the raw text before opening the form. Invalid YAML keeps
+   you in Raw YAML and reports the parse error.
+7. Select **Save**.
+
+Save validates the YAML and replaces the file on disk. If the replacement fails, the original file
+is preserved. The status line gives the exact path and reminds you to run `/kdf reload`.
+
+## Edit pack files in Form or Raw YAML
+
+The **Form** view exposes the parsed YAML tree. Select a node to replace it, add a child, remove it,
+or use contextual suggestions for fields, classes, properties, and known values. The form preserves
+handler-supported values that do not have a specialized control as raw YAML nodes.
+
+Use **Raw YAML** for multi-document files, larger edits, or direct pasting. Switching back to Form
+parses the current text and synchronizes the tree. Save always parses again before writing.
+
+The editor tracks unsaved changes to the open file:
+
+- **Save** writes them to disk.
+- **Revert** reloads the selected file and discards the unsaved version.
+- Switching to another pack or file is blocked until you save or revert.
+- Creating another pack or document is also blocked while the current file is dirty.
+- Closing the editor from the Packs workspace shows a warning with **Cancel** and
+  **Discard and close**.
+
+**Refresh** updates Pack Browser after files were added or moved outside the editor. It is not a
+replacement for Save or Revert.
+
+## Apply and verify the saved pack
+
+1. Run `/kdf reload` as the host or a dedicated-server administrator.
+2. Run `/kdf report` and confirm that the pack and document loaded without an Error.
+3. Test the recipe again.
+4. Restart the session if the report or feature page marks the change as cold, frozen, or
+   restart-bound.
+
+Reload restores captured property baselines, rescans the files, and reapplies the current pack set
+in that process. Frozen content registrations, irreversible world changes, and packs using native
+CDO helpers still require a restart.
+
+## Create new documents directly in Packs
+
+The Packs workspace can create typed documents for CDO patches, gameplay tags, assets,
+localization, generated classes and content, data assets, curves, sink points, resource nodes,
+sublevels, sounds, and pack configuration. Each new file gets the correct
+`<name>.<type>.yml` suffix and a valid starting shape for that type.
+
+This is the preferred editor workflow for new pack files. Follow the relevant feature page to fill
+the generated document because a valid skeleton does not contain the gameplay data for a finished
+item, recipe, schematic, or world rule.
+
+## Runtime Create drafts
+
+Runtime also retains a **Create** panel for drafting an item, resource, building, recipe, schematic,
+research tree, unlock, data asset, or generic class from a loaded parent. It writes the selected
+parent's current reflected values to:
+
+```text
 <ProjectDir>/DataForge/created/<Id>.<Kind>.yml
 ```
 
-Create the `DataForge/created/` directory before using the action. This is also a staging directory,
-not the canonical shipping location.
-
-For example, `MySuperIngot.item.yml`. It's a skeleton: `type:`, the plural entries key
-(`items:`/`recipes:`/`schematics:`/`research:`/`unlocks:`/`assets:`/`classes:`), and one entry with
-`id:` and `parent:` (or `class:`). There's no `properties:` yet. You still add those by hand, same
-as in [Item + Icon + Recipe + Tier-1 Unlock](/kdataforge/tutorials/item-icon-recipe-schematic),
-just starting from a correctly-shaped file instead of a blank one.
-
-**Create writes a draft file; it does not apply the draft to the running session.** Every kind,
-including `dataasset`, is loaded from YAML on the next session start. The status message shows the
-written path and reminds you to restart. `created/` is a scratch area, so move the finished draft
-into a real pack before relying on it long-term.
-
-## Worked scenario: retuning a recipe's craft time
-
-1. Open chat, type `/kdf editor`.
-2. Switch to the **Recipes** category, search for the recipe you want (e.g. the Super Ingot recipe
-   from the [item/recipe/schematic tutorial](/kdataforge/tutorials/item-icon-recipe-schematic)), and select it.
-3. In the inspector tree, find `mManufactoringDuration` and commit a new value, say `2.0` instead
-   of `4.0`. The change applies immediately. Go build one and confirm it's actually faster.
-4. Click **Export Diff**. Because `mManufactoringDuration` is the only property you touched on this
-   object this session, the exported file is short:
-
-   ```yaml
-   type: cdo
-   patches:
-     - target: /KDataForge/Gen/KDFSample.Gen_KDFSample_Recipe_SuperIngot
-       properties:
-         - path: mManufactoringDuration
-           value: 2.0
-   ```
-
-5. Check the status bar. It read `Exported to <ProjectDir>/DataForge/exported/Default__Gen_KDFSample_Recipe_SuperIngot.cdo.yml`
-   (or similar, matching the generated class's CDO name).
-6. Create `<your-mod>/DataForge/pack.yml` (`ref: MyTweaks`) if you don't
-   already have a pack folder, and move the exported file in next to it.
-7. Restart the game. The recipe still takes 2 seconds: same value, now coming from a real pack
-   file instead of a session-only edit, applied through the identical `type: cdo` pipeline as
-   before.
-
-If you'd clicked **Export Full** instead, the file would list every reflected, non-deprecated,
-non-transient, non-editor-only property of the recipe class: ingredients, product, produced-in,
-display name, and possibly internal reflected fields too. Each value is frozen at its current value,
-not just the duration. That's usually more than you want to ship.
+The editor creates the `created` directory when needed. This action writes a draft and does not
+apply the new content to the running session. Move the reviewed draft into a named pack and restart
+when its content registration requires it. For new work, the Packs workspace usually avoids this
+extra staging step.
 
 ## Troubleshooting
 
-- **Exported file has an empty `properties:` list or almost nothing under Diff mode.** Diff only includes
-  properties that were actually written this session on **that specific object**. Browsing or
-  inspecting a value without committing an edit never creates a snapshot, so it never shows up.
-  Double-check you selected the same object you edited, and that you actually committed a value,
-  not just opened the row.
-- **I edited something, then undid it, then exported, and the property still shows up.** The
-  vanilla snapshot is recorded on **first** write and never cleared by Undo. Diff mode checks "was
-  this property ever touched this session", not "does it currently differ from vanilla". So a
-  touched-then-reverted property can still appear in the export, just with its value back at
-  vanilla. This is harmless, it's a no-op patch, but worth knowing if the file looks odd.
-- **Export/Create button seems to do nothing.** Check the status bar text at the bottom of the
-  editor window. Both actions always set it: green for success (with the exact file path), or
-  red for failure (`Nothing selected`, `Could not write <path>`, etc.). It's easy to miss because
-  it's small, not because the click didn't register.
-- **Can't find the exported/created file.** It is under the source-hardcoded
-  `<ProjectDir>/DataForge/exported/` or `<ProjectDir>/DataForge/created/` staging directory. The
-  directory must already exist. Move the finished YAML into `<your-mod>/DataForge/` before shipping.
-- **New item/recipe/schematic from Create still isn't there.** Create only writes a draft. Move it
-  into a real pack and restart the session. The SML content registry freezes at world begin play.
-- **Export Full includes fields from `Non-UPROPERTY / Internal`.** The current UI label is
-  misleading. Those rows are still reflected `FProperty` members; they only lack Unreal's normal
-  edit flag or category metadata. Export Full may include them unless they are deprecated,
-  transient, or editor-only.
+### Export Diff contains little or nothing
 
-[Getting Started](/kdataforge/getting-started) covers pack roots, `/kdf report`,
-session restarts, and the same debug format used for editor-originated operations. The separate
-[UE Editor Integration](/kdataforge/reference/editor-integration) workflow uses the
-`WITH_EDITOR`-only `KDF.ApplyToAssets` command to change Unreal Editor assets; it is not the in-game
-`/kdf editor` described here. Every export uses the
-[Patching (`type: cdo`)](/kdataforge/features/patching-cdo) document shape. To fill a
-Create-panel draft's `properties:` from scratch, follow
-[Item + Icon + Recipe + Tier-1 Unlock](/kdataforge/tutorials/item-icon-recipe-schematic).
+Diff includes properties written on the selected object during the current session. Confirm that
+you committed the value and still have the same object selected. Browsing a row does not record a
+snapshot.
+
+### An undone property still appears in Export Diff
+
+Undo removes its live operation. The first-write snapshot remains, so after you undo every active
+operation the fallback export can still include the current top-level property value. Review the
+YAML and remove a no-op property before publishing if you do not want the pack to own it.
+
+### Export Full contains internal-looking fields
+
+Full export includes reflected fields even when Unreal does not mark them as normally editable. It
+excludes deprecated, transient, and editor-only fields. Review the output and prefer Diff for a
+small balance patch.
+
+### Form will not open
+
+Raw YAML contains a parse error or a document root that is not a map. Read the status line, correct
+the raw text, then switch to Form again. You can use the [linter](/kdataforge/lint-your-pack) for
+schema checks beyond parsing.
+
+### A saved change has no effect
+
+Save writes the file but does not apply it. Run `/kdf reload`, inspect `/kdf report`, and follow any
+restart rule for the affected document or property. A generated content draft may require a
+restart because the game registry has already frozen its session state.
+
+### Another player does not see the change
+
+Live edits and reloads are process-local. Copy the saved pack to every multiplayer process and use
+the same version on the server, host, and clients.
+
+[Getting started](/kdataforge/getting-started) covers pack discovery and reporting.
+[Targeting](/kdataforge/features/targeting) explains selectors and spawned-actor patches. The
+separate [UE Editor integration](/kdataforge/reference/editor-integration) applies YAML to Unreal
+Editor assets with `KDF.ApplyToAssets`; it is not the in-game `/kdf editor` workflow.

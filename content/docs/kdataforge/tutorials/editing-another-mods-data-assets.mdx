@@ -1,17 +1,15 @@
 ---
-title: "Editing Another Mod's Data Assets"
+title: "Edit another mod's data assets"
 description: Rebalancing existing KAPI or RefinedR&D data asset instances without creating a new one and without a hard dependency on the mod that owns them.
 sidebar:
   order: 10
 ---
 
-You don't want to add a new miner resource, cleaner recipe, or boiler. You want to **retune the
-ones that already exist**, whether they belong to KAPI itself or to a RefinedR&D mod (RefinedPower,
-FicsitFarming). You also want your pack to skip cleanly instead of erroring if that mod isn't
-installed. This is a plain `cdo` patch with a `conditions:` gate, and no special document type is
-involved.
+Use a `cdo` patch with a `conditions:` gate to retune existing KAPI or RefinedR&D data assets
+(RefinedPower or FicsitFarming). The gate lets the pack skip cleanly when the owning mod is not
+installed. You do not need a special document type.
 
-## The mental model: it's the same `cdo` patch you already know
+## Data assets use normal `cdo` patches
 
 `UDataAsset` **instances** are objects sitting in memory just like a recipe or schematic CDO. KAPI
 and many RefinedR&D assets derive from `UPrimaryDataAsset`, which matters for consumer discovery,
@@ -23,7 +21,7 @@ used everywhere else in this framework. There's no "data asset patch" document.
 (package `/KDataForge/GenAssets/<PackRef>`, announced to the asset registry). Once that instance
 exists, whether `type: dataasset` made it or the target mod shipped it, you tune it exactly like
 this tutorial shows. See [Data Assets → Creating new instances](/kdataforge/features/data-assets#creating-new-instances-type-dataasset)
-if you actually do want to create one from scratch instead.
+if you want to create one from scratch instead.
 
 One more contrast is worth keeping in mind. Schematics need `register: false` when you reach into
 one you don't own (see [Adding a Recipe to an Existing Schematic](/kdataforge/tutorials/existing-schematic-unlock)),
@@ -107,13 +105,13 @@ and it's exactly what it's for.
 ## Troubleshooting
 
 - **The patch silently does nothing**: check the exact spelling of your `hasMod:` value (`KAPI`,
-  `RefinedRDApi`, case matters) and confirm the target mod is actually loaded via `/kdf report`. A
-  failed `conditions:` check shows up there as an **Info** diagnostic, not an error, so it's easy to
-  miss if you're only scanning for red text.
+`RefinedRDApi`, case matters) and confirm through `/kdf report` that the target mod is loaded. A
+  failed `conditions:` check shows up there as an **Info** diagnostic, not an error. A search for
+  errors alone will miss it.
 - **`allAssetsOfClass:` matches zero assets**: double-check the exact class path
   (`/Script/KAPI.KAPIModularMinerDescription`, `/Script/RefinedRDApi.RRDABoilerDataAsset`, etc.). A
   typo'd module or class name matches nothing rather than erroring. `/kdf report` lists every asset
-  a selector actually matched, so you can confirm the count before you trust the values it set.
+a selector matched, so you can confirm the count before you trust the values it set.
 - **Values look patched in the report but the in-game behaviour didn't change**: check whether the
   property you touched is one KAPI/RRDA only reads once at scan time, versus one read live every
   tick. If it's the former, confirm the automatic rescan ran after the initial load. If it still

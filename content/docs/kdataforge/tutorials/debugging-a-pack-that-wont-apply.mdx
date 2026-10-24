@@ -1,15 +1,13 @@
 ---
-title: "Debugging a Pack That Won't Apply"
+title: "Debug a pack that won't apply"
 description: An ordered, top-to-bottom checklist for "my YAML file doesn't seem to be doing anything." Six checkpoints, from file discovery to reload verification.
 sidebar:
   order: 8
 ---
 
-Every other page in [Features](/kdataforge/features) has its own scattered "Troubleshooting"
-section for symptoms specific to that document type. This page is different. It's the one ordered
-sequence you follow **top to bottom** the moment something you wrote just isn't happening and you
-don't yet know why. Each step below rules out exactly one stage of the pipeline before you move to
-the next, so don't skip ahead.
+Use this checklist **top to bottom** when a pack does not apply and you do not yet know why. Each
+step rules out one pipeline stage before you move to the next. Document-specific symptoms remain in
+the Troubleshooting sections under [Features](/kdataforge/features).
 
 The first five steps follow the pipeline
 (`Source/KDataForge/Private/Subsystems/KDFSubsystem.cpp`): scan → parse/type-detect → conditions →
@@ -136,7 +134,7 @@ things.
   zero ops, and the document doesn't count toward "document(s) applied" in the report at all.
 
 - **`ApplyDocument` is semantic.** Now it resolves your YAML against the actual running game. Does
-  `target:` point at a real, loadable class or object? Does `matchTag` / `producedIn` / `where` + `ofClass` actually
+  `target:` point at a real, loadable class or object? Does `matchTag` / `producedIn` / `where` + `ofClass`
   match anything? This is where a structurally-perfect document can still fail because a path is wrong or
   a class doesn't exist:
 
@@ -215,7 +213,7 @@ explicitly documented as cold or restart-bound.
 | 5: Op-level apply   | Turn on `debug: true` / `KDF.Debug 1`. Does your op's `[KDF DEBUG]` line appear? | Missing entirely means it never reached apply, back to Steps 1 to 4. Present but wrong pre/post means a property/assumption issue, not a pipeline bug                                                         |
 | 6: Reload scope     | Did you reload after saving YAML?                                                | Host/server: `/kdf reload` or `KDF.Reload`, then `/kdf report`. Reload is process-local. Restart for frozen registrations, irreversible world changes, or explicitly cold/restart-bound data |
 
-[Getting Started → Debugging](/kdataforge/getting-started#debugging) covers all three
-debug switches and the log location. Its [report severity table](/kdataforge/getting-started#reading-the-report)
+[Create your first pack: trace an operation](/kdataforge/getting-started#trace-an-applied-operation) covers all three
+debug switches and the log location. Its [load and verification step](/kdataforge/getting-started#4-load-and-verify-the-pack)
 defines the Info, Warning, and Error levels used here. [Diagnostics, never failures](/kdataforge/features/patching-cdo#diagnostics-never-failures)
 explains why a skipped patch entry never halts the rest of the load.

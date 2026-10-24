@@ -1,11 +1,12 @@
 ---
-title: Category Ordering
-description: Assign menu categories and deterministic one-based ordering to items, recipes, schematics, and user settings.
+title: Category ordering
+description: Assign menu categories and one-based display order to items, recipes, schematics, and user settings.
 sidebar:
   order: 18
 ---
 
-`type: category_reorder` keeps category placement separate from general `cdo` patches. One document
+`type: category_reorder` keeps category placement separate from general
+[`cdo` patches](/kdataforge/features/patching-cdo). One document
 selects a content kind, assigns one main category and optional subcategory, then writes priorities
 from the `order` array: first entry gets `1`, second gets `2`, and so on.
 
@@ -42,7 +43,8 @@ A user setting can appear in more than one menu location. `category_reorder` upd
 `WidgetsToCreate[0].CategoryClass`, optional `SubCategoryClass`, and `MenuPriority`. It does not
 replace the array, change later placements, or change `SubOptionTo` links.
 
-The setting must already have a `WidgetsToCreate[0]` entry. Use a general `cdo` object patch when
+The setting must already have a `WidgetsToCreate[0]` entry. Use a general
+[`cdo` object patch](/kdataforge/features/patching-cdo) when
 creating a placement from scratch.
 
 ```yaml

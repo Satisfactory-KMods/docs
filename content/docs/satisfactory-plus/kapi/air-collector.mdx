@@ -1,13 +1,18 @@
 ---
-title: 'Adding new Resources to the Air Collector'
-description: How to add new Resource DataAssets to the Air Collector in Satisfactory Plus through KAPI. To allow them in SF+ gameplay.
+title: 'Add Air Collector resources'
+description: Add resource DataAssets to the Satisfactory Plus Air Collector through KAPI.
 sidebar:
   order: 4
 ---
 
-## The DataAsset
+## Create the DataAsset
 
-For adding new Resources to the Air Collector in Satisfactory Plus, you need to create a new DataAsset of type `KAPIAirCollectorData` the header can be found [HERE](https://github.com/Satisfactory-KMods/public-source/blob/main/KAPI/Source/KAPI/Public/DataAssets/KAPIAirCollectorData.h).
+Create a `KAPIAirCollectorData` DataAsset for each resource you want the
+Satisfactory Plus Air Collector to produce. See the
+[`KAPIAirCollectorData` header](https://github.com/Satisfactory-KMods/public-source/blob/main/KAPI/Source/KAPI/Public/DataAssets/KAPIAirCollectorData.h)
+for its class definition.
+
+Prefer YAML? Follow the matching [KDataForge Air Collector guide](/satisfactory-plus/kdataforge/air-collector/).
 
 ![KAPIAirCollectorData DataAsset properties in the editor](../../../assets/satisfactory-plus/kapi/air-collector-asset.png)
 

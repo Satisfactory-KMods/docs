@@ -1,0 +1,127 @@
+---
+title: Core concepts
+description: Understand how KDataForge finds, identifies, orders, applies, reloads, and preserves pack content.
+sidebar:
+  order: 2
+---
+
+KDataForge reads YAML documents and applies them to Satisfactory content. A document can edit an
+existing object, generate content, register data with a game system, or describe a world rule.
+These terms appear throughout the authoring guides and reference.
+
+## Pack
+
+A pack is one detected KDataForge root and every YAML document assigned to it. Put a `pack.yml`
+manifest at that root to give the pack a stable `ref`, display name, version, priority,
+dependencies, conditions, and generated-content redirects.
+
+Treat `ref` as permanent after release. KDataForge uses it in generated class paths and save
+records. Moving a pack without an explicit `ref` can change its implicit identity.
+
+## Document and root type
+
+A document is one YAML map. Its `type:` selects the handler that understands the document. For
+example, `type: cdo` patches reflected properties, while `type: recipe` can generate or register a
+recipe. A file can contain several documents separated by `---`; each document then needs its own
+`type:`.
+
+For a single-document file, a suffix such as `.cdo.yml` can provide the type. An explicit `type:`
+wins when both forms are present.
+
+## Target, property path, and operation
+
+A target selects the class, object, asset set, or actor set that receives a change. A property path
+selects the reflected value below that target. An operation says how to change the value.
+
+```yaml
+type: cdo
+patches:
+  - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
+    properties:
+      - path: mManufactoringDuration
+        op: multiply
+        value: 0.5
+```
+
+Here, `target` selects the Iron Ingot recipe class, `path` selects its manufacturing duration, and
+`multiply` changes the current value instead of replacing it. KDataForge supports 25 operations.
+Each operation accepts specific property kinds and arguments.
+
+Use [Targeting](/kdataforge/features/targeting),
+[Property types](/kdataforge/features/property-types), and
+[Operations](/kdataforge/features/operations) for those contracts.
+
+## Entry and generated identity
+
+Content-creation documents contain entries with an `id`. KDataForge combines the pack `ref` and
+entry `id` into a deterministic generated path:
+
+```text
+/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>
+```
+
+Other documents in the same pack can usually refer to generated content by its short `id`. The
+full path stays stable across file moves and load-order changes.
+
+Changing an `id` changes the generated path. Add an old-to-new mapping under `redirects:` in
+`pack.yml` before shipping that rename. A redirect can preserve an entry rename inside the same
+pack. It cannot make a changed pack `ref` safe.
+
+See [Renaming content safely](/kdataforge/tutorials/renaming-content-safely) before renaming
+released content.
+
+## Conditions and dependencies
+
+`conditions:` decide whether a pack, document, or supported list entry applies in the current
+environment. They can test installed mods, versions, classes, configuration, sessions, advanced
+game settings, and user options. A failed condition skips that scope.
+
+`dependencies:` in `pack.yml` controls order between packs. `include:` controls order between
+same-pack documents in the same processing stage. These fields describe ordering, not optional
+compatibility. Use conditions for optional integrations.
+
+## Stages and deterministic order
+
+KDataForge groups handlers into fixed stages so prerequisites exist before consumers use them.
+Gameplay tags and assets must exist before later content refers to them, and world rules wait until
+a world exists. Inside a stage, pack dependencies, pack priority, handler priority, includes, and
+relative paths determine a stable order.
+
+Do not use filenames as the identity of generated content. Filenames help order documents only
+after stronger ordering rules have been resolved.
+
+## Hot, new-actor, and cold changes
+
+`/kdf reload` restores captured baselines, rescans packs, and applies the current documents in that
+game process. A reloadable property can update immediately. Actor defaults often affect newly
+spawned actors only unless the patch also targets existing spawned actors. Cold registrations,
+irreversible world changes, and explicitly restart-bound settings still need a session restart.
+
+Packs that generate native CDO helper assets disable live reload. Restart after changing,
+disabling, or removing one of those packs.
+
+The desktop editor can read reload classifications from reflection data. When a feature page gives
+a stricter restart rule, follow that rule.
+
+## Saves and removal
+
+Generated classes use stable paths, and KDataForge recreates missing recorded classes as hidden
+tombstones so an old save can still resolve them. This protects class references. It does not make
+every gameplay change reversible.
+
+Recipe, schematic, research, actor, inventory, and resource-node changes have different save and
+restoration behavior. Read the removal or world-feature page before distributing a pack that
+removes content or changes placed world actors.
+
+## Multiplayer
+
+Every game process loads its own files. KDataForge does not transfer packs, compare pack checksums,
+or stream applied operations when a player joins. Install the same pack versions on the host or
+dedicated server and every client.
+
+Pack configuration can distinguish host-controlled synchronized gameplay values from local values.
+Generated audio volume controls are local to each client. Live edits made through the in-game
+editor stay in the process where they were made until you export and distribute them as YAML.
+
+See the [player multiplayer guide](/kdataforge/players/settings-and-multiplayer) and
+[Pack configuration](/kdataforge/features/pack-configuration) for the operational details.

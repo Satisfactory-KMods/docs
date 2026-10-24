@@ -1,0 +1,60 @@
+---
+title: Choose an authoring tool
+description: Pick the KDataForge workflow that matches the change you are making.
+sidebar:
+  order: 3
+---
+
+KDataForge supports several authoring workflows. They produce or consume the same runtime YAML,
+but they solve different parts of the job.
+
+| Tool | Use it for | Limits |
+| --- | --- | --- |
+| Handwritten YAML | Small patches, version-controlled packs, and exact use of every supported field | You must find paths and value shapes yourself |
+| In-game editor | Inspecting live objects, trying property changes, undoing edits, and exporting a draft | Edits are process-local until exported; it is not a multiplayer synchronization tool |
+| KDataForge desktop editor | Project editing with schema checks, completion, hover help, builders, and game-specific reflection data | Game-specific help requires an imported `.kdfdata` archive bound to the project |
+| KPatchwork linter | Static pack checks before starting Satisfactory or publishing a pack | It cannot prove that runtime assets and optional mods exist together |
+| Unreal Editor integration | Applying supported YAML patches to editor assets and saving cooked changes into a mod | Editor-build workflow for mod developers, not a player or runtime-pack tool |
+
+## Write YAML directly
+
+Start with handwritten YAML when you already know the target and want a small, reviewable change.
+Use the [first-pack tutorial](/kdataforge/getting-started) for the initial folder and manifest. Keep
+the [YAML schema](/kdataforge/reference/yaml-schema) open when you need a field, default, or exact
+value form.
+
+## Inspect and draft in game
+
+Run `/kdf editor` to request the host-local editor window and change properties in that process.
+Export the changes to YAML, review the generated target and property paths, place the files in a
+pack, then reload or restart as required. The exported pack is the shareable result.
+
+[From live edits to a shareable pack](/kdataforge/tutorials/from-live-edits-to-a-shareable-pack)
+covers that workflow.
+
+## Use the desktop editor
+
+The desktop editor can validate schema without game data. Import a `.kdfdata` reflection archive
+and bind it to the project when you also need completions and diagnostics for the exact game build
+and installed mods.
+
+Read [Desktop editor and LSP](/kdataforge/reference/desktop-editor-lsp) for project binding and
+[Reflection export](/kdataforge/reference/reflection-export) for archive generation and validation.
+
+## Lint before runtime testing
+
+Run the standalone linter before launching the game. It catches malformed YAML, unsupported field
+shapes, broken same-pack references, and other static errors. Then test the pack with the same game
+build and mod set that players will use.
+
+[Lint your pack](/kdataforge/lint-your-pack) documents installation, commands, result levels, and
+the checks that still require a runtime test.
+
+## Apply changes inside Unreal Editor
+
+Native mod developers can use `KDF.ApplyToAssets [PathFilter]` in an editor build. It applies
+supported YAML patches to editor assets and marks changed packages dirty so the developer can
+review and save them. It does not replace the runtime pipeline for distributed player packs.
+
+See [UE Editor integration](/kdataforge/reference/editor-integration) for supported targets,
+filters, save behavior, and limitations.

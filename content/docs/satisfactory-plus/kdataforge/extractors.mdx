@@ -1,13 +1,39 @@
 ---
-title: "Adding new Extractors / Remove Extractors"
-description: How to add new Extractor or Remove Extractor DataAssets to Satisfactory Plus through KAPI. To allow / disallow them in SF+ gameplay.
+title: "Configure extractor allow lists with YAML"
+description: Create Satisfactory Plus extractor and resource allow lists with KDataForge.
 sidebar:
   order: 1
 ---
 
-## The DataAsset
+## Create the DataAsset from YAML
 
-For adding Extractors or Remove Extractors to Satisfactory Plus, you need to create a new DataAsset of type `KAPIExtractorAllowList` the header can be found [HERE](https://github.com/Satisfactory-KMods/public-source/blob/main/KAPI/Source/KAPI/Public/DataAssets/KAPIExtractorAllowList.h).
+Create a `KAPIExtractorAllowList` DataAsset with `type: dataasset` to allow or
+disallow extractors and resources in Satisfactory Plus. This example registers
+one custom extractor and one custom resource:
+
+```yaml
+# file: my-extractor-allowlist.dataasset.yml
+type: dataasset
+conditions:
+  hasMod: KAPI
+assets:
+  - id: MyModExtractorAllowList
+    class: /Script/KAPI.KAPIExtractorAllowList
+    properties:
+      - path: mAllowedExtractors
+        value:
+          - /Game/YourMod/Buildable/Build_YourExtractor.Build_YourExtractor_C
+      - path: mAllowedResources
+        value:
+          - /Game/YourMod/Resource/Desc_YourResource.Desc_YourResource_C
+      - path: mPriority
+        value: 0
+```
+
+Replace the two `/Game/YourMod/...` paths with classes from your mod. See
+[Adding KAPI data assets](/kdataforge/examples/kapi-data-assets/#ukapiextractorallowlist-registering-new-extractors-and-resources)
+for a longer example and packaging context. The [KAPI version of this guide](/satisfactory-plus/kapi/extractors/)
+explains the same properties for authors who create the DataAsset in Unreal Editor.
 
 ## Properties
 
@@ -25,8 +51,8 @@ All `KAPIExtractorAllowList` assets in the game are collected, sorted by `mPrior
 first, ties broken by asset path), and then applied one after another. Each asset adds its
 `mAllowed*` entries to the running set and removes its `mDisallow*` entries from it.
 
-Because the lists are applied in sequence, **the last asset to touch an entry decides it** — with
-the sort above that is the lowest-priority asset. `mPriority` defaults to `-MAX_int32`, so an asset
+Because the lists are applied in sequence, **the last asset to touch an entry decides it**. With
+the sort above, that is the lowest-priority asset. `mPriority` defaults to `-MAX_int32`, so an asset
 that never sets it is applied last and wins over one that does.
 
 :::caution
@@ -37,7 +63,9 @@ ordering for conflict resolution between mods.
 
 ## Notes
 
-- Creating a new `UFGResourceDescriptor` for a brand-new resource type is out of KAPI's scope `mAllowedResources`/`mDisallowResources` only reference existing resource descriptor classes.
+- KAPI does not create a new `UFGResourceDescriptor` for a new resource type.
+  `mAllowedResources` and `mDisallowResources` only reference existing resource
+  descriptor classes.
 
-See [Adding KAPI Data Assets](/kdataforge/examples/kapi-data-assets/) for every KAPI type's
-`type: dataasset` example in one place.
+See [Adding KAPI data assets](/kdataforge/examples/kapi-data-assets/) for
+`type: dataasset` examples of every KAPI type.

@@ -1,0 +1,78 @@
+---
+title: Pack settings and multiplayer
+description: Change pack settings and keep host, server, and clients on the same content definition.
+sidebar:
+  order: 3
+---
+
+Every host, dedicated server, and client loads its own KDataForge files. KDataForge does not send
+packs during connection, compare checksums, or reject a client whose files differ. Matching the pack
+set is therefore part of server administration.
+
+## Prepare a multiplayer session
+
+1. Install the same KDataForge version and pack versions on the host or dedicated server and every
+   client.
+2. Include the same optional integrations when their YAML conditions affect visible content.
+3. Restart every process after installing or updating packs.
+4. Run `/kdf report` on the host or server and check errors and warnings.
+5. Have each client verify the affected recipes, buildings, menus, or sounds after joining.
+
+`/kdf reload` reloads only the process where the command runs. It does not update connected clients.
+Use a full restart across the session after distribution changes, cold setting changes, or any
+release whose notes require it.
+
+## Change gameplay settings
+
+Some packs define their own settings. The pack may display them in its own menu. KDataForge also
+provides chat commands for inspecting and changing them.
+
+Use these commands when the pack author asks for them:
+
+```text
+/kdf config dump [PackRef]
+/kdf config set <PackRef>:<SettingId> <value>
+/kdf config apply [PackRef]
+```
+
+The host or a dedicated-server administrator can change and apply gameplay settings. Other clients
+can inspect values, but their controls are disabled. A server console can also apply changes.
+
+Setting edits remain pending until they are applied. Applying a hot setting saves it and requests a
+KDataForge reload. The game may still need newly spawned actors or a restart before a changed
+property becomes visible. Cold settings save the new value and report that a restart is required.
+Follow the restart notice shown by the pack UI or chat response.
+
+Stored values use this path on the process that owns them:
+
+```text
+FactoryGame/Configs/Packs/<PackRef>.config.yml
+```
+
+KDataForge retains values for fields that still exist. It removes obsolete generated fields after
+a complete, valid definition load. Disabled packs and packs skipped because of dependencies keep
+their stored values.
+
+## Change sound volume
+
+Generated sound volume is local to each player. Open **Options > Audio**:
+
+- ADA sounds marked for the native dialogue bus use **Dialogue Volume**.
+- Other generated sounds can have their own pack-provided volume controls.
+
+The host does not synchronize these audio preferences. Dedicated servers do not need the source
+audio files, but they still need the matching pack definitions. Every client, including a
+listen-server host, needs the audio files because KDataForge does not transfer them.
+
+## Use runtime commands
+
+| Command | Who can use it | Result |
+| --- | --- | --- |
+| `/kdf report` | Any sender with the command available | Shows load totals plus errors and warnings for this process |
+| `/kdf reload` | Listen-server host or dedicated-server administrator | Rescans and reapplies packs in this process |
+| `/kdf config dump [PackRef]` | Any sender with the command available | Lists stored, default, and effective setting values |
+| `/kdf config set ...` and `/kdf config apply ...` | Host, dedicated-server administrator, or server console | Stages and saves gameplay settings |
+| `/kdf debug on\|off` | Any sender with the command available | Toggles detailed operation logging in this process |
+
+The in-game object editor opened by `/kdf editor` changes only the local process. It is an authoring
+tool, not a way to distribute live edits to other players.

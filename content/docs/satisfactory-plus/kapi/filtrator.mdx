@@ -1,13 +1,18 @@
 ---
-title: 'Adding new Recipes to Filtrator'
-description: How to add new Recipe DataAssets to the Filtrator in Satisfactory Plus through KAPI. To allow them in SF+ gameplay.
+title: 'Add Filtrator recipes'
+description: Add recipe DataAssets to the Satisfactory Plus Filtrator through KAPI.
 sidebar:
   order: 3
 ---
 
-## The DataAsset
+## Create the DataAsset
 
-For adding new Recipes to the Filtrator (internally named "Cleaner" in KAPI), you need to create a new DataAsset of type `KAPICleanerItemDescription` the header can be found [HERE](https://github.com/Satisfactory-KMods/public-source/blob/main/KAPI/Source/KAPI/Public/DataAssets/KAPICleanerItemDescription.h).
+Create a `KAPICleanerItemDescription` DataAsset for each Filtrator recipe. KAPI
+uses the internal name "Cleaner" for this system. See the
+[`KAPICleanerItemDescription` header](https://github.com/Satisfactory-KMods/public-source/blob/main/KAPI/Source/KAPI/Public/DataAssets/KAPICleanerItemDescription.h)
+for its class definition.
+
+Prefer YAML? Follow the matching [KDataForge Filtrator guide](/satisfactory-plus/kdataforge/filtrator/).
 
 ![KAPICleanerItemDescription DataAsset properties in the editor](../../../assets/satisfactory-plus/kapi/filtrator-asset.png)
 

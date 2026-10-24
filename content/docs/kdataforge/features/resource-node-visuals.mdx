@@ -1,12 +1,14 @@
 ---
 title: Resource node appearance
-description: Maintain material slots and hidden mesh actors on existing resource nodes, including streamed nodes and local client meshes.
+description: Override materials or hide mesh actors on existing, streamed, and client-side resource nodes.
 ---
 
 Use `type: resourcenode` with `visuals` to override existing nodes' mesh materials, or
 `hideMeshes` to hide selected static mesh assets and disable collision on their mesh actors.
 These rules run independently on server and clients. They also handle nodes and mesh actors
 that appear later or stream into the world. They do not create or destroy resource nodes.
+Use [resource node placement](/kdataforge/features/resource-node-placement/) for adding or
+replacing nodes instead.
 
 Save the configuration as `node_appearance.resourcenode.yml` in your pack. Replace the example
 material with an asset shipped by your mod:
@@ -27,7 +29,8 @@ Material mappings skip resource deposit actors. `materials` is a non-empty list 
 occur only once per resource. Unlisted slots remain unchanged. Write numbers as numbers,
 not quoted strings. Material paths name material or material-instance objects, without `_C`.
 
-Descriptors and assets must be cooked and available in installed mods on every peer.
+Resource [descriptors](/kdataforge/features/resources/#generate-a-resource-descriptor) and assets
+must be cooked and available in installed mods on every peer.
 Invalid visual entries or unresolved material/mesh references reject that resource-node
 document. Keep independent placement and appearance edits in separate files.
 

@@ -1,6 +1,6 @@
 ---
 title: 'Type: research'
-description: Generating new M.A.M. research trees from YAML, registering existing ones, and how this fits alongside schematics and recipes.
+description: Generate or register M.A.M. research trees and connect them with schematics and recipes.
 sidebar:
   order: 15
 ---
@@ -24,7 +24,7 @@ trees.
 
 Most of the time you don't need to _generate_ a research tree. The base game's trees already
 exist, and you just want to rename or retune one. That's register-only mode, or honestly, just a
-plain `cdo` patch: both work identically for editing something that already exists. Here's an
+plain `cdo` patch: both work identically for editing something that already exists. This is an
 example renaming the Mycelia tree's display text:
 
 ```yaml
@@ -208,10 +208,10 @@ that progression, also use [recipe `remove:`](/kdataforge/features/recipes#remov
 ## Troubleshooting
 
 - **New tree doesn't appear in the M.A.M. menu**: confirm registration succeeded
-  (`/kdf report`). An empty tree with no nodes may also simply not render meaningfully in the
+  (`/kdf report`). An empty tree with no nodes may not render meaningfully in the
   M.A.M. UI, so see the callout above and the linked tutorial for what's currently achievable.
 - **Just want to rename or reprioritise a vanilla tree**: don't generate anything. Use a plain
-  `cdo` patch as shown above. It's simpler and doesn't touch the content registry at all.
+  `cdo` patch as shown above. This avoids the content registry.
 - **Want a schematic unlocked through research instead of the HUB**: that's just
   `mType: EST_MAM` on an ordinary [Type: schematic](/kdataforge/features/schematics)
   entry. Nothing tree-specific about it.

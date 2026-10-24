@@ -7,10 +7,11 @@ sidebar:
 
 ## Overview
 
-KDataForge is a **data-driven runtime content editing framework**. Users, and other mods, describe
-changes to game content in YAML documents. The framework parses these documents once at startup,
-validates them, and applies them through Unreal's reflection system in a fixed, deterministic
-stage order.
+KDataForge is a data-driven runtime content editing framework. Pack authors and other mods describe
+changes to game content in YAML documents. The initial load parses, validates, and applies those
+documents before a world or save loads. A later `/kdf reload` restores captured baselines, rescans
+the packs, and runs the applicable pipeline again. Frozen registrations, irreversible world
+changes, and explicitly cold data still require a session restart.
 
 Authors use `<your-mod>/DataForge/**/*.yml`. The scanner itself starts at the Unreal project root,
 which is `FactoryGame/` in a packaged game. It recognizes directories named `DataForge`, the legacy
@@ -22,7 +23,7 @@ so documentation examples and cached backups cannot become active packs.
 
 ![KDataForge runtime architecture from pack discovery through staged reflection operations and per-world actor patches](../../../assets/kdataforge/architecture.svg)
 
-## Lifecycle Integration (SML)
+## Lifecycle integration with SML
 
 KDataForge hooks SML's module lifecycle via two auto-discovered root modules, `UKDFGameInstanceModule`
 and `UKDFWorldModule`.
@@ -31,7 +32,8 @@ and `UKDFWorldModule`.
 (the subsystem's `Initialize`), and this is the window in which third-party mods register their own
 handlers. During INITIALIZATION, `UKDFSubsystem::RunInitialLoad()` performs the full scan, parse,
 and apply pass. This runs before any world or save loads, so CDO edits and generated classes exist
-before anything references them. The full pass runs only once per GameInstance. During
+before anything references them. This initial pre-world pass runs once per GameInstance; later
+reloads use the reload path and retain the cold boundaries described below. During
 POST_INITIALIZATION, the load report is logged.
 
 `UKDFWorldModule` runs per world. It registers the `/kdf` chat command. During world
@@ -43,7 +45,7 @@ the same class.
 SML guarantees all modules receive CONSTRUCTION before any receives INITIALIZATION, which makes the
 third-party handler registration window safe.
 
-## Core Components
+## Core components
 
 | Component                 | Type                    | Responsibility                                                                                          |
 | ---------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------ |
@@ -53,7 +55,7 @@ third-party handler registration window safe.
 | `FKDFConditionEvaluator`  | static                  | Document `conditions:` evaluation                                                                       |
 | `FKDFPropertyResolver`    | static                  | Property path → (FProperty, value ptr) resolution incl. containers and object dereference               |
 | `FKDFValueCodec`          | static                  | Bidirectional YAML ↔ FProperty conversion                                                               |
-| `FKDFOpEngine`            | static                  | The 22 property operations with per-kind capability matrix                                              |
+| `FKDFOpEngine`            | static                  | The 25 property operations with a per-kind capability matrix                                             |
 | `FKDFVanillaCache`        | member of subsystem     | First-write snapshots for editor diff, undo, and changes-only export                                    |
 | `FKDFDynamicContentRegistry` | member of subsystem  | Creates deterministic generated classes/assets and reconstructs missing generated classes as tombstones |
 | `UKDFCdoHandler`          | handler (`cdo`)         | CDOs, data-asset instances, `allAssetsOfClass`, tag matcher, actor patches                               |
@@ -70,9 +72,12 @@ third-party handler registration window safe.
 | `UKDFContentRemoveSubsystem` | WorldSubsystem       | Orchestrates recipe sweeps and exposes per-world removal queries/counts                                  |
 | `UKDFResourceNodeSubsystem` | WorldSubsystem        | Purges matching nodes, local mesh actors, scanner data, and radar/scanner caches                         |
 | `FKDFRecipeRemoval`       | static/native hooks     | Blocks future recipe adds and removes recipes restored from server save data                             |
-| `AKDFChatCommand`         | chat command             | `/kdf report`, `/kdf editor`, `/kdf debug on\|off`                                                       |
+| `UKDFConfigRegistry`      | GameInstance object      | Owns generated pack settings, pending values, persistence, and apply modes                                |
+| `UKDFConfigSyncSubsystem` | GameInstanceSubsystem    | Replicates host-controlled configuration values to multiplayer clients                                    |
+| `AKDFEventRuleSubsystem`  | ModSubsystem             | Runs bounded `worldReady` and `schematicPurchased` actions and stores once-per-save state                 |
+| `AKDFChatCommand`         | chat command             | Reports, reloads, configuration, editor toggle, sound preview, and debug logging                           |
 
-## The Reflection Engine
+## Reflection engine
 
 **Resolution** (`FKDFPropertyPath` → `FKDFPropertyResolver`) turns a parsed path such as
 `mIngredients[0].Amount` into a value, segment by segment, supporting name lookup (including
@@ -89,18 +94,18 @@ makes "every reflectable type" honest, without needing hundreds of hand-written 
 **Operations** (`FKDFOpEngine`) validate each op against the leaf property kind before applying it:
 `multiply` on an FString produces a diagnostic, not a silent no-op. `FGameplayTagContainer` is
 special-cased so tag containers accept append/prepend/remove/clear/set with plain tag names. The full list
-of the 22 supported operations, their signatures, and which property kinds accept each one is
+of the 25 supported operations, their signatures, and which property kinds accept each one is
 covered in [Operations](/kdataforge/features/operations). The property kinds
 themselves, and how a `mIngredients[0].Amount`-style path resolves, are covered in
 [Property Types](/kdataforge/features/property-types).
 
-## Vanilla Snapshots
+## Vanilla snapshots
 
 Before the **first** write to any `(object, property path)` pair, the original value is exported to
 canonical text and stored in `FKDFVanillaCache`. The in-game editor uses this snapshot for its Diff
 tab, undo workflow, and changes-only export.
 
-## Runtime Actor Patches
+## Runtime actor patches
 
 `applyToSpawnedActors: true` on a cdo patch registers an `FKDFActorPatch`. `UKDFActorPatchSubsystem`
 applies the ops to all matching pre-existing actors at world begin play, and to every matching
@@ -117,7 +122,7 @@ the CDO/data-asset/tag-matcher targeting model are covered in full in
 [Patching (type: cdo)](/kdataforge/features/patching-cdo) and
 [Targeting](/kdataforge/features/targeting).
 
-## Per-world Registration and Removal
+## Per-world registration and removal
 
 GameInstance handlers cannot mutate world managers because no gameplay world exists during the
 initial YAML pass. They retain deterministic requests instead:
@@ -135,7 +140,7 @@ server save before `AFGRecipeManager::BeginPlay` builds derived caches. Resource
 separate four-point schedule because level actors, streamed levels, spawns, and late descriptor
 retargeting become visible at different times.
 
-## Savegame Persistence Strategy
+## Savegame persistence
 
 Dynamically created content must survive save/load with valid class paths.
 
@@ -157,8 +162,7 @@ A global generated-content manifest at `Saved/KDataForge/GeneratedClasses.json` 
 generated class ever created**, including its pack, id, and parent path. At startup, recorded
 classes missing from the current YAML are recreated as **tombstones**: functional but hidden and
 deprecated, so old saves load cleanly even after packs are removed. Because the manifest is
-global, class-path resolution works for **any** save, not just ones whose header was written by
-KDataForge.
+global, class-path resolution works for **any** save whether or not KDataForge wrote its header.
 
 Renames use `redirects:` in `pack.yml` (`OldId: NewId`), which feeds `FCoreRedirects` so old save
 class paths resolve to the renamed class.
@@ -187,17 +191,19 @@ See [Recipes](/kdataforge/features/recipes),
 generated-class path, and [Renaming Content Safely](/kdataforge/tutorials/renaming-content-safely)
 for how `redirects:` is used in practice.
 
-## Multiplayer Boundaries
+## Multiplayer boundaries
 
 Every game process performs its own initial YAML load. The current source has no pack-checksum
 handshake, mismatch rejection, or server-to-client operation stream. Install the same packs and
 versions on the server and every client.
 
 `UKDFRemoteCallObject::Server_ApplySetOp` is a host-gated RPC scaffold. The editor UI does not call
-it, and there is no general `Server_ApplyOps` pipeline. Treat live editor changes as local process
-state, not synchronized multiplayer state.
+it, and there is no general `Server_ApplyOps` pipeline. The `/kdf editor` branch itself does not run
+the host or administrator permission check used by reload and configuration writes. It requests
+the host-local editor window from the process that handles the command. Treat live editor changes
+as local process state, not synchronized multiplayer state.
 
-## Determinism Rules (load-bearing)
+## Determinism rules
 
 1. Stages execute in fixed `EKDFStage` enum order.
 2. Pack dependencies are hard topological constraints. Packs with missing, self-referential, or
@@ -211,5 +217,5 @@ state, not synchronized multiplayer state.
 
 For the module layout that hosts these subsystems and handlers, see
 [Module Structure](/kdataforge/background/module-structure). For the YAML fields that
-condition evaluation, targeting, and the stage/handler pipeline actually parse, see the
+condition evaluation, targeting, and the stage/handler pipeline parse, see the
 [YAML Schema](/kdataforge/reference/yaml-schema) reference.

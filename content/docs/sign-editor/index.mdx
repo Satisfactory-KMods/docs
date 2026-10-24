@@ -8,8 +8,9 @@ sidebar:
 import { CardGrid, LinkCard, Steps } from '@astrojs/starlight/components';
 
 The Sign Editor is a browser-based designer for **Refined Sign Systems (RSS)**
-signs. Lay out text, icons and effects on a real-size canvas, save the design to
-your account, and load it in game no editing JSON by hand.
+signs. Arrange [text, icons and effects](/sign-editor/elements/) on a real-size
+[canvas](/sign-editor/canvas/), [save the design](/sign-editor/saving/) to
+your account, and load it in game without editing JSON by hand.
 
 ## Build your first sign
 
@@ -20,10 +21,11 @@ your account, and load it in game no editing JSON by hand.
 2. Give it a **name** in the left panel. This is what you will recognise it by
    in your design list.
 
-3. Pick a **sign size**. This is the one setting you have to choose before
-   anything else unlocks it decides the pixel canvas the mod renders.
+3. Pick a [**sign size**](/sign-editor/sign-settings/#size). You must choose it
+   before the remaining settings unlock because it defines the pixel canvas
+   rendered by the mod.
 
-4. Add an element with **Text**, **Image** or **Effect** above the layer list.
+4. Add an [element](/sign-editor/elements/) with **Text**, **Image** or **Effect** above the layer list.
 
 5. Drag it into place on the canvas, and adjust it in the right-hand panel.
 
@@ -32,19 +34,18 @@ your account, and load it in game no editing JSON by hand.
 </Steps>
 
 :::tip
-Two guided tours are built into the editor, on the **?** and **shape** buttons
-in the action bar: one walks through the workspace, the other covers elements
-and the image browser.
+The action bar has two guided tours. The **?** button covers the workspace; the
+**shape** button explains elements and the image browser.
 :::
 
 ## The workspace
 
-The editor is three columns:
+The editor uses three columns:
 
-- **Left** the design's name, whether it is public, the sign size, the
+- **Left:** the design's name, whether it is public, the sign size, the
   **Add element** buttons, and the layer list.
-- **Middle** the action bar and the canvas your sign is drawn on.
-- **Right** the inspector: settings for the selected element, and below them
+- **Middle:** the action bar and the canvas your sign is drawn on.
+- **Right:** the inspector, with settings for the selected element and below them
   the settings for the sign as a whole.
 
 :::caution

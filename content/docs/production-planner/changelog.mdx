@@ -1,6 +1,6 @@
 ---
 title: Changelog
-description: What's new in the Production Planner, release by release.
+description: Changes included in each Production Planner release.
 sidebar:
   order: 8
 ---
@@ -11,7 +11,7 @@ Production Modeler, which covers the same factory planning and more. Get it at
 [k-mods.com/production-modeler/download](https://k-mods.com/production-modeler/download).
 :::
 
-Every release, in short. Newest first.
+Releases appear newest first.
 
 ## Maintenance (September 2026)
 
@@ -157,7 +157,7 @@ Every release, in short. Newest first.
 - Picking an alternate recipe as a consumer now enables that one recipe for the plan, instead of failing because alternates are switched off. The global alternates setting is left alone.
 - Deleting a node that came from a suggested consuming recipe also removes it from the plan, and a pinned recipe the planner can no longer use is dropped automatically instead of leaving the whole plan stuck on "no valid route".
 - New **Pinned Recipes** list in the I/O panel: change how much a suggested consuming recipe should produce, see the building count it works out to, or remove it again. Previously such a recipe could only be added, never adjusted or deleted.
-- Unused-output actions (suggest consumer, route to sink, add as desired output, highlight flow) now also work on raw-resource and byproduct nodes, not just recipe blocks.
+- Unused-output actions (suggest consumer, route to sink, add as desired output, highlight flow) now work on recipe, raw-resource and byproduct nodes.
 - Miner overclock now tops out at `100%`, matching the real extractor.
 - Fixed: a configured miner was scaled past the single physical building it represents. It is now capped at one unit, so demand it cannot cover is reported instead of silently satisfied.
 - Fixed: the Balance panel compared against the wrong node, so every desired output showed `0/min` actual and a false "off target" warning even when the plan produced exactly the target.
@@ -236,7 +236,7 @@ Every release, in short. Newest first.
 
 ## 0.13 (July 2026)
 
-- Unrouted-output actions (Suggest Consuming Recipe, Route to Sink, Add as Desired Output) reachable from the sidebar list, not just the canvas.
+- Unrouted-output actions (Suggest Consuming Recipe, Route to Sink, Add as Desired Output) are reachable from both the sidebar list and canvas.
 - Fixed: Suggest Consuming Recipe and Auto-build chain doing nothing (used the output rate instead of the input rate).
 - Fixed: actions button missing on byproduct sink cards.
 - Fixed: some buildings showed no Somersloop slots at all.
@@ -266,18 +266,18 @@ Every release, in short. Newest first.
 - Belt/pipe tier badges on every edge showing the smallest tier that can carry the flow.
 - Alternate recipes flagged from the game's own data instead of guessed from the name.
 - Sink point overview (whether a plan can sink byproducts) visible to everyone; exact pts/min stays Patreon.
-- Power/Resources planning strategies now score the whole chain, not just local data.
+- Power/Resources planning strategies now score the whole chain instead of individual local values.
 - Somersloop production boost: shard stepper on supported buildings.
 - Raw resource totals aggregate demand per item across the whole plan.
 - PDF diagram export.
-- Recipe/building exclusion checks game tags, not just name patterns.
+- Recipe/building exclusion checks both game tags and name patterns.
 
 ## 0.10 (June 2026)
 
 - Hovering a connection highlights every line on the same blocks and animates flow back to the source.
 - Refreshed "Create plan" wizard to match the rest of the design system.
 - Guide grew into a full docs site with a sidebar.
-- Forced recipes now apply at every occurrence of an item, not just the final step.
+- Forced recipes now apply at every occurrence of an item, including the final step.
 
 ## 0.9 (June 25, 2026)
 

@@ -1,17 +1,19 @@
 ---
-title: 'Adding new Slug / Breeding Recipes'
-description: How to add new Slug or Breeding Recipe DataAssets to Satisfactory Plus through KAPI. To allow them in SF+ gameplay.
+title: 'Add slug breeding recipes'
+description: Define Satisfactory Plus slug breeding DataAssets in KDataForge YAML.
 sidebar:
   order: 5
 ---
 
-Define a slug species as a `KAPISugHatchingData` instance with a `type: dataasset` document instead
-of creating it in the Unreal Editor. See the [full property reference](/satisfactory-plus/kapi/slug-breeding/)
-for every field, including the fluid-incubator properties (`mTankTier`, `mFluidConsume`,
-`mFluidClass`, `mFluidConsumeTime`) left out below since `bRequireFluid` is `false` here.
+Define a slug species as a `KAPISugHatchingData` instance in a `type: dataasset`
+document. This replaces creating the asset in Unreal Editor. The
+[full property reference](/satisfactory-plus/kapi/slug-breeding/) covers every
+field. Because this example sets `bRequireFluid` to `false`, it omits the
+fluid-incubator properties (`mTankTier`, `mFluidConsume`, `mFluidClass`,
+`mFluidConsumeTime`).
 
-The example reproduces the shipped Red Slug breeder, trimmed to two `mPossibleSlugs` entries for
-readability:
+This example reproduces the shipped Red Slug breeder. It includes two
+`mPossibleSlugs` entries to keep the example readable:
 
 ```yaml
 # file: kapi-slug-red.dataasset.yml
@@ -80,5 +82,5 @@ assets:
         value: Any # EKAPISlugTime enum name (Any/Day/Night), not a raw number; Any is also the default
 ```
 
-See [Adding KAPI Data Assets](/kdataforge/examples/kapi-data-assets/) for every KAPI type's
-`type: dataasset` example in one place.
+See [Adding KAPI Data Assets](/kdataforge/examples/kapi-data-assets/) for a
+`type: dataasset` example of every KAPI type.

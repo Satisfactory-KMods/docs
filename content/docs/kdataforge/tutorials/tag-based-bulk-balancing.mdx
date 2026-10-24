@@ -1,16 +1,14 @@
 ---
-title: 'Tag-Based Bulk Balancing'
+title: 'Tag-based bulk balancing'
 description: Register your own gameplay tag, mark a pile of content as yours or as needing rebalancing, and bulk-edit everything carrying that tag in one patch instead of one cdo patch per target.
 sidebar:
   order: 6
 ---
 
-You're rebalancing a dozen recipes and you don't want a dozen `target:` patches to keep in sync as
-the list grows. This tutorial builds a small, reusable tag, marks a handful of recipes with it
-across separate files, and bulk-edits every one of them with a single `matchTag:` patch. That's the
-same mechanism the [Balancing](/kdataforge/examples/balancing#bulk-edits-with-the-tag-matcher) page shows
-in miniature. Here it's worked all the way through with real files, covering the exact matching rules
-end to end.
+This tutorial creates a reusable tag, applies it to recipes across separate files, and edits all of
+them with one `matchTag:` patch. This avoids maintaining a separate `target:` patch for every
+recipe. The [Balancing example](/kdataforge/examples/balancing#bulk-edits-with-the-tag-matcher)
+shows the same mechanism in a smaller form.
 
 ## The problem this solves
 
@@ -118,7 +116,7 @@ recipes:
       # … mIngredients, mProduct, mManufactoringDuration, mProducedIn …
 ```
 
-This isn't a style preference. It's the only version guaranteed to work on the very first load. See
+Only this version is guaranteed to work on the first load. See
 [Step 3](#step-3-the-bulk-patch-matchtag--ofclass--tagproperty) and
 [Troubleshooting](#troubleshooting) for why a separate `cdo` patch targeting a same-pass generated
 recipe doesn't resolve on that first load.
@@ -191,9 +189,9 @@ since they don't exist without KAPI loaded. Your own tags never need any `hasMod
   suggested fix, usually a stray space or extra dot in the dotted tag string. Fix the YAML string,
   not the tag. See [Game Tags → Troubleshooting](/kdataforge/features/game-tags#troubleshooting).
 - **`matchTag` matched no objects: check `ofClass` first.** `ofClass` has to be the class the
-  tagged content actually is, or an ancestor of it. `ofClass: /Script/FactoryGame.FGSchematic` will
+  tagged content is, or an ancestor of it. `ofClass: /Script/FactoryGame.FGSchematic` will
   never match a recipe's tags, even if the tag name is identical. Confirm with `/kdf report` which
-  classes were actually scoped.
+  classes were scoped.
 - **`matchTag` matched no objects: check `tagProperty` next.** If a class exposes a tag container
   under a non-standard name, an unnamed or mis-typed `tagProperty` silently finds nothing rather
   than erroring. The lookup fails closed, not loud.

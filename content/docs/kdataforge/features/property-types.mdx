@@ -1,6 +1,6 @@
 ---
-title: Property Types
-description: One working example for every supported property datatype, and the gotchas specific to each.
+title: Property types
+description: Match YAML values to each supported Unreal property type and avoid type-specific errors.
 sidebar:
   order: 2
 ---
@@ -9,10 +9,10 @@ Every `properties:` entry inside a `type: cdo` patch (see [Patching](/kdataforge
 normally targets one reflected UE property, and the `value:` you write has to match that property's kind.
 The operation selector [`'@tagContainers'`](/kdataforge/features/operations#select-every-gameplay-tag-container)
 applies to every top-level gameplay tag container on each target.
-KDataForge's value codec recognizes each UE property class in turn: bool, enum, numeric, string,
+KDataForge's value codec recognizes UE property classes in this order: bool, enum, numeric, string,
 object/class reference, struct, container. It only falls through to raw UE text-import for
-anything it doesn't special-case. This page walks through every kind it handles, in the order the
-codec checks them, so you know exactly what YAML shape to reach for. Pair this with
+anything it doesn't special-case. The sections follow the order used by the codec and show the
+YAML shape for each kind. Pair this with
 [Operations](/kdataforge/features/operations) for what you can _do_ to a value once
 you've written it, and [Targeting](/kdataforge/features/targeting) for picking what
 object the patch applies to.
@@ -190,7 +190,7 @@ below or route it through [Localization](/kdataforge/features/localization):
 
 ## FText: localized (key/namespace/source)
 
-Passing a map instead of a scalar creates a properly keyed, localizable `FText` instead of an
+Passing a map instead of a scalar creates a keyed, localizable `FText` instead of an
 invariant literal. The `key` field is required, while `ns` and `source` are optional. A map containing
 only `source` is invalid; use a scalar for culture-invariant text. This uses the
 same runtime-safe construction path the localization system relies on:

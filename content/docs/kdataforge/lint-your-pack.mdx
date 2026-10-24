@@ -1,12 +1,12 @@
 ---
-title: Lint Your Pack
+title: Lint your pack
 description: Run standalone KDataForge Linter or KPatchwork policy linter before starting game or opening pull request.
 sidebar:
   order: 3
 ---
 
-Standalone [KDataForge Linter](https://github.com/Satisfactory-KMods/KDataForge-Linter) validates
-packs with bundled schemas. Its CLI uses a `lint` subcommand plus a path:
+The standalone [KDataForge Linter](https://github.com/Satisfactory-KMods/KDataForge-Linter)
+validates packs with bundled schemas. Pass the `lint` subcommand and a path:
 
 ```text
 kdataforge-linter lint DataForge
@@ -36,6 +36,11 @@ bundled inventory.
 `kdataforge-linter` executable, pinned through its `pyproject.toml` and `uv.lock`. Repository-local
 schemas under `ci/schemas` override selected bundled schemas with KPatchwork policy, such as its
 required player-facing pack description.
+
+Its [public `DataForge` directory](https://github.com/Satisfactory-KMods/KPatchwork/tree/main/DataForge)
+also provides maintained examples of complete compatibility packs. Use their YAML as examples of
+pack organization and conditional integrations, while keeping the repository-specific policy
+fields described below separate from the runtime grammar.
 
 The linter is also the validation step used by KPatchwork's pull-request CI. It reports every issue
 it finds in one run: warnings are printed but do not fail the command, while errors produce exit
@@ -189,7 +194,7 @@ asset or class path exists, that a reflected property has the expected runtime t
 mod is installed, or that two otherwise valid packs produce the intended result together.
 
 After linting, start the game and use
-[`/kdf report`](/kdataforge/getting-started#kdf-report-and-loading-changes) to check
+[`/kdf report`](/kdataforge/getting-started#4-load-and-verify-the-pack) to check
 runtime resolution and application. Use
-[debug logging](/kdataforge/getting-started#debugging) when you need the before/after
+[debug logging](/kdataforge/getting-started#trace-an-applied-operation) when you need the before/after
 value for each applied operation.

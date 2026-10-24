@@ -1,16 +1,14 @@
 ---
-title: 'Conditional Multi-Mod Integration Packs'
+title: 'Build a conditional multi-mod integration pack'
 description: Adding bonus content only when another mod (or a specific version of it, or just one of its classes) is present, without a hard dependency and without breaking the load for players who don't have it.
 sidebar:
   order: 7
 ---
 
-The goal is for your pack to add extra content when another specific mod is installed: a KAPI data
-asset, a patch to another mod's buildable, or a bonus recipe. It must not error, warn, or crash for
-the majority of players who don't have that mod. [Conditions & Packs](/kdataforge/features/conditions-and-packs)
-already documents every condition key's syntax individually. This tutorial covers the missing
-piece: how the pieces actually behave under the hood, and how to combine them into a real
-optional-integration pack.
+This tutorial builds a pack that adds content when another mod is installed, such as a KAPI data
+asset, a buildable patch, or a bonus recipe. Players without that mod should receive no errors,
+warnings, or crashes. [Conditions & Packs](/kdataforge/features/conditions-and-packs) documents
+each condition key; this page shows how those keys behave together in an optional integration.
 
 ## The core idea
 
@@ -157,7 +155,7 @@ This applies when RefinedPower is loaded **or** LegacyPowerBridge is absent. Inv
 unknown keys, malformed objects, and invalid ranges always fail closed; a matching OR branch cannot
 hide them. An empty condition array passes under `AND` and fails under `OR`.
 
-## `modVersion:` vs `hasMod`: what's actually different
+## Difference between `modVersion:` and `hasMod`
 
 `modVersion:` is an explicit map form:
 
@@ -289,7 +287,7 @@ This is the standard shape for KAPI-integrated content. See
 [Data Assets](/kdataforge/features/data-assets) for the full field reference. If KAPI isn't
 installed, this document is skipped and the base item from (a) is completely unaffected.
 
-### (c) A RefinedPower patch: only if the class actually exists
+### (c) A RefinedPower patch: only if the class exists
 
 ```yaml
 # file: refinedpower-windturbine-boost.cdo.yml
@@ -317,7 +315,7 @@ actual buildable/actor class rather than a data asset built for cross-mod integr
 
 Three independent documents, three independent outcomes: (a) always applies, (b) applies only
 with KAPI, (c) applies only with RefinedPower present. Any subset, "only (a)", "(a)+(b)",
-"(a)+(c)", or all three, is a valid, error-free load depending on what's actually installed.
+"(a)+(c)", or all three, is a valid, error-free load depending on what is installed.
 
 ## Troubleshooting
 

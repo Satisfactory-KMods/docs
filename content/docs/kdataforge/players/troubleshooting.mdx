@@ -1,0 +1,135 @@
+---
+title: Troubleshoot a pack
+description: Diagnose missing content, multiplayer differences, reload failures, settings, and audio problems.
+sidebar:
+  order: 4
+---
+
+Start with the visible symptom. Keep a backup of the affected save before changing pack versions or
+removing files.
+
+## A pack has no visible effect
+
+1. Run `/kdf report` in chat.
+2. Check the error and warning counts.
+3. Confirm that the pack and all dependencies match the current game and KDataForge versions.
+4. For a manual install, confirm this shape:
+
+   ```text
+   FactoryGame/DataForge/<PackFolder>/pack.yml
+   ```
+
+5. Restart the game instead of relying on reload.
+6. Check the change named by the pack author in a fresh place where saved actor values cannot hide
+   it.
+
+A pack can skip itself because of a game version, mod version, missing class, or other condition.
+Expected condition skips are informational and do not appear in `/kdf report`. Search
+`FactoryGame.log` for the pack ref and `LogKDataForge` when the report has no error but the pack is
+still inactive.
+
+Packaged-game logs are stored here:
+
+```text
+%LOCALAPPDATA%\FactoryGame\Saved\Logs\FactoryGame.log
+```
+
+## The report shows errors or warnings
+
+`/kdf report` prints up to 100 non-informational diagnostics. An error means KDataForge skipped a
+file, document, or operation. A warning can mean a duplicate pack ref, missing dependency, invalid
+manifest, or another tolerated problem.
+
+1. Copy the complete diagnostic, including its file name.
+2. Search `FactoryGame.log` for the same text and nearby `LogKDataForge` entries.
+3. Restore the pack files supplied by the author. Do not repair unfamiliar YAML by guessing.
+4. If the error remains, send the pack version, KDataForge version, game build, report, and relevant
+   log section to the pack author.
+
+One broken document does not stop all other packs from loading. The report totals may therefore show
+applied documents alongside errors.
+
+## Reload is refused or changes nothing
+
+`/kdf reload` requires the listen-server host or a dedicated-server administrator. It can also fail
+before the first load finishes, while another reload is running, or when a pack uses native CDO
+helper assets whose callback and cache state cannot be restored safely.
+
+1. Run the command from the host, an administrator account, or the server console.
+2. Read the refusal message.
+3. Restart the game or server when the message mentions native CDO helpers, frozen content, or a
+   restart requirement.
+4. Restart all multiplayer processes because reload is local to one process.
+5. Run `/kdf report` after the restart.
+
+Some properties affect only newly spawned actors. Others are read once and require a restart. A
+successful reload therefore does not guarantee that every existing building or world object changes
+immediately.
+
+## Host and clients see different content
+
+1. Compare the KDataForge version and every pack version on the server or host and each client.
+2. Remove duplicate or old manual pack folders.
+3. Confirm that optional dependency mods also match.
+4. Restart every process.
+5. Recheck the affected content on each client.
+
+KDataForge has no pack handshake or file transfer. A connection can succeed while peers use
+different YAML, and a host reload does not repair that mismatch.
+
+## Pack settings are disabled or do not apply
+
+Only the host or a dedicated-server administrator can change synchronized gameplay settings. Normal
+clients see read-only controls.
+
+1. Apply the change from the host, administrator, or server console.
+2. Check the result for `Saved`, `reloaded`, and `Restart required` messages.
+3. Restart every process for a cold setting.
+4. For a hot setting, verify whether the affected property applies live, only to new actors, or
+   after a restart.
+
+If a setting disappeared after an update, check the pack release notes. KDataForge removes stored
+keys that the installed pack no longer defines after a complete, valid definition load.
+
+## A generated sound is missing or silent
+
+1. Confirm that the client has the same pack definition and audio files as the host. The server does
+   not send audio to clients.
+2. Open **Options > Audio**.
+3. For ADA dialogue, check **Dialogue Volume**. For other generated sounds, check the pack's own
+   volume row and the game's master volume.
+4. Search `FactoryGame.log` for `LogAkAudio`, `LogWwiseFileHandler`, and `LogKDataForge` errors.
+
+Dedicated servers can use placeholder audio events without the source audio. Missing files on a
+dedicated server alone do not explain silent playback on a client.
+
+## Content is missing after an update
+
+Generated content uses the pack `ref` and entry `id` as its saved identity. Changing a file name is
+safe. Changing an `id` requires an author-supplied redirect, while changing the pack `ref` creates a
+different class path that the current redirect format cannot bridge.
+
+1. Stop using the affected save and keep its backup.
+2. Restore the last working pack version with its original `ref` and ids.
+3. Load the save and confirm that the content returns.
+4. Ask the pack author for a corrected release with the original `ref` or the required id redirects.
+
+Do not remove missing generated objects from a save by hand. KDataForge recreates recorded missing
+classes as hidden tombstones so the save can load, but only the matching pack definition restores
+their normal content.
+
+## World changes remain after removing a pack
+
+Resource Node removal can leave vanilla destruction records in the save. Removing the pack does not
+reliably restore those nodes. Node replacement has separate restoration data and should be removed
+while KDataForge remains installed.
+
+1. Keep KDataForge installed and load the save once without the content pack.
+2. Inspect the affected nodes and progression before saving again.
+3. If the world state is wrong, close the game and restore the backup made before installation or
+   update.
+4. Give the pack author the pack version and the affected save behavior.
+
+Recipe, schematic, and research listing removals have different recovery behavior. Recipes normally
+return when purchased schematics reapply their unlocks. Schematic and research listings return, but
+existing purchase and research progress remains in the save.

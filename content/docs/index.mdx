@@ -1,11 +1,41 @@
 ---
 title: Documentation
-description: Guides for everything on k-mods.com the Satisfactory wiki, the production modeler, and more.
+description: Guides for the K-Mods wiki, production tools and sign editor.
 sidebar:
   order: 1
 ---
 
-Welcome to the k-mods documentation. Pick a topic from the sidebar to get started.
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Choose a topic from the sidebar or open a guide below.
+
+<CardGrid>
+  <LinkCard
+    title="Production Modeler"
+    href="/production-modeler/"
+    description="Draw factories, calculate flows and plan production chains."
+  />
+  <LinkCard
+    title="Production Planner"
+    href="/production-planner/"
+    description="Read the guide for the legacy browser-based planner."
+  />
+  <LinkCard
+    title="Sign Editor"
+    href="/sign-editor/"
+    description="Design Refined Sign Systems signs and load them in game."
+  />
+  <LinkCard
+    title="KDataForge"
+    href="/kdataforge/"
+    description="Install content packs, create YAML changes, or integrate KDataForge into a mod."
+  />
+  <LinkCard
+    title="Satisfactory Plus"
+    href="/satisfactory-plus/"
+    description="Understand gameplay systems, buildings, progression, and mod integrations."
+  />
+</CardGrid>
 
 The [K-Mods home page](https://k-mods.com) brings together the wiki, Production
 Modeler and RSS Sign Builder. Its mod collection shows public mods reported
@@ -20,9 +50,9 @@ catalogs and in the sidebar. Sign in to save entries and write guides.
 
 ## Production Modeler
 
-Draw a factory the way you build it and let the numbers follow, or let the
-modeler plan a chain from "I want X per minute" and edit what it gives you.
-Covers the canvas, special buildings, automatic planning and saving.
+Draw a factory and calculate its flows, or ask the Modeler to plan a chain from
+"I want X per minute" and edit the result. The guide covers the canvas, special
+buildings, automatic planning and saving.
 
 [Read the Production Modeler guide](/production-modeler)
 
@@ -33,10 +63,9 @@ keys** to move between results and **Enter** to open one.
 
 ## KDataForge
 
-Reference documentation for the KDataForge Satisfactory mod, a YAML-driven,
-zero-code runtime content editing framework. Covers its architecture, full
-YAML schema, module structure, public API, worked examples for every document
-type, and task-oriented tutorials.
+Player, pack-author, and developer documentation for KDataForge. It covers pack installation and
+settings, authoring tutorials, the full YAML schema, maintained examples, runtime architecture,
+and native extension APIs.
 
 [Read the KDataForge docs](/kdataforge)
 

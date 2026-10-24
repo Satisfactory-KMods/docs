@@ -1,13 +1,13 @@
 ---
-title: Mod Unlock Classes
+title: Mod unlock classes
 description: Every mod FGUnlock subclass, with abstract state, Blueprint path, exact field types, accepted values, nested structs, examples, and caveats.
 sidebar:
   order: 7
 ---
 
-KDataForge uses mod unlocks in schematic and delivery-task `unlocks:` lists exactly like base-game
-classes. The mechanism is fully generic (resolve `class:`, `NewObject` it onto the schematic's CDO,
-apply `properties:`, append to `mUnlocks`), so mod-provided classes need no special handling. Known
+KDataForge handles mod unlocks in schematic and delivery-task `unlocks:` lists like base-game
+classes. It resolves `class:`, creates the object on the schematic CDO with `NewObject`, applies
+`properties:`, and appends it to `mUnlocks`. Mod-provided classes need no special handling. Known
 native paths with Blueprint variants automatically remap; exact Blueprint paths also work. Catalog
 reflects mods loaded during Unreal scan.
 

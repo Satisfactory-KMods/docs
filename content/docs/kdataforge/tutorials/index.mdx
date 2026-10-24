@@ -1,35 +1,45 @@
 ---
-title: Task Guides
-description: Goal-oriented procedures for building, integrating, debugging, and shipping KDataForge packs.
+title: How-to guides
+description: Complete a specific KDataForge authoring, integration, maintenance, or debugging task.
 sidebar:
   order: 1
 ---
 
-Each page here starts from a **goal** and walks through however many files and document types it
-takes to get there. Every page includes complete, working YAML that you can copy directly.
-[Features](/kdataforge/features) explains individual capabilities, while
-[Reference](/kdataforge/reference) provides normative fields and APIs.
+These guides assume you have completed [Create your first pack](/kdataforge/getting-started). Each
+guide starts from a goal, provides the required files and YAML, and ends with a result you can check.
+Use [Authoring concepts and document types](/kdataforge/features) when you need to understand a
+capability, or [Reference](/kdataforge/reference) when you need an exact field or default.
 
-If this is your first pack, start with [Getting Started](/kdataforge/getting-started)
-before the guides below. It builds the smallest possible pack and confirms it loads, then covers
-`/kdf` commands, debug logging, the load report, session restarts, and current multiplayer limits.
-That is the groundwork these guides assume.
+## Create content
 
-| Page                                                                                                                  | Goal                                                                                                                                                                |
-| ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Item + Icon + Recipe + Tier-1 Unlock](/kdataforge/tutorials/item-icon-recipe-schematic)                | The most common first pack: a new item with a placeholder icon, a recipe that produces it, and a Tier-1 schematic that actually makes it obtainable in a fresh game |
-| [Custom Research Trees](/kdataforge/tutorials/research-trees)                                           | Generate a tree, place MAM schematics into its visual node graph, then extend or prune branches safely                                                              |
-| [Adding a Recipe to an Existing Schematic](/kdataforge/tutorials/existing-schematic-unlock)             | Unlocking something new from a schematic you didn't generate, vanilla, another mod's, or your own from an earlier pack version                                      |
-| [Localizing Your Pack](/kdataforge/tutorials/localizing-your-pack)                                      | Shipping new text in multiple languages and overriding existing vanilla or modded strings without retyping them                                                     |
-| [Tag-Based Bulk Balancing](/kdataforge/tutorials/tag-based-bulk-balancing)                              | Registering your own gameplay tag and bulk-editing everything carrying it in one patch instead of one patch per target                                              |
-| [Conditional Multi-Mod Integration Packs](/kdataforge/tutorials/conditional-multi-mod-packs)            | Adding bonus content only when another mod (or a specific version or class of it) is present, without a hard dependency                                             |
-| [Debugging a Pack That Won't Apply](/kdataforge/tutorials/debugging-a-pack-that-wont-apply)             | An ordered, top-to-bottom checklist for "my YAML file doesn't seem to be doing anything"                                                                            |
-| [Renaming Content Safely](/kdataforge/tutorials/renaming-content-safely)                                | What you can rename in a pack for free, what needs a `redirects` entry, and the one rename `redirects` genuinely can't fix                                          |
-| [Editing Another Mod's Data Assets](/kdataforge/tutorials/editing-another-mods-data-assets)             | Rebalancing existing KAPI or RefinedR&D `PrimaryDataAsset` instances without creating a new one and without a hard dependency on the mod that owns them             |
-| [From Live Editor Edits to a Shareable Pack](/kdataforge/tutorials/from-live-edits-to-a-shareable-pack) | Turning values you tweaked live in `/kdf editor` into a real YAML pack that survives a restart and that you can hand to other people                                |
+- [Create an item, icon, recipe, and Tier 1 unlock](/kdataforge/tutorials/item-icon-recipe-schematic)
+  builds a common first content chain and makes it obtainable in a new save.
+- [Create a research tree](/kdataforge/tutorials/research-trees) generates the tree, places MAM
+  schematics in its node graph, and shows how to extend or prune its branches.
+- [Add a recipe to an existing schematic](/kdataforge/tutorials/existing-schematic-unlock) adds an
+  unlock to a vanilla schematic, another mod's schematic, or one from an earlier pack version.
 
-If you're not sure whether you want a tutorial or a reference page, here is the difference.
-Task Guides assume you know the basics from [Getting Started](/kdataforge/getting-started)
-and are trying to get one specific thing working. Use [Features](/kdataforge/features)
-for conceptual and per-capability explanations. Use [Examples](/kdataforge/examples)
-when you want complete, copy-pasteable packs that wire several capabilities together.
+## Integrate and balance
+
+- [Balance content by tag](/kdataforge/tutorials/tag-based-bulk-balancing) registers a gameplay tag
+  and edits every matching target with one patch.
+- [Build a conditional multi-mod pack](/kdataforge/tutorials/conditional-multi-mod-packs) adds
+  content only when a required mod version or class is present, without a hard dependency.
+- [Edit another mod's data assets](/kdataforge/tutorials/editing-another-mods-data-assets) patches
+  existing KAPI or RefinedR&D `PrimaryDataAsset` instances without generating replacements.
+
+## Prepare and maintain a release
+
+- [Localize your pack](/kdataforge/tutorials/localizing-your-pack) adds translated text and safely
+  overrides existing vanilla or mod strings.
+- [Rename generated content safely](/kdataforge/tutorials/renaming-content-safely) separates file
+  renames from identity changes and shows where `redirects:` can preserve saves.
+- [Turn live edits into a shareable pack](/kdataforge/tutorials/from-live-edits-to-a-shareable-pack)
+  exports changes from `/kdf editor` and verifies that they survive a restart.
+
+## Diagnose a failure
+
+- [Debug a pack that will not apply](/kdataforge/tutorials/debugging-a-pack-that-wont-apply) checks
+  discovery, parsing, conditions, targets, operations, reload limits, and logs in order.
+
+For complete packs that combine several document types, continue to [Examples](/kdataforge/examples).

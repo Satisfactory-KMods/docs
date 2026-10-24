@@ -1,0 +1,104 @@
+---
+title: Commands and console variables
+description: Chat commands, console commands, permissions, output, and process boundaries for KDataForge runtime and editor tools.
+sidebar:
+  order: 2
+---
+
+KDataForge has chat commands for normal in-game work and console commands for local diagnostics,
+automation, and Unreal Editor workflows. Chat output appears in the sender's chat. Console output
+appears in the game or editor log unless the command opens a UI or plays audio.
+
+Commands act on the process where they run. They do not transfer pack files or live edits to other
+multiplayer peers.
+
+## Chat commands
+
+| Command | Who can run it | Result |
+| --- | --- | --- |
+| `/kdf report` | Any sender with access to chat commands | Prints loaded packs, applied documents and operations, warnings, and errors. Info diagnostics are omitted. |
+| `/kdf reload` | Host, dedicated-server administrator, or server console | Restores captured property baselines, rescans packs, and applies the current pack set in that process. |
+| `/kdf config dump [PackRef]` | Any sender | Lists configuration fields, current values, defaults, effective values, and hot or cold mode. The optional pack ref filters the list. |
+| `/kdf config set <PackRef>:<Id> <Value>` | Host, dedicated-server administrator, or server console | Sets a pending configuration value. Array values use comma-separated elements. |
+| `/kdf config apply [PackRef]` | Host, dedicated-server administrator, or server console | Saves pending values for one pack or every pack. Hot changes request a reload; cold changes report restart requirements. |
+| `/kdf editor` | No explicit host or administrator check in the command branch | Requests the host-local in-game editor window in the process handling the command. Live changes remain local until exported to YAML. |
+| `/kdf sound <PackRef> <Id>` | Local player controller | Previews one generated sound on that machine. A remote player is directed to `KDF.Sound` in the local client console. |
+| `/kdf debug [on\|off]` | Any sender | Sets `KDF.Debug`. With no argument, toggles the current value. `1` and `0` are accepted aliases. |
+| `/kdf-reflection [options]` | Host or server by default; client with `--force` | Starts a reflection export. With no options, uses the full export profile. |
+| `/kdf-export [options]` | Same as `/kdf-reflection` | Alias for `/kdf-reflection`. |
+
+The `/kdf editor` branch has no permission check, but the window itself needs a local game viewport.
+This differs from reload and configuration writes, which check host or administrator authority.
+
+### Reload limits
+
+`/kdf reload` and `KDF.Reload` re-read files. A successful reload does not mean every gameplay
+change can update live. Frozen content registrations, irreversible world changes, and cold or
+restart-bound data still need a session restart. Packs that create native CDO helper assets refuse
+live reload to protect native callback and cache state.
+
+Reload is process-local. Run it on the host or server after changing shared gameplay packs, then
+restart every process when the affected feature requires a restart.
+
+## Runtime console commands
+
+| Command | Result |
+| --- | --- |
+| `KDF.Reload` | Runs smart reload on the first initialized host or server world. It refuses client-only worlds. |
+| `KDF.Editor` | Toggles the in-game editor in the first game or PIE world with an editor subsystem. |
+| `KDF.Sound <PackRef> <Id>` | Previews a generated Wwise event locally. |
+| `KDF.Config.Dump [PackRef]` | Logs configuration kind, apply mode, category, default, stored, pending, effective, and host values, plus state flags and source location. |
+| `KDF.Config.Set <PackRef>:<Id> <Value>` | Sets a pending local value. Array input uses comma-separated elements. Run `KDF.Config.Apply` to save it. |
+| `KDF.Config.Apply [PackRef]` | Saves pending values and reports changed keys, scheduled reload, pending state, and restart requirements. |
+| `KDF.Template "<Text>" [PackRef]` | Expands template references and logs the result. The optional pack provides scope for relative configuration references. |
+| `KDF.Config.Expr "<Expression>" [PackRef]` | Evaluates a `config:` condition expression and logs `true`, `false`, or a diagnostic. |
+
+Quote template text or expressions that contain spaces. Inside quoted text, escape a double quote as
+`\"` and a backslash as `\\`. The optional pack ref is one unquoted argument after the closing
+quote.
+
+`KDF.Config.Set` validates the field and value through the same configuration description used by
+the settings UI. The command can therefore reject an unknown key, invalid value, or read-only
+field. `KDF.Config.Apply` reports permission or persistence failures through its result.
+
+## Debug logging
+
+`KDF.Debug` is a Boolean console variable. Set it from the console or use the chat wrapper:
+
+```text
+KDF.Debug 1
+/kdf debug on
+```
+
+While enabled, every applied property operation writes one `[KDF DEBUG]` line with source file,
+target, property path, operation, before value, and after value. It also includes operations made
+through the in-game editor. Launch with `-KDFDebug` to enable it from startup.
+
+## Reflection commands
+
+| Command | Default behavior |
+| --- | --- |
+| `KDF.DumpReflection [options]` | Exports core reflection, texture data, settings, and reload metadata. Add `--assets --functions --flattened` for the extended indexes. |
+| `/kdf-reflection [options]` | With no options, supplies `--assets --functions --flattened --pack --image-max-dimension=1024`. Passing any option uses only the supplied options. |
+| `KDF.ValidateReflection [--out <Directory>]` | Validates live reflection contracts and basic structure of a completed export. |
+
+The exporter accepts output, mount, asset, function, flattened-class, texture, widget, performance,
+catalog-family, and client-force options. See [Reflection export](/kdataforge/reference/reflection-export)
+for the complete option table, output contract, publication recovery, and artifact validation.
+
+Reflection export normally runs on the host or server. Add `--force` for a deliberate local-client
+export. Progress appears in chat for chat-started exports and in `LogKDFReflection`.
+
+## Unreal Editor command
+
+`KDF.ApplyToAssets [PathFilter]` exists only in Unreal Editor builds. It applies supported `cdo`
+YAML changes directly to editor assets and marks touched packages dirty. The optional path prefix
+limits target assets, for example:
+
+```text
+KDF.ApplyToAssets /Game/FactoryGame/Recipes
+```
+
+Review and save the dirty packages to make the edits permanent. This command does not modify player
+configuration value files. See [UE Editor integration](/kdataforge/reference/editor-integration)
+for supported targets and safety limits.

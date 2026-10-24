@@ -1,0 +1,203 @@
+---
+title: Template provider API
+description: Register a native provider for custom `{prefix:body}` values in KDataForge documents.
+sidebar:
+  order: 5
+---
+
+Use `IKDFTemplateProvider` when a native mod needs to expose values through custom template tokens.
+For example, a provider registered as `acme` receives the body of `{acme:rate}` and returns a typed
+value or localized `FText`.
+
+Pack authors do not need this API for KDataForge's built-in `cfg`, setting, class, item, recipe, or
+asset providers. Their syntax is documented in
+[Templates and typed references](/kdataforge/features/templates).
+
+## Module and header
+
+The provider contract and registry are in the public `KDataForgeApi` module:
+
+```cpp
+#include "KDFTemplateProvider.h"
+```
+
+Add `KDataForgeApi` to the module that owns the provider. A provider that only returns values from
+its own mod does not need to link the main `KDataForge` module.
+
+## Provider contract
+
+Implement three methods:
+
+```cpp
+class IKDFTemplateProvider
+{
+public:
+	virtual FName GetPrefix() const = 0;
+	virtual EKDFTemplatePhase GetPhase() const = 0;
+	virtual FKDFTemplateResult Resolve(const FKDFTemplateRequest& Request) = 0;
+};
+```
+
+`GetPrefix()` returns the token prefix without the colon. A valid prefix starts with an ASCII
+letter and continues with ASCII letters, digits, or `_`.
+
+`GetPhase()` assigns the provider to one expansion phase:
+
+| Phase | When it runs | Use it for |
+| --- | --- | --- |
+| `PrePass` | Before KDataForge validates and applies document stages | Configuration or environment values that can change the document data passed to a handler |
+| `ApplyTime` | When a reflected property operation expands its operands | Values that need the final target, world state, or current apply-time context |
+
+A token is visible only in its provider's phase. Third-party prefixes support braced
+`{prefix:body}` tokens. The unquoted forms such as `cfg:id` are built-in typed references, not a
+general extension mechanism for third-party providers.
+
+`Resolve()` always runs on the game thread. The request contains:
+
+| Member | Meaning |
+| --- | --- |
+| `mBody` | Text after `prefix:`. Nested tokens have already been substituted. |
+| `mPackRef` | Pack that owns the document. Use it when names are scoped to a pack. |
+| `mGameInstance` | Current game instance. |
+| `mWorld` | Current world, or `nullptr` when the initial pre-pass runs before a world exists. |
+
+Tokens can nest up to four levels. KDataForge does not scan a provider's returned value for more
+tokens.
+
+## Result contract
+
+Set `mStatus` on every result:
+
+| Status | Meaning | Runtime behavior |
+| --- | --- | --- |
+| `Resolved` | The provider returned a value. | Expansion continues. |
+| `Unavailable` | The source cannot answer yet, commonly because no world or session settings exist. | A pre-pass document can be deferred until world values are available. |
+| `NotFound` | The requested target or member does not exist. | The token remains unresolved and KDataForge reports it. |
+| `Error` | The request is malformed or the provider failed. | The token remains unresolved and `mError` explains the failure. |
+
+Return typed data in `mValue` with `FKDFConfigValue::MakeScalar` or `MakeArray`. A whole apply-time
+token can keep that type when KDataForge converts it for a destination property. Inside surrounding
+text, KDataForge converts the value to canonical text and joins arrays with `, `.
+
+Return a localized result in `mText` and set `bHasText = true` when the namespace and key must be
+preserved. Do not set both forms unless callers can use either representation consistently.
+
+Set `bWorldBound = true` when the result depends on the current world or session. KDataForge records
+world-bound reads so it can re-evaluate affected data after those values change. An
+`Unavailable` result is tracked as world-bound even if the provider does not set the flag.
+
+Fill `mError` for `Unavailable`, `NotFound`, and `Error`. Without it, KDataForge can only report a
+generic message containing the unresolved token.
+
+## Minimal provider
+
+This apply-time provider exposes `{acme:rate}` as a float:
+
+```cpp
+#include "KDFTemplateProvider.h"
+
+class FAcmeTemplateProvider final : public IKDFTemplateProvider
+{
+public:
+	virtual FName GetPrefix() const override
+	{
+		return TEXT("acme");
+	}
+
+	virtual EKDFTemplatePhase GetPhase() const override
+	{
+		return EKDFTemplatePhase::ApplyTime;
+	}
+
+	virtual FKDFTemplateResult Resolve(const FKDFTemplateRequest& Request) override
+	{
+		FKDFTemplateResult Result;
+		if (!Request.mBody.Equals(TEXT("rate"), ESearchCase::CaseSensitive))
+		{
+			Result.mStatus = EKDFTemplateStatus::NotFound;
+			Result.mError = FString::Printf(TEXT("Unknown acme value '%s'"), *Request.mBody);
+			return Result;
+		}
+
+		Result.mStatus = EKDFTemplateStatus::Resolved;
+		Result.mValue = FKDFConfigValue::MakeScalar(EKDFConfigValueType::Float, TEXT("1.25"));
+		return Result;
+	}
+};
+```
+
+A pack can use the result as a typed operation value:
+
+```yaml
+properties:
+  - path: mManufactoringDuration
+    op: divide
+    value: '{acme:rate}'
+```
+
+Surrounding text converts it to text:
+
+```yaml
+value: 'Acme rate: {acme:rate}'
+```
+
+## Register the provider
+
+Register during module startup and unregister during shutdown. Prefer `RegisterWithSpelling()`.
+Unreal's global `FName` table preserves the case of the first spelling it saw, so
+`GetPrefix().ToString()` may not reproduce the spelling your provider declared.
+
+```cpp
+void FAcmeModule::StartupModule()
+{
+	mTemplateProvider = MakeShared<FAcmeTemplateProvider>();
+	bTemplateProviderRegistered = FKDFTemplateProviderRegistry::RegisterWithSpelling(
+		mTemplateProvider.ToSharedRef(), TEXT("acme"));
+}
+
+void FAcmeModule::ShutdownModule()
+{
+	if (bTemplateProviderRegistered)
+	{
+		FKDFTemplateProviderRegistry::Unregister(TEXT("acme"));
+		bTemplateProviderRegistered = false;
+	}
+	mTemplateProvider.Reset();
+}
+```
+
+Document prefixes are case-sensitive. With the registration above, `{acme:rate}` resolves and
+`{Acme:rate}` does not. `RegisterWithSpelling()` also checks that the supplied spelling matches
+`GetPrefix()` when case is ignored.
+
+The registry is process-wide and thread-safe. The first registration for a prefix wins. These
+built-in families stay reserved even when their providers are temporarily unregistered:
+`cfg`, `session`, `ags`, `option`, `class`, `item`, `resource`, `building`, `recipe`, `schematic`,
+`research`, `category`, `dataasset`, and `asset`. A third-party registration cannot take one of
+those names. Check the Boolean return value and leave another provider registered when your call
+fails.
+
+`Register()` remains available, but derives the document spelling from
+`GetPrefix().ToString()`. Use it only when the `FName` casing issue cannot affect the prefix.
+
+## Diagnostics and verification
+
+KDataForge reports an unavailable pre-pass value as an informational deferral. Other unresolved
+pre-pass tokens produce warnings. An apply-time failure rejects the affected expansion or property
+operation with the provider's error text.
+
+Verify a provider with one document that covers each supported body:
+
+1. Register it before KDataForge loads packs.
+2. Use the exact registered spelling in a braced token.
+3. Run `/kdf report` and confirm the document applied without an unresolved-template diagnostic.
+4. Enable `debug: true` on the document and confirm the target property received the expected typed
+   value.
+5. Test `Unavailable` before a world exists if the provider reads world state, then load a save and
+   confirm the deferred document applies.
+6. Test a missing body and a malformed body. Confirm they return `NotFound` and `Error` with useful
+   messages.
+7. Repeat the checks in a dedicated-server build when the provider can run on a server.
+
+For the rest of native setup, see [Integrate KDataForge](/kdataforge/developers/integrate-kdataforge)
+and [API design](/kdataforge/reference/api-design).

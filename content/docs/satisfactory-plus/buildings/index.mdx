@@ -1,0 +1,46 @@
+---
+title: Satisfactory Plus buildings
+description: Operating guides for extraction, production, power, logistics, and storage buildings in Satisfactory Plus.
+sidebar:
+  order: 1
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+SF+ changes more than build costs. Some machines gain new inventories, supported
+resources, outputs, placement rules, or operating limits. These guides describe
+effective SF+ behavior and identify buildings supplied by required dependency
+mods.
+
+<CardGrid>
+  <LinkCard
+    title="Extraction and cultivation"
+    href="/satisfactory-plus/buildings/extraction/"
+    description="Module requirements, extraction scaling, shared farm inputs, and environmental production conditions."
+  />
+  <LinkCard
+    title="Production"
+    href="/satisfactory-plus/buildings/production/"
+    description="Port mapping, backpressure, Filtrator timing, mixed material states, and variable power demand."
+  />
+  <LinkCard
+    title="Power"
+    href="/satisfactory-plus/buildings/power/"
+    description="Fixed generators, modular heat-to-RPM chains, renewable conditions, and node ownership."
+  />
+  <LinkCard
+    title="Logistics and storage"
+    href="/satisfactory-plus/buildings/logistics/"
+    description="Flow limits, pressure, head lift, buffer behavior, sink storage, portals, and controlled valves."
+  />
+</CardGrid>
+
+## Reading these guides
+
+Exact recipes belong in the in-game production menu because SF+ updates and
+compatibility packs can change them. Building guides focus on setup, connections,
+controls, constraints, and reasons a machine may stop.
+
+A **dependency integration** uses a building supplied by another required mod,
+such as Refined Power, Ficsit Farming, or Fluid Extras. An **upcoming** section
+is not part of the released build yet.
