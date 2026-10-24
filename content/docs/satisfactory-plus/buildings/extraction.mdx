@@ -6,35 +6,51 @@ sidebar:
   order: 2
 ---
 
-These systems are driven by the resource, recipe, or creature placed in them. The same building can therefore need different modules, fluids, environmental settings, or output capacity after its input changes.
+These systems are driven by the resource, recipe, or creature placed in them. The same building can therefore need
+different modules, fluids, environmental settings, or output capacity after its input changes.
 
 ## Modular Miner mechanics
 
-The node under the miner selects its resource rules. Those rules determine minimum mining-head tier, mandatory attachments, forbidden processing modules, allowed Fluid Module inputs, and any processed main product or byproduct. The base alone cannot extract anything.
+The node under the miner selects its resource rules. Those rules determine minimum mining-head tier, mandatory
+attachments, forbidden processing modules, allowed Fluid Module inputs, and any processed main product or byproduct. The
+base alone cannot extract anything.
 
-Module placement is validated against the selected resource. A module that works on one node can be rejected on another. A valid mining head must meet the node's tier, and every mandatory attachment must be present before production starts. Missing requirements appear as the miner's blue state.
+Module placement is validated against the selected resource. A module that works on one node can be rejected on another.
+A valid mining head must meet the node's tier, and every mandatory attachment must be present before production starts.
+Missing requirements appear as the miner's blue state.
 
 ### Rate and efficiency
 
 Mining Efficiency controls cycle speed. It begins with node purity:
 
 | Purity | Starting efficiency |
-| --- | ---: |
-| Impure | 50% |
-| Normal | 100% |
-| Pure | 200% |
+| ------ | ------------------: |
+| Impure |                 50% |
+| Normal |                100% |
+| Pure   |                200% |
 
-Module bonuses and the selected Fluid Module bonus modify this value. Processing-module penalties are applied after their related bonuses. For example, the Crusher halves Booster Module benefits. The displayed Mining Efficiency is therefore more useful than comparing module names alone.
+Module bonuses and the selected Fluid Module bonus modify this value. Processing-module penalties are applied after
+their related bonuses. For example, the Crusher halves Booster Module benefits. The displayed Mining Efficiency is
+therefore more useful than comparing module names alone.
 
-The mining head controls batch size. Standard, Hardened, and Diamond heads use tier multipliers of 1, 2, and 4. At equal efficiency, a higher-tier head therefore moves more material per completed cycle. Efficiency changes how quickly that batch completes. Replacing a head and changing modules can affect throughput through both parts of this calculation.
+The mining head controls batch size. Standard, Hardened, and Diamond heads use tier multipliers of 1, 2, and 4. At equal
+efficiency, a higher-tier head therefore moves more material per completed cycle. Efficiency changes how quickly that
+batch completes. Replacing a head and changing modules can affect throughput through both parts of this calculation.
 
-The Fluid Module consumes the fluid defined for the current resource. Consumption per fluid cycle also scales with node purity. The miner will not run without enough fluid for the next required amount, even when the product belts are clear.
+The Fluid Module consumes the fluid defined for the current resource. Consumption per fluid cycle also scales with node
+purity. The miner will not run without enough fluid for the next required amount, even when the product belts are clear.
 
-Half and Full Booster Modules contribute their configured efficiency bonus and power profile to the base miner. The Full variant supplies the stronger boost. Crusher processing replaces compatible raw output with the crushed product selected by that resource and reduces Booster benefits. Smelter processing replaces compatible ore with its primary ingot, turns Dirt into Crushed Gangue, and sends Tailings Slurry through its module pipe. Both processing paths use the resource's own product mapping, so their result varies by ore.
+Half and Full Booster Modules contribute their configured efficiency bonus and power profile to the base miner. The Full
+variant supplies the stronger boost. Crusher processing replaces compatible raw output with the crushed product selected
+by that resource and reduces Booster benefits. Smelter processing replaces compatible ore with its primary ingot, turns
+Dirt into Crushed Gangue, and sends Tailings Slurry through its module pipe. Both processing paths use the resource's
+own product mapping, so their result varies by ore.
 
 ### Main outputs and processing output
 
-The miner maintains two independent main-product buffers, one for each belt output. A normal completed cycle writes one batch to both buffers. If only one buffer can accept material, the miner redirects as much of the combined production as will fit into the other buffer. Both blocked buffers stop extraction.
+The miner maintains two independent main-product buffers, one for each belt output. A normal completed cycle writes one
+batch to both buffers. If only one buffer can accept material, the miner redirects as much of the combined production as
+will fit into the other buffer. Both blocked buffers stop extraction.
 
 Source processing adds another output path:
 
@@ -50,15 +66,22 @@ two main-product buffers      processing-module byproduct buffer
 two belt outputs              module belt or pipe output
 ```
 
-The byproduct timer runs separately from the main extraction timer. When its buffer cannot accept a complete byproduct batch, that timer waits instead of discarding a partial batch. Main extraction may continue while some space remains, but a completely full byproduct buffer blocks the miner's storage check. This distinction explains the common pattern where belts still move briefly before the whole machine stops.
+The byproduct timer runs separately from the main extraction timer. When its buffer cannot accept a complete byproduct
+batch, that timer waits instead of discarding a partial batch. Main extraction may continue while some space remains,
+but a completely full byproduct buffer blocks the miner's storage check. This distinction explains the common pattern
+where belts still move briefly before the whole machine stops.
 
-Crusher and Smelter processing cannot be combined. Changing between them can change the main product as well as the byproduct form, so old belt and pipe routing may no longer match.
+Crusher and Smelter processing cannot be combined. Changing between them can change the main product as well as the
+byproduct form, so old belt and pipe routing may no longer match.
 
 ### Power and potential
 
-Modules do not behave as separate grid consumers. The miner sums its own power profile with every attached module and reports that total through the base connection. Variable module loads follow the miner's running state. Adding a module can therefore trip a previously stable circuit even though no new power cable is needed.
+Modules do not behave as separate grid consumers. The miner sums its own power profile with every attached module and
+reports that total through the base connection. Variable module loads follow the miner's running state. Adding a module
+can therefore trip a previously stable circuit even though no new power cable is needed.
 
-Potential is applied to the miner's main and processing timers together. The Modular Miner does not consume Power Shards through a conventional shard inventory. Booster attachments provide its production bonuses and power cost.
+Potential is applied to the miner's main and processing timers together. The Modular Miner does not consume Power Shards
+through a conventional shard inventory. Booster attachments provide its production bonuses and power cost.
 
 ### Diagnosing an idle miner
 
@@ -75,17 +98,16 @@ An idle miner must pass these checks:
 
 ## Air Collector mechanics
 
-When placed, the collector checks supported atmospheric sources around it. A
-source can be a nearby world feature, a matching unoccupied resource node, or a
-combination of both. The highest-priority match decides what it collects.
+When placed, the collector checks supported atmospheric sources around it. A source can be a nearby world feature, a
+matching unoccupied resource node, or a combination of both. The highest-priority match decides what it collects.
 Ordinary Air is the fallback when no special source wins.
 
 The winning rule supplies product, cycle time, minimum and maximum output, and one of two yield models:
 
-- Height-based collection multiplies base output from 1 at or below 40 metres
-  of world elevation to 5 at or above 450 metres, with linear scaling between
-  them.
-- Hit-based collection multiplies configured output by matching nearby sources, capped by that resource rule's hit limit.
+- Height-based collection multiplies base output from 1 at or below 40 metres of world elevation to 5 at or above 450
+  metres, with linear scaling between them.
+- Hit-based collection multiplies configured output by matching nearby sources, capped by that resource rule's hit
+  limit.
 
 The result is clamped to the selected resource's minimum and maximum. Nearby collectors then apply the spacing penalty:
 
@@ -93,19 +115,17 @@ The result is clamped to the selected resource's minimum and maximum. Nearby col
 final raw output = unpenalized output / (1 + nearby collectors * 1.1)
 ```
 
-Output is rounded down in 0.5 m³ steps before the resource limits are applied again. Source limits, elevation, nearby collectors, and rounding can all contribute to a low reading.
+Output is rounded down in 0.5 m³ steps before the resource limits are applied again. Source limits, elevation, nearby
+collectors, and rounding can all contribute to a low reading.
 
-Only collectors of the same type inside 25 metres count toward the spacing
-penalty. The build-mode range display makes this radius visible. Destroying one
-recalculates the remaining collectors' yield.
+Only collectors of the same type inside 25 metres count toward the spacing penalty. The build-mode range display makes
+this radius visible. Destroying one recalculates the remaining collectors' yield.
 
-The Air Collector stores its selected product in a small fluid buffer and
-pushes it through its output pipe. Power loss, an unsupported source, or
-insufficient buffer space stops its production cycle.
+The Air Collector stores its selected product in a small fluid buffer and pushes it through its output pipe. Power loss,
+an unsupported source, or insufficient buffer space stops its production cycle.
 
-Version 1.4 adds an Air Collector speed multiplier. It changes cycle duration
-only. Output per cycle, height, spacing, pipe capacity, and power remain
-unchanged. This setting is not part of the current public build.
+Version 1.4 adds an Air Collector speed multiplier. It changes cycle duration only. Output per cycle, height, spacing,
+pipe capacity, and power remain unchanged. This setting is not part of the current public build.
 
 ## Extractor placement and node coupling
 
@@ -115,28 +135,37 @@ SF+ checks extractor support and resource support separately:
 - Extractor must accept that form of resource.
 - World node must accept that extractor type.
 
-Loading another mod is therefore not enough by itself. Its extractor and
-resource pairing must also have SF+ compatibility.
+Loading another mod is therefore not enough by itself. Its extractor and resource pairing must also have SF+
+compatibility.
 
-Ordinary Water Extractors validate water volume. Oil and Algal Mass extractors bind to matching nodes. Toxic resource nodes deliberately reject normal extractor occupation and are harvested indirectly by Air Collectors.
+Ordinary Water Extractors validate water volume. Oil and Algal Mass extractors bind to matching nodes. Toxic resource
+nodes deliberately reject normal extractor occupation and are harvested indirectly by Air Collectors.
 
-Resource wells add a parent-child dependency. The central Pressurizer activates and controls the well; satellite Extractors draw from its surrounding nodes. Overclocking the central building changes the potential of the whole well. A satellite with a clear pipe still remains idle when its core is inactive or unpowered.
+Resource wells add a parent-child dependency. The central Pressurizer activates and controls the well; satellite
+Extractors draw from its surrounding nodes. Overclocking the central building changes the potential of the whole well. A
+satellite with a clear pipe still remains idle when its core is inactive or unpowered.
 
 ## Seed Extractor state
 
-Inserted Dirt selects a material definition containing Dirt consumed per cycle, extraction time, and up to four seed products. The input filter accepts only Dirt with a registered definition. Changing Dirt immediately reselects the definition, updates cycle time, and rewrites output-slot filters.
+Inserted Dirt selects a material definition containing Dirt consumed per cycle, extraction time, and up to four seed
+products. The input filter accepts only Dirt with a registered definition. Changing Dirt immediately reselects the
+definition, updates cycle time, and rewrites output-slot filters.
 
-Each possible seed has two reserved output slots in the eight-slot output inventory. A cycle starts only when the full Dirt cost is present and every configured seed stack has room. One blocked seed type can stop all outputs from that cycle.
+Each possible seed has two reserved output slots in the eight-slot output inventory. A cycle starts only when the full
+Dirt cost is present and every configured seed stack has room. One blocked seed type can stop all outputs from that
+cycle.
 
-Selected Dirt is saved with the machine. On load, SF+ checks it against current
-material settings and refreshes production time. This prevents an old save from
-keeping outdated Dirt behavior after definitions or load order changes.
+Selected Dirt is saved with the machine. On load, SF+ checks it against current material settings and refreshes
+production time. This prevents an old save from keeping outdated Dirt behavior after definitions or load order changes.
 
-Overclocking divides the selected Dirt's base cycle time by potential. It does not alter Dirt cost or seed amounts per cycle. The custom potential inventory accepts overclock-type shards, and the machine's visual, sound, and particle state follows power and production state.
+Overclocking divides the selected Dirt's base cycle time by potential. It does not alter Dirt cost or seed amounts per
+cycle. The custom potential inventory accepts overclock-type shards, and the machine's visual, sound, and particle state
+follows power and production state.
 
 ## Farming Platform flow
 
-The platform is a logistics hub for attached plots. Its visible belt inventory reserves slots for configured seed types. Separate hidden buffers hold Water and Fertilizer arriving through any of its four fluid connections.
+The platform is a logistics hub for attached plots. Its visible belt inventory reserves slots for configured seed types.
+Separate hidden buffers hold Water and Fertilizer arriving through any of its four fluid connections.
 
 ```text
 seed belt and fluid pipes
@@ -154,70 +183,86 @@ Harvester Module present?
     no:  remains in plot
 ```
 
-For each plot, the platform reads the selected crop recipe. When a plot holds less than roughly two cycles of an ingredient, the platform transfers another small batch from shared storage. Solids move one item at a time; fluids move in 1 m³ units. This keeps one plot from immediately taking the entire shared supply.
+For each plot, the platform reads the selected crop recipe. When a plot holds less than roughly two cycles of an
+ingredient, the platform transfers another small batch from shared storage. Solids move one item at a time; fluids move
+in 1 m³ units. This keeps one plot from immediately taking the entire shared supply.
 
-The plot will run only while attached to a platform, powered, supplied with every recipe ingredient, fitted with every module required by that recipe, and able to store all products. The Greenhouse Module changes plot speed to 150%. Irrigation and Harvester modules satisfy separate recipe and logistics roles; Harvester does not make a recipe valid by itself.
+The plot will run only while attached to a platform, powered, supplied with every recipe ingredient, fitted with every
+module required by that recipe, and able to store all products. The Greenhouse Module changes plot speed to 150%.
+Irrigation and Harvester modules satisfy separate recipe and logistics roles; Harvester does not make a recipe valid by
+itself.
 
-Changing a plot recipe returns its current input and output inventory to the player when possible, resizes those inventories for the new recipe, and refreshes the platform's output filters. Check personal inventory space before switching a busy plot.
+Changing a plot recipe returns its current input and output inventory to the player when possible, resizes those
+inventories for the new recipe, and refreshes the platform's output filters. Check personal inventory space before
+switching a busy plot.
 
 ## Doggo House care loop
 
-Doggo House turns Doggo care and item collection into a powered factory loop.
-Full Doggo Cages and Doggo Chow can enter through its belt inputs, while Water
-arrives through its pipe. Releasing a caged Doggo is possible only while fewer
-than 16 Doggos occupy the house range.
+Doggo House turns Doggo care and item collection into a powered factory loop. Full Doggo Cages and Doggo Chow can enter
+through its belt inputs, while Water arrives through its pipe. Releasing a caged Doggo is possible only while fewer than
+16 Doggos occupy the house range.
 
-The house runs only with power, at least one Doggo in range, enough Water, and
-enough Chow. Its care rate scales with the number of occupants. A successful
-care cycle consumes supplies and restores hunger and thirst for Doggos in the
+The house runs only with power, at least one Doggo in range, enough Water, and enough Chow. Its care rate scales with
+the number of occupants. A successful care cycle consumes supplies and restores hunger and thirst for Doggos in the
 house. When supplies or power fail, their needs fall instead of recovering.
 
-Doggo findings leave through the output belt. Keep it clear before increasing
-occupancy. Opening or closing the doors changes access to the enclosure, while
-the house continues to count Doggos inside its working range.
+Doggo findings leave through the output belt. Keep it clear before increasing occupancy. Opening or closing the doors
+changes access to the enclosure, while the house continues to count Doggos inside its working range.
 
 ## Slug breeding state
 
-The Terrarium has two parent slots and one food slot. Both parent types must be mutually compatible. The higher-tier parent's definition supplies active environmental requirements, breeding duration, and preferred food. Food consumed per feeding event is the sum of both parents' requirements.
+The Terrarium has two parent slots and one food slot. Both parent types must be mutually compatible. The higher-tier
+parent's definition supplies active environmental requirements, breeding duration, and preferred food. Food consumed per
+feeding event is the sum of both parents' requirements.
 
-Production requires power, both parents, correct food, enough food for the next event, temperature and humidity inside the active ranges, and space for both configured egg outputs. Each successful breeding cycle produces the defined egg count for each parent side.
+Production requires power, both parents, correct food, enough food for the next event, temperature and humidity inside
+the active ranges, and space for both configured egg outputs. Each successful breeding cycle produces the defined egg
+count for each parent side.
 
 Three timers advance while the Terrarium is producing:
 
-| Timer | Completion effect |
-| --- | --- |
-| Breeding | Stores eggs for both parent sides. |
-| Feeding | Removes combined food cost. |
+| Timer                     | Completion effect                        |
+| ------------------------- | ---------------------------------------- |
+| Breeding                  | Stores eggs for both parent sides.       |
+| Feeding                   | Removes combined food cost.              |
 | Parent life, one per slot | Removes one adult from that parent slot. |
 
-Pausing or losing a production condition pauses these timers. Potential scales
-all three, so faster breeding also accelerates food use and parent retirement.
-Factory Clipboard copies target temperature, target humidity, and pause state.
-The host keeps active parents, settings, and timers consistent for connected
-players.
+Pausing or losing a production condition pauses these timers. Potential scales all three, so faster breeding also
+accelerates food use and parent retirement. Factory Clipboard copies target temperature, target humidity, and pause
+state. The host keeps active parents, settings, and timers consistent for connected players.
 
 ## Slug hatching state
 
-An inserted egg selects its incubation definition: duration, environment, optional fluid, possible adult results, and result probabilities. Changing egg type resets the incubation timer, rewrites output filters, and clears an incompatible fluid already in the tank.
+An inserted egg selects its incubation definition: duration, environment, optional fluid, possible adult results, and
+result probabilities. Changing egg type resets the incubation timer, rewrites output filters, and clears an incompatible
+fluid already in the tank.
 
-The Hatchery starts from 25°C and 50% humidity. Attached temperature and humidity modules add their current values to those baselines; humidity is clamped from 0% to 100%. Module values move toward their targets over time, so entering a valid range can take time after placement or adjustment.
+The Hatchery starts from 25°C and 50% humidity. Attached temperature and humidity modules add their current values to
+those baselines; humidity is clamped from 0% to 100%. Module values move toward their targets over time, so entering a
+valid range can take time after placement or adjustment.
 
-Incubation requires an Incubator Module. Eggs with a fluid requirement also need a Tank Module and enough of the exact fluid for the next consumption event. While incubation runs, the tank removes that amount repeatedly at the egg's configured fluid interval. A slow supply can satisfy the first check and stall the Hatchery later.
+Incubation requires an Incubator Module. Eggs with a fluid requirement also need a Tank Module and enough of the exact
+fluid for the next consumption event. While incubation runs, the tank removes that amount repeatedly at the egg's
+configured fluid interval. A slow supply can satisfy the first check and stall the Hatchery later.
 
-Only one Incubator, Tank, and Night Module can contribute to a Hatchery. Temperature and Humidity Modules can stack because their values are added. The Night Module supplies the time override used by time-sensitive eggs; without an override, the Hatchery follows the world's current day or night state.
+Only one Incubator, Tank, and Night Module can contribute to a Hatchery. Temperature and Humidity Modules can stack
+because their values are added. The Night Module supplies the time override used by time-sensitive eggs; without an
+override, the Hatchery follows the world's current day or night state.
 
-Running power is the Hatchery's base demand plus the selected egg's demand and every attached module's demand. Changing egg type or module stack can therefore change consumption without changing potential.
+Running power is the Hatchery's base demand plus the selected egg's demand and every attached module's demand. Changing
+egg type or module stack can therefore change consumption without changing potential.
 
-Before starting a cycle, the Hatchery checks space for every possible adult type. This includes low-probability results, so one full rare-output slot can stop the whole machine.
+Before starting a cycle, the Hatchery checks space for every possible adult type. This includes low-probability results,
+so one full rare-output slot can stop the whole machine.
 
-At cycle completion, each configured adult result rolls independently. Successful rolls add their configured amount. For results using failure protection, a failed roll raises that result's next chance by a fraction of its base probability, up to 100%. A success removes the accumulated bonus. Multiple adult types can succeed in the same cycle.
+At cycle completion, each configured adult result rolls independently. Successful rolls add their configured amount. For
+results using failure protection, a failed roll raises that result's next chance by a fraction of its base probability,
+up to 100%. A success removes the accumulated bonus. Multiple adult types can succeed in the same cycle.
 
-The Hatchery consumes egg and configured fluid on their own schedules.
-Potential shortens incubation time. The host keeps the selected egg, environment,
-module effects, accumulated chances, and production progress consistent for
-connected players. Factory Clipboard copies pause state plus settings for each
-installed module type and tier. Pasting applies those values to matching
-modules already attached to the target Hatchery; it does not build missing modules.
+The Hatchery consumes egg and configured fluid on their own schedules. Potential shortens incubation time. The host
+keeps the selected egg, environment, module effects, accumulated chances, and production progress consistent for
+connected players. Factory Clipboard copies pause state plus settings for each installed module type and tier. Pasting
+applies those values to matching modules already attached to the target Hatchery; it does not build missing modules.
 
 ## Cross-system diagnostics
 
@@ -228,4 +273,5 @@ When a machine stops after an input or module change, inspect the dependency int
 - New Dirt or crop recipe: rewritten output filters, missing recipe module, or one full product slot.
 - New slug or egg: different food, climate, time, fluid, probability outputs, or parent compatibility.
 
-Most apparent throughput faults are buffer or dependency faults. Check every potential output, including rare outputs and byproducts, before changing clocks or rebuilding the machine.
+Most apparent throughput faults are buffer or dependency faults. Check every potential output, including rare outputs
+and byproducts, before changing clocks or rebuilding the machine.

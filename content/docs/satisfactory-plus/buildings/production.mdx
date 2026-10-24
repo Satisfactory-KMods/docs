@@ -5,132 +5,114 @@ sidebar:
   order: 3
 ---
 
-SF+ processing chains use mixed solid and fluid inputs, several outputs,
-independent byproduct rates, and machines whose power demand changes during a
-cycle. Every part of the selected recipe needs a valid route.
+SF+ processing chains use mixed solid and fluid inputs, several outputs, independent byproduct rates, and machines whose
+power demand changes during a cycle. Every part of the selected recipe needs a valid route.
 
 ## What controls production
 
-The selected recipe controls required ingredients, products, cycle time, active
-connections, and displayed power range. SF+ can replace those values while the
-machine keeps its familiar controls and completion rules. A vanilla building
-can therefore fill a different role in an SF+ factory.
+The selected recipe controls required ingredients, products, cycle time, active connections, and displayed power range.
+SF+ can replace those values while the machine keeps its familiar controls and completion rules. A vanilla building can
+therefore fill a different role in an SF+ factory.
 
-Research and milestones decide which recipes appear. Supplying material does
-not discover a hidden recipe. Once a recipe is available and selected, the
-machine maps its solid ingredients to belt inputs and fluids or gases to pipe
-inputs. Product slots and connections follow the recipe's product order.
+Research and milestones decide which recipes appear. Supplying material does not discover a hidden recipe. Once a recipe
+is available and selected, the machine maps its solid ingredients to belt inputs and fluids or gases to pipe inputs.
+Product slots and connections follow the recipe's product order.
 
-| Machine state | What it means | What to check |
-| --- | --- | --- |
-| No recipe | Machine has no active production definition. | Confirm recipe is unlocked and selected. |
+| Machine state     | What it means                                                            | What to check                                                 |
+| ----------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------- |
+| No recipe         | Machine has no active production definition.                             | Confirm recipe is unlocked and selected.                      |
 | Waiting for input | At least one mapped ingredient is missing, wrong, or below cycle amount. | Inspect every solid and fluid input shown in production menu. |
-| Output blocked | At least one product cannot fit in its assigned output. | Drain main product, byproducts, and waste fluids. |
-| Power limited | Grid cannot meet current demand. | Compare available capacity with recipe's maximum demand. |
-| Producing | Recipe, ingredients, output space, and power all pass. | Cycle advances at current clock speed. |
+| Output blocked    | At least one product cannot fit in its assigned output.                  | Drain main product, byproducts, and waste fluids.             |
+| Power limited     | Grid cannot meet current demand.                                         | Compare available capacity with recipe's maximum demand.      |
+| Producing         | Recipe, ingredients, output space, and power all pass.                   | Cycle advances at current clock speed.                        |
 
-Changing the recipe rebuilds slot and connection assignments. Belts and pipes
-remain physically attached, but the material expected at a connection may
-change. Empty or flush a mixed-state machine before switching a live line.
+Changing the recipe rebuilds slot and connection assignments. Belts and pipes remain physically attached, but the
+material expected at a connection may change. Empty or flush a mixed-state machine before switching a live line.
 
 ## Multi-output flow and backpressure
 
-A production cycle is one transaction. The machine does not discard a product
-the player does not want. If any solid output or fluid byproduct has no room, the
-complete recipe eventually stops.
+A production cycle is one transaction. The machine does not discard a product the player does not want. If any solid
+output or fluid byproduct has no room, the complete recipe eventually stops.
 
-The production menu shows output order for machines with several exits. Follow
-that order instead of identifying a port by height or an old screenshot. A model
-update can move a connection without changing recipe order, and a different
+The production menu shows output order for machines with several exits. Follow that order instead of identifying a port
+by height or an old screenshot. A model update can move a connection without changing recipe order, and a different
 recipe can use the same physical port for a different material.
 
-Crusher can split raw material into a useful crushed product and an unwanted
-solid fraction, so both exits need belt capacity. Sorter can return several
-mineral fractions, while higher processing stages may add Air, Water, or another
-fluid input. Wet Washer combines loose material with washing fluid, then sends
-the cleaned solid and liquid slurry through separate systems.
+Crusher can split raw material into a useful crushed product and an unwanted solid fraction, so both exits need belt
+capacity. Sorter can return several mineral fractions, while higher processing stages may add Air, Water, or another
+fluid input. Wet Washer combines loose material with washing fluid, then sends the cleaned solid and liquid slurry
+through separate systems.
 
-Treat waste as a normal production output. Buffer it, process it, or sink eligible
-solid material. A full waste connection is still a full output and blocks the line.
+Treat waste as a normal production output. Buffer it, process it, or sink eligible solid material. A full waste
+connection is still a full output and blocks the line.
 
 ## Mixed-state processing
 
-Flexible Blast Furnace, Reformer, Chemical Reactor, Refinery, and Blender can
-cross solid, liquid, and gas forms in one recipe. An unused pipe on one recipe may
-become a required input or output after a recipe change. Check the connection diagram
-each time the recipe changes.
+Flexible Blast Furnace, Reformer, Chemical Reactor, Refinery, and Blender can cross solid, liquid, and gas forms in one
+recipe. An unused pipe on one recipe may become a required input or output after a recipe change. Check the connection
+diagram each time the recipe changes.
 
-KMods mixed-state machines provide 10 metres of head lift at their fluid
-outputs. This covers a short rise away from Flexible Blast Furnace, Wet Washer,
-Reformer, Chemical Reactor, or Filtrator. Taller networks still need pumps and
+KMods mixed-state machines provide 10 metres of head lift at their fluid outputs. This covers a short rise away from
+Flexible Blast Furnace, Wet Washer, Reformer, Chemical Reactor, or Filtrator. Taller networks still need pumps and
 sensible pipe layout.
 
-The Flexible Blast Furnace also has a 1500 °C processing limit. The Reformer
-handles heating, cooling, pressure, and casting steps. The Chemical Reactor
-handles complex reaction and separation layouts. Use their production screens
-to check active input and output order.
+The Flexible Blast Furnace also has a 1500 °C processing limit. The Reformer handles heating, cooling, pressure, and
+casting steps. The Chemical Reactor handles complex reaction and separation layouts. Use their production screens to
+check active input and output order.
 
 ## Filtrator
 
-Filtrator behaves differently from a normal recipe machine. It selects one fluid
-process, optionally consumes solid filtration medium, returns treated fluid,
-and produces up to ten independently timed solid byproducts.
+Filtrator behaves differently from a normal recipe machine. It selects one fluid process, optionally consumes solid
+filtration medium, returns treated fluid, and produces up to ten independently timed solid byproducts.
 
 ### Connections
 
-| Connection | Purpose |
-| --- | --- |
-| Input pipe | Supplies fluid selected by active process. |
-| Input belt | Supplies filtration medium when process requires one. |
-| Output pipe | Drains treated fluid when process produces one. |
+| Connection  | Purpose                                                   |
+| ----------- | --------------------------------------------------------- |
+| Input pipe  | Supplies fluid selected by active process.                |
+| Input belt  | Supplies filtration medium when process requires one.     |
+| Output pipe | Drains treated fluid when process produces one.           |
 | Output belt | Carries all solid byproducts from shared internal output. |
 
 ### Automatic selection and unlocks
 
-When no process is selected, Filtrator periodically checks the fluid already inside
-the input or visible through the connected input pipe. It can then select the matching
-unlocked process.
+When no process is selected, Filtrator periodically checks the fluid already inside the input or visible through the
+connected input pipe. It can then select the matching unlocked process.
 
-Fluid detection never grants research. The matching Filtrator process must already
-be unlocked. Automatic selection also stops once a process is active, so changing
-the input fluid alone does not safely convert a running machine to another process.
+Fluid detection never grants research. The matching Filtrator process must already be unlocked. Automatic selection also
+stops once a process is active, so changing the input fluid alone does not safely convert a running machine to another
+process.
 
-Selecting a different process empties internal input and output storage before new
-slot rules are applied. This removes buffered input fluid, filtration medium,
-treated fluid, and solid byproducts. Drain valuable material before changing
+Selecting a different process empties internal input and output storage before new slot rules are applied. This removes
+buffered input fluid, filtration medium, treated fluid, and solid byproducts. Drain valuable material before changing
 the process.
 
 ### Independent timers
 
 Filtrator runs several schedules while producing:
 
-| Production state | Result |
-| --- | --- |
-| Main process timer | Consumes input fluid and creates treated fluid. |
-| Filtration-medium timer | Consumes required solid medium at its configured interval. |
-| Byproduct timer | Creates one configured solid in its own internal slot. Each byproduct has separate timer. |
+| Production state        | Result                                                                                    |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| Main process timer      | Consumes input fluid and creates treated fluid.                                           |
+| Filtration-medium timer | Consumes required solid medium at its configured interval.                                |
+| Byproduct timer         | Creates one configured solid in its own internal slot. Each byproduct has a separate timer. |
 
-These schedules share the machine's permission to run. Filtrator checks room for
-every configured solid byproduct and treated fluid before production continues.
-One full byproduct slot blocks the whole process even when the main fluid output is
-empty. Missing or wrong filtration medium has the same effect when the process
-requires one.
+These schedules share the machine's permission to run. Filtrator checks room for every configured solid byproduct and
+treated fluid before production continues. One full byproduct slot blocks the whole process even when the main fluid
+output is empty. Missing or wrong filtration medium has the same effect when the process requires one.
 
-All solid byproducts leave through one belt. The machine selects the fullest
-populated internal byproduct slot when feeding the belt, so the output should be
-treated as a mixed stream. Do not design downstream sorting around a fixed
+All solid byproducts leave through one belt. The machine selects the fullest populated internal byproduct slot when
+feeding the belt, so the output should be treated as a mixed stream. Do not design downstream sorting around a fixed
 round-robin sequence.
 
 ### Clock speed and copied settings
 
-A clock change applies to the main fluid process, filtration-medium use, and every
-byproduct timer. Each keeps its own base duration, so relative schedules remain
-different as the machine speeds up or slows down. A faster clock therefore
+A clock change applies to the main fluid process, filtration-medium use, and every byproduct timer. Each keeps its own
+base duration, so relative schedules remain different as the machine speeds up or slows down. A faster clock therefore
 increases pressure on all outputs, including the treated fluid.
 
-Copy and paste carries the selected process with common factory settings. The target
-accepts the selection only when that process is unlocked. Paste cannot bypass
-progression.
+Copy and paste carries the selected process with common factory settings. The target accepts the selection only when
+that process is unlocked. Paste cannot bypass progression.
 
 ### Filtrator diagnosis
 
@@ -146,48 +128,39 @@ Check faults in this order:
 
 ## Packaging and container circulation
 
-Recipe Helper and Fluid Packer run the same packaging loop. Packaging consumes
-fluid or gas plus its matching empty container. Unpackaging releases the fluid
-or gas and returns the container as a second product.
+Recipe Helper and Fluid Packer run the same packaging loop. Packaging consumes fluid or gas plus its matching empty
+container. Unpackaging releases the fluid or gas and returns the container as a second product.
 
-A packaging line therefore has two balances: material flow and container flow.
-If empty containers run out, packaging stops. If returned containers cannot
-leave an unpacking machine, unpacking stops even when its pipe is clear. Reuse
+A packaging line therefore has two balances: material flow and container flow. If empty containers run out, packaging
+stops. If returned containers cannot leave an unpacking machine, unpacking stops even when its pipe is clear. Reuse
 returned containers in a closed loop when both ends run at compatible rates.
 
-The recipe still needs its research unlock. Supplying a fluid does not reveal
-its package or unpackage recipe automatically. Some recipes run in Recipe
-Helper, some in Fluid Packer, and some in either machine. Check the machine menu
-before choosing a building for the line.
+The recipe still needs its research unlock. Supplying a fluid does not reveal its package or unpackage recipe
+automatically. Some recipes run in Recipe Helper, some in Fluid Packer, and some in either machine. Check the machine
+menu before choosing a building for the line.
 
 ## Farming production
 
-Cooking Hub follows the ordinary selected-recipe cycle described above. It does
-not pull crops directly from nearby plots. Harvested produce must reach its
-inputs through factory logistics, and every food product needs output space.
-Its cooking, baking, boiling, blending, and frying options appear as their
-research unlocks become available.
+Cooking Hub follows the ordinary selected-recipe cycle described above. It does not pull crops directly from nearby
+plots. Harvested produce must reach its inputs through factory logistics, and every food product needs output space. Its
+cooking, baking, boiling, blending, and frying options appear as their research unlocks become available.
 
-Composter uses the same input, cycle, and output checks for a different role.
-Early processes turn suitable organic material into Nutrient Mixture. Later
-SF+ processes also concentrate or recover Slug Slime. Reserve crops needed by
-food or seed production before sending farm overflow into composting.
+Composter uses the same input, cycle, and output checks for a different role. Early processes turn suitable organic
+material into Nutrient Mixture. Later SF+ processes also concentrate or recover Slug Slime. Reserve crops needed by food
+or seed production before sending farm overflow into composting.
 
-Version 1.4 adds compatibility handling for Composter recipes saved under older
-paths. That migration is not a current-public-build mechanic.
+Version 1.4 adds compatibility handling for Composter recipes saved under older paths. That migration is not a
+current-public-build mechanic.
 
 ## Variable power demand
 
-Some late-game production uses a minimum and maximum power range instead of a
-flat draw. Demand changes while the cycle runs. The Particle Accelerator and Quantum Encoder
-have large enough range to shape grid design, and Converter recipes can also use
-a variable range.
+Some late-game production uses a minimum and maximum power range instead of a flat draw. Demand changes while the cycle
+runs. The Particle Accelerator and Quantum Encoder have large enough range to shape grid design, and Converter recipes
+can also use a variable range.
 
-Plan the grid against the maximum shown for the selected recipe. Idle draw,
-average draw, or an early-cycle reading does not prove the grid can sustain the
-peak. A machine that loses power at a similar point in each cycle usually lacks peak capacity even when
-average generation looks sufficient.
+Plan the grid against the maximum shown for the selected recipe. Idle draw, average draw, or an early-cycle reading does
+not prove the grid can sustain the peak. A machine that loses power at a similar point in each cycle usually lacks peak
+capacity even when average generation looks sufficient.
 
-Clocking raises material throughput and output pressure alongside power demand.
-Before increasing clock speed, verify all mixed outputs, byproduct storage, pipe
-head lift, and peak grid capacity together.
+Clocking raises material throughput and output pressure alongside power demand. Before increasing clock speed, verify
+all mixed outputs, byproduct storage, pipe head lift, and peak grid capacity together.

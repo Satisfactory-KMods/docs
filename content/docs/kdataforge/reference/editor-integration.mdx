@@ -47,7 +47,8 @@ summary line is logged with the number of ops applied, assets touched, and packa
 :::caution
 This command is a narrow importer, not the runtime document dispatcher. It reads explicit
 `target:` paths and `properties:` only. It does not expand `allAssetsOfClass` or `matchTag`, and it
-does not reproduce `applyToSubclasses`, `applyToSpawnedActors`, `actorAction`, `inventoryRemap`, or `deferOneGameTick`. Document
+does not reproduce `applyToSubclasses`, `applyToSpawnedActors`, `actorAction`, `inventoryRemap`, or `deferOneGameTick`.
+Document
 conditions and `include:` ordering are also not evaluated here. Write editor-import patches with
 explicit targets and review the dirty packages before saving.
 :::
@@ -77,7 +78,8 @@ CDO exports include these non-edit reflected fields as well.
 
 ## Runtime-only defer flag
 
-Set `deferOneGameTick: true` on a `type: cdo` patch when the base game initializes the target during startup and the patch must run after that initialization:
+Set `deferOneGameTick: true` on a `type: cdo` patch when the base game initializes the target during startup and the
+patch must run after that initialization:
 
 ```yaml
 type: cdo
@@ -89,7 +91,8 @@ patches:
         value: 123
 ```
 
-KDataForge waits for the matching world to enter `BeginPlay`, then applies the patch on the following game tick. The flag is deliberately a one-tick startup delay, not a general timer.
+KDataForge waits for the matching world to enter `BeginPlay`, then applies the patch on the following game tick. The
+flag is deliberately a one-tick startup delay, not a general timer.
 `KDF.ApplyToAssets` ignores this flag and applies explicit targets immediately.
 
 ## When to use which pipeline
@@ -111,7 +114,8 @@ pack is removed.
 
 ## Still open
 
-Asset/image import into the editor (bringing [`type: asset`](/kdataforge/features/data-assets#2d-image-assets-type-asset)
+Asset/image import into the editor (bringing
+[`type: asset`](/kdataforge/features/data-assets#2d-image-assets-type-asset)
 files in as real texture assets) and editor-side UI polish (search/filter/sort over patchable
 assets) are not implemented yet.
 

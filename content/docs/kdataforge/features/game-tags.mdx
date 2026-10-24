@@ -86,7 +86,8 @@ document itself never needs it, since `GameTags` runs before `CDOChanges` uncond
 
 ## Tag container ops on `mGameplayTags`
 
-Once a tag exists, whether it is yours or a native `KMods.*` one (see [Data Assets](/kdataforge/features/data-assets) for the
+Once a tag exists, whether it is yours or a native `KMods.*` one (see [Data Assets](/kdataforge/features/data-assets)
+for the
 full native list), every tag-container op works on any `FGameplayTagContainer` property. `append`
 adds tags without disturbing existing ones. `remove` takes a single tag back out. `clear` empties
 the container entirely, and the default `set` op replaces the whole container:

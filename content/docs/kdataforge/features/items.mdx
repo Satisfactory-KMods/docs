@@ -15,7 +15,8 @@ generated, so use `id:` instead.
 
 `item` creates a genuinely new `UFGItemDescriptor`-derived class at runtime. This is the same kind
 of class every base-game part or component is. It shares the entry grammar with `resource`,
-`building`, `unlock`, `recipe`, `schematic`, and `research` (see [YAML Schema → Content Creation](/kdataforge/reference/yaml-schema#content-creation-item-resource-building-recipe-schematic-research-unlock)).
+`building`, `unlock`, `recipe`, `schematic`, and `research` (see
+[YAML Schema → Content Creation](/kdataforge/reference/yaml-schema#content-creation-item-resource-building-recipe-schematic-research-unlock)).
 However, `item` (along with `resource`, `building`, and `unlock`) can only _generate_ a class,
 never register an existing one. That register-only mode is reserved for `recipe`/`schematic`/`research`,
 see [Recipes](/kdataforge/features/recipes).

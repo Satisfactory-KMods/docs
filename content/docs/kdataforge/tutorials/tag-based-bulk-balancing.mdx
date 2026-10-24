@@ -179,7 +179,8 @@ worked `matchTag` example against them in
 | You're fine gating the whole document behind `hasMod: KAPI`                                                            | You don't want a KAPI dependency at all                                      |
 
 The two aren't mutually exclusive. A single `matchTag:` list can include both, for example
-`matchTag:` with block-sequence entries `KMods.AlternateRecipe` and `MyOverhaul.Rebalanced`, remembering that's an AND: "alternates
+`matchTag:` with block-sequence entries `KMods.AlternateRecipe` and `MyOverhaul.Rebalanced`, remembering that's an AND:
+"alternates
 that are ALSO mine." Native tags always require a `conditions:` block with `hasMod: KAPI` on the document,
 since they don't exist without KAPI loaded. Your own tags never need any `hasMod` gate.
 

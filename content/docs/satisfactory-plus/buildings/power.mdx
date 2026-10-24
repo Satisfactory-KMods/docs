@@ -5,7 +5,9 @@ sidebar:
   order: 4
 ---
 
-Satisfactory Plus uses three power models. Conventional generators hold fixed output while required inputs remain available. Modular plants pass heat, working fluid, RPM, and power through attached buildings. Renewable generators derive output from time, placement, nearby machines, or a claimed world node.
+Satisfactory Plus uses three power models. Conventional generators hold fixed output while required inputs remain
+available. Modular plants pass heat, working fluid, RPM, and power through attached buildings. Renewable generators
+derive output from time, placement, nearby machines, or a claimed world node.
 
 Find costs, unlocks, accepted-item lists, and throughput values in in-game wiki.
 
@@ -13,29 +15,36 @@ Find costs, unlocks, accepted-item lists, and throughput values in in-game wiki.
 
 ### Fixed-output state
 
-Coal-Powered Generator is released content. It produces **200 MW** at normal
-clock speed and accepts several supported solid fuels. Fuel type determines
-burn time through its energy value. Water is separate required input. Generator
-stops when either fuel or Water buffer can no longer support next production
-step.
+The Coal-Powered Generator is released content. It produces **200 MW** at normal clock speed and accepts several
+supported solid fuels. The fuel type determines burn time through its energy value. Water is a separate required input.
+The generator stops when either the fuel or Water buffer can no longer support the next production step.
 
-Coal generator aims to hold output selected by clock speed. Low grid demand does not turn it into demand-following generator. Stable belt supply is insufficient when Water flow fluctuates, and full pipe is insufficient when upstream system cannot replace ongoing use.
+The coal generator aims to hold the output selected by its clock speed. Low grid demand does not turn it into a
+demand-following generator. A stable belt supply is insufficient when Water flow fluctuates, and a full pipe is
+insufficient when the upstream system cannot replace ongoing use.
 
-Fuel-Powered Generator follows same fixed-output idea with one compatible fluid or gas fuel in pipe network. SF+ changes its rating and progression, but does not give it modular heater or turbine stages. Flush mixed pipes before fuel change because incompatible residue can prevent valid fuel state.
+The Fuel-Powered Generator follows the same fixed-output model with one compatible fluid or gas fuel in the pipe
+network. SF+ changes its rating and progression, but does not give it modular heater or turbine stages. Flush mixed
+pipes before changing the fuel because incompatible residue can prevent a valid fuel state.
 
-Nuclear Power Plant also uses fixed-output model. SF+ requires Cooling Water and keeps nuclear waste as blocking output. Valid fuel rod, coolant supply, and waste capacity must all remain available. Failure of any one condition stops production.
+The Nuclear Power Plant also uses the fixed-output model. SF+ requires Cooling Water and keeps nuclear waste as a
+blocking output. A valid fuel rod, coolant supply, and waste capacity must all remain available. Failure of any one
+condition stops production.
 
-Alien Power Augmenter keeps base-game power mechanic. SF+ extends fuel acceptance and progression without routing it through modular Refined Power chain.
+The Alien Power Augmenter keeps the base-game power mechanic. SF+ extends fuel acceptance and progression without
+routing it through the modular Refined Power chain.
 
 ## Power Storage
 
-Power Storage charges from surplus on connected grid. When consumption exceeds live production, grid draws stored energy. SF+ changes storage and charge limits while keeping discharge uncapped by its balance patch.
+Power Storage charges from a surplus on the connected grid. When consumption exceeds live production, the grid draws
+stored energy. SF+ changes storage and charge limits while keeping discharge uncapped by its balance patch.
 
-Storage sees only its connected circuit. Separate subgrid cannot charge from surplus elsewhere. Empty storage provides no startup reserve even when power connection is valid.
+Storage sees only its connected circuit. A separate subgrid cannot charge from a surplus elsewhere. Empty storage
+provides no startup reserve even when the power connection is valid.
 
 ## Modular Refined Power chain
 
-Refined Power is required SF+ dependency. Modular plant passes state through attachments:
+Refined Power is a required SF+ dependency. A modular plant passes state through attachments:
 
 ```text
 fuel -> heater -> heat -> boiler <- working fluid
@@ -50,58 +59,62 @@ fuel -> heater -> heat -> boiler <- working fluid
                      spent fluid or condensate
 ```
 
-Heater and boiler share Boiler Platform. Standard turbine and generator share Converter Platform. Super-tier pair uses Super Conductor Platform. Vent stack attaches to Gas Vent Platform. Buildings placed nearby without valid attachment do not exchange heat or RPM.
+The heater and boiler share a Boiler Platform. The standard turbine and generator share a Converter Platform. The
+super-tier pair uses a Super Conductor Platform. The vent stack attaches to a Gas Vent Platform. Buildings placed nearby
+without a valid attachment do not exchange heat or RPM.
 
 ### Operating-mode selection
 
-Each module chooses operating mode from supplied item or fluid. That mode
-defines valid input, output, cycle time, heat, turbine behavior, or generator
-curve.
+Each module chooses an operating mode from the supplied item or fluid. That mode defines the valid input, output, cycle
+time, heat, turbine behavior, or generator curve.
 
 Selection follows gameplay state:
 
-1. Input buffer receives item or fluid.
-2. Machine checks which mode accepts that content.
-3. Matching mode becomes active.
-4. Machine checks attachment, pause state, required input, and output capacity.
-5. Completed cycle consumes profile input and stores profile output.
+1. The input buffer receives an item or fluid.
+2. The machine checks which mode accepts that content.
+3. The matching mode becomes active.
+4. The machine checks its attachment, pause state, required input, and output capacity.
+5. The completed cycle consumes the profile input and stores the profile output.
 
-Changing fluids can leave old content in internal buffer. Until flushed or
-consumed, machine may keep previous mode or refuse new one.
+Changing fluids can leave old content in the internal buffer. Until it is flushed or consumed, the machine may keep the
+previous mode or refuse a new one.
 
 ### Heater state
 
-Heater stores current fuel and heat. Solid heaters pull fuel from belt inventory. Solution heaters pull fluid or gas through pipe. Valid cycle consumes selected fuel, adds heat, and stores configured byproduct.
+The heater stores its current fuel and heat. Solid heaters pull fuel from the belt inventory. Solution heaters pull
+fluid or gas through a pipe. A valid cycle consumes the selected fuel, adds heat, and stores the configured byproduct.
 
-Fuel use is independent of boiler progress. Heater can continue burning while boiler is blocked or empty. This makes downstream shutdown capable of wasting fuel.
+Fuel use is independent of boiler progress. The heater can continue burning while the boiler is blocked or empty, so a
+downstream shutdown can waste fuel.
 
-Boiler must attach to heater through same platform. Adjacent buildings on separate platforms cannot share heat.
+The boiler must attach to the heater through the same platform. Adjacent buildings on separate platforms cannot share
+heat.
 
 ### Boiler state
 
-Boiler reads heat from attached heater and selects operating mode from working
-fluid. Production curve converts available heat into input consumption and
-output rate. Hotter heater changes both values. Each cycle removes working
-fluid, consumes heat, and stores output fluid.
+The boiler reads heat from the attached heater and selects an operating mode from the working fluid. Its production
+curve converts available heat into input consumption and output rate. A hotter heater changes both values. Each cycle
+removes working fluid, consumes heat, and stores output fluid.
 
-Boiler stops when heater attachment is invalid, no mode accepts supplied fluid,
-heat is insufficient, input runs dry, or output buffer is full. Water-to-Steam
-and Slug Slime modes use same mechanic. Wiki holds concrete rates because
-values can change without changing building behavior.
+The boiler stops when the heater attachment is invalid, no mode accepts the supplied fluid, heat is insufficient, the
+input runs dry, or the output buffer is full. Water-to-Steam and Slug Slime modes use the same mechanic. The wiki holds
+concrete rates because values can change without changing the building behavior.
 
 ### Turbine, RPM, and generator state
 
-Turbine selects operating mode from incoming working fluid. It consumes input,
-stores configured output, and changes RPM over time. Missing input or blocked
-output lets RPM fall.
+The turbine selects an operating mode from the incoming working fluid. It consumes input, stores the configured output,
+and changes RPM over time. Missing input or a blocked output lets RPM fall.
 
-Attached generator converts RPM through its power curve. Larger generator reaches nominal output only when compatible turbine and fluid supply maintain required RPM. Turbine and generator on different platforms do not share rotation.
+The attached generator converts RPM through its power curve. A larger generator reaches its nominal output only when a
+compatible turbine and fluid supply maintain the required RPM. A turbine and generator on different platforms do not
+share rotation.
 
-Higher-tier steam turbine covers RPM range required by high-voltage generation. Super-tier turbine and generator follow same chain on Super Conductor Platform with their own profiles.
+The higher-tier steam turbine covers the RPM range required by high-voltage generation. The super-tier turbine and
+generator follow the same chain on a Super Conductor Platform with their own profiles.
 
 ### Backpressure
 
-Blocked final output propagates through complete plant:
+A blocked final output propagates through the complete plant:
 
 1. Turbine cannot store spent fluid or condensate.
 2. Turbine stops consuming working fluid and loses RPM.
@@ -109,84 +122,106 @@ Blocked final output propagates through complete plant:
 4. Boiler output fills and stops using heat.
 5. Heater may continue consuming fuel until its own byproduct output fills.
 
-Trace stalled plant from final output toward heater. Increasing fuel or Water does not solve downstream block.
+Trace a stalled plant from the final output toward the heater. Increasing fuel or Water does not solve a downstream
+blockage.
 
 ### Venting
 
-Steam and gas stacks remove supported content without recoverable output. They
-still select operating mode from buffered input. Unsupported fluid, mixed pipe,
-or incompatible residue prevents operation.
+Steam and gas stacks remove supported content without recoverable output. They still select operating mode from buffered
+input. Unsupported fluid, mixed pipe, or incompatible residue prevents operation.
 
-Flush stack before changing gas. Use overflow routing when same byproduct also feeds production, since stack destroys everything it accepts.
+Flush the stack before changing the gas. Use overflow routing when the same byproduct also feeds production, since the
+stack destroys everything it accepts.
 
 ## Solar panels
 
-Each Refined Power solar type produces by day, night, or both. Day-state change
-switches panel between daytime output, nighttime output, and zero. Some models
-rotate visually toward sun, but rotation itself is not production requirement.
+Each Refined Power solar type produces by day, night, or both. A day-state change switches the panel between daytime
+output, nighttime output, and zero. Some models rotate visually toward the sun, but rotation itself is not a production
+requirement.
 
-Shared day state updates every panel together. Output still belongs to each panel's own grid connection.
+The shared day state updates every panel together. Output still belongs to each panel's own grid connection.
 
 ### Upcoming placement limits in 1.4
 
-Next major release adds separate world-wide cap for each solar type. Placement
-preview recounts existing buildings of same type. Below cap warning is soft. At
-cap construction is blocked. Setting cap to zero disables it.
+The next major release adds a separate world-wide cap for each solar type. The placement preview recounts existing
+buildings of the same type. Below the cap, the warning is informational. At the cap, construction is blocked. Setting
+the cap to zero disables it.
 
 This cap logic ships with 1.4.
 
 ## Solar Power Tower and Mirrors
 
-Solar Power Mirror links to one tower. It turns toward tower target and tests clear line of sight. Only linked, unobstructed mirrors contribute heat.
+A Solar Power Mirror links to one tower. It turns toward the tower target and tests for a clear line of sight. Only
+linked, unobstructed mirrors contribute heat.
 
-Mirror heat follows daytime progress. Tower sums heat from valid mirrors and clamps result to supported range. Tower then selects conversion profile from actual fluid in input buffer.
+Mirror heat follows daytime progress. The tower sums the heat from valid mirrors and clamps the result to the supported
+range. It then selects a conversion profile from the actual fluid in its input buffer.
 
-Production needs at least one linked mirror, valid profile, enough total heat, sufficient input, and room in output. Blocked output halts conversion. Obstacle between mirror and tower lowers heat and can drop plant below profile threshold.
+Production needs at least one linked mirror, a valid profile, enough total heat, sufficient input, and room in the
+output. A blocked output halts conversion. An obstacle between the mirror and tower lowers heat and can drop the plant
+below the profile threshold.
 
-Copying tower settings preserves tower link, letting same link be pasted to several mirrors. Reassigning mirror removes it from previous tower before linking new one.
+Copying the tower settings preserves the tower link, letting the same link be pasted to several mirrors. Reassigning a
+mirror removes it from the previous tower before linking the new one.
 
 ## Wind turbines
 
-Refined Power calculates wind output from turbine height curve. Dynamic wind mode also scales result with current wind state. Result is divided by configured local turbine-capacity value, then power multiplier is applied. Nearby-turbine count stops production when local maximum is reached.
+Refined Power calculates wind output from the turbine's height curve. Dynamic wind mode also scales the result with the
+current wind state. The result is divided by the configured local turbine-capacity value, then the power multiplier is
+applied. The nearby-turbine count stops production when the local maximum is reached.
 
-This local spacing rule is current gameplay. Turbine can be validly placed and later stop when neighborhood reaches limit.
+This local spacing rule is current gameplay. A turbine can be validly placed and later stop when the neighborhood
+reaches the limit.
 
 ### Upcoming placement limits in 1.4
 
-Next major release adds separate world-wide cap for each wind turbine class. It only decides whether another turbine may be built. Local Refined Power rule still decides output after placement.
+The next major release adds a separate world-wide cap for each wind turbine class. It only decides whether another
+turbine may be built. The local Refined Power rule still decides output after placement.
 
-Distant dismantling may free global build slot without improving local wind. Moving nearby turbines may improve local wind without freeing global slot. World-wide cap ships with 1.4.
+Distant dismantling may free a global build slot without improving local wind. Moving nearby turbines may improve local
+wind without freeing a global slot. The world-wide cap ships with 1.4.
 
 ## Water Turbine
 
-Water Turbine claims dedicated Water Turbine Node and marks it occupied. Dismantling turbine releases node. Visible river or lake without node is invalid.
+The Water Turbine claims a dedicated Water Turbine Node and marks it occupied. Dismantling the turbine releases the
+node. A visible river or lake without a node is invalid.
 
-SF+ sets base output to **60 MW** while turbine owns valid node and is not paused. Refined Power then applies turbine maximum and configured multiplier. Invalid or already occupied node prevents valid production state.
+SF+ sets the base output to **60 MW** while the turbine owns a valid node and is not paused. Refined Power then applies
+the turbine maximum and configured multiplier. An invalid or already occupied node prevents a valid production state.
 
 ## Water Dam
 
-Water Dam claims Water Dam Node. Node provides dam endpoints, section count, and base production. Section count controls dam width, total output, Water amount per cycle, and dismantle refund.
+The Water Dam claims a Water Dam Node. The node provides the dam endpoints, section count, and base production. The
+section count controls the dam width, total output, Water amount per cycle, and dismantle refund.
 
-Power mechanic is:
+The power calculation is:
 
 ```text
 node production x section count x configured multiplier
 ```
 
-Power Only mode uses full result. Water and Power mode halves output and enables Water production. Before cycle, dam checks whether internal Water buffer can accept section-scaled amount. Full buffer stops production. Output pipe drains stored Water; UI flush empties buffer.
+Power Only mode uses the full result. Water and Power mode halves the output and enables Water production. Before a
+cycle, the dam checks whether its internal Water buffer can accept the section-scaled amount. A full buffer stops
+production. The output pipe drains stored Water; the UI flush empties the buffer.
 
-Dam also requires valid node and grid connection. Dismantling releases site. Water Dam already exists. Release 1.4 keeps existing building and changes progression and settings.
+The dam also requires a valid node and grid connection. Dismantling releases the site. The Water Dam already exists.
+Release 1.4 keeps the existing building and changes its progression and settings.
 
 ## Release boundary
 
-Coal-Powered Generator and current mechanics above are released.
+The Coal-Powered Generator and the current mechanics above are released.
 
-Upcoming 1.4 adds configurable power-production multiplier, world-wide solar and wind placement caps, and revised Water Dam progression. These settings, full multiplayer support, and other 1.4 progression changes remain pending until release ships.
+Upcoming 1.4 adds a configurable power-production multiplier, world-wide solar and wind placement caps, and revised
+Water Dam progression. These settings, full multiplayer support, and other 1.4 progression changes remain pending until
+the release ships.
 
 ## Diagnose by state
 
-For conventional generator, check fuel state, required fluid, and blocking output such as nuclear waste.
+For a conventional generator, check the fuel state, required fluid, and any blocking output such as nuclear waste.
 
-For modular plant, work backward: generator attachment and RPM, turbine output room and input fluid, boiler output room and heater attachment, then heater fuel and byproduct room.
+For a modular plant, work backward: generator attachment and RPM, turbine output room and input fluid, boiler output
+room and heater attachment, then heater fuel and byproduct room.
 
-For renewable building, separate production from placement. Solar depends on time state. Wind depends on height, wind state, and local density. Upcoming SF+ caps affect construction only. Water buildings require valid unoccupied node.
+For a renewable building, separate production from placement. Solar depends on the time state. Wind depends on height,
+wind state, and local density. Upcoming SF+ caps affect construction only. Water buildings require a valid unoccupied
+node.

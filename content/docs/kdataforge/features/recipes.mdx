@@ -73,7 +73,8 @@ time you register it.
 A `type: recipe` document can also declare a top-level `remove:` sequence. Each entry is either a
 bare class reference (a full Unreal class path, a bare loaded class name, or a generated content id
 from this or another loaded KDataForge pack) or a **filter map** that removes every recipe passing
-the [scope filters](/kdataforge/features/targeting#ofclass-scope--filters-select-by-tag-name-recipe-shape-or-property-values)
+the
+[scope filters](/kdataforge/features/targeting#ofclass-scope--filters-select-by-tag-name-recipe-shape-or-property-values)
 (`producedIn:`, `ingredient:`, `product:`, `matchName:`, `matchTag:`, `where:`; the scope defaults
 to `FGRecipe`). Removal-only documents are valid, and `remove:` can also be mixed with normal
 `recipes:` entries in the same document:

@@ -1,81 +1,111 @@
 ---
 title: Getting started with Satisfactory Plus
-description: Learn how SF+ progression, recipe unlocks, resource changes, and multi-output production affect a new factory.
+description:
+  Learn how SF+ progression, recipe unlocks, resource changes, and multi-output production affect a new factory.
 sidebar:
   order: 2
 ---
 
-Satisfactory Plus expects a new world. It changes the progression graph, resource pool, recipes, machine roles, and power chain deeply enough that a vanilla save no longer matches the overhaul.
+Satisfactory Plus expects a new world. It changes the progression graph, resource pool, recipes, machine roles, and
+power chain deeply enough that a vanilla save no longer matches the overhaul.
 
 :::caution[Use a new save for first installation]
-Do not add SF+ to a vanilla world or to a save that previously ran without it. An existing SF+ world can move to a newer SF+ release when that release supports migration. Back up the save and read the release notes before loading it.
+Do not add SF+ to a vanilla world or to a save that previously ran without it. An existing SF+ world can move to a newer
+SF+ release when that release supports migration. Back up the save and read the release notes before loading it.
 :::
 
 ## How progression is split
 
 SF+ progression has three paths that meet throughout a playthrough.
 
-HUB milestones establish the main industrial sequence. They introduce the machine families and materials needed for the next tier. MAM research opens specialist processing, resource scanning, alternate recipes, slugs, farming, and FaxIT. Some MAM branches begin with discovery, so a missing research tree can mean that its world item has not been collected yet.
+HUB milestones establish the main industrial sequence. They introduce the machine families and materials needed for the
+next tier. MAM research opens specialist processing, resource scanning, alternate recipes, slugs, farming, and FaxIT.
+Some MAM branches begin with discovery, so a missing research tree can mean that its world item has not been collected
+yet.
 
-Owning a machine does not make every recipe authored for it selectable. The
-recipe also needs its own research or milestone unlock. Finding an unfamiliar
-resource can happen before its processing route is available. Check both the
-HUB and MAM before treating a missing recipe as a bug.
+Owning a machine does not make every recipe authored for it selectable. The recipe also needs its own research or
+milestone unlock. Finding an unfamiliar resource can happen before its processing route is available. Check both the HUB
+and MAM before treating a missing recipe as a bug.
 
-FicsitFarming uses the discovery side of this system. SF+ replaces the standalone mod's unlock order, and finding Dirt opens its MAM progression. Aurovite shows the resource-replacement side: its research leads into Caterium processing because Caterium nodes are absent.
+FicsitFarming uses the discovery side of this system. SF+ replaces the standalone mod's unlock order, and finding Dirt
+opens its MAM progression. Aurovite shows the resource-replacement side: its research leads into Caterium processing
+because Caterium nodes are absent.
 
 ## Build around every output
 
-Early Crusher recipes introduce a production rule that governs much of SF+: a secondary output can stop the whole machine. The Crusher may produce useful crushed ore and Crushed Gangue at the same time. If either belt fills, the cycle stops.
+Early Crusher recipes introduce a production rule that governs much of SF+: a secondary output can stop the whole
+machine. The Crusher may produce useful crushed ore and Crushed Gangue at the same time. If either belt fills, the cycle
+stops.
 
-Plan the unwanted-looking stream before supplying the machine. Route it to another process when that route is unlocked, or give it enough temporary storage to finish the current production target. A container postpones the stall, so continuous production still needs a consumer or treatment process.
+Plan the unwanted-looking stream before supplying the machine. Route it to another process when that route is unlocked,
+or give it enough temporary storage to finish the current production target. A container postpones the stall, so
+continuous production still needs a consumer or treatment process.
 
-The same pressure appears later in fluid and gas chains. Wet washing can leave Tailings Slurry. Chemical and oil recipes can have secondary fluids, while thermal production can generate Flue Gas. Every active output affects the machine's ability to complete its next cycle. A full pipe can stop a solid product, and a full belt can stop a fluid product.
+The same pressure appears later in fluid and gas chains. Wet washing can leave Tailings Slurry. Chemical and oil recipes
+can have secondary fluids, while thermal production can generate Flue Gas. Every active output affects the machine's
+ability to complete its next cycle. A full pipe can stop a solid product, and a full belt can stop a fluid product.
 
 For each line, work backwards from all recipe outputs:
 
-1. Identify main target and products which feed later stages.
-2. Give every output a route before starting machine.
-3. Size belts and pipes for selected clock speed and downstream demand.
+1. Identify the main target and the products that feed later stages.
+2. Give every output a route before starting the machine.
+3. Size belts and pipes for the selected clock speed and downstream demand.
 4. Add buffers where demand changes, then monitor whether they fill over time.
-5. Unlock or build permanent treatment before buffer becomes final destination.
+5. Unlock or build a permanent treatment before the buffer becomes the final destination.
 
-SF+ frequently changes the machine, duration, amount, and byproduct together, so a vanilla layout rarely transfers cleanly.
+SF+ frequently changes the machine, duration, amount, and byproduct together, so a vanilla layout rarely transfers
+cleanly.
 
 ## Read machine state in context
 
-A powered machine with its main input available can still be correctly idle. Check the selected recipe first, then every required input and every output inventory or pipe. A multi-output cycle waits until every product has somewhere to go.
+A powered machine with its main input available can still be correctly idle. Check the selected recipe first, then every
+required input and every output inventory or pipe. A multi-output cycle waits until every product has somewhere to go.
 
-Clear the connected material before changing a Filtrator treatment. Selecting another treatment empties its stored input and output, so finish or recover the current batch first.
+Clear the connected material before changing a Filtrator treatment. Selecting another treatment empties its stored input
+and output, so finish or recover the current batch first.
 
-Detailed ports, placement rules, and machine controls are covered in [building guide](/satisfactory-plus/buildings/).
+Detailed ports, placement rules, and machine controls are covered in the
+[building guide](/satisfactory-plus/buildings/).
 
 ## Use MAM as part of factory planning
 
-MAM research often provides the missing link between a raw material and useful production. If the machine menu lacks an expected treatment, sorting route, or alternate recipe, inspect the relevant research branch before rebuilding the factory.
+MAM research often provides the missing link between a raw material and useful production. If the machine menu lacks an
+expected treatment, sorting route, or alternate recipe, inspect the relevant research branch before rebuilding the
+factory.
 
-Hard Drives and specialist research can also change which producer handles a material. The unlock notification confirms that the recipe is available. The machine menu shows where it can run and what it consumes, and the production planner shows the capacity needed by the full chain.
+Hard Drives and specialist research can also change which producer handles a material. The unlock notification confirms
+that the recipe is available. The machine menu shows where it can run and what it consumes, and the production planner
+shows the capacity needed by the full chain.
 
-[SF+ Production Planner](https://k-mods.com/production-planner) becomes useful after the unlock path and producer are known. A locked recipe remains unavailable in game even when it can be planned.
+[SF+ Production Planner](https://k-mods.com/production-planner) becomes useful after the unlock path and producer are
+known. A locked recipe remains unavailable in game even when it can be planned.
 
 ## Updating an SF+ world
 
-Treat a large SF+ update like a factory migration. Back up the world, update SF+ and its required player-facing dependencies together, then read the release notes before the first load. After migration, inspect machines with several outputs, renamed recipes, or saved network settings. Those systems carry more state than a single-input constructor and may need attention after a balance or data migration.
+Treat a large SF+ update like a factory migration. Back up the world, update SF+ and its required player-facing
+dependencies together, then read the release notes before the first load. After migration, inspect machines with several
+outputs, renamed recipes, or saved network settings. Those systems carry more state than a single-input constructor and
+may need attention after a balance or data migration.
 
-Avoid removing required dependencies from an active world. Optional mods need explicit SF+ support or a matching KPatchwork compatibility pack. A mod can load while its resource nodes, recipes, schematics, or balance still conflict with the overhaul.
+Avoid removing required dependencies from an active world. Optional mods need explicit SF+ support or a matching
+KPatchwork compatibility pack. A mod can load while its resource nodes, recipes, schematics, or balance still conflict
+with the overhaul.
 
 ## Current multiplayer boundary
 
-The current public build does not officially support multiplayer or dedicated servers. Some replication fixes are already present, but multiplayer remains experimental until the next major release. Diagnose a suspected general SF+ issue in single player when possible because client desync can resemble a recipe, inventory, or machine bug.
+The current public build does not officially support multiplayer or dedicated servers. Some replication fixes are
+already present, but multiplayer remains experimental until the next major release. Diagnose a suspected general SF+
+issue in single player when possible because client desync can resemble a recipe, inventory, or machine bug.
 
-Next major release targets supported multiplayer play. Dedicated-server support has not been announced.
+The next major release targets supported multiplayer play. Dedicated-server support has not been announced.
 
 ## Diagnose common stalls
 
-Missing Caterium nodes are expected. Search for Aurovite and follow its MAM
-research. Missing FicsitFarming progression usually means that Dirt has not
-been collected. A machine which starts and then stops usually has a blocked
-secondary output. A recipe visible in reference data but absent from a machine
-may still need its research unlock or belong to another producer.
+Missing Caterium nodes are expected. Search for Aurovite and follow its MAM research. Missing FicsitFarming progression
+usually means that Dirt has not been collected. A machine which starts and then stops usually has a blocked secondary
+output. A recipe visible in reference data but absent from a machine may still need its research unlock or belong to
+another producer.
 
-When a third-party resource is absent, check its compatibility pack. SF+ removes descriptors explicitly excluded from node randomization, including descriptors carrying the exclusion tag. Other third-party resources remain eligible for the node pool.
+When a third-party resource is absent, check its compatibility pack. SF+ removes descriptors explicitly excluded from
+node randomization, including descriptors carrying the exclusion tag. Other third-party resources remain eligible for
+the node pool.

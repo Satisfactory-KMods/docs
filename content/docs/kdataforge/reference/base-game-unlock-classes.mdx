@@ -88,7 +88,8 @@ unlocks:
           - /Game/FactoryGame/Schematics/Progression/Schematic_2-3.Schematic_2-3_C
 ```
 
-The current game build ships no Blueprint variant for FGUnlockVisualizationMode; use a mod-provided concrete subclass for that abstract native type.
+The current game build ships no Blueprint variant for FGUnlockVisualizationMode; use a mod-provided concrete subclass
+for that abstract native type.
 
 | Class                | Key property                                     | What it does                                                                      |
 | --------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------- |
@@ -225,7 +226,9 @@ unlocks:
 | `FGUnlockCheckmark`    | _(inherits `FGUnlockInfoOnly`'s fields)_                                                   | Same as `FGUnlockInfoOnly`, plus tracks a per-player "seen/unlocked" checkmark in the save |
 | `FGUnlockTape`         | `mTapeUnlocks: TArray<TSubclassOf<UFGTapeData>>`                                           | Unlocks audio tapes in tape-player content                                               |
 
-These classes plug into [schematic instanced unlocks](/kdataforge/features/schematics#instanced-unlocks-the-normal-way-to-wire-up-a-recipe).
+These classes plug into
+[schematic instanced unlocks](/kdataforge/features/schematics#instanced-unlocks-the-normal-way-to-wire-up-a-recipe).
 Use [Type: unlock](/kdataforge/features/unlocks) to reuse one preconfigured unlock
-class across several schematics. Schematic [`dependencies:`](/kdataforge/features/schematics#gating-a-schematic-on-prerequisites)
+class across several schematics. Schematic
+[`dependencies:`](/kdataforge/features/schematics#gating-a-schematic-on-prerequisites)
 uses the equivalent instanced-array mechanism for `mSchematicDependencies`.

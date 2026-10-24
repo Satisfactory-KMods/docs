@@ -1,75 +1,69 @@
 ---
 title: Logistics and storage systems
-description: How Satisfactory Plus pipeline pressure, pumps, buffers, valves, portals, and AWESOME Storage behave in play.
+description:
+  How Satisfactory Plus pipeline pressure, pumps, buffers, valves, portals, and AWESOME Storage behave in play.
 sidebar:
   order: 5
 ---
 
-SF+ changes fluid-network limits, buffer pressure, and powered storage behavior.
-Use the [Satisfactory Plus wiki](https://k-mods.com/wiki) or in-game build menu
-for building lists, unlock locations, and current construction costs.
+SF+ changes fluid-network limits, buffer pressure, and powered storage behavior. Use the
+[Satisfactory Plus wiki](https://k-mods.com/wiki) or in-game build menu for building lists, unlock locations, and
+current construction costs.
 
 ## Pipeline tiers
 
 | Pipeline | Maximum flow |
-| --- | ---: |
-| Mk.1 | 150 m³/min |
-| Mk.2 | 300 m³/min |
-| Mk.3 | 450 m³/min |
+| -------- | -----------: |
+| Mk.1     |   150 m³/min |
+| Mk.2     |   300 m³/min |
+| Mk.3     |   450 m³/min |
 
-SF+ applies the 150 m³/min limit to Mk.1 and compatible ordinary pipeline
-segments, then gives Mk.2 and Mk.3 their own higher limits. A network does not
-inherit the best tier found anywhere in it. Every segment keeps its own limit.
-A short Mk.1 section therefore remains a 150 m³/min bottleneck between Mk.2 or
-Mk.3 sections.
+SF+ applies the 150 m³/min limit to Mk.1 and compatible ordinary pipeline segments, then gives Mk.2 and Mk.3 their own
+higher limits. A network does not inherit the best tier found anywhere in it. Every segment keeps its own limit. A short
+Mk.1 section therefore remains a 150 m³/min bottleneck between Mk.2 or Mk.3 sections.
 
-Pumps, valves, and junctions do not upgrade a pipe tier. They influence pressure,
-direction, or distribution while connected pipe limits stay in force.
+Pumps, valves, and junctions do not upgrade a pipe tier. They influence pressure, direction, or distribution while
+connected pipe limits stay in force.
 
 ### Clean variants
 
-Every tier has a standard and clean variant. Both carry the same fluids and use
-the same flow limit. Standard pipes show volume, rate, and flow direction on
-external indicators. Clean pipes have no indicator.
+Every tier has a standard and clean variant. Both carry the same fluids and use the same flow limit. Standard pipes show
+volume, rate, and flow direction on external indicators. Clean pipes have no indicator.
 
-A missing readout on a clean pipe is expected. Inspect a connected machine,
-buffer, pump, valve, or temporary standard segment when diagnosing the line.
+A missing readout on a clean pipe is expected. Inspect a connected machine, buffer, pump, valve, or temporary standard
+segment when diagnosing the line.
 
 ## Pressure, fullness, and actual flow
 
-Rated flow sets an upper bound. Actual movement depends on supplied volume,
-demand, gravity, pipe fullness, and pressure differences across the network.
+Rated flow sets an upper bound. Actual movement depends on supplied volume, demand, gravity, pipe fullness, and pressure
+differences across the network.
 
-Liquids need enough head lift to reach their highest point. Gases do not consume
-head lift while rising, but they still need pressure to move through the network.
-A vertical gas line can therefore stall even though height is not consuming a
+Liquids need enough head lift to reach their highest point. Gases do not consume head lift while rising, but they still
+need pressure to move through the network. A vertical gas line can therefore stall even though height is not consuming a
 head-lift allowance.
 
-Junctions split or merge the fluid network across their connected ports. The
-four-port junction tends toward an equal split until strong pressure differences
-take over. Gravity, fullness, and high flow can all create those differences.
+Junctions split or merge the fluid network across their connected ports. The four-port junction tends toward an equal
+split until strong pressure differences take over. Gravity, fullness, and high flow can all create those differences.
 The three-port T-Junction follows the same pressure model with one fewer port.
 
-When one branch takes more than another, check both downstream demand and the
-pressure on each branch. Adding another junction does not force an equal rate.
+When one branch takes more than another, check both downstream demand and the pressure on each branch. Adding another
+junction does not force an equal rate.
 
 ## Pumps
 
-Pumps are directional attachments. Placement arrows show the pressure direction.
-Mk.1 supplies 20 m of liquid head lift; Mk.2 supplies 50 m.
+Pumps are directional attachments. Placement arrows show the pressure direction. Mk.1 supplies 20 m of liquid head lift;
+Mk.2 supplies 50 m.
 
-Head lift does not add when several pumps occupy the same pressure section. Put
-the next pump near the point where the previous pump's lift has been consumed.
-Several pumps placed together repeat pressure the line already has.
+Head lift does not add when several pumps occupy the same pressure section. Put the next pump near the point where the
+previous pump's lift has been consumed. Several pumps placed together repeat pressure the line already has.
 
 ```text
 source -> pump input -> pressure increase -> rising pipe -> next pressure section
                     direction matters
 ```
 
-A reversed pump opposes the intended route. A correctly oriented pump can push
-gas along, but its head-lift rating has no vertical meaning for gas. A pump also
-cannot make a 150 m³/min segment carry 300 m³/min.
+A reversed pump opposes the intended route. A correctly oriented pump can push gas along, but its head-lift rating has
+no vertical meaning for gas. A pump also cannot make a 150 m³/min segment carry 300 m³/min.
 
 When a pump appears inactive, check these in order:
 
@@ -81,22 +75,19 @@ When a pump appears inactive, check these in order:
 
 ## Regular valve
 
-The regular Valve has an input and output direction. Its interface caps flow in
-that direction. It does not create pressure or head lift, so the input side still
-needs enough pressure to cross it.
+The regular Valve has an input and output direction. Its interface caps flow in that direction. It does not create
+pressure or head lift, so the input side still needs enough pressure to cross it.
 
-The gauge is approximate. Compare sustained input and output behavior instead
-of treating one gauge frame as an exact measurement. If opening the valve does
-not restore flow, inspect upstream pressure and pump direction before raising
-the limit again.
+The gauge is approximate. Compare sustained input and output behavior instead of treating one gauge frame as an exact
+measurement. If opening the valve does not restore flow, inspect upstream pressure and pump direction before raising the
+limit again.
 
 ## Buffers and head-lift reset
 
-SF+ uses a 400 m³ Fluid Buffer and a 2,400 m³ Industrial Fluid Buffer. Liquids
-need 8 m and 12 m of head lift respectively to fill them completely.
+SF+ uses a 400 m³ Fluid Buffer and a 2,400 m³ Industrial Fluid Buffer. Liquids need 8 m and 12 m of head lift
+respectively to fill them completely.
 
-A buffer does not forward head lift from an upstream machine or pump to its
-outlet until it is full.
+A buffer does not forward head lift from an upstream machine or pump to its outlet until it is full.
 
 ```text
 machine or pump -> buffer filling -> buffer full -> head lift reaches outlet
@@ -104,22 +95,18 @@ machine or pump -> buffer filling -> buffer full -> head lift reaches outlet
                          +-> before full, downstream pressure can remain low
 ```
 
-This startup phase can look like a broken output pipe. Supply enough upstream
-lift to reach the top of the buffer. Once full, treat its outlet as the beginning
-of the next pressure section and add another pump where that section needs one.
+This startup phase can look like a broken output pipe. Supply enough upstream lift to reach the top of the buffer. Once
+full, treat its outlet as the beginning of the next pressure section and add another pump where that section needs one.
 
-A buffer only delays a blockage. If a machine keeps producing a byproduct with
-no consumer or disposal route, the buffer eventually fills and the machine
-stops.
+A buffer only delays a blockage. If a machine keeps producing a byproduct with no consumer or disposal route, the buffer
+eventually fills and the machine stops.
 
 ## AWESOME Storage
 
-SF+ progression includes AWESOME Storage Mk.1 and Mk.2. They behave like storage
-containers with conveyor input and output, plus one powered sink slot. Mk.1 has
-24 slots and Mk.2 has 48.
+SF+ progression includes AWESOME Storage Mk.1 and Mk.2. They behave like storage containers with conveyor input and
+output, plus one powered sink slot. Mk.1 has 24 slots and Mk.2 has 48.
 
-Only the final slot, shown at bottom right, feeds the AWESOME Sink. Other slots
-store items normally.
+Only the final slot, shown at bottom right, feeds the AWESOME Sink. Other slots store items normally.
 
 ```text
 item enters bottom-right slot
@@ -133,83 +120,69 @@ building powered and item sinkable? -- no --> item remains
 AWESOME points awarded -> eligible stack removed
 ```
 
-Default behavior drains the whole eligible stack. An item rejected by the
-AWESOME Sink remains in the slot. Losing power pauses sinking without deleting
-the stack. Restoring power retries the slot. The building also checks that slot
-when it loads, so a supported stack saved there can be sunk after the world
-starts and power is available.
+Default behavior drains the whole eligible stack. An item rejected by the AWESOME Sink remains in the slot. Losing power
+pauses sinking without deleting the stack. Restoring power retries the slot. The building also checks that slot when it
+loads, so a supported stack saved there can be sunk after the world starts and power is available.
 
-The host performs sinking in multiplayer. Once a supported item reaches the
-designated slot while powered, points are awarded and the item is removed
-without a confirmation step. Treat that slot as destructive even when filling
-the container through a conveyor.
+The host performs sinking in multiplayer. Once a supported item reaches the designated slot while powered, points are
+awarded and the item is removed without a confirmation step. Treat that slot as destructive even when filling the
+container through a conveyor.
 
 ### Upgrading storage
 
-AWESOME Storage supports an upgrade build mode. Old and new storage must use
-the same inventory width and height, and they must be different storage types. The
-upgrade keeps items only within the new container's normal slot count; it does not
-expand that container to inherit a larger inventory.
+AWESOME Storage supports an upgrade build mode. Old and new storage must use the same inventory width and height, and
+they must be different storage types. The upgrade keeps items only within the new container's normal slot count; it does
+not expand that container to inherit a larger inventory.
 
-Use ordinary dismantle and rebuild when placement preview rejects a container with
-different dimensions. Empty any slots that would not fit before replacing a
-storage building through another route.
+Use ordinary dismantle and rebuild when placement preview rejects a container with different dimensions. Empty any slots
+that would not fit before replacing a storage building through another route.
 
 ## Conveyors and transport
 
-SF+ changes many construction recipes for belts, lifts, splitters, mergers,
-vehicles, trains, drones, and elevators. Their ordinary routing, schedules,
-driving, and pathing use familiar game behavior. See the
+SF+ changes many construction recipes for belts, lifts, splitters, mergers, vehicles, trains, drones, and elevators.
+Their ordinary routing, schedules, driving, and pathing use familiar game behavior. See the
 [wiki catalogs](https://k-mods.com/wiki) for variants and current costs.
 
-Fluid Extras provides fixed bends and junction shapes. Their connected ports
-use the same pressure and pipe-limit rules described above. Fork Splitter and
-Fork Merger are directional, so their placement orientation matters.
+Fluid Extras provides fixed bends and junction shapes. Their connected ports use the same pressure and pipe-limit rules
+described above. Fork Splitter and Fork Merger are directional, so their placement orientation matters.
 
 ## Main Portal startup and restart
 
-The Main Portal links to a configured Satellite Portal and relies on its normal
-operating supply. SF+ changes the startup cycle to 25 seconds. Starting from idle
-requires at least two fuel items. An abrupt stop also requires two fuel items
-before the portal can start again.
+The Main Portal links to a configured Satellite Portal and relies on its normal operating supply. SF+ changes the
+startup cycle to 25 seconds. Starting from idle requires at least two fuel items. An abrupt stop also requires two fuel
+items before the portal can start again.
 
-After the link disconnects, the Main Portal has a five-second cooldown before it
-can reconnect. Keep spare fuel available if an interruption would strand the
-route.
+After the link disconnects, the Main Portal has a five-second cooldown before it can reconnect. Keep spare fuel
+available if an interruption would strand the route.
 
 ## Upcoming: Pressure Trigger Valve
 
-Pressure Trigger Valve (called Pressure Regulator Valve in the development
-changelog) is planned for the next major SF+ release. Development code and
-assets exist, but the building is not part of the released catalog yet.
+Pressure Trigger Valve (called Pressure Regulator Valve in the development changelog) is planned for the next major SF+
+release. Development code and assets exist, but the building is not part of the released catalog yet.
 
-It is a passive directional attachment. It consumes no power, adds no head lift,
-and cannot force flow against network pressure. Instead, it opens and closes from
-the fullness of one neighboring pipe.
+It is a passive directional attachment. It consumes no power, adds no head lift, and cannot force flow against network
+pressure. Instead, it opens and closes from the fullness of one neighboring pipe.
 
 Slider order selects its mode:
 
-| Threshold order | Monitored side | Opens when | Closes when | Between thresholds |
-| --- | --- | --- | --- | --- |
-| `OPEN >= CLOSE` | Consumer-side Pipe A | Fill is greater than `OPEN` | Fill is less than `CLOSE` | Keeps current state |
-| `OPEN < CLOSE` | Producer-side Pipe B | Fill is less than `OPEN` | Fill is greater than `CLOSE` | Keeps current state |
+| Threshold order | Monitored side       | Opens when                  | Closes when                  | Between thresholds  |
+| --------------- | -------------------- | --------------------------- | ---------------------------- | ------------------- |
+| `OPEN >= CLOSE` | Consumer-side Pipe A | Fill is greater than `OPEN` | Fill is less than `CLOSE`    | Keeps current state |
+| `OPEN < CLOSE`  | Producer-side Pipe B | Fill is less than `OPEN`    | Fill is greater than `CLOSE` | Keeps current state |
 
-High-fill mode works as overflow control. The valve waits for the monitored side
-to exceed `OPEN`, then stays open until fullness falls below `CLOSE`.
+High-fill mode works as overflow control. The valve waits for the monitored side to exceed `OPEN`, then stays open until
+fullness falls below `CLOSE`.
 
-Low-fill mode works as refill control. The valve opens when the monitored side
-falls below `OPEN`, then stays open until it rises above `CLOSE`.
+Low-fill mode works as refill control. The valve opens when the monitored side falls below `OPEN`, then stays open until
+it rises above `CLOSE`.
 
-The band between thresholds is hysteresis. It stops small solver fluctuations
-from repeatedly toggling the valve. Comparisons are strict. When both values are
-equal, the valve uses high-fill mode, opens only above that value, closes only
-below it, and keeps its current state at the exact threshold.
+The band between thresholds is hysteresis. It stops small solver fluctuations from repeatedly toggling the valve.
+Comparisons are strict. When both values are equal, the valve uses high-fill mode, opens only above that value, closes
+only below it, and keeps its current state at the exact threshold.
 
-A disconnected or unreadable monitored pipe closes the valve. Fullness is
-clamped to 140% because a pressurized pipe can exceed nominal volume. Player
-thresholds range from 1% through 125%.
+A disconnected or unreadable monitored pipe closes the valve. Fullness is clamped to 140% because a pressurized pipe can
+exceed nominal volume. Player thresholds range from 1% through 125%.
 
-Displayed fill is smoothed slightly before threshold decisions. This removes
-some rapid movement from solver noise, while the threshold band provides most
-of the stability. Copy and paste transfers both thresholds together, preserving
+Displayed fill is smoothed slightly before threshold decisions. This removes some rapid movement from solver noise,
+while the threshold band provides most of the stability. Copy and paste transfers both thresholds together, preserving
 the selected mode and hysteresis band.

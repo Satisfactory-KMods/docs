@@ -306,8 +306,8 @@ patches:
 This pack never lists RefinedPower as a dependency anywhere. `hasClass` checks for the actual
 `ARPTurbineBaseActor`-derived class at load time and skips cleanly (Info, no error) if it's absent.
 
-This is the same no-hard-dependency philosophy as the RRDA integration pattern already documented
-in [Data Assets → Editing RefinedR&D data assets (RRDA)](/kdataforge/features/data-assets#editing-refinedrd-data-assets-rrda).
+This follows the same no-hard-dependency philosophy as the
+[RRDA data asset integration pattern](/kdataforge/features/data-assets#editing-refinedrd-data-assets-rrda).
 That pattern gates on `hasMod: RefinedRDApi` because it's patching RRDA's own data assets, whose
 consumer rescan already runs by reflection. Here, we go one level more direct and gate on the
 RefinedPower class itself with `hasClass`. This is useful whenever you want to touch another mod's

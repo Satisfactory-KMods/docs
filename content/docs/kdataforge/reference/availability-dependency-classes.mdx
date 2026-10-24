@@ -13,7 +13,8 @@ explicit lists:
 - research `visibilityDependencies:` → `UFGResearchTree::mVisibilityDependencies`;
 - KAPI delivery-task `dependencies:` → `UKAPIDeliveryTask::mTaskDependencies`.
 
-Each entry is a block map containing `class:` and `properties:`. Known native paths with Blueprint children automatically
+Each entry is a block map containing `class:` and `properties:`. Known native paths with Blueprint children
+automatically
 remap to concrete generated classes; exact Blueprint paths remain valid. The linter emits warning
 `class.native-remapped` for mapped native form. Abstract classes without Blueprint variants cannot
 be instanced.

@@ -60,7 +60,8 @@ schematics:
 ## Why it has to run first
 
 Unlocks generate at priority `40`, after generic `class` (`50`) and ahead of `item` (`30`),
-`resource` (`25`), and `building` (`20`). All five sit within the `Items` stage. This ordering exists specifically so that a schematic
+`resource` (`25`), and `building` (`20`). All five sit within the `Items` stage. This ordering exists specifically so
+that a schematic
 generated later in the same pack can reference the unlock class the moment it's created, with no
 `include:` gymnastics needed.
 

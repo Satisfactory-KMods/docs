@@ -67,11 +67,13 @@ in pack configuration files no longer affect playback; they can be removed.
 
 ## Accepted audio
 
-- Little-endian RIFF/WAVE containing uncompressed 16-bit PCM, native lossless FLAC containing 16-bit PCM, or Ogg Vorbis (decoded to PCM16).
+- Little-endian RIFF/WAVE containing uncompressed 16-bit PCM, native lossless FLAC containing 16-bit PCM, or Ogg Vorbis
+  (decoded to PCM16).
 - Mono or stereo, with a sample rate from 8,000 through 192,000 Hz.
 - A non-empty audio payload containing complete PCM frames; maximum 64 MiB for both the encoded file and decoded PCM.
 - A `.wav`, `.flac` or `.ogg` extension, matched without regard to case.
-- FLAC must declare its nonzero total frame count in STREAMINFO. Decoding verifies the declared frame count and PCM MD5 when supplied.
+- FLAC must declare its nonzero total frame count in STREAMINFO. Decoding verifies the declared frame count and PCM MD5
+  when supplied.
 
 MP3, Opus, Ogg FLAC, chained/multiplexed Ogg streams, 24-bit FLAC and floating-point WAV are unsupported. Export
 as PCM16 WAV, native 16-bit FLAC or Ogg Vorbis in your audio editor. Files and any symbolic links must resolve inside
@@ -164,7 +166,8 @@ savings; keep client audio and server YAML definitions.
   Linux, and whether a symbolic link points outside the pack.
 - **WAV rejected:** Re-export as uncompressed PCM16 mono/stereo WAV within the rate
   and size limits above. Renaming an MP3 to `.wav` does not convert it.
-- **FLAC rejected:** Export native 16-bit FLAC with a known frame count, within both size limits. Re-export files with checksum failures; renaming another format does not convert it.
+- **FLAC rejected:** Export native 16-bit FLAC with a known frame count, within both size limits. Re-export files with
+  checksum failures; renaming another format does not convert it.
 - **Generated event missing:** Check for duplicate ids, including collisions with
   other generated assets, and confirm the sound document's conditions pass.
 - **Bank cache cannot be written:** The client must be able to write generated

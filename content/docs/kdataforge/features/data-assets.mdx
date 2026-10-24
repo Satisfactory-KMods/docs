@@ -361,7 +361,8 @@ assets:
 
 `dataasset` runs in the **Assets** stage, the second stage in the pipeline, right after `GameTags`
 and before `Localization`/`CDOChanges`. This means a generated instance already exists by the time
-any later `cdo`, `item`, or `recipe` document in the same load needs to reference it. YAML changes are loaded on the next session start.
+any later `cdo`, `item`, or `recipe` document in the same load needs to reference it. YAML changes are loaded on the
+next session start.
 
 The same example appears inside the end-to-end pack in
 [End-to-End Pack](/kdataforge/examples/end-to-end-pack). There it sits next to the item/recipe/schematic files it
@@ -452,7 +453,8 @@ document's `properties:` instead (see [Items](/kdataforge/features/items)), same
 ## Automatic consumer rescans
 
 Neither KAPI nor RRDA notice a new or changed data asset on their own. Somebody has to tell their
-scanning subsystem to look again, and KDataForge does that for you. After the initial load, it checks whether any data assets were **modified or added** and only then
+scanning subsystem to look again, and KDataForge does that for you. After the initial load, it checks whether any data
+assets were **modified or added** and only then
 triggers a rescan. You never have to poke a subsystem yourself:
 
 - **KAPI**: rescanned via reflection only when the KAPI mod is actually loaded, no hard dependency

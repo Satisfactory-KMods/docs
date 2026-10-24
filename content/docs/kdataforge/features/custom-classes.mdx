@@ -10,9 +10,15 @@ and `building`. Later generation types can therefore use a custom generated clas
 and `recipe`, `schematic`, and `research` can reference it. Changes load during session
 initialization, so restart after editing YAML. Its entries key is `classes`.
 
-There is no default `parent`, so every entry must set `parent:` explicitly. There is no required base class either: every parent works, whether native C++ or Blueprint. Register-only mode (`class:`) is not supported; use `id:` instead, and register existing classes via [Type: recipe](/kdataforge/features/recipes), [schematic](/kdataforge/features/schematics), or [research](/kdataforge/features/research-trees).
+There is no default `parent`, so every entry must set `parent:` explicitly. There is no required base class either:
+every parent works, whether native C++ or Blueprint. Register-only mode (`class:`) is not supported; use `id:` instead,
+and register existing classes via [Type: recipe](/kdataforge/features/recipes),
+[schematic](/kdataforge/features/schematics), or [research](/kdataforge/features/research-trees).
 
-Use the preset types (`item`, `resource`, `building`, `unlock`, `recipe`, `schematic`, `research`) when one fits. They select the parent, stage priority, and registration. Use `class` for everything else: equipment descriptors, vehicle descriptors, item and schematic categories, `FGUnlock` subclasses, custom classes from other mods gated behind `hasMod`, reparented buildables, and any class kind without a KDataForge preset.
+Use the preset types (`item`, `resource`, `building`, `unlock`, `recipe`, `schematic`, `research`) when one fits. They
+select the parent, stage priority, and registration. Use `class` for everything else: equipment descriptors, vehicle
+descriptors, item and schematic categories, `FGUnlock` subclasses, custom classes from other mods gated behind `hasMod`,
+reparented buildables, and any class kind without a KDataForge preset.
 
 ```yaml
 type: class
@@ -31,9 +37,14 @@ classes:
 
 Everything that holds for the preset generation types holds here too:
 
-- **Same save-stable identity**: package `/KDataForge/Gen/<PackRef>`, class `Gen_<PackRef>_<Id>`. Reference it elsewhere as `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>`. The global manifest, tombstone reconstruction, and `redirects:` in `pack.yml` all apply.
-- **Layout-copy constraint**: the generated class copies the parent's layout exactly, with no new reflected properties and no new components. All variation lives in the CDO defaults that `properties:` sets.
-- `registerAs:` is only for the three kinds SML's `UModContentRegistry` tracks: `recipe`, `schematic`, and `research`. If you generate one of those through `class` instead of the preset type, set it so registration is queued. Everything else, such as descriptors, categories, and unlocks, just needs to exist and be referenced.
+- **Same save-stable identity**: package `/KDataForge/Gen/<PackRef>`, class `Gen_<PackRef>_<Id>`. Reference it elsewhere
+  as `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>`. The global manifest, tombstone reconstruction, and `redirects:` in
+  `pack.yml` all apply.
+- **Layout-copy constraint**: the generated class copies the parent's layout exactly, with no new reflected properties
+  and no new components. All variation lives in the CDO defaults that `properties:` sets.
+- `registerAs:` is only for the three kinds SML's `UModContentRegistry` tracks: `recipe`, `schematic`, and `research`.
+  If you generate one of those through `class` instead of the preset type, set it so registration is queued. Everything
+  else, such as descriptors, categories, and unlocks, just needs to exist and be referenced.
 
 ## Example 1: an equipment descriptor from a C++ parent
 
@@ -55,7 +66,9 @@ classes:
         value: /Game/FactoryGame/Equipment/JetPack/Equip_JetPack.Equip_JetPack_C
 ```
 
-The result is a real `UFGEquipmentDescriptor` subclass, usable in recipes, schematics, and sinkpoints like any other descriptor. Because of the layout-copy constraint, `mEquipmentClass` has to point at an **existing** equipment actor, here the jetpack. You are re-parametrising existing equipment behaviour, not writing new equipment logic.
+The result is a real `UFGEquipmentDescriptor` subclass, usable in recipes, schematics, and sinkpoints like any other
+descriptor. Because of the layout-copy constraint, `mEquipmentClass` has to point at an **existing** equipment actor,
+here the jetpack. You are re-parametrising existing equipment behaviour, not writing new equipment logic.
 
 ## Example 2: a build-menu / item category
 
@@ -77,7 +90,8 @@ classes:
         value: 999
 ```
 
-Point generated items at it from the same pack. The `Items` stage guarantees the category class exists before any later stage references it. Within the stage, `include:` orders documents when one Items-stage document needs another:
+Point generated items at it from the same pack. The `Items` stage guarantees the category class exists before any later
+stage references it. Within the stage, `include:` orders documents when one Items-stage document needs another:
 
 ```yaml
 type: item
@@ -92,7 +106,8 @@ items:
 
 ## Example 3: a modded parent class, gated behind `hasMod`
 
-Any loaded mod's classes work as parents. Gate the document so it is skipped cleanly (Info diagnostic) when the mod is missing:
+Any loaded mod's classes work as parents. Gate the document so it is skipped cleanly (Info diagnostic) when the mod is
+missing:
 
 ```yaml
 # file: ff-crop.class.yml
@@ -109,7 +124,9 @@ classes:
 
 ## `registerAs:` (generating a registered kind through `class`)
 
-If you generate a recipe, schematic, or research class via `class`, for example because you want a specific modded subclass as the parent, queue its registration with `registerAs:`. It does exactly what the preset type's default `register: true` does:
+If you generate a recipe, schematic, or research class via `class`, for example because you want a specific modded
+subclass as the parent, queue its registration with `registerAs:`. It does exactly what the preset type's default
+`register: true` does:
 
 ```yaml
 type: class
@@ -124,9 +141,12 @@ classes:
 
 ## Troubleshooting
 
-- **"parent is required"**: unlike the preset types, `class` has no default parent. Every entry needs an explicit `parent:`.
-- **"My generated recipe/schematic never shows up"**: you generated it via `class` without `registerAs:`. Only the preset types register automatically. `class` registers nothing unless you ask.
-- **Wanting new components, meshes, or logic**: not possible. See the layout-copy constraint above and the honest scope callout in [A Complete Building](/kdataforge/examples/building-chain).
+- **"parent is required"**: unlike the preset types, `class` has no default parent. Every entry needs an explicit
+  `parent:`.
+- **"My generated recipe/schematic never shows up"**: you generated it via `class` without `registerAs:`. Only the
+  preset types register automatically. `class` registers nothing unless you ask.
+- **Wanting new components, meshes, or logic**: not possible. See the layout-copy constraint above and the honest scope
+  callout in [A Complete Building](/kdataforge/examples/building-chain).
 - Preset-type pages for the ergonomic forms: [Type: item](/kdataforge/features/items),
   [Type: recipe](/kdataforge/features/recipes), [Type: schematic](/kdataforge/features/schematics),
   [Type: building](/kdataforge/features/buildings).

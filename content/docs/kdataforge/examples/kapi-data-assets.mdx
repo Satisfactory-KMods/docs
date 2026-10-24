@@ -58,7 +58,13 @@ assets:
 
 ## `UKAPICleanerItemDescription`: Filtrator (Cleaner) recipes
 
-A `dataasset` document targeting `KAPICleanerItemDescription` creates a brand-new Filtrator recipe: which input fluid it consumes, what it outputs, and any bonus items produced alongside the main conversion. See the [full property reference](/satisfactory-plus/kdataforge/filtrator/) for every field, including `FKAPICleanerInfo`. The example below reproduces Satisfactory Plus's own "Filtrator filter Wastewater" recipe: 6000 wastewater in, 4000 clean water out over 6 seconds, plus two bypass products (crushed zinc and crushed caterium) that come out independent of the main fluid conversion. `mCleanerItemInfo` is left out entirely here, it's optional, and this real recipe ships with no extra cleaner item required (`mCleanerItemInfo.mProduceItem` is `None` in the shipped asset).
+A `dataasset` document targeting `KAPICleanerItemDescription` creates a brand-new Filtrator recipe: which input fluid it
+consumes, what it outputs, and any bonus items produced alongside the main conversion. See the
+[full property reference](/satisfactory-plus/kdataforge/filtrator/) for every field, including `FKAPICleanerInfo`. The
+example below reproduces Satisfactory Plus's own "Filtrator filter Wastewater" recipe: 6000 wastewater in, 4000 clean
+water out over 6 seconds, plus two bypass products (crushed zinc and crushed caterium) that come out independent of the
+main fluid conversion. `mCleanerItemInfo` is left out entirely here, it's optional, and this real recipe ships with no
+extra cleaner item required (`mCleanerItemInfo.mProduceItem` is `None` in the shipped asset).
 
 ```yaml
 # file: filtrator-wastewater.dataasset.yml
@@ -93,7 +99,10 @@ assets:
 
 ## UKAPIModularMinerDescription: modular miner ore entries
 
-Full [property reference](/satisfactory-plus/kdataforge/modular-miner/). Each `UKAPIModularMinerDescription` instance registers one raw-resource entry the KAPI modular miner can extract, its rarity/found flavor text, node screenshot, which attachment modules are required or blocked, and the minimum drill tier needed. The example below mirrors a real shipped Cryolite raw-ore entry:
+Full [property reference](/satisfactory-plus/kdataforge/modular-miner/). Each `UKAPIModularMinerDescription` instance
+registers one raw-resource entry the KAPI modular miner can extract, its rarity/found flavor text, node screenshot,
+which attachment modules are required or blocked, and the minimum drill tier needed. The example below mirrors a real
+shipped Cryolite raw-ore entry:
 
 ```yaml
 # file: modular-miner-cryolite.dataasset.yml
@@ -124,7 +133,10 @@ assets:
         value: 1
 ```
 
-`mFluidInfo` and `mModuleInformation` are optional `TMap` fields (keyed by an item class and a waste-producer module class respectively) for entries that feed fluid or waste-producer modules, see the property reference for their map-key/value shapes. A resource entry that doesn't use either module type, like this one, works fine without them. `mScannerTier` is unused and left out entirely.
+`mFluidInfo` and `mModuleInformation` are optional `TMap` fields (keyed by an item class and a waste-producer module
+class respectively) for entries that feed fluid or waste-producer modules, see the property reference for their
+map-key/value shapes. A resource entry that doesn't use either module type, like this one, works fine without them.
+`mScannerTier` is unused and left out entirely.
 
 ## UKAPISugHatchingData: slug breeding & incubation
 
