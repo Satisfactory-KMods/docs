@@ -1,0 +1,69 @@
+---
+title: Category Ordering
+description: Assign menu categories and deterministic one-based ordering to items, recipes, schematics, and user settings.
+sidebar:
+  order: 18
+---
+
+`type: category_reorder` keeps category placement separate from general `cdo` patches. One document
+selects a content kind, assigns one main category and optional subcategory, then writes priorities
+from the `order` array: first entry gets `1`, second gets `2`, and so on.
+
+```yaml
+type: category_reorder
+subType: items
+category: /Game/MyMod/Categories/Cat_Pipelines.Cat_Pipelines_C
+subCategory: /Game/MyMod/Categories/SC_SpecialPipes.SC_SpecialPipes_C
+categoryPriority: 4
+subCategoryPriority: 2
+order:
+  - /Game/MyMod/Pipes/Desc_PipeMk1.Desc_PipeMk1_C
+  - /Game/MyMod/Pipes/Desc_PipeMk2.Desc_PipeMk2_C
+```
+
+The handler runs in `CDOChanges` after ordinary `cdo` handlers. This makes the declared array the
+final category order even when another patch previously changed the same priority fields.
+
+## Supported subtypes
+
+| `subType` | `order` entries | Main category | Subcategory | Priority field |
+| --- | --- | --- | --- | --- |
+| `items` | `UFGItemDescriptor` class paths, including buildings and equipment | `UFGCategory` | optional `UFGCategory` | `mMenuPriority` |
+| `recipe` | `UFGRecipe` class paths, including customization recipes | `UFGItemCategory` | not supported | `mManufacturingMenuPriority` |
+| `schematic` | `UFGSchematic` class paths | `UFGSchematicCategory` | optional `UFGSchematicCategory` | `mMenuPriority` |
+| `settings` | `UFGUserSetting` asset paths | `UFGUserSettingCategory` | optional `UFGUserSettingCategory` | `WidgetsToCreate[0].MenuPriority` |
+
+`items`, `recipe`, and `schematic` entries are class paths and normally end in `_C`. `settings`
+entries are Primary Data Asset object paths and do not end in `_C`.
+
+## Settings preserve other placements
+
+A user setting can appear in more than one menu location. `category_reorder` updates only
+`WidgetsToCreate[0].CategoryClass`, optional `SubCategoryClass`, and `MenuPriority`. It does not
+replace the array, change later placements, or change `SubOptionTo` links.
+
+The setting must already have a `WidgetsToCreate[0]` entry. Use a general `cdo` object patch when
+creating a placement from scratch.
+
+```yaml
+type: category_reorder
+subType: settings
+category: /Game/MyMod/Settings/Cat_Gameplay.Cat_Gameplay_C
+subCategory: /Game/MyMod/Settings/SC_Logistics.SC_Logistics_C
+order:
+  - /Game/MyMod/Settings/US_PipeHints.US_PipeHints
+  - /Game/MyMod/Settings/US_AutoConnect.US_AutoConnect
+```
+
+## Category priorities
+
+`categoryPriority` changes `mMenuPriority` on the main category class. `subCategoryPriority` does
+the same for `subCategory` and therefore requires that field. Both accept fractional values.
+
+Omitting `subCategory` leaves each target's existing subcategory unchanged. Supplying it replaces
+the subcategory list for items and schematics with one entry; settings update only the first menu
+placement. Recipes reject both subcategory fields because `UFGRecipe` has no equivalent property.
+
+Every `order` array must be non-empty and contain unique paths. Missing class targets are watched
+and applied if their class loads later. Settings are asset instances, so an unresolved settings
+path is reported as an error instead of becoming a class-load watch.
