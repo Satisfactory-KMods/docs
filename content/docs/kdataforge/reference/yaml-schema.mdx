@@ -1,6 +1,6 @@
 ---
 title: YAML Schema
-description: Complete grammar for packs, document types, property paths, all 23 operations, conditions, and includes.
+description: Complete grammar for packs, document types, property paths, all 24 operations, conditions, and includes.
 sidebar:
   order: 2
 ---
@@ -298,6 +298,7 @@ names never appear in YAML.
 | `clamp`                                               | numeric                                                       | `min`, `max`                                                        |
 | `append`                                              | array, set, map, string/name/text, tag container, bitmask     | `value` (map for map; scalar or sequence otherwise)                 |
 | `append_unique` | array | `value` (one element or sequence); append only missing values, preserving existing duplicates |
+| `update_where`                                       | array of structs                                              | `where`, `value`; partially update every matching element           |
 | `prepend`                                             | array, set, string/name/text, tag container, bitmask          | `value` (scalar or sequence)                                        |
 | `insert`                                              | array                                                         | `index`, `value`                                                    |
 | `remove`                                              | array (by value), set (by value), map (by key), tag container, bitmask | `value`                                                     |

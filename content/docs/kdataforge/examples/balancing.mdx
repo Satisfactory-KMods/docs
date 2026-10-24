@@ -457,9 +457,20 @@ patches:
         value: 0.5
 ```
 
-`mProduct[0].Amount` addresses the first product. Recipes with several outputs need one op per
-index; a `where:` clause such as `path: mProduct[*].ItemClass` / `equals: Desc_IronScrew_C` does
-not tell an op which index matched.
+`mProduct[0].Amount` addresses the first product. For recipes with several outputs, use
+`update_where` when the position is unknown:
+
+```yaml
+- product: Desc_IronScrew_C
+  properties:
+    - path: mProduct
+      op: update_where
+      where: { path: ItemClass, equals: Desc_IronScrew_C }
+      value: { Amount: 24 }
+```
+
+The outer `product:` selects recipes. The operation's `where:` independently selects matching
+elements inside each recipe's `mProduct` array.
 
 ## Bulk edits by name pattern (`matchName`)
 

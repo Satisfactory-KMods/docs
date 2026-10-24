@@ -1,6 +1,6 @@
 ---
 title: Operations
-description: What each of the 23 property operations does, which property kinds support it, and one working example apiece.
+description: What each of the 24 property operations does, which property kinds support it, and one working example apiece.
 sidebar:
   order: 3
 ---
@@ -10,7 +10,7 @@ Every entry in a `type: cdo` patch's `properties:` list names a target `path` an
 currently stored at that path. If you leave `op:` out, it defaults to `set`, a plain overwrite.
 That is why most of the simple examples elsewhere in these docs never mention an op at all.
 
-This page walks through all 23 operations the engine recognizes. They are grouped by the kind of
+This page walks through all 24 operations the engine recognizes. They are grouped by the kind of
 property they act on: numeric math and clamping, container mutation for arrays, sets, maps, and
 tag containers, string concatenation, array reordering and deduplication, and cross-property copy
 or move.
@@ -67,6 +67,31 @@ is a successful no-op. Equality uses the reflected element type, including enum,
 identity. Arrays only: use ordinary `append` for sets/maps. Inline `{class, properties}` subobject
 creation is rejected; reference an existing object or use `append` to create a new instance.
 Malformed operands fail without leaving a partial array edit.
+
+## update_where: array of structs
+
+`update_where` checks every struct element in an array and partially updates every match. The
+`where` path is relative to one element, not the patched object. `value` must be a struct mapping;
+members omitted from that mapping keep their current values:
+
+```yaml
+- path: mProduct
+  op: update_where
+  where:
+    path: ItemClass
+    equals: /OldMod/Items/Desc_Old.Desc_Old_C
+  value:
+    ItemClass: /NewMod/Items/Desc_New.Desc_New_C
+```
+
+Use a sequence under `where` to AND several clauses. Clauses accept the same operators as target
+filters: `equals`, `notEquals`, numeric comparisons, `contains`, `notContains`, `in`, `notIn`,
+`matches`, and `isEmpty`. Nested paths and `[*]` reads are supported inside the element.
+
+Every matching element is updated. No match is an error, protecting patches against upstream array
+changes. Invalid predicates or values roll back the whole array operation; partial writes are not
+kept. Only arrays whose elements are reflected structs are supported. This operation is useful for
+recipe `mIngredients` and `mProduct` arrays because it does not depend on element order.
 
 ## set (default): everything
 
