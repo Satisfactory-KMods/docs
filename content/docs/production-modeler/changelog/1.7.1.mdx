@@ -1,0 +1,21 @@
+---
+title: Version 1.7.1
+description: Large connected factory conflicts report their real calculation error without exceeding the diagnostic limit, and bounded follow-up analysis keeps invalid models responsive.
+slug: production-modeler/changelog/1.7.1
+sidebar:
+  label: '1.7.1'
+  order: 1
+---
+
+## BUGFIXES
+
+- **Large factory conflicts report normally.** Joining large connected factories
+  no longer replaces the real calculation message with an `Invalid input`
+  error about a 1,024-character diagnostic.
+  - Messages may now use up to 8 KiB and are safely shortened with a warning if
+    they ever exceed that limit.
+  - Long lists of conflicting exact or minimum values show the first entries
+    and count the rest instead of growing with the whole factory.
+  - Detailed conflict analysis has a bounded number of follow-up calculations,
+    so an invalid large factory stays responsive. A warning appears when that
+    safety limit is reached.
