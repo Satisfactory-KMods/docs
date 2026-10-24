@@ -176,7 +176,7 @@ an entry must pass, so the filters are AND-combined:
 | `producedIn:`                  | a recipe's `mProducedIn` references **any** listed building class **or a subclass of it**       |
 | `ingredient:`                  | a recipe's `mIngredients[*].ItemClass` references **any** listed item class or a subclass of it |
 | `product:`                     | a recipe's `mProduct[*].ItemClass` references **any** listed item class or a subclass of it     |
-| `where:`                       | **every** listed `path` / operator clause holds                                                 |
+| `where:`                       | every clause holds; with `whereMode: OR`, any clause holds                                      |
 
 The three recipe shortcuts (`producedIn:`, `ingredient:`, `product:`) default the scope to
 `/Script/FactoryGame.FGRecipe` when `ofClass:` is omitted, and any `matchTag:`, `matchName:` or
@@ -291,7 +291,10 @@ resolved.
 ### `where:` filter by property values
 
 `where:` compares reflected properties of every candidate in the scope. It takes one map, or a
-sequence of maps that must **all** hold. Each map names a `path:` (the same
+sequence of maps. Clauses use `AND` by default, so every clause must hold. Set sibling
+`whereMode: OR` to require any clause instead. `whereMode` accepts `AND` or `OR` case-insensitively
+and is invalid without `where`. Other filters on the same entry remain AND-combined with the final
+where result. Each map names a `path:` (the same
 [property path grammar](/kdataforge/reference/yaml-schema#property-paths) as `properties:`, plus
 `[*]` for "any element") and **exactly one** operator:
 
@@ -314,6 +317,16 @@ every object a patch touched.
 ```yaml
 type: cdo
 patches:
+  # liquid OR gas descriptors get no sink points
+  - ofClass: /Script/FactoryGame.FGItemDescriptor
+    whereMode: OR
+    where:
+      - { path: mForm, equals: RF_LIQUID }
+      - { path: mForm, equals: RF_GAS }
+    properties:
+      - path: mResourceSinkPoints
+        value: 0
+
   # long recipes (more than 8 seconds) that use Iron Ingot get a bit faster
   - ofClass: /Script/FactoryGame.FGRecipe
     where:

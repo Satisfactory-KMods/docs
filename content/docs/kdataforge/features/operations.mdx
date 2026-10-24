@@ -1,6 +1,6 @@
 ---
 title: Operations
-description: What each of the 24 property operations does, which property kinds support it, and one working example apiece.
+description: What each of the 25 property operations does, which property kinds support it, and one working example apiece.
 sidebar:
   order: 3
 ---
@@ -10,7 +10,7 @@ Every entry in a `type: cdo` patch's `properties:` list names a target `path` an
 currently stored at that path. If you leave `op:` out, it defaults to `set`, a plain overwrite.
 That is why most of the simple examples elsewhere in these docs never mention an op at all.
 
-This page walks through all 24 operations the engine recognizes. They are grouped by the kind of
+This page walks through all 25 operations the engine recognizes. They are grouped by the kind of
 property they act on: numeric math and clamping, container mutation for arrays, sets, maps, and
 tag containers, string concatenation, array reordering and deduplication, and cross-property copy
 or move.
@@ -84,14 +84,53 @@ members omitted from that mapping keep their current values:
     ItemClass: /NewMod/Items/Desc_New.Desc_New_C
 ```
 
-Use a sequence under `where` to AND several clauses. Clauses accept the same operators as target
-filters: `equals`, `notEquals`, numeric comparisons, `contains`, `notContains`, `in`, `notIn`,
-`matches`, and `isEmpty`. Nested paths and `[*]` reads are supported inside the element.
+Use a sequence under `where` for several clauses. They use `AND` by default. Set sibling
+`whereMode: OR` to update an element when any clause matches:
+
+```yaml
+- path: mProduct
+  op: update_where
+  whereMode: OR
+  where:
+    - { path: ItemClass, equals: Desc_OldA_C }
+    - { path: ItemClass, equals: Desc_OldB_C }
+  value: { ItemClass: Desc_New_C }
+```
+
+`whereMode` accepts `AND` or `OR` case-insensitively and requires `where`. Clauses accept the same
+operators as target filters: `equals`, `notEquals`, numeric comparisons, `contains`, `notContains`,
+`in`, `notIn`, `matches`, and `isEmpty`. Nested paths and `[*]` reads are supported inside the
+element.
 
 Every matching element is updated. No match is an error, protecting patches against upstream array
 changes. Invalid predicates or values roll back the whole array operation; partial writes are not
 kept. Only arrays whose elements are reflected structs are supported. This operation is useful for
 recipe `mIngredients` and `mProduct` arrays because it does not depend on element order.
+
+## replace_refs: reflected reference trees
+
+`replace_refs` searches below one property and replaces every exact matching object or class
+reference. It follows reflected structs, arrays, sets, maps, and instanced objects. This makes the
+same operation usable for recipe inputs/outputs and for nested schematic unlock or dependency
+objects without knowing array indexes or concrete unlock subclasses:
+
+```yaml
+- path: mUnlocks
+  op: replace_refs
+  from: /OldMod/Recipes/Recipe_Old.Recipe_Old_C
+  value: /NewMod/Recipes/Recipe_New.Recipe_New_C
+```
+
+Use `path: mIngredients` or `path: mProduct` for recipes, `path: mUnlocks` for unlock payloads,
+`path: mSchematicDependencies` for schematic dependencies, or `path: mTaskDependencies` for KAPI
+delivery-task dependencies. `path` is also the traversal boundary: unrelated properties on the
+target are never searched.
+
+Both hard and soft object/class references are supported. Instanced objects are traversed, but KDF
+does not follow ordinary external object references into unrelated assets. `from` and `value` must
+be scalar references. The replacement must satisfy every matched property's reflected class type.
+Zero matches, incompatible targets, or excessive nesting fail the operation. All matched references
+are validated before writing; a failure keeps original values.
 
 ## set (default): everything
 

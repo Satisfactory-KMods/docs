@@ -501,7 +501,8 @@ patches:
 ## Bulk edits by property value (`where`)
 
 `where:` compares any reflected property of every candidate in an `ofClass:` scope. One map, or a
-list of maps that must all hold; each map has a `path:` and exactly one operator (`equals`,
+list of maps using `AND` by default. Add sibling `whereMode: OR` when any clause may hold. Each map
+has a `path:` and exactly one operator (`equals`,
 `notEquals`, `lessThan`, `lessOrEqual`, `greaterThan`, `greaterOrEqual`, `contains`, `notContains`,
 `matches`, `isEmpty`). `[*]` in a path means "any element":
 
