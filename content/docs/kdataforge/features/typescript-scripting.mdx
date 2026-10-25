@@ -10,12 +10,12 @@ transactions, lifecycle, and limits rather than exposing Unreal objects directly
 build is intended for testing and API feedback.
 
 Install KDataForgeJS alongside KDataForge. A scripted pack still uses a normal `DataForge` root and
-`pack.yml`, but its entry point is always `Scripts/main.ts`:
+`pack.yml`, but its entry point is always `scripts/main.ts`:
 
 ```text
 DataForge/
 ├── pack.yml
-└── Scripts/
+└── scripts/
     ├── main.ts
     └── lib.ts
 ```
@@ -26,7 +26,7 @@ Import `defineHandler` and `defineMeta` from the built-in module. `defineHandler
 complete generated type, so do not write a separate context interface.
 
 ```ts
-import { defineHandler, defineMeta } from "@kmods/kdataforge";
+import { defineHandler, defineMeta } from "@kmods/kdataforgejs";
 
 export const meta = defineMeta({ id: "example.typed-pack", version: 1 });
 
@@ -42,31 +42,44 @@ or allow dynamic `import()`.
 
 ## Use generated types
 
-KDataForge generates TypeScript declarations from the sealed catalog. These declarations provide
-the event, hook, function, target, actor, property, and document IDs that the running pack can use.
+KDataForge generates TypeScript declarations from the sealed catalog. The virtual `satisfactory`
+module exposes authorized UE classes, properties, structs, and functions as normal TypeScript symbols.
+Catalog IDs stay internal runtime ABI details rather than pack-author API.
 Open the pack in KDataForge Editor, CodeOSS, or VS Code to get the same completion and diagnostics.
 Do not replace generated declarations with hand-written copies.
+
+KDataForge Editor writes the pack-specific result to
+`DataForge/typescript/kdataforgejs/kdataforge.generated.d.ts`. That file contains both core-module
+augmentations and `declare module "satisfactory"`, and its header records the sealed catalog digest.
+Runtime and declarations therefore consume one reflection snapshot.
 
 The repository's `KDataForgeJS/Examples/TypedStarter` folder is a complete project that can be opened
 directly. It includes `main.ts`, `lib.ts`, media and YAML imports, generated declarations, and a
 strict `tsconfig.json`; it requires no package installation.
 
-## Call KDataForge APIs
+## Use UE-native generated APIs
 
-The context exposes catalog-authorized operations rather than arbitrary reflection:
+Import generated UE symbols, resolve a typed class, then use CDO properties and functions directly:
 
 ```ts
-const realm = ctx.target("realm");
-const current = ctx.read(realm, "kdf.script.realm.counter");
-ctx.write(realm, "kdf.script.realm.counter", current);
+import { FGItemDescriptor } from "satisfactory";
 
-ctx.callStatic("provider.static-function", []);
-ctx.callMember(realm, "provider.member-function", [1n]);
-ctx.callCustom("provider.custom-function", [meta.id]);
+const itemClass: Class<FGItemDescriptor> = ctx.getClass("/Script/FactoryGame.FGItemDescriptor");
+const cdo = itemClass.getClassDefaultObject();
+
+console.info(cdo.mDisplayName.get());
+console.info(FGItemDescriptor.GetItemName(itemClass));
 ```
 
-Available IDs come from the generated declarations and active catalog. A TypeScript generic or a
-string written by the pack cannot grant a capability that the catalog did not seal.
+Writable UPROPERTY proxies also expose `set(value)`. Reflected USTRUCT arrays contain typed,
+revision-checked struct views. A TypeScript type or path written by the pack cannot grant a capability
+that the catalog did not seal.
+
+Native functions are explicit allowlists, not automatic exposure of every `BlueprintPure` function.
+A trusted reflection contributor can expose static native, `BlueprintPure`, read-only functions from a
+`UBlueprintFunctionLibrary`; KDataForgeJS then generates their signatures and runtime wrappers. Plain C++
+virtual functions without `UFUNCTION` cannot be reflected or intercepted through this API and still need
+a typed native hook integration.
 
 ### Import pack files
 
@@ -87,17 +100,8 @@ Objects, actors, and nested struct values use opaque handles. They are not C++ p
 addresses. KDataForge checks world, realm, catalog, generation, type, authority, lifecycle, and
 access again for every operation.
 
-```ts
-import type { UFGRecipe } from "@kmods/kdataforge";
-
-const recipe = ctx.getClassDefault<UFGRecipe>(
-    "/Game/FactoryGame/Recipes/Constructor/Recipe_IronPlate.Recipe_IronPlate_C",
-);
-
-for (const itemAmount of recipe.mIngredients) {
-    itemAmount.Amount.set(2);
-}
-```
+The `itemClass` and `cdo` values above are opaque handles. `getClassDefaultObject()` resolves the CDO
+through that class handle; `mDisplayName.get()` performs a checked property read.
 
 The class must be allowed by the pack's reflection catalog. Do not serialize handles or retain them
 across reload, world travel, realm replacement, or catalog regeneration; resolve new handles after
@@ -105,8 +109,9 @@ those transitions.
 
 ## Events, hooks, ticks, and timers
 
-Events and hooks are catalog-generated and typed. Keep returned subscriptions so you can clean them
-up explicitly; realm shutdown also removes remaining registrations.
+Events and hooks are catalog-generated and typed. Use generated keys rather than copying raw catalog
+IDs into pack code. Keep returned subscriptions so you can clean them up explicitly; realm shutdown
+also removes remaining registrations.
 
 ```ts
 const event = ctx.onTyped("provider.event", "example.event", (value) => {
