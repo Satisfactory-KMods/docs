@@ -8,8 +8,62 @@ sidebar:
 KDataForgeJS runs on a pinned QuickJS-NG build. Scripts receive ECMAScript built-ins plus the KDataForge context. Node,
 browser, filesystem, and network APIs are absent.
 
-The built-in module also exports 128 common helpers in seven typed groups. See the
+The built-in module also exports 144 common helpers in eight typed groups. See the
 [helper function reference](/kdataforge/features/kdataforgejs/helpers).
+
+## Mods, packs, and game version
+
+A script can check what is installed before it touches content from another mod or pack:
+
+```ts
+import { semver } from "@sf-kmods/kdataforgejs";
+
+if (ctx.isModLoaded("RefinedPower", ">=4.0.0")) {
+  ctx.info("RefinedPower is available");
+}
+
+const sml = ctx.getModMeta("SML");
+if (sml !== null && semver.lt(sml.version, "3.12.0")) {
+  ctx.warn(`SML ${sml.version} is older than expected`);
+}
+
+if (!ctx.isPackLoaded("my-base-pack")) return;
+```
+
+| Function | Result |
+| --- | --- |
+| `ctx.isModLoaded(reference, range?)` | `true` when SML loaded the mod. With `range`, its version must match as well. |
+| `ctx.getModMeta(reference)` | `reference`, `name`, `version`, `description`, `authors`, `docsUrl`, `supportUrl`, or `null`. |
+| `ctx.listMods()` | Metadata of every loaded mod, in the order SML reports them. |
+| `ctx.isPackLoaded(reference, range?)` | `true` when the KDataForge pack takes part in the current load. With `range`, its `pack.yml` version must match. |
+| `ctx.getPackMeta(reference)` | `reference`, `name`, `version`, `priority`, or `null`. |
+| `ctx.listPacks()` | Metadata of every pack that takes part in the current load. |
+| `ctx.gameVersion()` | Game build number, the value `gameVersion:` conditions compare. |
+
+References are case-sensitive mod references such as `SML` or `FicsitFarming`, and pack refs as written in `pack.yml`.
+A range uses the same syntax as `modVersion:` in YAML conditions, so a script and a document decide identically. These
+calls only read. They need no capability and work in every lifecycle phase.
+
+A pack is listed when it is enabled and not dropped by its dependencies or `conditions:`. A pack whose version is not a
+semantic version throws a `RangeError` when you pass `range`; call without a range to test presence only.
+
+Mod and pack lists are read at the moment of the call. Metadata objects are frozen copies and hold no engine state.
+
+## Version comparison
+
+`semver` is a pure helper group for Semantic Versioning 2.0 with npm-style ranges:
+
+```ts
+import { semver } from "@sf-kmods/kdataforgejs";
+
+semver.satisfies("3.13.1", "^3.12.0"); // true
+semver.gt("1.10.0", "1.9.0"); // true, numeric precedence
+semver.sort(["2.0.0", "1.0.0-rc.1", "1.0.0"]); // ["1.0.0-rc.1", "1.0.0", "2.0.0"]
+semver.maxSatisfying(["1.0.0", "1.4.2", "2.0.0"], "^1.0.0"); // "1.4.2"
+semver.format(semver.inc("1.2.3", "minor")); // "1.3.0"
+```
+
+See the [helper reference](/kdataforge/features/kdataforgejs/helpers#semver-16-helpers) for every function.
 
 ## Hashes and UUIDs
 

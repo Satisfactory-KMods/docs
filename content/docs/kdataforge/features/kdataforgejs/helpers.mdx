@@ -1,6 +1,6 @@
 ---
 title: Helper function reference
-description: Use reflected Unreal helpers plus 128 JavaScript helpers for common pack code.
+description: Use reflected Unreal helpers plus 144 JavaScript helpers for common pack code.
 sidebar:
   order: 6
 ---
@@ -29,7 +29,7 @@ example `KismetMathLibrary.SomeFunction(...)`. Runtime exports and TypeScript de
 
 ## JavaScript helpers
 
-`@sf-kmods/kdataforgejs` exports seven frozen helper groups. They run inside the existing QuickJS realm and need no npm
+`@sf-kmods/kdataforgejs` exports eight frozen helper groups. They run inside the existing QuickJS realm and need no npm
 package.
 
 ```ts
@@ -144,5 +144,42 @@ always throws.
 `once` and `memoize` retain values until their function becomes unreachable or the realm ends. Avoid caching UObject
 handles across reload. Timer-based debounce and throttle helpers are intentionally absent; use realm-owned
 `ctx.setTimeout` and `ctx.setInterval` so KDataForge can revoke scheduled work.
+
+## Semver: 16 helpers
+
+Versions are strings such as `1.2.3-rc.1+build` or parsed `SemVer` objects (`major`, `minor`, `patch`, `prerelease`,
+`build`). Every function accepts either form. Invalid input throws `TypeError`; an invalid range throws `RangeError`.
+Build metadata never affects comparison, and a leading `v` is accepted.
+
+| Helper | Use |
+| --- | --- |
+| `parse`, `create`, `coerce` | `parse` returns a frozen `SemVer` or `null`. `create(major, minor?, patch?, prerelease?, build?)` builds one. `coerce("v2.5")` reads the first version-like number and fills missing parts with zero. |
+| `format`, `isValid` | Write a version back as text or test whether a value is a valid version. |
+| `compare` | Return `-1`, `0`, or `1` by semantic precedence. A prerelease sorts before its release. |
+| `eq`, `neq`, `gt`, `gte`, `lt`, `lte` | Comparisons built on `compare`. |
+| `satisfies` | Test a version against a range. |
+| `maxSatisfying` | Return the highest matching entry of a list, or `undefined`. The entry keeps its original form. |
+| `sort` | Return a copy ordered from lowest to highest precedence. |
+| `inc` | Return the next `major`, `minor`, `patch`, or `prerelease` version. |
+
+`satisfies` and `maxSatisfying` read npm-style ranges:
+
+| Range | Matches |
+| --- | --- |
+| `^3.12.0` | `>=3.12.0 <4.0.0`. For `0.x` versions the caret stops at the next leftmost non-zero part. |
+| `~1.2.0` | `>=1.2.0 <1.3.0` |
+| `1.x`, `1.2`, `*` | Any version with that major, major and minor, or any version. |
+| `>=1.2 <2` | Space combines comparators with AND. |
+| `1.2.3 - 1.4` | An inclusive range; a partial upper bound includes the whole minor or major. |
+| `1.x \|\| 3.x` | `\|\|` combines alternatives with OR. |
+
+A prerelease such as `2.0.0-alpha` only matches a range that names a prerelease of the same `major.minor.patch`, so
+`^1.0.0` never selects a prerelease by accident.
+
+The range arguments of `ctx.isModLoaded` and `ctx.isPackLoaded` use the matcher of `modVersion:` conditions instead, so
+a script and a YAML document always decide the same way. The two agree on every range in the table above except in
+four edge cases: `modVersion:` matches `~1.2.0` only up to `1.2.1`, accepts a prerelease below the upper bound of a
+caret or tilde range, reads a partial `>1.2` as `>1.2.0` and `<=1.2` as `<=1.2.0`, and rejects a space after the
+operator. Use `semver.satisfies(ctx.getModMeta(reference).version, range)` when you want the npm behavior for a mod.
 
 See [Runtime APIs and limits](/kdataforge/features/kdataforgejs/runtime) for determinism, timers, and sandbox rules.
