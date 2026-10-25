@@ -49,6 +49,110 @@ semantic version throws a `RangeError` when you pass `range`; call without a ran
 
 Mod and pack lists are read at the moment of the call. Metadata objects are frozen copies and hold no engine state.
 
+## Pack configuration and conditions
+
+Request `kdf.config.read` for `ctx.config.get(id)` and `ctx.config.onChange(id, callback)`.
+IDs belong to the current pack; cross-pack IDs such as `OtherPack:enabled` are rejected. `get` returns the effective
+value used by running content, or `null` for a missing field. Pending UI edits are not effective values. Cold values
+remain unchanged until their normal restart boundary; multiplayer clients read the effective host override.
+
+`kdf sync` generates `DataForge/typescript/kdataforgejs-config.d.ts` from authored `*.config.yml` and
+`*.config.yaml` fields. Known keys infer their value type; other keys return the general config value union.
+Integers within JavaScript's safe range return `number`; larger signed integers return `bigint`.
+
+For example, define `enabled` in `balance.config.yml`. Configuration fields require a category:
+
+```yaml
+type: config
+category: /Script/FactoryGame.FGCategory
+fields:
+  - id: enabled
+    type: boolean
+    name: Enable rule
+    description: Enable this pack's scripted rule.
+    default: true
+    apply: hot
+```
+
+```ts
+import { defineHandler, defineMeta, type Subscription } from "@sf-kmods/kdataforgejs";
+
+export const meta = defineMeta({
+  capabilities: ["kdf.config.read", "kdf.conditions.evaluate"],
+});
+
+const subscriptions: Subscription[] = [];
+
+export default defineHandler(async (ctx) => {
+  console.info("effective enabled", ctx.config.get("enabled"));
+  subscriptions.push(ctx.config.onChange("enabled", ({ value, previous }) => {
+    console.info("effective value changed", previous, value);
+  }));
+  const enabled = ctx.conditions.evaluate({ config: "enabled == true" });
+  console.info("condition matched", enabled);
+});
+```
+
+`onChange` supplies `{ id, value, previous }` after an effective value changes. It does not call the handler immediately.
+Callbacks run through the realm pump, not inside the configuration UI. `unsubscribe()` stops an observer; reload,
+disable and world travel remove it with the realm. A reload creates a new observer: read the current value with `get`
+when the new handler starts.
+
+`ctx.conditions.evaluate(mapOrMaps, behavior?)` requires `kdf.conditions.evaluate` and uses the same evaluator as YAML
+conditions. Supported fields are `gameVersion`, `hasMod`, `modVersion`, `hasClass`, `config`, and `ifNotMatch`.
+Keys inside one map use AND. For an array of maps, `behavior` is `"AND"` by default or `"OR"`.
+Config expressions can read `cfg:`, `session:`, `ags:`, and `option:` through their existing KDF grammar.
+Invalid conditions throw; a world-dependent value that is not ready throws `Unavailable` rather than returning false.
+The input is bounded to eight nested levels, 256 nodes and 16 KiB. `all` and `any` keep their existing boolean-only behavior.
+
+## Existing and newly spawned actors
+
+Request `kdf.world.read`, import an actor class from `satisfactory`, and run queries on the server during the runtime
+phase. Registering an observer in the entry handler is allowed; delivery starts in the runtime phase.
+
+```ts
+import { defineHandler, defineMeta, type Subscription } from "@sf-kmods/kdataforgejs";
+import { FGBuildableFactory } from "satisfactory";
+
+export const meta = defineMeta({ capabilities: ["kdf.world.read"] });
+const subscriptions: Subscription[] = [];
+
+export default defineHandler(async (ctx) => {
+  if (!ctx.isAuthority()) return;
+  subscriptions.push(ctx.observeActors(FGBuildableFactory, (change) => {
+    if (change.kind === "added") console.info(change.actor.toString());
+    else console.info("removed", change.path);
+  }));
+
+  ctx.setTimeout(() => {
+    const page = ctx.findActors(FGBuildableFactory, { limit: 32 });
+    console.info("first page", page.actors.length);
+    if (page.nextCursor !== null) {
+      const next = ctx.findActors(FGBuildableFactory, { limit: 32, after: page.nextCursor });
+      console.info("next page", next.actors.length);
+    }
+  }, 0.1);
+});
+```
+
+Queries include subclasses in the current world. `findActors` returns `{ actors, nextCursor }`, sorted by object path.
+The default page size is 64, the maximum is 256; `nextCursor: null` marks the last page. A cursor is only meaningful
+within the current live world. Results are not a frozen world snapshot across pages.
+
+`observeActors` includes existing instances by default, delivering them in bounded batches. Pass
+`{ includeExisting: false }` for future spawns and destruction only. Added events contain a weak actor handle and path;
+removed events contain `actor: null` and the captured path. An actor destroyed before queued delivery may produce only
+a removed event. Handles can become stale after delivery. Spawn observation
+does not guarantee that `BeginPlay` or construction has completed; use a typed lifecycle hook when that ordering matters.
+World travel and reload revoke subscriptions and old handles. Observing an actor never gives the pack ownership of it:
+cleanup does not destroy existing world actors.
+
+Actor scans are bounded to 10 ms and 16,384 matching results. Select a narrower class if the scan exceeds these limits.
+Each realm can have at most 32 observations, also subject to the shared subscription limit, with 128 pending deliveries
+per observer. Overflow reports a diagnostic and ends the current realm; reduce the workload and reload the pack to
+rescan current state. Delivery is not lossless under overload.
+These APIs do not add client-side actor access or replication.
+
 ## Version comparison
 
 `semver` is a pure helper group for Semantic Versioning 2.0 with npm-style ranges:

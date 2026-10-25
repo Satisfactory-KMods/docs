@@ -37,6 +37,28 @@ if (isCdoDocument(document)) {
 `applyDocument` pairs a handler key with its generated document type. The runtime validates the full change before
 commit and compensates prepared mutations if a later step fails.
 
+## Optional content document types
+
+Run `kdf game-data --content-types` to replace generic content entries in the exported declarations with types derived
+from the KDF validation schemas bundled with the CLI. This covers asset, building, category reorder, CDO, curve,
+dataasset, eventrule, gametag, item, recipe, research, resource, resource node, schematic, sinkpoints, sound, sublevel,
+and unlock documents. Existing item/recipe helpers and dynamic class definitions keep their current API.
+
+```ts
+ctx.applyDocument("schematic", {
+  type: "schematic",
+  schematics: [{ id: "Schematic_MyPack_Inventory", inventorySlots: 3 }],
+});
+```
+
+For example, `inventroySlots` or `inventorySlots: "three"` is a type error with this option enabled. Nested definitions
+and references come from the same bundled schemas; they are not fetched from schema URLs while generating types.
+The CLI package must match the runtime's authoring contract. TypeScript checks field names, structural types and
+supported unions; numeric ranges, patterns, conditional rules and runtime reflection still require KDF validation.
+This option does not simulate content changes or broaden the script's capabilities.
+
+The flag is off by default. Re-run `kdf game-data` without it to regenerate generic document types.
+
 ## Create an item
 
 ```ts

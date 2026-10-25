@@ -83,6 +83,19 @@ Run the game-data command after installing or updating Satisfactory, KDataForge,
 npx @sf-kmods/kdataforgejs-cli game-data
 ```
 
+To additionally generate schema-derived content document types, opt in for that export:
+
+```bash
+npx @sf-kmods/kdataforgejs-cli game-data --content-types
+```
+
+Without the flag, content documents keep their existing generic entry types. Exporting again without it restores
+that default. The option affects local editor and type-checking output only; it grants no runtime capability and adds
+no package dependency to the distributed pack. See [content authoring](/kdataforge/features/kdataforgejs/content-authoring).
+
+`kdf sync` also generates pack-local config keys and value types from authored config definitions. Re-run it after
+editing a `*.config.yml` or `*.config.yaml` file.
+
 The command finds a compatible Steam or Epic installation on Windows, or a native or Flatpak Steam installation on
 Linux. It loads the newest local save, starts reflection export, closes the game, and imports the result.
 
