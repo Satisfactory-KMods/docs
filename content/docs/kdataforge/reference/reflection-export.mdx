@@ -38,6 +38,11 @@ options yourself: `KDF.DumpReflection --assets --functions --flattened`. The cha
 only when you give **no** option at all; as soon as you pass one, exactly the options you passed
 are used.
 
+For KDataForgeJS projects, `kdf game-data` owns this lifecycle. It discovers a compatible Windows or Linux install,
+launches with `-KDFReflectionAutoExport=<temporary-directory> -KDFReflectionAutoExit`, waits for atomic publication,
+and imports the archive and generated declarations into the current project. `-KDFReflectionAutoExit` requests a clean
+game exit after the automatic export finishes; it has no effect on manual exports.
+
 Clients do nothing unless `--force` is supplied. Server or host is normal export location. Default
 directory is `FactoryGame/KMods/ReflectionExport/`.
 
