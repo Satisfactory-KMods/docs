@@ -1,0 +1,139 @@
+---
+title: Runtime APIs and limits
+description: Use JavaScript built-ins and KDataForgeJS utilities within the runtime sandbox.
+sidebar:
+  order: 5
+---
+
+KDataForgeJS runs on a pinned QuickJS-NG build. Scripts receive ECMAScript built-ins plus the KDataForge context. Node,
+browser, filesystem, and network APIs are absent.
+
+The built-in module also exports 128 common helpers in seven typed groups. See the
+[helper function reference](/kdataforge/features/kdataforgejs/helpers).
+
+## Hashes and UUIDs
+
+```ts
+const md5 = ctx.md5("pack input");
+const sha1 = ctx.sha1("pack input");
+const sha256 = ctx.sha256("pack input");
+const crc32 = ctx.crc32("pack input");
+const id = ctx.uuid();
+```
+
+Hash functions read UTF-8 and return lowercase hexadecimal text. `ctx.uuid()` returns a lowercase RFC 4122 UUID.
+
+Use SHA-256 for stable keys derived from canonical input:
+
+```ts
+function recipeCacheKey(canonicalRecipeJson: string): string {
+  return `recipe:${ctx.sha256(canonicalRecipeJson)}`;
+}
+```
+
+MD5, SHA-1, and CRC32 are useful for compatibility, checksums, and matching an existing format. Do not use them as a
+security boundary.
+
+`Date.now()`, `Math.random()`, and `ctx.uuid()` are nondeterministic. They fit log correlation, transient local state,
+and unique runtime keys. Shared content and replicated decisions need deterministic inputs.
+
+## Collections and data
+
+The runtime includes arrays, typed arrays, iterators, `Map`, `Set`, `WeakMap`, and `WeakSet`. Newer collection helpers
+include `Object.groupBy`, `Map.groupBy`, and set operations such as `union`, `intersection`, and `difference`.
+
+```ts
+const uniquePaths = new Set([
+  "/Game/FactoryGame/A",
+  "/Game/FactoryGame/A",
+]);
+
+console.info("unique paths", uniquePaths.size);
+```
+
+`Number`, `BigInt`, `Math`, and `JSON` are available. Reflected `int64` and `uint64` values use `bigint`; floating-point
+values use `number`.
+
+`ctx.compare(left, operator, right)` performs KDataForge's deterministic comparison without JavaScript's loose
+coercion. `ctx.conditions.all` and `ctx.conditions.any` combine boolean results:
+
+```ts
+const accepted = ctx.conditions.all([
+  ctx.compare(amount, ">=", 2),
+  ctx.conditions.any([isUnlocked, isAdmin]),
+]);
+```
+
+The module also exports `all(values)` and `any(values)` for normal JavaScript truthiness. Use `ctx.conditions` when
+every input must already be a boolean; it rejects other value types.
+
+## Text, patterns, and encoding
+
+`RegExp`, `RegExp.escape`, Unicode string normalization, and URI encoding are available. Escape config or user text
+before inserting it into a regular expression:
+
+```ts
+function matchesExactName(configuredName: string, candidateName: string): boolean {
+  return new RegExp(`^${RegExp.escape(configuredName)}$`, "u").test(candidateName);
+}
+```
+
+`atob` and `btoa` handle Base64 binary strings. `btoa` rejects characters outside the byte range, so it does not encode
+arbitrary Unicode text directly.
+
+## Promises and scheduled work
+
+Promises, `async`/`await`, and `queueMicrotask` are available. `ctx.setTimeout`, `ctx.setInterval`, and
+`ctx.registerTick` schedule work through KDataForge, which can revoke it with the current realm.
+
+Microtasks and timer callbacks still share the script's deadline and quota. They do not create unrestricted background
+work.
+
+## Logging
+
+Use `console.log`, `console.info`, `console.warn`, `console.error`, or `console.debug`. The context provides matching
+`ctx.log`, `ctx.info`, `ctx.warn`, `ctx.error`, and `ctx.debug` methods when passing the logger with other helpers is more
+convenient.
+
+The console prints an object handle as `[object]`. Call `toString()` for its generated class name and object path:
+
+```ts
+console.info(target.toString());
+```
+
+The string never contains a native memory address.
+
+## Missing APIs
+
+The runtime does not expose:
+
+- Node.js or npm packages
+- DOM APIs beyond the native `DOMException`, `atob`, and `btoa` built-ins
+- filesystem, process, socket, HTTP, or server APIs
+- remote downloads
+- `Intl`, `Temporal`, WebAssembly, or `Atomics.waitAsync`
+
+`Atomics.wait` exists in the ECMAScript surface, but host policy blocks it because it would stop the game thread.
+
+## Runtime checks
+
+KDataForge checks catalog generation, capability, authority, thread affinity, lifecycle phase, world, realm, handle
+generation, and quotas at each boundary. Generated TypeScript catches many mistakes before launch, but it cannot prove
+that the running game has the same catalog or object state.
+
+`ctx.catalog()` exposes read-only runtime metadata for diagnostics and generic tools:
+
+```ts
+const catalog = ctx.catalog();
+console.info("catalog", catalog.digest, catalog.generation.toString());
+```
+
+The snapshot contains `types`, `properties`, `functions`, `events`, `imports`, `targets`, `tracked`, and
+`nativeAdapters`. Normal pack code should use generated class and member symbols; descriptor IDs are runtime ABI and may
+change with the catalog.
+
+Include the pack ref, script path, relevant log line, catalog generation, and a minimal reproduction when reporting a
+runtime failure.
+
+See also: [Hooks and lifecycle](/kdataforge/features/kdataforgejs/hooks-and-lifecycle) and
+[Use reflected game APIs](/kdataforge/features/kdataforgejs/reflection).

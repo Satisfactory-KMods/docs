@@ -103,8 +103,18 @@ Do not serialize them.
 The class symbol contains exposed static functions. Instance functions appear on object handles. KDataForge checks
 argument types, invocation form, authority, thread, and lifecycle before each call.
 
-Reflection does not expose every `BlueprintPure` function automatically. A trusted contributor must add safe native
-functions to the catalog. Plain C++ functions without `UFUNCTION` need native metadata.
+Pure Unreal helpers with unique names are also direct exports from `satisfactory`:
+
+```ts
+import { IsValid, Sin } from "satisfactory";
+
+if (IsValid(target)) {
+  const wave = Sin(timeSeconds);
+}
+```
+
+The exporter accepts native `BlueprintPure` functions with supported scalar signatures. Name collisions stay on their
+class symbol. Plain C++ functions without `UFUNCTION` need native metadata.
 
 ## Use native members
 

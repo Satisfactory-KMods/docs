@@ -1,0 +1,116 @@
+---
+title: Create content from TypeScript
+description: Import pack files, apply typed documents, and define items, recipes, and dynamic classes.
+sidebar:
+  order: 4
+---
+
+TypeScript can call the same KDataForge handlers as YAML. Use scripts for computed values, shared helpers, or runtime
+events. A static document remains easier to inspect when it needs no code.
+
+## Import pack files
+
+`ctx.import(kind, path)` reads a file from the verified pack manifest. Supported kinds are `text`, `yaml`, `binary`,
+`image`, and `audio`.
+
+```ts
+const settings = ctx.import("yaml", "settings.yml");
+const sound = ctx.import("audio", "alert.ogg");
+```
+
+Paths are pack-relative. KDataForge validates the normalized path, kind, SHA-256 digest, and size before returning a
+value. URLs and absolute paths are rejected.
+
+Use literal arguments so `kdf sync` can add the import and digest to `pack.yml`. Dynamic import paths cannot receive
+authority automatically.
+
+## Apply a document
+
+```ts
+const document = ctx.import("yaml", "balance.cdo.yml");
+
+if (isCdoDocument(document)) {
+  ctx.applyDocument("cdo", document);
+}
+```
+
+`applyDocument` pairs a handler key with its generated document type. The runtime validates the full change before
+commit and compensates prepared mutations if a later step fails.
+
+## Create an item
+
+```ts
+import { EResourceForm, FGItemDescriptor } from "satisfactory";
+
+const item = ctx.createItem({
+  id: "my-pack.rare-part",
+  parent: FGItemDescriptor,
+  displayName: { namespace: "my-pack", key: "rare-part", source: "Rare Part" },
+  form: "solid",
+  stackSize: "medium",
+  properties: { mForm: EResourceForm.RF_SOLID },
+  extra: { mSubCategories: [MyCategory] },
+});
+```
+
+Passing a generated class as `parent` types `properties` from that class. Read-only and unknown names fail type
+checking. `extra` accepts values that the fixed item fields do not cover: booleans, numbers, strings, class handles,
+lists, and objects. It allows up to 64 entries and eight nested levels. A property already set by a fixed field cannot
+also appear in `extra`.
+
+`updateItem` uses the same definition shape. `removeItem` returns a typed content reference.
+
+## Create a recipe
+
+```ts
+const recipe = ctx.createRecipe({
+  id: "my-pack.rare-part-recipe",
+  ingredients: [{ item: { classPath: ironPlatePath }, amount: 2 }],
+  products: [{ item: { id: item.id }, amount: 1 }],
+  producedIn: [{ classPath: constructorPath }],
+  durationSeconds: 4,
+  register: true,
+});
+```
+
+Recipes support `createRecipe`, `updateRecipe`, `removeRecipe`, and `extra` properties.
+
+## Define a dynamic class
+
+```ts
+const dynamicClass = ctx.defineClass({
+  type: "class",
+  classes: [{
+    id: "Actor_MyPack_RuntimeClass",
+    parent: "/Script/Engine.Actor",
+  }],
+});
+```
+
+Class definition and document application belong in `Initialization`. Gameplay work belongs in the runtime phase. Use
+`ctx.isAuthority()` when only the host or server should perform it.
+
+There is no `save()` call and scripts do not write cooked Unreal packages. KDataForge owns validation, registration,
+transactions, reload baselines, and rollback.
+
+## Actors and behaviors
+
+`ctx.spawnActor` and `ctx.modifyActor` use generated actor and property keys. `ctx.destroyActor` removes a spawned actor.
+Tools that discover a catalog at runtime can use the explicit escape hatches `spawnActorById` and `modifyActorById`.
+Those methods return broader types and defer more mistakes to runtime.
+
+Behavior APIs compose catalogued handlers without creating a native UClass:
+
+1. `registerBehavior` validates the descriptor and callback map.
+2. `createBehavior` attaches an instance to an actor.
+3. `destroyBehavior` or `unregisterBehavior` removes an instance.
+4. `unregisterBehaviorClass` removes the registration and can cascade to its instances.
+
+Dynamic native UClasses remain part of KDataForge's class-definition system. Runtime behaviors are bounded
+composition attached to existing actors.
+
+`defineBehavior(value)` from `@sf-kmods/kdataforgejs` freezes a behavior helper object while preserving its inferred
+TypeScript shape. Pass the resulting callbacks to `registerBehavior`; descriptors still go through KDataForge's runtime
+validation.
+
+Next: [Hooks and lifecycle](/kdataforge/features/kdataforgejs/hooks-and-lifecycle).

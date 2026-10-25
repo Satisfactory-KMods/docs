@@ -1,0 +1,148 @@
+---
+title: Helper function reference
+description: Use reflected Unreal helpers plus 128 JavaScript helpers for common pack code.
+sidebar:
+  order: 6
+---
+
+## Unreal helpers
+
+The generated `satisfactory` module exports pure native Blueprint helpers as normal functions. Current local catalog
+generates 236 typed global functions, primarily from Unreal math, string, and text libraries. Exact set comes from
+installed game build and appears in generated declarations.
+
+```ts
+import { IsValid, Sin, Concat_StrStr } from "satisfactory";
+
+if (IsValid(target)) {
+  const wave = Sin(timeSeconds);
+  const label = Concat_StrStr("Power: ", String(power));
+}
+```
+
+`IsValid` understands KDataForge object, class, and actor handles. It returns `false` for `null`, `undefined`, stale
+reload handles, destroyed KDataForge actors, and unrelated JavaScript values.
+
+KDataForge exposes native `BlueprintPure` static functions whose parameters and return value fit its bounded scalar ABI.
+A globally unique function name gets a top-level export. Name collisions stay available through the owning class, for
+example `KismetMathLibrary.SomeFunction(...)`. Runtime exports and TypeScript declarations use the same sealed catalog.
+
+## JavaScript helpers
+
+`@sf-kmods/kdataforgejs` exports seven frozen helper groups. They run inside the existing QuickJS realm and need no npm
+package.
+
+```ts
+import { arrays, strings, numbers } from "@sf-kmods/kdataforgejs";
+
+const batches = arrays.chunk(items, 50);
+const id = strings.slugify(displayName);
+const output = numbers.clamp(requestedOutput, 0, maximumOutput);
+```
+
+All helpers are typed. Methods that return arrays, objects, maps, or sets create new containers unless their description
+states that they mutate an input.
+
+## Arrays: 27 helpers
+
+| Helpers | Use |
+| --- | --- |
+| `chunk`, `partition` | Split values into fixed-size batches or predicate groups. `chunk` requires a positive integer size. |
+| `compact`, `unique`, `uniqueBy` | Remove falsey values or duplicates. |
+| `groupBy`, `keyBy`, `countBy` | Build records from a selector. Later values replace earlier values in `keyBy`. |
+| `flatten`, `flattenDeep` | Flatten one level or all nested array levels. |
+| `first`, `last`, `initial`, `tail` | Read or remove array edges without changing the input. |
+| `take`, `takeRight`, `drop`, `dropRight` | Copy a count of values from either side. Negative counts become zero. |
+| `zip`, `unzip` | Convert rows to columns or columns to rows. `zip` stops at the shortest input. |
+| `rotate` | Rotate left by a signed amount. |
+| `difference`, `intersection`, `union` | Perform set-style array operations while preserving encounter order. |
+| `sortBy`, `minBy`, `maxBy` | Compare selector results. `sortBy` preserves original order when keys match. |
+
+## Strings: 25 helpers
+
+| Helpers | Use |
+| --- | --- |
+| `capitalize`, `decapitalize` | Change the first character's case. |
+| `words` | Split ASCII words across case changes and non-alphanumeric separators. |
+| `camelCase`, `pascalCase`, `kebabCase`, `snakeCase`, `titleCase` | Convert word casing. |
+| `slugify` | Normalize accents and return a lowercase kebab-case identifier. |
+| `truncate`, `padCenter`, `reverse` | Format display text without changing the input. |
+| `countOccurrences` | Count non-overlapping matches. Empty search text returns zero. |
+| `removePrefix`, `removeSuffix`, `ensurePrefix`, `ensureSuffix` | Normalize known string edges. |
+| `before`, `after`, `between` | Extract text around delimiters. |
+| `lines`, `normalizeWhitespace`, `isBlank` | Process lines and whitespace. |
+| `escapeRegExp` | Escape text before inserting it into a regular expression. |
+| `stripIndent` | Remove shared leading indentation from nonblank lines. |
+
+## Numbers: 20 helpers
+
+| Helpers | Use |
+| --- | --- |
+| `clamp`, `inRange`, `wrap` | Constrain, test, or wrap a number within a range. |
+| `lerp`, `inverseLerp`, `remap` | Interpolate and map between ranges. Empty source ranges throw `RangeError`. |
+| `roundTo`, `floorTo`, `ceilTo` | Quantize to a positive step. |
+| `sum`, `product`, `average`, `median`, `mode`, `min`, `max` | Aggregate number arrays. Empty optional results return `undefined`. |
+| `percentage`, `percentOf` | Convert between fractions and percentage values. Division by zero throws `RangeError`. |
+| `nearlyEqual` | Compare using an optional epsilon. |
+| `signNonZero` | Return `-1` for negative values and `1` for zero or positive values. |
+
+## Objects: 15 helpers
+
+| Helpers | Use |
+| --- | --- |
+| `pick`, `omit` | Copy selected or unselected own keys. |
+| `mapValues`, `mapKeys`, `filterEntries` | Transform record entries. |
+| `invert`, `fromPairs`, `toPairs`, `entriesSorted` | Convert between records and entry pairs. |
+| `mergeDefined` | Merge records while ignoring `undefined` values. |
+| `getPath`, `hasPath` | Read nested own properties through a key array. |
+| `setPath` | Return a copy with one nested path changed. |
+| `deepFreeze` | Recursively freeze an object graph and handle cycles. |
+| `isEmpty` | Check whether an object has own string or symbol keys. |
+
+## Guards: 20 helpers
+
+Type predicates narrow values in TypeScript:
+
+```ts
+if (guards.isNonEmptyString(value)) {
+  console.info(value.toUpperCase());
+}
+```
+
+Available predicates are `isDefined`, `isNil`, `isBoolean`, `isNumber`, `isFiniteNumber`, `isInteger`,
+`isSafeInteger`, `isBigInt`, `isString`, `isNonEmptyString`, `isArray`, `isObject`, `isPlainObject`, `isFunction`,
+`isPromiseLike`, `isIterable`, `isMap`, and `isSet`.
+
+`assertDefined` returns a non-null value or throws `TypeError`. `assertNever` marks an unreachable union branch and
+always throws.
+
+## Collections: 10 helpers
+
+| Helper | Use |
+| --- | --- |
+| `getOrCreate` | Read a map value or create, store, and return it. |
+| `mapMap`, `filterMap` | Create a transformed or filtered map. |
+| `mapSet`, `filterSet` | Create a transformed or filtered set. |
+| `toggleSet` | Add or remove one value. This helper mutates the supplied set. |
+| `addToMapSet`, `removeFromMapSet` | Maintain a `Map<K, Set<V>>`. These helpers mutate the supplied map and set. |
+| `frequency` | Count iterable values in a map. |
+| `hasDuplicates` | Stop at the first repeated iterable value. |
+
+## Functions: 11 helpers
+
+| Helper | Use |
+| --- | --- |
+| `identity`, `constant`, `noop` | Small callback adapters. |
+| `tap` | Run an effect and return the original value. |
+| `negate` | Invert a predicate. |
+| `once` | Run a callback once and reuse its first result. |
+| `memoize` | Cache results by a selected key for the current realm. |
+| `pipe`, `compose` | Build a left-to-right or right-to-left unary pipeline. |
+| `times` | Call a function for indexes from zero to count minus one. |
+| `tryOr` | Return a fallback value, or call a fallback function, when the callback throws. |
+
+`once` and `memoize` retain values until their function becomes unreachable or the realm ends. Avoid caching UObject
+handles across reload. Timer-based debounce and throttle helpers are intentionally absent; use realm-owned
+`ctx.setTimeout` and `ctx.setInterval` so KDataForge can revoke scheduled work.
+
+See [Runtime APIs and limits](/kdataforge/features/kdataforgejs/runtime) for determinism, timers, and sandbox rules.

@@ -1,240 +1,72 @@
 ---
 title: TypeScript scripting with KDataForgeJS
-description: Write typed KDataForge packs with catalog-generated APIs, local modules, events, hooks, ticks, and safe object handles.
+description: Add typed scripts, reflected game APIs, hooks, and runtime logic to a KDataForge pack.
 sidebar:
   order: 9
 ---
 
-KDataForgeJS is the TypeScript adapter for KDataForge. It uses KDataForge's catalog, validation,
-transactions, lifecycle, and limits rather than exposing Unreal objects directly. The current dev
-build is intended for testing and API feedback.
+KDataForgeJS runs typed scripts inside a KDataForge pack. Use it when a change needs computed values, hooks, delegates,
+timers, or runtime decisions. YAML remains the shorter option for static content and property patches.
 
-Install KDataForgeJS alongside KDataForge. A scripted pack still uses a normal `DataForge` root and
-`pack.yml`, but its entry point is always `scripts/main.ts`:
+Scripts use KDataForge's catalog, transactions, authority checks, reload baselines, and limits. Unreal objects stay
+behind typed handles.
 
-```text
-DataForge/
-├── pack.yml
-└── scripts/
-    ├── main.ts
-    └── lib.ts
+## Start a project
+
+```bash
+npx @sf-kmods/kdataforgejs-cli init MyPack
+cd MyPack
+npm install
+npx @sf-kmods/kdataforgejs-cli game-data
+npm run verify
 ```
 
-## Write the entry point
+The project keeps npm tooling outside its `DataForge/` pack. The game provides `@sf-kmods/kdataforgejs` at runtime and
+does not load `node_modules`.
 
-Import `defineHandler` from the built-in module. It gives `ctx` its complete generated type, so you never
-write a context interface yourself. `meta` is optional and only exists to request capabilities.
-KDataForge builds a stable script identity from the pack ref and the entry path, so there is no ID to
-choose.
+A minimal entry contains one default handler:
 
 ```ts
 import { defineHandler } from "@sf-kmods/kdataforgejs";
 
 export default defineHandler(async (ctx) => {
-    console.info("loaded", ctx.catalog().digest);
-    await Promise.resolve();
+  console.info("loaded", ctx.catalog().digest);
 });
 ```
 
-Local static imports such as `./lib` are supported when they remain inside the pack's prepared
-source graph. KDataForgeJS does not read `package.json` or `node_modules`, resolve external packages,
-or allow dynamic `import()`.
+KDataForge derives the script identity from the pack ref and `scripts/main.ts`. `meta` is optional and requests extra
+capabilities only when the script needs them.
 
-## Use generated types
+[Set up a KDataForgeJS project](/kdataforge/features/kdataforgejs/project-setup) covers project layout, game-data import,
+generated types, capabilities, supported imports, and every CLI check.
 
-KDataForge generates TypeScript declarations from the sealed catalog and full game reflection export.
-The virtual `satisfactory` module exposes every exported native and Blueprint class as a typed class symbol,
-including its superclass and exact object path. Classes in the executable catalog additionally expose their
-reflected properties, structs, functions, hooks, and delegates. Catalog IDs stay internal runtime ABI details
-rather than pack-author API.
-Open the pack in KDataForge Editor, CodeOSS, or VS Code to get the same completion and diagnostics.
-Do not replace generated declarations with hand-written copies.
+## Use generated game APIs
 
-Satisfactory's KDataForge reflection export writes the pack-specific result to
-`DataForge/typescript/kdataforgejs/kdataforge.generated.d.ts`. Build and run the installed Steam mod,
-then export reflection for the active pack instead of hand-writing this file. It contains core-module
-augmentations and `declare module "satisfactory"`; its header records the sealed catalog digest.
-Runtime and declarations therefore consume one reflection snapshot.
-
-For npm-based authoring, install `@sf-kmods/kdataforgejs` and extend its strict base configuration:
-
-```json
-{
-  "extends": "@sf-kmods/kdataforgejs/tsconfig.base.json"
-}
-```
-
-The package supplies authoring declarations only. Game runtime still provides built-in
-`@sf-kmods/kdataforgejs` and generated `satisfactory` modules; it never loads `node_modules`.
-
-The repository's `KDataForgeJS/Examples/TypedStarter` folder is a complete project that can be opened
-directly. It includes `main.ts`, `lib.ts`, media and YAML imports, generated declarations, and a
-strict `tsconfig.json`; it requires no package installation.
-
-## Use UE-native generated APIs
-
-Import generated UE symbols, resolve a typed class, then use CDO properties and functions directly:
+The generated `satisfactory` module contains class symbols from the active reflection export:
 
 ```ts
 import { FGItemDescriptor } from "satisfactory";
 
-const itemClass = ctx.getClass(FGItemDescriptor, "/Script/FactoryGame.FGItemDescriptor", { checked: true });
-const cdo = itemClass.getClassDefaultObject();
+const itemClass = ctx.getClass(
+  FGItemDescriptor,
+  "/Script/FactoryGame.FGItemDescriptor",
+  { checked: true },
+);
 
+const cdo = itemClass.getClassDefaultObject();
 console.info(cdo.mDisplayName.get());
 console.info(FGItemDescriptor.GetItemName(itemClass));
 ```
 
-For Blueprint and native class sets, use typed sealed search:
+Properties, functions, enums, structs, hooks, and delegates carry generated types. Setters record reload baselines.
+Class, object, and data-asset lookups return opaque handles with catalog, realm, world, and generation checks.
 
-```ts
-const itemClasses = ctx.findClasses(FGItemDescriptor, {
-  pathPrefix: "/Game/FactoryGame/",
-  nameContains: "Desc_",
-  includeNative: false,
-  includeBlueprints: true,
-  limit: 64,
-});
-```
+[Use reflected game APIs](/kdataforge/features/kdataforgejs/reflection) covers class search, checked lookups, CDOs,
+property proxies, casts, native functions, and non-reflected C++ members.
 
-Supported search fields are `pathPrefix`, `nameContains`, `includeNative`, `includeBlueprints`, and `limit`.
-Search covers only the classes your pack already knows about (the ones it imports or lists); it does not scan or load arbitrary assets.
+## React to the game
 
-A script entry in `pack.yml` needs nothing beyond the language, its version and the entry file:
-
-```yaml
-scripts:
-  - language: kmods.typescript
-    languageVersion: 1
-    entry: scripts/main.ts
-```
-
-`realm`, `network` and `authority` default to `any`. You don't list the classes your script uses either.
-KDataForge reads what you import from `satisfactory` and resolves the names for you: native classes by their
-short name (`FGBuildable`), Blueprint classes by asset name (`BP_WaterTurbineNode`). If two Blueprints share a name,
-KDataForge reports `KDF.Script.AmbiguousClassImport` and picks neither. In that case, name the class you
-mean under `reflectionClasses` in the manifest entry. The same list still works for classes your code doesn't
-import. A script can use up to 64 classes. Regenerate game data after installing or updating game/mod content so
-new or removed classes and changed reflection members match the running build.
-
-Capabilities are the rights a script asks for. They live in optional static meta, never in `pack.yml`.
-Reading and writing reflected values (`kdf.reflection.read` and `kdf.reflection.write`) is always allowed, and
-the capability names are typed, so a typo is an editor error rather than a runtime surprise:
-
-```ts
-import { defineHandler, defineMeta } from "@sf-kmods/kdataforgejs";
-
-export const meta = defineMeta({
-  capabilities: ["kdf.reflection.read", "kdf.reflection.write"],
-});
-
-export default defineHandler(async (ctx) => {
-  // ...
-});
-```
-
-Metadata inspection is static and happens before capability policy is sealed. Capability values must
-be unique string literals. Other meta fields, computed values, spreads, and runtime-generated arrays
-are rejected. Packs needing no capabilities should omit `defineMeta` and `meta` entirely.
-
-Writable UPROPERTY proxies also expose `set(value)`. Reflected USTRUCT arrays contain typed,
-revision-checked struct views. A TypeScript type or path written by the pack cannot grant a capability
-that the catalog did not seal.
-
-Reflected Unreal enums are exported from `satisfactory` with frozen named runtime values. Enum-backed
-properties use their concrete enum instead of `number`:
-
-```ts
-import { EResourceForm, FGItemDescriptor } from "satisfactory";
-
-const cdo = ctx.getClass(
-  FGItemDescriptor,
-  "/Script/FactoryGame.FGItemDescriptor",
-  { checked: true },
-).getClassDefaultObject();
-const form: EResourceForm = cdo.mForm.get();
-cdo.mForm.set(EResourceForm.RF_SOLID);
-```
-
-Class, object, data-asset, and cast lookups are nullable by default. Pass `{ checked: true }` when absence or a
-type mismatch must stop the script with a controlled KDF exception:
-
-```ts
-const maybeObject = ctx.getObject(FGItemDescriptor, objectPath);
-const object = ctx.getObject(FGItemDescriptor, objectPath, { checked: true });
-const dataAsset = ctx.getDataAsset(MyDataAsset, dataAssetPath, { checked: true });
-const childObject = ctx.cast(MyChildDescriptor, object, { checked: true });
-const childClass = ctx.cast(MyChildDescriptor, itemClass, { checked: true });
-```
-
-Object and data-asset paths must already be loaded. These calls never perform synchronous asset loading. Returned
-values are broker-issued handles bound to the current catalog, realm, world, and declared reflected type.
-
-Each successful setter records its first previous value and latest value in KDataForge's patch history,
-and captures the same reload baseline as a document patch. After editing a script, a host or administrator
-can run `/kdf reload` (`KDF.Reload` in the console). KDataForge revokes the old realm, restores document and
-setter baselines, rereads the source graph, recompiles changed bundle digests, and runs each active entry once.
-Resolve fresh class, object, and property handles after reload.
-
-Native functions are explicit allowlists, not automatic exposure of every `BlueprintPure` function.
-A trusted reflection contributor can expose static native, `BlueprintPure`, read-only functions from a
-`UBlueprintFunctionLibrary`; KDataForgeJS then generates their signatures and runtime wrappers. Plain C++
-virtual functions without `UFUNCTION` cannot be reflected or intercepted through this API and still need
-a typed native hook integration.
-
-### Import pack files
-
-`ctx.import(kind, path)` reads only files declared by the pack and included in its verified source
-manifest. Supported kinds are `text`, `yaml`, `binary`, `image`, and `audio`.
-
-```ts
-const settings = ctx.import("yaml", "settings.yml");
-const sound = ctx.import("audio", "alert.ogg");
-```
-
-Paths are pack-relative. KDataForge validates the normalized path, kind, digest, and size before the
-runtime receives the value. URLs and absolute paths are rejected.
-
-### Work with CDOs and object handles
-
-Objects, actors, and nested struct values use opaque handles. They are not C++ pointers or UObject
-addresses. KDataForge checks world, realm, catalog, generation, type, authority, lifecycle, and
-access again for every operation.
-
-The `itemClass` and `cdo` values above are opaque handles. `getClassDefaultObject()` resolves the CDO
-through that class handle; `mDisplayName.get()` performs a checked property read.
-
-The class must be allowed by the pack's reflection catalog. Do not serialize handles or retain them
-across reload, world travel, realm replacement, or catalog regeneration; resolve new handles after
-those transitions.
-
-## Events, hooks, ticks, and timers
-
-Events and hooks are catalog-generated and typed. Use generated keys rather than copying raw catalog
-IDs into pack code. Keep returned subscriptions so you can clean them up explicitly; realm shutdown
-also removes remaining registrations.
-
-```ts
-const event = ctx.onTyped("provider.event", "example.event", (value) => {
-    console.info("event", value);
-});
-
-const tick = ctx.registerTick(
-    "example.inventory-sorter",
-    (deltaSeconds) => console.debug("sort", deltaSeconds),
-    { every: 5, requireGameThread: true },
-);
-
-event.unsubscribe();
-tick.unsubscribe();
-ctx.unregisterTick("example.inventory-sorter");
-```
-
-Use `ctx.setTimeout(callback, seconds)` for a bounded one-shot timer. Every callback remains subject to
-realm deadlines, quotas, authority, and lifecycle validation.
-
-Hooks hang off the class constant. Every Blueprint event and RPC of a class (inherited ones included) shows up
-under `hooks`, as long as its parameters are plain values:
+Generated hooks attach directly to class symbols:
 
 ```ts
 import { BP_WaterTurbineNode } from "satisfactory";
@@ -246,134 +78,57 @@ ctx.hook(
   ({ target }) => {
     if (target === undefined) return;
     target.mNodeSlowPowerOutput.set(60);
-    target.mNodeMedPowerOutput.set(60);
-    target.mNodeFastPowerOutput.set(60);
   },
 );
 ```
 
-The callback is fully typed. `target` is the receiving object, `args` is a tuple of the function's parameters,
-and `returnValue` holds the result after the call. The phase is `"before"` (the default), `"after"`, or
-`"replace"`. A replace callback returns the new value, or nothing to let the original run. Integers arrive as
-`bigint` and floating-point values as `number`. Strings, names, classes and objects arrive as text: the class or
-object path, or an empty string for `null`. You can read them but not replace them; pass the path to `getClass` or
-`getObject` when you need a handle again. Hooking a function of another class, or using an event string instead
-of the hook, is a type error.
+Events, hooks, delegates, ticks, and timers belong to their script realm. Reload, pack disable, world travel, and realm
+shutdown revoke them automatically. Manual unsubscribe methods remain available for early shutdown.
 
-Setter writes use the same transaction history and reload baseline as document patches. `/kdf reload`
-restores old actor/CDO values before loading changed scripts and installing their hooks again.
+[Hooks and lifecycle](/kdataforge/features/kdataforgejs/hooks-and-lifecycle) explains callback types, hook phases,
+delegates, timers, cleanup bags, and `/kdf reload`.
 
-Some things cannot be hooked this way. Plain C++ functions without `UFUNCTION` are invisible to reflection, and
-Blueprint-to-Blueprint calls inside a graph don't go through `ProcessEvent`. Hooks run on the server only,
-and each hook is limited to 64 calls per frame. A C++ mod can offer extra native targets through its own hook
-provider, which then appear in `hooks` like everything else.
+## Create content
 
-### Delegates
-
-Blueprint-assignable delegates of an object can be bound with a key. The member carries the property name with a
-lowercase first letter:
+Scripts can import verified pack files and call typed KDataForge handlers:
 
 ```ts
-const manager = ctx.getObject(FGSchematicManager, managerPath, { checked: true });
+import { FGItemDescriptor } from "satisfactory";
 
-manager.onSchematicUnlocked.bind("my-pack.unlocked", (schematicPath) => {
-  console.info("unlocked", schematicPath);
-});
-
-manager.onSchematicUnlocked.unbind("my-pack.unlocked");
-```
-
-The callback receives the delegate's own arguments, in order and with their exported types. Class and object
-arguments arrive as paths. A key belongs to one object and one delegate, so binding it again replaces the earlier
-callback. `bind` also returns a subscription with `unsubscribe()`. Delegates bind to a live object, never to a
-class or a CDO, and they run on the server only. Reload, travel and realm shutdown remove every binding for
-you. `onSchematicUnlocked` is just an example name; the editor shows which delegates a class really has.
-
-### Native members
-
-Most of the game's classes are plain C++: Unreal does not know their fields or functions, so reflection cannot reach
-them. KDataForgeJS reads them from the game's debug symbols instead and exposes them under `native`:
-
-```ts
-import { defineHandler, defineMeta } from "@sf-kmods/kdataforgejs";
-import { FGBuildableFactory } from "satisfactory";
-
-export const meta = defineMeta({
-  capabilities: ["kdf.native.read", "kdf.native.write", "kdf.native.call", "kdf.native.hook"],
-});
-
-export default defineHandler(async (ctx) => {
-  ctx.hook(FGBuildableFactory, FGBuildableFactory.native.hooks.Factory_Tick, "after", ({ target, args }) => {
-    if (target === undefined) return;
-    const potential = target.native.mCurrentPotential.get();
-    target.native.mCurrentPotential.set(potential + args[0]);
-    if (target.native.IsProducing()) target.native.SetCurrentPotential(1);
-  });
-});
-```
-
-Native access is never granted on its own. List the capabilities you use in `defineMeta`: `kdf.native.read` for fields,
-`kdf.native.write` to change them, `kdf.native.call` for functions and `kdf.native.hook` for hooks.
-
-- **Fields** take numbers, booleans and enums in both directions. Objects, classes, names and strings can be read as text
-  but not written. Fields wider than 32 bits are `bigint`.
-- **Functions** can be called with up to three number, boolean or enum arguments. Virtual functions go through the object's
-  own table, so overrides apply.
-- **Hooks** run before or after the call, on the server, with the game's own parameter names. There is no `replace` phase.
-- **Reloads** restore every native field a script changed. Function calls cannot be undone.
-- Everything an imported class inherits is available on its subclasses, and the editor completes all of it.
-
-The member list is generated per game build. If it does not match the running game, KDataForge logs a warning and
-the script simply has no `native` members.
-
-### Logging objects
-
-The console never prints objects, so `console.info(target)` writes `[object]`. Use `target.toString()` instead: it
-gives the class name and object path (a class gives its class path) and never an address.
-
-## Create content and classes
-
-Scripted packs can use the same KDataForge handlers as YAML through `ctx.applyDocument`. Typed
-helpers also cover items, recipes, actors, behaviors, and dynamic classes. Document application and
-class definition run during `Initialization`; gameplay work belongs in the runtime phase and should
-be guarded with `ctx.isAuthority()` when only the authority may perform it.
-
-Item and recipe definitions have the fixed fields plus two places for everything else. If you pass the exported
-parent class as `parent`, `properties` is typed from that class's members, so the editor shows exactly which values
-the descriptor has, class-specific ones included. Anything the export doesn't describe goes into `extra`, where class
-handles are replaced by their paths. That is how you set sub categories:
-
-```ts
-import { EResourceForm, FGItemDescriptor } from "satisfactory";
-
-ctx.createItem({
+const item = ctx.createItem({
   id: "my-pack.rare-part",
   parent: FGItemDescriptor,
   displayName: { namespace: "my-pack", key: "rare-part", source: "Rare Part" },
   form: "solid",
   stackSize: "medium",
-  properties: { mForm: EResourceForm.RF_SOLID },
-  extra: { mSubCategories: [MyCategory] },
 });
 ```
 
-`properties` rejects read-only and unknown names at type level. `extra` takes booleans, numbers, strings, class
-handles, lists and objects, up to 64 entries and eight levels deep. Names that a fixed field already sets are
-refused, so every value has one source. Recipes accept `extra` too.
+`ctx.applyDocument` uses the same documents as YAML. Typed helpers cover items, recipes, and dynamic classes. KDataForge
+validates each change before commit and owns rollback.
 
-KDataForge validates the complete change before commit and compensates prepared mutations if a later
-step fails. There is no separate `save()` call and no direct write to cooked Unreal packages.
+[Create content from TypeScript](/kdataforge/features/kdataforgejs/content-authoring) covers file imports, document
+application, item and recipe helpers, dynamic classes, initialization, and authority.
 
-## Runtime boundaries
+## Know the runtime boundary
 
-The dev build includes the native ECMAScript built-ins supplied by its pinned QuickJS-NG runtime,
-including promises, collections, typed arrays, iterators, `Math`, `Number`, `BigInt`, `JSON`, and
-`console.log`/`info`/`warn`/`error`/`debug`.
+The runtime includes ECMAScript collections, typed arrays, promises, regular expressions, Base64, URI encoding, and
+microtasks. Context utilities add hashes, UUIDs, realm-owned timers, and native cleanup bags. The built-in module adds
+[128 typed helper functions](/kdataforge/features/kdataforgejs/helpers) for common collection and transformation work.
 
-It intentionally does not expose Node.js, npm packages, browser DOM APIs, sockets, web servers,
-remote downloads, or unrestricted filesystem access. `Intl`, `Temporal`, WebAssembly, and
-`Atomics.waitAsync` are also absent from the pinned runtime. Networking and external packages are
-post-release work and require separate authority and security contracts.
+Node.js, npm packages, unrestricted files, network access, and browser APIs are absent. KDataForge checks capabilities,
+authority, lifecycle, handles, deadlines, and quotas at native boundaries.
 
-When reporting a dev-build problem, include the pack ID, script path, relevant log line, generated
-catalog version, and minimal reproduction.
+[Runtime APIs and limits](/kdataforge/features/kdataforgejs/runtime) lists available built-ins, deterministic patterns,
+logging, missing APIs, and runtime checks.
+
+## Choose the next page
+
+| Goal | Page |
+| --- | --- |
+| Create a project and import types | [Project setup](/kdataforge/features/kdataforgejs/project-setup) |
+| Call game classes and edit properties | [Reflected game APIs](/kdataforge/features/kdataforgejs/reflection) |
+| Install hooks, delegates, ticks, or timers | [Hooks and lifecycle](/kdataforge/features/kdataforgejs/hooks-and-lifecycle) |
+| Apply documents or create content | [Content authoring](/kdataforge/features/kdataforgejs/content-authoring) |
+| Check available JavaScript and sandbox limits | [Runtime APIs and limits](/kdataforge/features/kdataforgejs/runtime) |
+| Reuse common array, string, number, object, and collection patterns | [Helper functions](/kdataforge/features/kdataforgejs/helpers) |

@@ -1,0 +1,133 @@
+---
+title: Set up a KDataForgeJS project
+description: Create a scripted pack, import game types, and run the local checks.
+sidebar:
+  order: 1
+---
+
+KDataForgeJS scripts live inside a normal KDataForge pack. Keep npm tooling next to `DataForge/`, because the game never
+loads `package.json` or `node_modules` from a pack.
+
+## Create the project
+
+```bash
+npx @sf-kmods/kdataforgejs-cli init MyPack
+cd MyPack
+npm install
+```
+
+The command creates this layout:
+
+```text
+MyPack/
+├── package.json
+├── tsconfig.json
+└── DataForge/
+    ├── pack.yml
+    └── scripts/
+        └── main.ts
+```
+
+`DataForge/` is the distributable pack. The files beside it exist for editors and local commands.
+
+## Define the script entry
+
+One script entry is enough:
+
+```yaml
+scripts:
+  - language: kmods.typescript
+    languageVersion: 1
+    entry: scripts/main.ts
+```
+
+`realm`, `network`, and `authority` default to `any`. KDataForge derives the script identity from the pack ref and entry
+path. Do not add a script ID.
+
+Write `scripts/main.ts` with a default handler:
+
+```ts
+import { defineHandler } from "@sf-kmods/kdataforgejs";
+
+export default defineHandler(async (ctx) => {
+  console.info("loaded", ctx.catalog().digest);
+});
+```
+
+`defineHandler` supplies the generated `Context` type. A separate context interface will drift from the runtime API.
+
+## Request capabilities when needed
+
+Reflected reads and writes are available by default. Other operations require static metadata in the entry file:
+
+```ts
+import { defineHandler, defineMeta } from "@sf-kmods/kdataforgejs";
+
+export const meta = defineMeta({
+  capabilities: ["kdf.items.define", "kdf.imports.read"],
+});
+
+export default defineHandler(async (ctx) => {
+  // ...
+});
+```
+
+Capability values must be unique string literals. KDataForge rejects computed arrays, spreads, and metadata fields it
+does not know. Omit `meta` when the script needs no extra capability.
+
+## Import game data
+
+Run the game-data command after installing or updating Satisfactory, KDataForge, or another mod whose types you use:
+
+```bash
+npx @sf-kmods/kdataforgejs-cli game-data
+```
+
+The command finds a compatible Steam or Epic installation on Windows, or a native or Flatpak Steam installation on
+Linux. It loads the newest local save, starts reflection export, closes the game, and imports the result.
+
+Pass `--game-path <root-or-executable>` to choose an installation. Timeout is 15 minutes; change it with
+`--timeout <seconds>`.
+
+Generated declarations go to `DataForge/typescript/kdataforgejs/`. `index.d.ts` references these smaller groups:
+
+```text
+runtime.d.ts
+globals.d.ts
+satisfactory/
+paths/
+```
+
+The generated snapshot records the catalog digest. Do not edit it. Projects created by `kdf init` exclude the directory
+from Git, so each author regenerates types for the installed game and mod set.
+
+## Run local checks
+
+```bash
+npm run sync
+npm run format
+npm run check
+npm run lint
+npm run validate
+```
+
+`sync` updates imports, hashes, and reflected class authority from source usage. `check` runs TypeScript against the
+imported game types. `format` and `lint` use bundled Biome. `validate` checks the manifest, source graph, and import
+digests.
+
+These commands do not replace runtime checks. KDataForge still validates catalog generation, authority, lifecycle,
+limits, and object ownership in game.
+
+## Supported imports
+
+A script can import:
+
+- `@sf-kmods/kdataforgejs`
+- the generated `satisfactory` module
+- static relative `.ts` or `.js` modules that stay below `DataForge/scripts/`
+
+An extensionless relative import resolves to `.ts`. Dynamic `import()`, `require()`, npm dependencies, and source paths
+outside `scripts/` are rejected.
+
+Next: [Use reflected game APIs](/kdataforge/features/kdataforgejs/reflection) or
+[create content from TypeScript](/kdataforge/features/kdataforgejs/content-authoring).
