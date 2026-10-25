@@ -42,9 +42,11 @@ or allow dynamic `import()`.
 
 ## Use generated types
 
-KDataForge generates TypeScript declarations from the sealed catalog. The virtual `satisfactory`
-module exposes authorized UE classes, properties, structs, and functions as normal TypeScript symbols.
-Catalog IDs stay internal runtime ABI details rather than pack-author API.
+KDataForge generates TypeScript declarations from the sealed catalog and full game reflection export.
+The virtual `satisfactory` module exposes every exported native and Blueprint class as a typed class symbol,
+including its superclass and exact object path. Classes in the executable catalog additionally expose their
+reflected properties, structs, functions, hooks, and delegates. Catalog IDs stay internal runtime ABI details
+rather than pack-author API.
 Open the pack in KDataForge Editor, CodeOSS, or VS Code to get the same completion and diagnostics.
 Do not replace generated declarations with hand-written copies.
 
@@ -112,8 +114,8 @@ KDataForge reads what you import from `satisfactory` and resolves the names for 
 short name (`FGBuildable`), Blueprint classes by asset name (`BP_WaterTurbineNode`). If two Blueprints share a name,
 KDataForge reports `KDF.Script.AmbiguousClassImport` and picks neither. In that case, name the class you
 mean under `reflectionClasses` in the manifest entry. The same list still works for classes your code doesn't
-import. A script can use up to 64 classes. After you import a new class, export the types again (or run
-`/kdf reload`) so the generated declarations include it.
+import. A script can use up to 64 classes. Regenerate game data after installing or updating game/mod content so
+new or removed classes and changed reflection members match the running build.
 
 Capabilities are the rights a script asks for. They live in optional static meta, never in `pack.yml`.
 Reading and writing reflected values (`kdf.reflection.read` and `kdf.reflection.write`) is always allowed, and

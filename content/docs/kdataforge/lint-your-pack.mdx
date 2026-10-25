@@ -200,7 +200,9 @@ npx @sf-kmods/kdataforgejs-cli validate
 
 `game-data` finds a Windows Steam/Epic or Linux Steam installation containing KDataForge and KDataForgeJS, loads the
 newest local save, waits for a full reflection export, exits the game, and imports both `.kdataforge/satisfactory.kdfdata` and the
-generated declarations. Pass `--game-path <root-or-executable>` when you want a specific installation. The default
+generated declarations. Those declarations include typed symbols and exact path mappings for every exported native
+and Blueprint class, not only classes already named in a pack manifest. Pass `--game-path <root-or-executable>` when
+you want a specific installation. The default
 timeout is 15 minutes; `--timeout <seconds>` overrides it. No manual console command or archive extraction is needed.
 
 `check` then type-checks the scripts against those installed-game types. `validate` checks the manifest entry, the entry
