@@ -39,7 +39,7 @@ only when you give **no** option at all; as soon as you pass one, exactly the op
 are used.
 
 For KDataForgeJS projects, `kdf game-data` owns this lifecycle. It discovers a compatible Windows or Linux install,
-launches with `-KDFReflectionAutoExport=<temporary-directory> -KDFReflectionAutoExit`, waits for atomic publication,
+loads the newest local save, launches with `-KDFReflectionAutoExport=<temporary-directory> -KDFReflectionAutoExit`, waits for atomic publication,
 and imports the archive and generated declarations into the current project. `-KDFReflectionAutoExit` requests a clean
 game exit after the automatic export finishes; it has no effect on manual exports.
 

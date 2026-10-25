@@ -198,8 +198,8 @@ npx @sf-kmods/kdataforgejs-cli check
 npx @sf-kmods/kdataforgejs-cli validate
 ```
 
-`game-data` finds a Windows Steam/Epic or Linux Steam installation containing KDataForge and KDataForgeJS, starts the
-game, waits for a full reflection export, exits the game, and imports both `.kdataforge/satisfactory.kdfdata` and the
+`game-data` finds a Windows Steam/Epic or Linux Steam installation containing KDataForge and KDataForgeJS, loads the
+newest local save, waits for a full reflection export, exits the game, and imports both `.kdataforge/satisfactory.kdfdata` and the
 generated declarations. Pass `--game-path <root-or-executable>` when you want a specific installation. The default
 timeout is 15 minutes; `--timeout <seconds>` overrides it. No manual console command or archive extraction is needed.
 
