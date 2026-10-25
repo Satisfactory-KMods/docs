@@ -287,6 +287,43 @@ callback. `bind` also returns a subscription with `unsubscribe()`. Delegates bin
 class or a CDO, and they run on the server only. Reload, travel and realm shutdown remove every binding for
 you. `onSchematicUnlocked` is just an example name; the editor shows which delegates a class really has.
 
+### Native members
+
+Most of the game's classes are plain C++: Unreal does not know their fields or functions, so reflection cannot reach
+them. KDataForgeJS reads them from the game's debug symbols instead and exposes them under `native`:
+
+```ts
+import { defineHandler, defineMeta } from "@sf-kmods/kdataforgejs";
+import { FGBuildableFactory } from "satisfactory";
+
+export const meta = defineMeta({
+  capabilities: ["kdf.native.read", "kdf.native.write", "kdf.native.call", "kdf.native.hook"],
+});
+
+export default defineHandler(async (ctx) => {
+  ctx.hook(FGBuildableFactory, FGBuildableFactory.native.hooks.Factory_Tick, "after", ({ target, args }) => {
+    if (target === undefined) return;
+    const potential = target.native.mCurrentPotential.get();
+    target.native.mCurrentPotential.set(potential + args[0]);
+    if (target.native.IsProducing()) target.native.SetCurrentPotential(1);
+  });
+});
+```
+
+Native access is never granted on its own. List the capabilities you use in `defineMeta`: `kdf.native.read` for fields,
+`kdf.native.write` to change them, `kdf.native.call` for functions and `kdf.native.hook` for hooks.
+
+- **Fields** take numbers, booleans and enums in both directions. Objects, classes, names and strings can be read as text
+  but not written. Fields wider than 32 bits are `bigint`.
+- **Functions** can be called with up to three number, boolean or enum arguments. Virtual functions go through the object's
+  own table, so overrides apply.
+- **Hooks** run before or after the call, on the server, with the game's own parameter names. There is no `replace` phase.
+- **Reloads** restore every native field a script changed. Function calls cannot be undone.
+- Everything an imported class inherits is available on its subclasses, and the editor completes all of it.
+
+The member list is generated per game build. If it does not match the running game, KDataForge logs a warning and
+the script simply has no `native` members.
+
 ### Logging objects
 
 The console never prints objects, so `console.info(target)` writes `[object]`. Use `target.toString()` instead: it
