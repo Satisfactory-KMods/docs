@@ -1,0 +1,139 @@
+---
+title: Use reflected game APIs
+description: Work with generated classes, CDOs, properties, functions, enums, structs, and object handles.
+sidebar:
+  order: 2
+---
+
+The generated `satisfactory` module contains native and Blueprint classes from the active reflection export. Class
+symbols carry their exact object type, inherited members, hooks, delegates, and Unreal path.
+
+## Resolve a class and its CDO
+
+```ts
+import { FGItemDescriptor } from "satisfactory";
+
+const itemClass = ctx.getClass(
+  FGItemDescriptor,
+  "/Script/FactoryGame.FGItemDescriptor",
+  { checked: true },
+);
+const cdo = itemClass.getClassDefaultObject();
+
+console.info(cdo.mDisplayName.get());
+console.info(FGItemDescriptor.GetItemName(itemClass));
+```
+
+`getClass` returns `Class<T> | null` by default. `{ checked: true }` returns `Class<T>` or throws a controlled KDF error
+when the path is absent or has the wrong type.
+
+The built-in realm target uses the same property proxies. Its unsigned maximum is a property, so code reads it through
+`get()` instead of calling a catalog function ID:
+
+```ts
+const realm = ctx.target();
+const maximum = realm.uint64_max.get();
+realm.counter.set(realm.counter.get() + 1n);
+```
+
+## Find known classes
+
+```ts
+const itemClasses = ctx.findClasses(FGItemDescriptor, {
+  pathPrefix: "/Game/FactoryGame/",
+  nameContains: "Desc_",
+  includeNative: false,
+  includeBlueprints: true,
+  limit: 64,
+});
+```
+
+Search only covers classes already known to the pack. It does not scan or synchronously load arbitrary assets.
+
+Imports from `satisfactory` give KDataForge class names to resolve. Native names such as `FGItemDescriptor` are normally
+unique. If two Blueprints share an asset name, KDataForge reports `KDF.Script.AmbiguousClassImport`. Add the intended
+full path to `reflectionClasses` in `pack.yml` in that case. The same field can authorize a class that code does not
+import. Each script can authorize up to 64 classes.
+
+## Read and write properties
+
+Generated properties expose `get()`. Writable properties also expose `set(value)`:
+
+```ts
+import { EResourceForm, FGItemDescriptor } from "satisfactory";
+
+const itemClass = ctx.getClass(
+  FGItemDescriptor,
+  "/Script/FactoryGame.FGItemDescriptor",
+  { checked: true },
+);
+const cdo = itemClass.getClassDefaultObject();
+const form: EResourceForm = cdo.mForm.get();
+cdo.mForm.set(EResourceForm.RF_SOLID);
+```
+
+Enums are frozen named values. Enum-backed properties use the generated enum type, so arbitrary numbers fail type
+checking. Reflected struct arrays expose typed views with revision checks.
+
+Variables that a Blueprint declares are properties too. Scalar ones (number, boolean, enum, text) are writable whenever a
+Blueprint graph may set them (not "Blueprint Read Only"); they do not have to be instance editable.
+
+The first successful setter records the previous value as its reload baseline. Later writes update the final value in
+KDataForge's patch history. `/kdf reload`, pack disable, and realm replacement restore the baseline before scripts run
+again.
+
+## Resolve objects and data assets
+
+```ts
+const maybeObject = ctx.getObject(FGItemDescriptor, objectPath);
+const object = ctx.getObject(FGItemDescriptor, objectPath, { checked: true });
+const dataAsset = ctx.getDataAsset(MyDataAsset, dataAssetPath, { checked: true });
+const childObject = ctx.cast(MyChildDescriptor, object, { checked: true });
+const childClass = ctx.cast(MyChildDescriptor, itemClass, { checked: true });
+```
+
+Object and data-asset paths must already be loaded. These calls do not start synchronous asset loading.
+
+Returned values are opaque handles. They contain no UObject address and are bound to the current catalog, realm, world,
+generation, and declared type. Resolve them again after reload, world travel, realm replacement, or catalog regeneration.
+Do not serialize them.
+
+## Call reflected functions
+
+The class symbol contains exposed static functions. Instance functions appear on object handles. KDataForge checks
+argument types, invocation form, authority, thread, and lifecycle before each call.
+
+Reflection does not expose every `BlueprintPure` function automatically. A trusted contributor must add safe native
+functions to the catalog. Plain C++ functions without `UFUNCTION` need native metadata.
+
+## Use native members
+
+KDataForgeJS can expose selected non-reflected C++ members under `native`. This API uses metadata derived from the game
+build and requires explicit capabilities:
+
+```ts
+import { defineHandler, defineMeta } from "@sf-kmods/kdataforgejs";
+import { FGBuildableFactory } from "satisfactory";
+
+export const meta = defineMeta({
+  capabilities: ["kdf.native.read", "kdf.native.write", "kdf.native.call", "kdf.native.hook"],
+});
+
+export default defineHandler(async (ctx) => {
+  ctx.hook(FGBuildableFactory, FGBuildableFactory.native.hooks.Factory_Tick, "after", ({ target, args }) => {
+    if (target === undefined) return;
+    const potential = target.native.mCurrentPotential.get();
+    target.native.mCurrentPotential.set(potential + args[0]);
+    if (target.native.IsProducing()) target.native.SetCurrentPotential(1);
+  });
+});
+```
+
+Native fields support numbers, booleans, and enums in both directions. Objects, classes, names, and strings are readable
+as text but cannot be written. Integers wider than 32 bits use `bigint`. Native functions accept up to three number,
+boolean, or enum arguments. Virtual calls use the object's own table.
+
+Native hooks run before or after a function and do not support `replace`. Field writes get reload baselines; function
+calls cannot be undone. If metadata does not match the running build, KDataForge logs a warning and omits `native`.
+
+Next: [Hooks and lifecycle](/kdataforge/features/kdataforgejs/hooks-and-lifecycle).

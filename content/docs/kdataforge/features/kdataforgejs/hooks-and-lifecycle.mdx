@@ -1,0 +1,144 @@
+---
+title: Hooks and lifecycle
+description: React to events, hooks, delegates, ticks, and timers without leaking work across reloads.
+sidebar:
+  order: 3
+---
+
+Registrations belong to the script realm that created them. KDataForge revokes them during `/kdf reload`, pack disable,
+world travel, and realm shutdown. Keep a subscription when you need to stop work earlier.
+
+## Events
+
+Use generated event keys with `ctx.on` or `ctx.onTyped`:
+
+```ts
+const event = ctx.onTyped("provider.event", "example.event", (value) => {
+  console.info("event", value);
+});
+
+event.unsubscribe();
+```
+
+A keyed event can also be removed without its handle:
+
+```ts
+ctx.unregisterEvent("example.event");
+```
+
+`ctx.off(subscription)` and `subscription.unsubscribe()` are idempotent.
+
+## Blueprint hooks
+
+Hooks hang off their generated class symbol:
+
+```ts
+import { BP_WaterTurbineNode } from "satisfactory";
+
+ctx.hook(
+  BP_WaterTurbineNode,
+  BP_WaterTurbineNode.hooks.ReceiveBeginPlay,
+  "after",
+  ({ target }) => {
+    if (target === undefined) return;
+    target.mNodeSlowPowerOutput.set(60);
+    target.mNodeMedPowerOutput.set(60);
+    target.mNodeFastPowerOutput.set(60);
+  },
+);
+```
+
+The callback type includes `target`, the argument tuple, and the return value. Hook phase can be `before`, `after`, or
+`replace`. A replace callback returns a new result or returns nothing to run the original function.
+
+Hooks run on the server and allow up to 64 calls per frame. Integers use `bigint`; floating-point values use `number`.
+String, name, class, and object arguments arrive as text. Resolve a class or object path through `getClass` or
+`getObject` when you need a handle.
+
+### Functions and custom events defined in a Blueprint
+
+Functions and custom events that a Blueprint defines itself appear under `hooks` like any other event, with their
+parameters and return value. The hook also sees calls from other Blueprints, which never pass through `ProcessEvent`.
+It is only installed while a script listens, so an unhooked Blueprint function costs nothing. `replace` answers the call
+without running the Blueprint function.
+
+Hooks exist for every class you import, including objects that are not actors (subsystems, world modules, widgets). Only
+actors hand the callback a `target`.
+
+A Blueprint override of a native event is observed through the native path and sees only calls from native code. An
+override that calls its parent function fires the hook for both levels. A Blueprint loaded after the hook was installed is
+not covered, and continuations after a Delay node do not pass through the function. Functions with struct, array, or
+reference parameters cannot be hooked. Plain C++ functions without `UFUNCTION` appear under `native.hooks`; see
+[non-reflected members](/kdataforge/features/kdataforgejs/reflection).
+
+`ctx.unhook(subscription)` removes a hook early. Realm teardown removes hooks that remain registered.
+
+## Delegates
+
+Blueprint-assignable delegates appear on live object handles:
+
+```ts
+const manager = ctx.getObject(FGSchematicManager, managerPath, { checked: true });
+
+manager.onSchematicUnlocked.bind("my-pack.unlocked", (schematicPath) => {
+  console.info("unlocked", schematicPath);
+});
+
+manager.onSchematicUnlocked.unbind("my-pack.unlocked");
+```
+
+Event dispatchers that a Blueprint declares are bound the same way.
+
+Delegate callbacks receive generated argument types in declaration order. Object and class arguments arrive as paths.
+A key belongs to one object and one delegate; binding it again replaces the earlier callback. `bind` also returns a
+subscription. Delegates require a live object and run on the server.
+
+## Ticks and timers
+
+```ts
+ctx.registerTick("pack.poll", (deltaSeconds) => {
+  console.debug("tick", deltaSeconds);
+}, { every: 30, requireGameThread: true });
+
+ctx.setTimeout(() => console.info("once"), 0.5);
+ctx.setInterval(() => console.info("again"), 1);
+```
+
+KDataForge cancels ticks and both timer kinds with their realm. Pack code does not need `clearTimeout` or
+`clearInterval` for reload safety. Use `unregisterTick`, `clearTimeout`, `clearInterval`, or `unsubscribe()` when work
+should stop earlier.
+
+Callbacks remain subject to deadlines, quotas, authority, and lifecycle checks.
+
+## Group early cleanup
+
+`ctx.createCleanupBag()` stores cleanup callbacks in native runtime state. `dispose()` runs them once in reverse
+registration order. A callback added after disposal runs immediately.
+
+```ts
+const cleanup = ctx.createCleanupBag();
+const tick = ctx.registerTick("pack.poll", poll, { every: 30 });
+const interval = ctx.setInterval(poll, 1);
+
+cleanup.add(() => tick.unsubscribe());
+cleanup.add(() => interval.unsubscribe());
+
+cleanup.dispose();
+```
+
+Use a cleanup bag for a group that can stop before realm teardown. Automatic realm cleanup still handles omitted
+`dispose()` calls.
+
+## Reload behavior
+
+After a source change, run `/kdf reload` as host or administrator. `KDF.Reload` is the console equivalent. KDataForge:
+
+1. revokes registrations and handles from the old realm;
+2. restores document, reflected-property, and native-field baselines;
+3. reads and compiles the current source graph;
+4. runs each active entry once and installs its new registrations.
+
+Old class, object, property, and subscription handles are invalid after reload. Resolve them again in the new handler
+run.
+
+Next: [Runtime APIs and limits](/kdataforge/features/kdataforgejs/runtime).
