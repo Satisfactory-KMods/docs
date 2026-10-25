@@ -14,6 +14,7 @@ but they solve different parts of the job.
 | In-game editor | Inspecting live objects, trying property changes, undoing edits, and exporting a draft | Edits are process-local until exported; it is not a multiplayer synchronization tool |
 | KDataForge desktop editor | Project editing with schema checks, completion, hover help, builders, and game-specific reflection data | Game-specific help requires an imported `.kdfdata` archive bound to the project |
 | KPatchwork linter | Static pack checks before starting Satisfactory or publishing a pack | It cannot prove that runtime assets and optional mods exist together |
+| TypeScript scripting (KDataForgeJS) | Logic that YAML cannot express, such as reacting to Blueprint events or delegates, or computing values at load time | Dev build; scripts are bounded, server-side for hooks, and need the KDataForgeJS mod |
 | Unreal Editor integration | Applying supported YAML patches to editor assets and saving cooked changes into a mod | Editor-build workflow for mod developers, not a player or runtime-pack tool |
 
 ## Write YAML directly
@@ -40,6 +41,13 @@ and installed mods.
 
 Read [Desktop editor and LSP](/kdataforge/reference/desktop-editor-lsp) for project binding and
 [Reflection export](/kdataforge/reference/reflection-export) for archive generation and validation.
+
+## Script what YAML can't say
+
+Some changes depend on something that happens in the game: a Blueprint event fires, a schematic is unlocked,
+an actor appears. YAML describes values, not reactions. For those cases, write a TypeScript script with
+KDataForgeJS. It sits next to your YAML in the same pack and uses the same catalog, validation, and rollback.
+Start from [TypeScript scripting with KDataForgeJS](/kdataforge/features/typescript-scripting).
 
 ## Lint before runtime testing
 

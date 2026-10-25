@@ -72,6 +72,38 @@ accepts a cooked `UTexture2D` object path beginning with `/`, or a pack-relative
 TGA, or BMP file inside the pack directory. Relative icons are limited to 16 MiB and 4096 by 4096
 pixels. Dedicated servers skip icon loading.
 
+### Script entries (`scripts:`)
+
+A pack can carry TypeScript scripts next to its YAML documents (see
+[TypeScript scripting with KDataForgeJS](/kdataforge/features/typescript-scripting)). Each script is one
+entry under `scripts:`. Three keys are enough:
+
+```yaml
+scripts:
+  - language: kmods.typescript
+    languageVersion: 1
+    entry: scripts/main.ts
+```
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `language` | required | Script language. `kmods.typescript` is the only one available. |
+| `languageVersion` | `1` | Version of the language contract. |
+| `entry` | required | Entry file, pack-relative. KDataForgeJS only accepts `scripts/main.ts`. |
+| `realm` | `any` | Where the script runs: `any`, `server` or `client`. |
+| `network` | `any` | Network mode: `any`, `standalone` or `networked`. |
+| `authority` | `any` | Authority requirement: `any`, `required` or `forbidden`. |
+| `reflectionClasses` | none | Optional. Extra classes to allow, as full class paths (up to 64). `classes` is an alias. |
+| `imports` | none | Optional. Files the script may read with `ctx.import`, each with `key`, `kind`, `path` and `sha256`. |
+
+You don't set an ID or a list of capabilities here. KDataForge derives the script identity from the pack
+ref and the entry path, and capabilities come from `defineMeta` in the script. The classes a script uses are
+read from its `satisfactory` imports, so `reflectionClasses` is only needed when two Blueprints share a name or
+when a class should be allowed that the code doesn't import.
+
+Authoring capabilities (items, recipes, documents, dynamic classes) need `realm: any` and `authority: any`.
+An invalid entry is skipped with a diagnostic; the rest of the pack still loads.
+
 ## Document structure
 
 Every document is a YAML map with a root type:

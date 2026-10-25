@@ -187,6 +187,19 @@ The linter has no automatic-fix mode. Show current CLI options with:
 uv run --locked kdataforge-linter lint --help
 ```
 
+## Scripted packs
+
+The YAML linter checks documents only. If your pack also has TypeScript scripts, use the KDataForgeJS command
+line tool (`@sf-kmods/kdataforgejs-cli`) on the project folder:
+
+```bash
+npx @sf-kmods/kdataforgejs-cli check
+npx @sf-kmods/kdataforgejs-cli validate
+```
+
+`check` type-checks the scripts against the exported game types. `validate` checks the manifest entry, the entry
+file, the static imports and the digests of declared import files. Both run without starting Satisfactory.
+
 ## What static linting cannot prove
 
 The linter parses files without loading Unreal Engine or Satisfactory. It cannot prove that an

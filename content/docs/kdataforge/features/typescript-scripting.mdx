@@ -22,13 +22,13 @@ DataForge/
 
 ## Write the entry point
 
-Import `defineHandler` and `defineMeta` from the built-in module. `defineHandler` gives `ctx` its
-complete generated type, so do not write a separate context interface.
+Import `defineHandler` from the built-in module. It gives `ctx` its complete generated type, so you never
+write a context interface yourself. `meta` is optional and only exists to request capabilities.
+KDataForge builds a stable script identity from the pack ref and the entry path, so there is no ID to
+choose.
 
 ```ts
-import { defineHandler, defineMeta } from "@sf-kmods/kdataforgejs";
-
-export const meta = defineMeta({ id: "example.typed-pack", version: 1 });
+import { defineHandler } from "@sf-kmods/kdataforgejs";
 
 export default defineHandler(async (ctx) => {
     console.info("loaded", ctx.catalog().digest);
@@ -48,10 +48,22 @@ Catalog IDs stay internal runtime ABI details rather than pack-author API.
 Open the pack in KDataForge Editor, CodeOSS, or VS Code to get the same completion and diagnostics.
 Do not replace generated declarations with hand-written copies.
 
-KDataForge Editor writes the pack-specific result to
-`DataForge/typescript/kdataforgejs/kdataforge.generated.d.ts`. That file contains both core-module
-augmentations and `declare module "satisfactory"`, and its header records the sealed catalog digest.
+Satisfactory's KDataForge reflection export writes the pack-specific result to
+`DataForge/typescript/kdataforgejs/kdataforge.generated.d.ts`. Build and run the installed Steam mod,
+then export reflection for the active pack instead of hand-writing this file. It contains core-module
+augmentations and `declare module "satisfactory"`; its header records the sealed catalog digest.
 Runtime and declarations therefore consume one reflection snapshot.
+
+For npm-based authoring, install `@sf-kmods/kdataforgejs` and extend its strict base configuration:
+
+```json
+{
+  "extends": "@sf-kmods/kdataforgejs/tsconfig.base.json"
+}
+```
+
+The package supplies authoring declarations only. Game runtime still provides built-in
+`@sf-kmods/kdataforgejs` and generated `satisfactory` modules; it never loads `node_modules`.
 
 The repository's `KDataForgeJS/Examples/TypedStarter` folder is a complete project that can be opened
 directly. It includes `main.ts`, `lib.ts`, media and YAML imports, generated declarations, and a
@@ -64,16 +76,97 @@ Import generated UE symbols, resolve a typed class, then use CDO properties and 
 ```ts
 import { FGItemDescriptor } from "satisfactory";
 
-const itemClass: Class<FGItemDescriptor> = ctx.getClass("/Script/FactoryGame.FGItemDescriptor");
+const itemClass = ctx.getClass(FGItemDescriptor, "/Script/FactoryGame.FGItemDescriptor", { checked: true });
 const cdo = itemClass.getClassDefaultObject();
 
 console.info(cdo.mDisplayName.get());
 console.info(FGItemDescriptor.GetItemName(itemClass));
 ```
 
+For Blueprint and native class sets, use typed sealed search:
+
+```ts
+const itemClasses = ctx.findClasses(FGItemDescriptor, {
+  pathPrefix: "/Game/FactoryGame/",
+  nameContains: "Desc_",
+  includeNative: false,
+  includeBlueprints: true,
+  limit: 64,
+});
+```
+
+Supported search fields are `pathPrefix`, `nameContains`, `includeNative`, `includeBlueprints`, and `limit`.
+Search covers only the classes your pack already knows about (the ones it imports or lists); it does not scan or load arbitrary assets.
+
+A script entry in `pack.yml` needs nothing beyond the language, its version and the entry file:
+
+```yaml
+scripts:
+  - language: kmods.typescript
+    languageVersion: 1
+    entry: scripts/main.ts
+```
+
+`realm`, `network` and `authority` default to `any`. You don't list the classes your script uses either.
+KDataForge reads what you import from `satisfactory` and resolves the names for you: native classes by their
+short name (`FGBuildable`), Blueprint classes by asset name (`BP_WaterTurbineNode`). If two Blueprints share a name,
+KDataForge reports `KDF.Script.AmbiguousClassImport` and picks neither. In that case, name the class you
+mean under `reflectionClasses` in the manifest entry. The same list still works for classes your code doesn't
+import. A script can use up to 64 classes. After you import a new class, export the types again (or run
+`/kdf reload`) so the generated declarations include it.
+
+Capabilities are the rights a script asks for. They live in optional static meta, never in `pack.yml`.
+Reading and writing reflected values (`kdf.reflection.read` and `kdf.reflection.write`) is always allowed, and
+the capability names are typed, so a typo is an editor error rather than a runtime surprise:
+
+```ts
+import { defineHandler, defineMeta } from "@sf-kmods/kdataforgejs";
+
+export const meta = defineMeta({
+  capabilities: ["kdf.reflection.read", "kdf.reflection.write"],
+});
+
+export default defineHandler(async (ctx) => {
+  // ...
+});
+```
+
+Metadata inspection is static and happens before capability policy is sealed. Capability values must
+be unique string literals. Other meta fields, computed values, spreads, and runtime-generated arrays
+are rejected. Packs needing no capabilities should omit `defineMeta` and `meta` entirely.
+
 Writable UPROPERTY proxies also expose `set(value)`. Reflected USTRUCT arrays contain typed,
 revision-checked struct views. A TypeScript type or path written by the pack cannot grant a capability
 that the catalog did not seal.
+
+Reflected Unreal enums are exported from `satisfactory` with frozen named runtime values. Enum-backed
+properties use their concrete enum instead of `number`:
+
+```ts
+import { EResourceForm, FGItemDescriptor } from "satisfactory";
+
+const cdo = ctx.getClass(
+  FGItemDescriptor,
+  "/Script/FactoryGame.FGItemDescriptor",
+  { checked: true },
+).getClassDefaultObject();
+const form: EResourceForm = cdo.mForm.get();
+cdo.mForm.set(EResourceForm.RF_SOLID);
+```
+
+Class, object, data-asset, and cast lookups are nullable by default. Pass `{ checked: true }` when absence or a
+type mismatch must stop the script with a controlled KDF exception:
+
+```ts
+const maybeObject = ctx.getObject(FGItemDescriptor, objectPath);
+const object = ctx.getObject(FGItemDescriptor, objectPath, { checked: true });
+const dataAsset = ctx.getDataAsset(MyDataAsset, dataAssetPath, { checked: true });
+const childObject = ctx.cast(MyChildDescriptor, object, { checked: true });
+const childClass = ctx.cast(MyChildDescriptor, itemClass, { checked: true });
+```
+
+Object and data-asset paths must already be loaded. These calls never perform synchronous asset loading. Returned
+values are broker-issued handles bound to the current catalog, realm, world, and declared reflected type.
 
 Each successful setter records its first previous value and latest value in KDataForge's patch history,
 and captures the same reload baseline as a document patch. After editing a script, a host or administrator
@@ -135,9 +228,69 @@ tick.unsubscribe();
 ctx.unregisterTick("example.inventory-sorter");
 ```
 
-Use `ctx.hook(target, eventId, phase, callback)` for authorized `before`, `after`, or `replace`
-hooks. Use `ctx.setTimeout(callback, seconds)` for a bounded one-shot timer. Every callback remains
-subject to realm deadlines, quotas, authority, and lifecycle validation.
+Use `ctx.setTimeout(callback, seconds)` for a bounded one-shot timer. Every callback remains subject to
+realm deadlines, quotas, authority, and lifecycle validation.
+
+Hooks hang off the class constant. Every Blueprint event and RPC of a class (inherited ones included) shows up
+under `hooks`, as long as its parameters are plain values:
+
+```ts
+import { BP_WaterTurbineNode } from "satisfactory";
+
+ctx.hook(
+  BP_WaterTurbineNode,
+  BP_WaterTurbineNode.hooks.ReceiveBeginPlay,
+  "after",
+  ({ target }) => {
+    if (target === undefined) return;
+    target.mNodeSlowPowerOutput.set(60);
+    target.mNodeMedPowerOutput.set(60);
+    target.mNodeFastPowerOutput.set(60);
+  },
+);
+```
+
+The callback is fully typed. `target` is the receiving object, `args` is a tuple of the function's parameters,
+and `returnValue` holds the result after the call. The phase is `"before"` (the default), `"after"`, or
+`"replace"`. A replace callback returns the new value, or nothing to let the original run. Integers arrive as
+`bigint` and floating-point values as `number`. Strings, names, classes and objects arrive as text: the class or
+object path, or an empty string for `null`. You can read them but not replace them; pass the path to `getClass` or
+`getObject` when you need a handle again. Hooking a function of another class, or using an event string instead
+of the hook, is a type error.
+
+Setter writes use the same transaction history and reload baseline as document patches. `/kdf reload`
+restores old actor/CDO values before loading changed scripts and installing their hooks again.
+
+Some things cannot be hooked this way. Plain C++ functions without `UFUNCTION` are invisible to reflection, and
+Blueprint-to-Blueprint calls inside a graph don't go through `ProcessEvent`. Hooks run on the server only,
+and each hook is limited to 64 calls per frame. A C++ mod can offer extra native targets through its own hook
+provider, which then appear in `hooks` like everything else.
+
+### Delegates
+
+Blueprint-assignable delegates of an object can be bound with a key. The member carries the property name with a
+lowercase first letter:
+
+```ts
+const manager = ctx.getObject(FGSchematicManager, managerPath, { checked: true });
+
+manager.onSchematicUnlocked.bind("my-pack.unlocked", (schematicPath) => {
+  console.info("unlocked", schematicPath);
+});
+
+manager.onSchematicUnlocked.unbind("my-pack.unlocked");
+```
+
+The callback receives the delegate's own arguments, in order and with their exported types. Class and object
+arguments arrive as paths. A key belongs to one object and one delegate, so binding it again replaces the earlier
+callback. `bind` also returns a subscription with `unsubscribe()`. Delegates bind to a live object, never to a
+class or a CDO, and they run on the server only. Reload, travel and realm shutdown remove every binding for
+you. `onSchematicUnlocked` is just an example name; the editor shows which delegates a class really has.
+
+### Logging objects
+
+The console never prints objects, so `console.info(target)` writes `[object]`. Use `target.toString()` instead: it
+gives the class name and object path (a class gives its class path) and never an address.
 
 ## Create content and classes
 
@@ -145,6 +298,29 @@ Scripted packs can use the same KDataForge handlers as YAML through `ctx.applyDo
 helpers also cover items, recipes, actors, behaviors, and dynamic classes. Document application and
 class definition run during `Initialization`; gameplay work belongs in the runtime phase and should
 be guarded with `ctx.isAuthority()` when only the authority may perform it.
+
+Item and recipe definitions have the fixed fields plus two places for everything else. If you pass the exported
+parent class as `parent`, `properties` is typed from that class's members, so the editor shows exactly which values
+the descriptor has, class-specific ones included. Anything the export doesn't describe goes into `extra`, where class
+handles are replaced by their paths. That is how you set sub categories:
+
+```ts
+import { EResourceForm, FGItemDescriptor } from "satisfactory";
+
+ctx.createItem({
+  id: "my-pack.rare-part",
+  parent: FGItemDescriptor,
+  displayName: { namespace: "my-pack", key: "rare-part", source: "Rare Part" },
+  form: "solid",
+  stackSize: "medium",
+  properties: { mForm: EResourceForm.RF_SOLID },
+  extra: { mSubCategories: [MyCategory] },
+});
+```
+
+`properties` rejects read-only and unknown names at type level. `extra` takes booleans, numbers, strings, class
+handles, lists and objects, up to 64 entries and eight levels deep. Names that a fixed field already sets are
+refused, so every value has one source. Recipes accept `extra` too.
 
 KDataForge validates the complete change before commit and compensates prepared mutations if a later
 step fails. There is no separate `save()` call and no direct write to cooked Unreal packages.
