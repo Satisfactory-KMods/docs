@@ -75,6 +75,12 @@ Writable UPROPERTY proxies also expose `set(value)`. Reflected USTRUCT arrays co
 revision-checked struct views. A TypeScript type or path written by the pack cannot grant a capability
 that the catalog did not seal.
 
+Each successful setter records its first previous value and latest value in KDataForge's patch history,
+and captures the same reload baseline as a document patch. After editing a script, a host or administrator
+can run `/kdf reload` (`KDF.Reload` in the console). KDataForge revokes the old realm, restores document and
+setter baselines, rereads the source graph, recompiles changed bundle digests, and runs each active entry once.
+Resolve fresh class, object, and property handles after reload.
+
 Native functions are explicit allowlists, not automatic exposure of every `BlueprintPure` function.
 A trusted reflection contributor can expose static native, `BlueprintPure`, read-only functions from a
 `UBlueprintFunctionLibrary`; KDataForgeJS then generates their signatures and runtime wrappers. Plain C++
