@@ -1,0 +1,153 @@
+---
+title: TypeScript scripting with KDataForgeJS
+description: Write typed KDataForge packs with catalog-generated APIs, local modules, events, hooks, ticks, and safe object handles.
+sidebar:
+  order: 9
+---
+
+KDataForgeJS is the TypeScript adapter for KDataForge. It uses KDataForge's catalog, validation,
+transactions, lifecycle, and limits rather than exposing Unreal objects directly. The current dev
+build is intended for testing and API feedback.
+
+Install KDataForgeJS alongside KDataForge. A scripted pack still uses a normal `DataForge` root and
+`pack.yml`, but its entry point is always `Scripts/main.ts`:
+
+```text
+DataForge/
+├── pack.yml
+└── Scripts/
+    ├── main.ts
+    └── lib.ts
+```
+
+## Write the entry point
+
+Import `defineHandler` and `defineMeta` from the built-in module. `defineHandler` gives `ctx` its
+complete generated type, so do not write a separate context interface.
+
+```ts
+import { defineHandler, defineMeta } from "@kmods/kdataforge";
+
+export const meta = defineMeta({ id: "example.typed-pack", version: 1 });
+
+export default defineHandler(async (ctx) => {
+    console.info("loaded", ctx.catalog().digest);
+    await Promise.resolve();
+});
+```
+
+Local static imports such as `./lib` are supported when they remain inside the pack's prepared
+source graph. KDataForgeJS does not read `package.json` or `node_modules`, resolve external packages,
+or allow dynamic `import()`.
+
+## Use generated types
+
+KDataForge generates TypeScript declarations from the sealed catalog. These declarations provide
+the event, hook, function, target, actor, property, and document IDs that the running pack can use.
+Open the pack in KDataForge Editor, CodeOSS, or VS Code to get the same completion and diagnostics.
+Do not replace generated declarations with hand-written copies.
+
+The repository's `KDataForgeJS/Examples/TypedStarter` folder is a complete project that can be opened
+directly. It includes `main.ts`, `lib.ts`, media and YAML imports, generated declarations, and a
+strict `tsconfig.json`; it requires no package installation.
+
+## Call KDataForge APIs
+
+The context exposes catalog-authorized operations rather than arbitrary reflection:
+
+```ts
+const realm = ctx.target("realm");
+const current = ctx.read(realm, "kdf.script.realm.counter");
+ctx.write(realm, "kdf.script.realm.counter", current);
+
+ctx.callStatic("provider.static-function", []);
+ctx.callMember(realm, "provider.member-function", [1n]);
+ctx.callCustom("provider.custom-function", [meta.id]);
+```
+
+Available IDs come from the generated declarations and active catalog. A TypeScript generic or a
+string written by the pack cannot grant a capability that the catalog did not seal.
+
+### Import pack files
+
+`ctx.import(kind, path)` reads only files declared by the pack and included in its verified source
+manifest. Supported kinds are `text`, `yaml`, `binary`, `image`, and `audio`.
+
+```ts
+const settings = ctx.import("yaml", "settings.yml");
+const sound = ctx.import("audio", "alert.ogg");
+```
+
+Paths are pack-relative. KDataForge validates the normalized path, kind, digest, and size before the
+runtime receives the value. URLs and absolute paths are rejected.
+
+### Work with CDOs and object handles
+
+Objects, actors, and nested struct values use opaque handles. They are not C++ pointers or UObject
+addresses. KDataForge checks world, realm, catalog, generation, type, authority, lifecycle, and
+access again for every operation.
+
+```ts
+import type { UFGRecipe } from "@kmods/kdataforge";
+
+const recipe = ctx.getClassDefault<UFGRecipe>(
+    "/Game/FactoryGame/Recipes/Constructor/Recipe_IronPlate.Recipe_IronPlate_C",
+);
+
+for (const itemAmount of recipe.mIngredients) {
+    itemAmount.Amount.set(2);
+}
+```
+
+The class must be allowed by the pack's reflection catalog. Do not serialize handles or retain them
+across reload, world travel, realm replacement, or catalog regeneration; resolve new handles after
+those transitions.
+
+## Events, hooks, ticks, and timers
+
+Events and hooks are catalog-generated and typed. Keep returned subscriptions so you can clean them
+up explicitly; realm shutdown also removes remaining registrations.
+
+```ts
+const event = ctx.onTyped("provider.event", "example.event", (value) => {
+    console.info("event", value);
+});
+
+const tick = ctx.registerTick(
+    "example.inventory-sorter",
+    (deltaSeconds) => console.debug("sort", deltaSeconds),
+    { every: 5, requireGameThread: true },
+);
+
+event.unsubscribe();
+tick.unsubscribe();
+ctx.unregisterTick("example.inventory-sorter");
+```
+
+Use `ctx.hook(target, eventId, phase, callback)` for authorized `before`, `after`, or `replace`
+hooks. Use `ctx.setTimeout(callback, seconds)` for a bounded one-shot timer. Every callback remains
+subject to realm deadlines, quotas, authority, and lifecycle validation.
+
+## Create content and classes
+
+Scripted packs can use the same KDataForge handlers as YAML through `ctx.applyDocument`. Typed
+helpers also cover items, recipes, actors, behaviors, and dynamic classes. Document application and
+class definition run during `Initialization`; gameplay work belongs in the runtime phase and should
+be guarded with `ctx.isAuthority()` when only the authority may perform it.
+
+KDataForge validates the complete change before commit and compensates prepared mutations if a later
+step fails. There is no separate `save()` call and no direct write to cooked Unreal packages.
+
+## Runtime boundaries
+
+The dev build includes the native ECMAScript built-ins supplied by its pinned QuickJS-NG runtime,
+including promises, collections, typed arrays, iterators, `Math`, `Number`, `BigInt`, `JSON`, and
+`console.log`/`info`/`warn`/`error`/`debug`.
+
+It intentionally does not expose Node.js, npm packages, browser DOM APIs, sockets, web servers,
+remote downloads, or unrestricted filesystem access. `Intl`, `Temporal`, WebAssembly, and
+`Atomics.waitAsync` are also absent from the pinned runtime. Networking and external packages are
+post-release work and require separate authority and security contracts.
+
+When reporting a dev-build problem, include the pack ID, script path, relevant log line, generated
+catalog version, and minimal reproduction.
