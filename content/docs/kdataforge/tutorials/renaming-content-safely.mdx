@@ -130,6 +130,15 @@ is cosmetic.
 
 ## Troubleshooting
 
+### Rename through VS Code
+
+KDataForge Tools can plan a content-ID rename across the selected pack's YAML plus statically
+provable TypeScript references. It rechecks document versions, exact old text, normalized identity
+collisions, and a complete pack snapshot before applying one `WorkspaceEdit`. Dynamic expressions,
+external packs, aliases, redirects, includes, incomplete inventories, pack refs, and config IDs are
+refused. You still add and retain the `redirects:` entry described above when a shipped generated
+ID changes.
+
 - **Shipped an id rename, then got reports of missing items in old saves:** you forgot the
   `redirects:` entry. Add it retroactively in a follow-up version. It's read fresh at every load,
   never baked into the save, so adding it late still fixes existing saves the next time they load.

@@ -1,0 +1,81 @@
+---
+title: KDataForgeJS Runtime API
+description: Hooks, lifecycle, structured values, DataTables, queries, temporary overrides, and sandboxed YAML or JSON files.
+sidebar:
+  order: 7
+---
+
+KDataForgeJS provider ABI 13 adds bounded authoring helpers. TypeScript declarations help discovery;
+native capability, authority, lifecycle, generation, deadline, and quota checks remain authoritative.
+
+## Hooks and delivery
+
+`ctx.hookOnce(...)` removes itself before its first matching callback. `ctx.hook(...)` accepts
+`priority` from `-1024` through `1024` and exact scalar argument filters for `before` and `after`.
+Replacement hooks keep their existing behavior and do not accept ordering or delivery options.
+
+`ctx.observeHook(...)` is an after-call observation. Keyed events and observations accept immediate,
+trailing debounce, or leading throttle delivery. Intervals range from `0.016` through `86400`
+seconds. Deferred work is realm-owned and disappears on unsubscribe, reload, travel, or shutdown.
+
+## Lifecycle
+
+Register `worldReady` during initialization. `travel` and `shutdown` are terminal notifications:
+new mutations and registrations are already blocked, callbacks have a small cleanup deadline, and
+native cleanup continues even when a callback fails. Crashes and forced process termination cannot
+guarantee notification.
+
+## Transactions and values
+
+`ctx.applyDocuments()` atomically applies only explicit `set` operations from bounded `cdo`
+documents. It rejects selectors, generated content, registration, insertion, and overlapping paths.
+
+`ctx.values(object)` reads or replaces supported struct, array, map, and set properties as whole
+values. It does not expose mutable live container proxies. Unsupported layouts, delegates, instanced
+objects, cycles, read-only fields, schema changes, and native-key collisions fail before mutation.
+
+`ctx.dataTables.open(table, rowType)` operates only on loaded tables and existing rows whose sealed
+native `RowStruct` matches. Reading needs `kdf.datatables.read`; replacement needs
+`kdf.datatables.write`, server authority, and initialization phase. Row creation/removal is not
+supported.
+
+## Content and world queries
+
+`ctx.graph.recipes()` and `ctx.graph.schematicsUnlocking()` return bounded, one-hop relationships
+from loaded and authorized content. Results report truncation and `coverage: "loadedAuthorized"`;
+they are not a complete dependency solver.
+
+Spatial actor queries combine class, ordinary actor tags, sphere, and box predicates with AND.
+Coordinates use world centimetres. `ctx.world.openQuery()` pages through a bounded cursor. Cursors
+are world/realm generation-bound, expire after 30 idle seconds, and invalidate their previous
+page-owned handles when advanced or closed.
+
+## Temporary overrides
+
+`ctx.overrideFor(property, value, seconds)` supports server-runtime scalar actor properties. It
+requires `kdf.overrides.temporary`. Restoration is conditional: a later KDF write supersedes the
+lease, and destroyed targets are not recreated. Reload and realm shutdown retire outstanding leases.
+
+## YAML and JSON globals
+
+```ts
+const settings = new YMLFile("data/settings.yml");
+const value = await settings.json();
+await settings.save({...value, enabled: true});
+
+const parsed = YML.parse("enabled: true");
+const text = YML.stringify(parsed);
+const json = await new JSONFile("data/settings.json").json();
+```
+
+Constructors require direct static string literals. Paths are normalized pack-relative imports with
+matching extensions and hashes; URLs, absolute paths, traversal, symlinks, dynamic paths, and host
+filesystem access are rejected. `json()` reads the server-side sandbox override when present,
+otherwise the immutable attested pack input.
+
+`save()` requires `kdf.files.write`, server authority, and runtime phase. It writes atomically only
+inside KDF-owned per-pack Saved storage, never into a shipped pack. Limits are 1 MiB per file, 64
+files and 8 MiB per pack. Sandbox state is server-local and must not drive peer-deterministic content.
+
+Structured parsing/stringification is bounded to depth 16 and 2048 nodes. Returned data is deeply
+frozen. Pack code getters, proxies, iterators, YAML tags, and custom constructors are not executed.

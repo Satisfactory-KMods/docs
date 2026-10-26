@@ -15,7 +15,7 @@ YAML can start with [Getting started](/kdataforge/getting-started).
 | Let packs edit your classes or assets | Expose reflected properties. Built-in `cdo` targeting already handles them. |
 | Ship YAML with your mod | Add KDataForge as a plugin dependency and place the files under your mod's `DataForge/` directory. |
 | Add another YAML `type:` | Link `KDataForgeApi` and `KDataForge`, implement a native handler, then register it during the SML game-instance `CONSTRUCTION` phase. |
-| Generate or inspect game-data metadata | Use the [reflection export](/kdataforge/reference/reflection-export) and bind its `.kdfdata` archive in the [desktop editor](/kdataforge/reference/desktop-editor-lsp). |
+| Generate or inspect game-data metadata | Use the [reflection export](/kdataforge/reference/reflection-export) and bind its `.kdfdata` archive in [KDataForge Tools for VS Code](/kdataforge/reference/vscode-extension-lsp). |
 | Bake supported `cdo` changes into editor assets | Use [`KDF.ApplyToAssets`](/kdataforge/reference/editor-integration) in an Unreal Editor build. |
 
 Most mods need only reflected properties and a YAML pack. A custom handler is useful when a new

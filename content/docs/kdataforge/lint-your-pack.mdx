@@ -161,6 +161,22 @@ unexpected field. In that case, update the linter before treating the diagnostic
 After linting, still verify in game with `/kdf report`; static schemas cannot prove runtime class
 resolution or another mod's installed content.
 
+## Bundled Rust CLI reports
+
+KDataForge Tools also bundles the current Rust validator used by its language server:
+
+```text
+kdf lint PATH --format json
+kdf lint PATH --format sarif
+kdf why PATH --format text
+kdf why PATH --format json --rule RULE_ID --line 12
+```
+
+JSON and SARIF share stable rule IDs, UTF-16 source ranges, explanation IDs, and structured evidence.
+`why` explains only evidence emitted by validation/reflection; missing evidence stays unknown. Exit
+codes are `0` success, `1` lint findings under selected warning policy, `2` usage/configuration, and
+`3` internal failure. This Rust CLI is separate from the historical standalone Python linter above.
+
 KPatchwork may pin an older standalone release until its lockfile is updated. Its `ci/schemas`
 directory overrides only repository-policy schemas; it does not add every newer runtime handler.
 Use a current standalone build when checking new KDataForge grammar outside KPatchwork CI.
