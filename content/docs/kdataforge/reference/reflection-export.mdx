@@ -1,6 +1,6 @@
 ---
-title: Reflection export
-description: Export runtime Unreal classes, structs, enums, defaults, functions, game settings, reload classification, Blueprint mappings, and asset indexes for Pack Manager and validation use.
+title: Reflection Export
+description: Export runtime Unreal classes, structs, enums, defaults, functions, game settings, reload classification, Blueprint mappings, and asset indexes for KDataForge Tools and validation use.
 sidebar:
   order: 9
 ---
@@ -32,7 +32,7 @@ The two commands do **not** export the same amount:
 | Chat `/kdf-reflection` (bare) | `--assets --functions --flattened --pack --image-max-dimension=1024` | The full profile: everything above plus functions, asset indexes and flattened classes. |
 | Launch argument `-KDFReflectionAutoExport=<dir>` | `--assets --functions --flattened` (and `--image-max-dimension` from `-KDFReflectionAutoImageMaxDimension=<n>` if given) | The same export, started automatically once a world has begun play. |
 
-For the data the desktop editor needs (function completion in templates, asset-by-class indexes,
+For the data KDataForge Tools needs (function completion in templates, asset-by-class indexes,
 inherited properties) use the bare chat command, the auto export, or give the console command the
 options yourself: `KDF.DumpReflection --assets --functions --flattened`. The chat defaults apply
 only when you give **no** option at all; as soon as you pass one, exactly the options you passed
@@ -130,10 +130,10 @@ value, and writes `defaultVolatile: true`. Result stays valid `ImportText` input
 constructor defaults remain unchanged. Blueprint-authored member names are emitted lowercase because Unreal's
 case-preserving `FName` display casing depends on asset load order. Lookup remains case-insensitive.
 
-To import, open desktop editor **Datapacks**, choose **Import game data**, select generated
-`.kdfdata`, then bind imported datapack to project. Pack Manager validates manifest/schema, stores
+To import, run **KDataForge: Switch datapack** in VS Code, select generated
+`.kdfdata`, then bind the imported datapack to the project. KDataForge Tools validates manifest/schema, stores
 immutable archive copy, and exposes contents as datapack `reflection` section to editor and language
-server. See [Desktop Editor & LSP](/kdataforge/reference/desktop-editor-lsp) for project binding,
+server. See [VS Code Extension & LSP](/kdataforge/reference/vscode-extension-lsp) for project binding,
 reflection requirements, and schema-only validation. Directory form is useful during
 editor/language-server development.
 
@@ -196,7 +196,7 @@ explained under [Editor Metadata Supplement](#editor-metadata-supplement). Do no
 ## Functions
 
 With `--functions` (included in the chat default and the auto export) each class record in
-`classes.ndjson` gets a `functions` array. The desktop editor uses it to complete and check
+`classes.ndjson` gets a `functions` array. KDataForge Tools uses it to complete and check
 [template function calls](/kdataforge/reference/reflection-export#functions).
 
 | Field | Meaning |
@@ -382,8 +382,8 @@ Native acceptance PASS does not verify ZIP contents, loose/packed parity, image 
 schema conformance. Use the Python artifact/package validator before distributing or importing an
 artifact. The editor can compact source archives larger than 512 MiB and rejects installed output
 that still exceeds its 512 MiB cache cap. Python PASS does not predict compacted-cache success or
-prove every desktop editor import gate. Confirm acceptance through **Import game data** in the desktop
-editor. The Python validator reads an export directory containing loose files and its
+prove every extension import gate. Confirm acceptance through **KDataForge: Switch datapack** in VS Code.
+The Python validator reads an export directory containing loose files and its
 `.kdfdata` archive; a standalone archive must first be extracted into a directory alongside that archive.
 
 Install Python dependency and validate one export from the modding workspace:

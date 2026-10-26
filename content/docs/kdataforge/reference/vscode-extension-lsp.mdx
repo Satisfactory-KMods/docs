@@ -1,0 +1,94 @@
+---
+title: VS Code Extension & LSP
+description: Install KDataForge Tools for completion, diagnostics, linting, Codex and typed KDataForgeJS authoring.
+sidebar:
+  order: 6
+---
+
+KDataForge Tools adds KDataForge authoring support to VS Code. Extension ID:
+`kmods.kdataforge`. It bundles the Rust language server, project linter, Codex class browser,
+KDataForgeJS declarations, snippets and Explorer actions. No separate editor application is needed.
+
+## Install
+
+Install **KDataForge Tools** from VS Code Marketplace after the first public release, or install a
+platform-specific `.vsix` produced by the release workflow. Windows x64 and Linux x64 packages carry
+matching native sidecars. Remote workspaces run those sidecars on the workspace host.
+
+The extension requires a trusted filesystem workspace. Virtual and untrusted workspaces cannot run
+the native validators or create project files.
+
+## YAML language support
+
+Open a KDataForge project or any workspace containing `DataForge/pack.yml`. The extension provides:
+
+- schema and semantic diagnostics;
+- context-sensitive completion and hover;
+- go to definition, references and rename;
+- file, pack and project lint commands;
+- Codex search and class-reference insertion;
+- context actions for new KDataForge documents.
+
+The language server and CLI linter share the same validation core. A successful schema check does not
+prove that runtime classes, assets or functions exist when reflection data is unavailable.
+
+## Import and bind game data
+
+1. Start a Satisfactory world with KDataForge and the mods your pack targets. After the world begins
+   play, run:
+
+   ```text
+   KDF.DumpReflection --assets --functions --flattened
+   ```
+
+2. Find the ISO-named `.kdfdata` archive under `FactoryGame/KMods/ReflectionExport/`, or the chosen
+   `--out` directory. See [Reflection Export](/kdataforge/reference/reflection-export) for options and
+   validation.
+3. Run **KDataForge: Switch datapack** from the Command Palette and select or import the archive.
+4. Confirm the effective datapack before relying on reflected completion or Codex results.
+
+Use an export matching the game build and installed mods. Missing or failed export records remain
+unknown; they are not proof that game content does not exist.
+
+## Schema-only mode
+
+Without usable game data, YAML schema and project validation remain available. Schema-only mode cannot
+establish whether a reflected class, property, function or asset exists. Reflection-dependent results
+state that limitation instead of treating missing metadata as success.
+
+For complete reflection-aware support, export classes with `--flattened`, functions with `--functions`,
+and non-texture assets with `--assets`.
+
+## KDataForgeJS projects
+
+Right-click a folder in Explorer and choose **KDataForgeJS: Create Project Here**. Generated projects
+receive the SDK bundled with the extension immediately, so TypeScript completion works before
+`npm install`.
+
+Available authoring actions:
+
+- **KDataForgeJS: Create Script** creates a typed handler without replacing existing files.
+- **KDataForgeJS: Refresh Built-in SDK** refreshes only the extension-managed SDK package.
+- `kdf-handler`, `kdf-meta` and `kdf-item` insert typed snippets.
+- TypeScript hover and CodeLens explain capabilities, authority, lifecycle, quotas, and unknown
+  policy facts without granting rights.
+- Content/class/file completion, guarded rename, verified reflection quick fixes, content forms,
+  JSON/SARIF export, diagnostic explanations, and offline docs search are available from standard
+  VS Code providers and the Command Palette.
+
+See [KDataForgeJS Authoring in VS Code](/kdataforge/reference/kdataforgejs-authoring) for limits and
+safe-refusal cases, and [KDataForgeJS Runtime API](/kdataforge/reference/kdataforgejs-api) for the
+runtime contracts shown by hover.
+
+Generated `package.json` files retain `@sf-kmods/kdataforgejs` and
+`@sf-kmods/kdataforgejs-cli` development dependencies. Install them when you need `kdf check`,
+`kdf lint`, `kdf sync`, `kdf format` or `kdf validate` outside VS Code.
+
+## Other LSP clients
+
+The `kdf-language-server` binary speaks LSP over stdio. A host can supply
+`initializationOptions.kdf.datapackPath` with a `.kdfdata` path; an empty string selects schema-only
+validation. The same setting is accepted through `workspace/didChangeConfiguration`.
+
+For applying YAML permanently to Unreal asset packages, see
+[UE Editor Integration](/kdataforge/reference/editor-integration).

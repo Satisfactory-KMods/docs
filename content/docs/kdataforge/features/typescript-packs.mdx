@@ -1,0 +1,29 @@
+---
+title: TypeScript Pack Modules and Libraries
+description: Split a KDataForgeJS pack into typed feature installers and vendored same-pack libraries.
+sidebar:
+  order: 24
+---
+
+Keep `scripts/main.ts` as canonical entry and move feature setup into static modules:
+
+```ts
+export function install(ctx: Context): () => void {
+  const subscription = ctx.setInterval(() => ctx.debug("feature tick"), 5);
+  return () => subscription.unsubscribe();
+}
+```
+
+The entry reads effective configuration, installs enabled features, and registers each disposer in
+`ctx.createCleanupBag()`. Runtime cleanup remains the safety net.
+
+Disabled features still belong to the static module graph. Their files, reflection imports, and
+capabilities count toward authority and source limits. Feature modules share one realm and pack
+authority; they are organization, not a security boundary.
+
+Shared typed libraries must be vendored below the same pack, for example
+`scripts/lib/balance-v1/index.ts`, and imported relatively. Use explicit versions in directory names
+when several packs vendor the same library. External `node_modules`, sibling-pack runtime imports,
+dynamic imports, downloads, and shared VM singletons are unavailable.
+
+Limits remain 64 source files, 512 KiB per file, bounded total graph bytes, and graph depth 16.

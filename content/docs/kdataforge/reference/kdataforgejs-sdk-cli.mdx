@@ -1,0 +1,35 @@
+---
+title: KDataForgeJS SDK and CLI
+description: Update projects, manage multi-pack workspaces, validate scripts, and refresh one reflection snapshot safely.
+sidebar:
+  order: 9
+---
+
+`@sf-kmods/kdataforgejs-cli` provides `kdf check`, `lint`, `validate`, `sync`, `format`, `doctor`,
+`dev`, `game-data`, `add`, and `update`.
+
+## Update
+
+`kdf update` reports local SDK/CLI versions and stale reflection data without network mutation.
+`kdf update --apply` updates only the project's two KDataForgeJS development dependencies through
+its detected npm or pnpm executable, then invokes the newly installed local CLI once for
+`game-data`. `--offline --apply` skips the package manager and refreshes only from installed
+packages, cache, or game data. Global tools are never silently modified.
+
+Package-manager changes are not atomic across the network. Existing generated types remain usable
+when dependency update or export fails; inspect the reported recovery command and rerun.
+
+## Multi-pack workspaces
+
+Use one tooling project per pack and list those directories through npm `workspaces` or
+`pnpm-workspace.yaml`. Literal paths and one-segment `*` patterns are supported. Discovery rejects
+escaping paths, symlink escapes, unsupported globs, and duplicate case-insensitive pack refs.
+
+From workspace root, project commands run packs in stable relative-path order. `--pack <ref>` selects
+one unique pack. `kdf add` requires a selection when several packs exist. Each TypeScript program
+uses only its own declarations and config types.
+
+`kdf game-data` launches or reuses the game-data cache once, stages declarations and manifests,
+then installs the same snapshot into every pack under one workspace writer lock. It never deploys
+packs or triggers game reload. `doctor` is read-only. Lockfiles and workspace scripts remain user
+owned; discovery never executes them.

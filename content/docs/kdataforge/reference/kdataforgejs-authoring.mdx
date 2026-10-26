@@ -1,0 +1,48 @@
+---
+title: KDataForgeJS Authoring in VS Code
+description: Policy hover, capability analysis, typed completion, safe rename, previews, forms, diagnostic exports, and offline help.
+sidebar:
+  order: 8
+---
+
+KDataForge Tools (`kmods.kdataforge`) bundles the KDataForgeJS SDK and analyzes static pack scripts
+without executing them or loading a pack `tsconfig` plugin.
+
+## TypeScript intelligence
+
+- Hover shows known capability, authority, lifecycle, quota, SDK, and catalog facts. Missing metadata
+  stays `unknown`; it is never inferred from a type name.
+- CodeLens compares declared capabilities with statically used and default-granted capabilities.
+  It reports missing or unnecessary entries but never grants permissions automatically.
+- Completion uses bounded reflection/content results and statically declared pack files.
+- Quick fixes for renamed reflection members require verified replacement evidence from the exact
+  reflection archive. Similar spelling is not evidence.
+
+Analysis permits at most 64 modules, 4 MiB total source, 512 KiB per file, and dependency depth 16.
+Dynamic imports, external packages, escaped paths, incomplete graphs, stale document generations,
+and ambiguous bindings disable unsafe edits.
+
+## Safe rename
+
+Content rename plans combine YAML declarations/references with provable TypeScript string references.
+Every edit contains the expected old text and document version. Dynamic values, incomplete pack
+inventories, collisions, redirects, includes, aliases, or external packs block automatic rename.
+Pack refs and config IDs are never renamed by this action.
+
+## Preview and forms
+
+Localized text previews use only local localization documents and explicit `source` fallback.
+Unresolved string tables stay unresolved. Icon previews accept only locally verified PNG data with
+archive and image size checks; no remote image is fetched.
+
+**Open With → KDataForge Content Form** exposes scalar fields described by the effective bundled
+schema. Messages include URI, document version, document index, path, operation, and value. The host
+revalidates them and applies minimal version-checked text edits. Unsupported/nested structures remain
+in the normal YAML editor.
+
+## Diagnostics and help
+
+Commands export current diagnostics as deterministic JSON or SARIF 2.1.0. **KDataForge: Explain
+Current Diagnostic** uses structured validator evidence; absent evidence returns “unknown” instead
+of inventing a cause. Bundled documentation search is offline, bounded, and excludes retired editor
+routes.
