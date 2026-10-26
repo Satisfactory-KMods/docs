@@ -8,7 +8,7 @@ sidebar:
 KDataForgeJS runs on a pinned QuickJS-NG build. Scripts receive ECMAScript built-ins plus the KDataForge context. Node,
 browser, filesystem, and network APIs are absent.
 
-The built-in module also exports 144 common helpers in eight typed groups. See the
+The built-in module also exports 154 common helpers in nine typed groups. See the
 [helper function reference](/kdataforge/features/kdataforgejs/helpers).
 
 ## Mods, packs, and game version
@@ -125,7 +125,13 @@ export default defineHandler(async (ctx) => {
   }));
 
   ctx.setTimeout(() => {
-    const page = ctx.findActors(FGBuildableFactory, { limit: 32 });
+    const page = ctx.findActors(FGBuildableFactory, {
+      limit: 32,
+      nameContains: "Constructor",
+      tags: ["Factory"],
+      tagMatch: "all",
+      exactClass: false,
+    });
     console.info("first page", page.actors.length);
     if (page.nextCursor !== null) {
       const next = ctx.findActors(FGBuildableFactory, { limit: 32, after: page.nextCursor });
@@ -135,7 +141,9 @@ export default defineHandler(async (ctx) => {
 });
 ```
 
-Queries include subclasses in the current world. `findActors` returns `{ actors, nextCursor }`, sorted by object path.
+Queries include subclasses in the current world unless `exactClass` is true. `findActors` returns
+`{ actors, nextCursor }`, sorted by object path. Options can filter by `nameContains`, `pathPrefix`, actor `tags`
+(`tagMatch: "all" | "any"`), exact class, and case sensitivity in addition to `limit` and `after`.
 The default page size is 64, the maximum is 256; `nextCursor: null` marks the last page. A cursor is only meaningful
 within the current live world. Results are not a frozen world snapshot across pages.
 
@@ -243,6 +251,17 @@ arbitrary Unicode text directly.
 
 Promises, `async`/`await`, and `queueMicrotask` are available. `ctx.setTimeout`, `ctx.setInterval`, and
 `ctx.registerTick` schedule work through KDataForge, which can revoke it with the current realm.
+
+`ctx.promises` exposes Promise-returning variants of suitable immediate context functions, including nested
+`config`, `world`, `conditions`, and `diagnostics` groups. Calls still execute immediately on the game thread; successful
+results resolve and controlled KDF failures reject. Subscription, callback, and timer registration stays synchronous.
+
+```ts
+const actors = await ctx.promises.world.findActors(FGBuildableFactory, {
+  limit: 16,
+  pathPrefix: "/Game/FactoryGame/",
+});
+```
 
 Microtasks and timer callbacks still share the script's deadline and quota. They do not create unrestricted background
 work.

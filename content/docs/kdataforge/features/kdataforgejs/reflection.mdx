@@ -41,7 +41,12 @@ realm.counter.set(realm.counter.get() + 1n);
 ```ts
 const itemClasses = ctx.findClasses(FGItemDescriptor, {
   pathPrefix: "/Game/FactoryGame/",
+  pathContains: "/Descriptor/",
+  namePrefix: "Desc_",
   nameContains: "Desc_",
+  exactName: "Desc_IronPlate_C",
+  exactClass: false,
+  caseSensitive: false,
   includeNative: false,
   includeBlueprints: true,
   limit: 64,
@@ -49,6 +54,8 @@ const itemClasses = ctx.findClasses(FGItemDescriptor, {
 ```
 
 Search only covers classes already known to the pack. It does not scan or synchronously load arbitrary assets.
+All filters combine. `exactClass` excludes subclasses; string matching is case-insensitive unless `caseSensitive` is
+true. Unknown option names are rejected instead of being ignored.
 
 Imports from `satisfactory` give KDataForge class names to resolve. Native names such as `FGItemDescriptor` are normally
 unique. If two Blueprints share an asset name, KDataForge reports `KDF.Script.AmbiguousClassImport`. Add the intended
@@ -100,8 +107,9 @@ Do not serialize them.
 
 ## Call reflected functions
 
-The class symbol contains exposed static functions. Instance functions appear on object handles. KDataForge checks
-argument types, invocation form, authority, thread, and lifecycle before each call.
+The class symbol contains exposed static functions. Instance functions appear on object handles. Generated declarations
+preserve reflected parameter names and emit Unreal function/parameter tooltips as JSDoc. KDataForge checks argument
+types, invocation form, authority, thread, and lifecycle before each call.
 
 Pure Unreal helpers with unique names are also direct exports from `satisfactory`:
 

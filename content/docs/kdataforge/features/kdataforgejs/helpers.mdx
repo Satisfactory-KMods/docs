@@ -1,6 +1,6 @@
 ---
 title: Helper function reference
-description: Use reflected Unreal helpers plus 144 JavaScript helpers for common pack code.
+description: Use reflected Unreal helpers plus 154 JavaScript helpers for common pack code.
 sidebar:
   order: 6
 ---
@@ -29,7 +29,7 @@ example `KismetMathLibrary.SomeFunction(...)`. Runtime exports and TypeScript de
 
 ## JavaScript helpers
 
-`@sf-kmods/kdataforgejs` exports eight frozen helper groups. They run inside the existing QuickJS realm and need no npm
+`@sf-kmods/kdataforgejs` exports nine frozen helper groups. They run inside the existing QuickJS realm and need no npm
 package.
 
 ```ts
@@ -43,10 +43,13 @@ const output = numbers.clamp(requestedOutput, 0, maximumOutput);
 All helpers are typed. Methods that return arrays, objects, maps, or sets create new containers unless their description
 states that they mutate an input.
 
-## Arrays: 27 helpers
+## Arrays: 31 helpers
 
 | Helpers | Use |
 | --- | --- |
+| `range` | Create up to 10,000 numbers between bounded start/end values with an optional non-zero step. |
+| `sample`, `shuffle` | Read one random value or return a shuffled copy. Pass a seeded random callback for deterministic results. |
+| `windowed` | Copy complete fixed-size windows with an optional positive step. |
 | `chunk`, `partition` | Split values into fixed-size batches or predicate groups. `chunk` requires a positive integer size. |
 | `compact`, `unique`, `uniqueBy` | Remove falsey values or duplicates. |
 | `groupBy`, `keyBy`, `countBy` | Build records from a selector. Later values replace earlier values in `keyBy`. |
@@ -74,14 +77,14 @@ states that they mutate an input.
 | `escapeRegExp` | Escape text before inserting it into a regular expression. |
 | `stripIndent` | Remove shared leading indentation from nonblank lines. |
 
-## Numbers: 20 helpers
+## Numbers: 22 helpers
 
 | Helpers | Use |
 | --- | --- |
 | `clamp`, `inRange`, `wrap` | Constrain, test, or wrap a number within a range. |
 | `lerp`, `inverseLerp`, `remap` | Interpolate and map between ranges. Empty source ranges throw `RangeError`. |
 | `roundTo`, `floorTo`, `ceilTo` | Quantize to a positive step. |
-| `sum`, `product`, `average`, `median`, `mode`, `min`, `max` | Aggregate number arrays. Empty optional results return `undefined`. |
+| `sum`, `sumBy`, `product`, `average`, `averageBy`, `median`, `mode`, `min`, `max` | Aggregate number arrays. `sumBy` and `averageBy` select numbers from arbitrary values. Empty optional results return `undefined`. |
 | `percentage`, `percentOf` | Convert between fractions and percentage values. Division by zero throws `RangeError`. |
 | `nearlyEqual` | Compare using an optional epsilon. |
 | `signNonZero` | Return `-1` for negative values and `1` for zero or positive values. |
@@ -144,6 +147,18 @@ always throws.
 `once` and `memoize` retain values until their function becomes unreachable or the realm ends. Avoid caching UObject
 handles across reload. Timer-based debounce and throttle helpers are intentionally absent; use realm-owned
 `ctx.setTimeout` and `ctx.setInterval` so KDataForge can revoke scheduled work.
+
+## Promises: 4 helpers
+
+| Helper | Use |
+| --- | --- |
+| `mapSeries` | Await a mapper for each value in order and return all mapped results. |
+| `filterSeries` | Await a predicate for each value in order and return matching input values. |
+| `eachSeries` | Await an effect for each value in order. |
+| `settle` | Convert fulfillment or rejection into a typed `{ status, value }` or `{ status, reason }` result. |
+
+Serial helpers avoid unbounded parallel work in one realm. They stop on the first rejection except `settle`, which always
+fulfills with an explicit status.
 
 ## Semver: 16 helpers
 
