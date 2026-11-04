@@ -1,6 +1,6 @@
 ---
 title: Version 1.7.2
-description: Change a node’s recipe while keeping compatible connections; canvas connections render again.
+description: Change recipes, keep canvas connections visible, and simplify the grid when zoomed out.
 slug: production-modeler/changelog/1.7.2
 sidebar:
   label: '1.7.2'
@@ -16,6 +16,8 @@ sidebar:
 
 ## BUGFIXES
 
+- **Grid at distant zoom.** The grid hides when its cells are too small to
+  distinguish and returns when zooming in. Snapping is unchanged.
 - **Connections stay visible.** Canvas connections and their context menus render
   again after the Vue Flow update.
 
