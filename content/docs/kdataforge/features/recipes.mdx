@@ -22,8 +22,9 @@ Both modes end with the recipe queued into SML's `UModContentRegistry` (unless y
 A generated recipe is just a subclass of `FGRecipe` whose CDO you set up entirely through
 `properties:`. `mIngredients` and `mProduct` describe the item/amount pairs consumed and produced,
 `mManufactoringDuration` is the craft time in seconds, and `mProducedIn` lists which buildable(s)
-can craft it. `super-ingot.recipe.yml` puts all of that together for a recipe that turns 2 iron
-ingots into 1 of a generated item, craftable in a Smelter Mk.1:
+can craft it. Registration alone does not unlock the recipe for a player: connect it to a schematic
+and unlock that schematic in the save. `super-ingot.recipe.yml` puts all of that together for a
+recipe that turns 2 iron ingots into 1 of a generated item, craftable in a Smelter Mk.1:
 
 ```yaml
 # file: super-ingot.recipe.yml
@@ -164,11 +165,12 @@ copyable examples.
 
 ## Troubleshooting
 
-- **"My new item has no recipe in a fresh save"**: check that _something_ registers the recipe.
-  Either `register: true` here (the default), or a schematic that unlocks it, whose own
-  registration auto-propagates down to this recipe, will do it. A recipe that's generated but never
-  registered anywhere never reaches `UModContentRegistry`, and the game won't know it
-  exists.
+- **"My new recipe is missing in game"**: registration and unlocking are separate steps.
+  `register: true` (the default) makes the recipe known to `UModContentRegistry`, but does not grant
+  it to players. Add it to a schematic and unlock that schematic in the save. See
+  [Add a recipe to an existing schematic](/kdataforge/tutorials/existing-schematic-unlock) or
+  [Item + Icon + Recipe + Tier-1 Unlock](/kdataforge/tutorials/item-icon-recipe-schematic).
+  If it is still missing, check `/kdf report` for errors and restart after changing recipe content.
 - **"class: gave me an error about register-only mode"**: `class:` (register-only) is only valid
   for `recipe`, `schematic`, and `research` documents. `item`/`resource`/`building`/`unlock` can
   only generate (`id:`). See [Type: item](/kdataforge/features/items) for why.

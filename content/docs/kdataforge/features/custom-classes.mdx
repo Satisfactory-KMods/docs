@@ -17,7 +17,7 @@ and register existing classes via [Type: recipe](/kdataforge/features/recipes),
 
 Use the preset types (`item`, `resource`, `building`, `unlock`, `recipe`, `schematic`, `research`) when one fits. They
 select the parent, stage priority, and registration. Use `class` for everything else: equipment descriptors, vehicle
-descriptors, item and schematic categories, `FGUnlock` subclasses, custom classes from other mods gated behind `hasMod`,
+descriptors, custom category subclasses, `FGUnlock` subclasses, custom classes from other mods gated behind `hasMod`,
 reparented buildables, and any class kind without a KDataForge preset.
 
 ```yaml
@@ -72,7 +72,8 @@ here the jetpack. You are re-parametrising existing equipment behaviour, not wri
 
 ## Example 2: a build-menu / item category
 
-There is no preset type for categories, which makes them the textbook `class` use case:
+Use [type: category](/kdataforge/features/categories) for a named category with an optional icon.
+Use `type: class` when a category needs additional properties such as `mMenuPriority`:
 
 ```yaml
 # file: my-category.class.yml

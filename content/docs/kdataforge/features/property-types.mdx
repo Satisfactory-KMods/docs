@@ -260,6 +260,69 @@ Class references also take a path, but the codec tries several forms in order be
   value: Desc_Water # bare-name shortcut for Desc_Water.Desc_Water_C see Targeting
 ```
 
+### Category class references
+
+Properties that accept a `UFGCategory` subclass, including category and subcategory entries,
+also accept a display name. KDataForge searches loaded classes and the asset registry for a
+category compatible with the property's required base class, and creates one when needed:
+
+```yaml
+- path: mCategory
+  value: Factory Parts
+- path: mSubCategories
+  value:
+    - Conveyors
+    - Pipes
+```
+
+To supply an icon, use a map with `name` and an optional `icon` texture object path:
+
+```yaml
+- path: mCategory
+  value:
+    name: Factory Parts
+    icon: /MyMod/UI/T_Category.T_Category
+```
+
+`name` also accepts the [localized FText form](#ftext-localized-keynamespacesource) and
+[StringTable references](#ftext-stringtable-references), for example:
+
+```yaml
+- path: mCategory
+  value:
+    name:
+      ns: MyPack
+      key: FactoryPartsCategory
+      source: Factory Parts
+```
+
+Without an icon, the FText map can also be used directly as the category value:
+
+```yaml
+- path: mCategory
+  value:
+    ns: MyPack
+    key: FactoryPartsCategory
+    source: Factory Parts
+```
+
+An existing class reference still works. KDataForge resolves a scalar as a class reference first.
+An unresolved path or name ending in `_C` is an error, as is an unresolved name starting with
+`Cat_`, `Category_`, `Desc_`, `BP_`, `Build_`, `Recipe_`, `Schematic_`, `Gen_`, or `DA_`.
+Use `name:` to force display-name interpretation when the name has one of these forms:
+
+```yaml
+- path: mCategory
+  value:
+    name: Cat_Toys
+```
+
+The search matches the name and, when supplied, the icon. If several categories match,
+KDataForge reports an error. An icon mismatch does not match an existing category; KDataForge
+creates another one. Reusing a category does not change its name or icon. This syntax applies to
+reflected category class properties; `category_reorder` has its own
+[category fields](/kdataforge/features/category-reorder).
+
 ## Soft references (`TSoftObjectPtr` / `TSoftClassPtr`)
 
 The value is stored as a path string and never force-loads the target. The referenced asset only

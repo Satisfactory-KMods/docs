@@ -1,0 +1,45 @@
+---
+title: 'Type: category'
+description: Create categories for items, schematics, and settings.
+---
+
+Use `type: category` to create named category classes that other entries can reference:
+
+```yaml
+type: category
+categories:
+  - id: Cat_FactoryParts
+    categoryType: item
+    name: Factory Parts
+    icon: /MyMod/UI/T_Category.T_Category
+  - id: Cat_Research
+    categoryType: schematic
+    name:
+      ns: MyPack
+      key: ResearchCategory
+      source: Research
+```
+
+Each entry needs a pack-unique `id` and a `name`. The name accepts the usual
+[FText forms](/kdataforge/features/property-types#ftext-plain-culture-invariant), including
+localized text and StringTable references. `icon` is optional and accepts a texture object path
+or a generated asset ID. Omit it to leave the icon unset. The entry does not accept `properties`.
+
+`categoryType` selects the generated class's base:
+
+| `categoryType` | Base class |
+| --- | --- |
+| `category` (default) | `UFGCategory` |
+| `item` | `UFGItemCategory` |
+| `schematic` | `UFGSchematicCategory` |
+| `settings` | `UFGUserSettingCategory` |
+
+Choose a type compatible with the property receiving the category. Generated IDs follow the
+same pack-wide uniqueness rules as other generated content. Reference a category by its `id` or
+its generated class path. Category documents run in `CDOChanges` before ordinary CDO patches and
+the `Items` stage.
+
+For a category needed only as a property value, the
+[category value syntax](/kdataforge/features/property-types#category-class-references) can find or
+create one directly from a name and optional icon. Use `type: category` when you need an explicit
+ID to reference from other entries.

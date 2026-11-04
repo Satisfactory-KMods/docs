@@ -183,6 +183,7 @@ page with its full grammar and worked examples:
 | `curve`              | Assets           | [Float and Vector Curves](/kdataforge/features/curves)    |
 | `localization`       | Localization     | [Localization](/kdataforge/features/localization)         |
 | `cdo`                | CDOChanges       | [Patching (type: cdo)](/kdataforge/features/patching-cdo) |
+| `category`           | CDOChanges       | [Categories](/kdataforge/features/categories)             |
 | `category_reorder`   | CDOChanges       | [Category Ordering](/kdataforge/features/category-reorder) |
 | `sublevel`           | CDOChanges       | [Sublevels](/kdataforge/features/sublevels)                |
 | `item`               | Items            | [Items](/kdataforge/features/items)                       |
@@ -198,8 +199,8 @@ page with its full grammar and worked examples:
 | `eventrule`          | RuntimePatches   | [Event Rules](/kdataforge/features/event-rules) |
 | custom (third-party) | handler-declared | registered via `RegisterHandler`, no page, it's yours                   |
 
-> All class **generation** types (`item`, `resource`, `building`, `unlock`, and the generic
-> `class`) run in the **Items** stage, priority-ordered
+> `category` generates classes in **CDOChanges**. Other class **generation** types (`item`,
+> `resource`, `building`, `unlock`, and the generic `class`) run in the **Items** stage, priority-ordered
 > (`class` → `unlock` → `item` → `resource` → `building`), so
 > later stages (`recipe`, `schematic`, `research`) can reference every generated class.
 
