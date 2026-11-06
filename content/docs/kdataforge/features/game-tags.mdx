@@ -57,8 +57,8 @@ type: cdo
 patches:
   - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
     properties:
-      - path: mGameplayTags
-        op: append
+      mGameplayTags:
+        $op: append
         value:
           - MyOverhaul.Machines.Tier2
 ```
@@ -75,8 +75,8 @@ patches:
     ofClass: /Script/FactoryGame.FGRecipe
     tagProperty: mGameplayTags
     properties:
-      - path: mManufactoringDuration
-        op: multiply
+      mManufactoringDuration:
+        $op: multiply
         value: 0.8
 ```
 
@@ -92,21 +92,42 @@ full native list), every tag-container op works on any `FGameplayTagContainer` p
 adds tags without disturbing existing ones. `remove` takes a single tag back out. `clear` empties
 the container entirely, and the default `set` op replaces the whole container:
 
+To add tags:
+
 ```yaml
-- path: mGameplayTags # append add tags (sequence or scalar)
-  op: append
-  value:
-    - MyOverhaul.Simple
-    - KMods.WikiExclude
-- path: mGameplayTags # remove take one tag out
-  op: remove
-  value: KMods.WikiExclude
-- path: mGameplayTags # clear empty the container
-  op: clear
-- path: mGameplayTags # set (default) replace ALL tags
-  value:
+properties:
+  mGameplayTags:
+    $op: append
+    value:
+      - MyOverhaul.Simple
+      - KMods.WikiExclude
+```
+
+To remove one tag:
+
+```yaml
+properties:
+  mGameplayTags:
+    $op: remove
+    value: KMods.WikiExclude
+```
+
+To empty or replace the container:
+
+```yaml
+properties:
+  mGameplayTags:
+    $op: clear
+```
+
+```yaml
+properties:
+  mGameplayTags:
     - MyOverhaul.Machines.Tier2
 ```
+
+Choose one of these blocks for a given `properties:` mapping. To apply several operations to
+`mGameplayTags` in order, use the ordered list form instead.
 
 ## Troubleshooting
 

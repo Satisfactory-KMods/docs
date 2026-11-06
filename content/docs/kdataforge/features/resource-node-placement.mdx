@@ -14,7 +14,10 @@ type: resourcenode
 add:
   - id: northern-iron
     resource: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
-    position: [10000, 20000, 1200]
+    position:
+      - 10000
+      - 20000
+      - 1200
     purity: Pure
     checkRange: 500
     reuseExisting: true
@@ -25,7 +28,10 @@ replace:
   - id: nearby-copper
     resource: /Game/FactoryGame/Resource/RawResources/OreCopper/Desc_OreCopper.Desc_OreCopper_C
     fromResource: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
-    position: [30000, 20000, 1200]
+    position:
+      - 30000
+      - 20000
+      - 1200
     checkRange: 500
     allowToMove: false
     purity: Normal
@@ -46,8 +52,8 @@ node does not automatically grant scanner unlocks or permit new resources in an 
 | --- | --- | --- |
 | `id` | Required | Stable identity, unique within pack. |
 | `resource` | Required | Resource descriptor class. |
-| `position` | Required | Three finite coordinates `[x, y, z]`. |
-| `rotation` | `[0, 0, 0]` | Finite `[pitch, yaw, roll]`. |
+| `position` | Required | Sequence of three finite coordinates: X, Y, Z. |
+| `rotation` | All three values default to `0` | Sequence of three finite angles: pitch, yaw, roll. |
 | `purity` | `Normal` for additions | `Impure`, `Normal`, or `Pure`. Replacement/reuse preserves existing purity when omitted from `replace`. |
 | `checkRange` | `500` | Search and optional overlap radius. Greater than zero, at most `100000` cm. |
 | `reuseExisting` | `true` | For `add`, reuse nearest ordinary node instead of creating a duplicate. |

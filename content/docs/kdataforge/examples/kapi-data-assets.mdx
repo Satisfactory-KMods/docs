@@ -32,28 +32,19 @@ assets:
   - id: AirCollector_ToxicAirNode
     class: /Script/KAPI.KAPIAirCollectorData
     properties:
-      - path: mRecipePrio
-        value: 100
-      - path: mRangeToScan
-        value: 2500
-      - path: bCheckNodes
-        value: true
-      - path: mTraceChannel
-        value:
-          - ObjectTypeQuery1
-          - ObjectTypeQuery2
-          - ObjectTypeQuery9
-          - ObjectTypeQuery6
-      - path: mItemClass
-        value: /KLib/Assets/Ressources/Raw/Gas/Desc_ToxicAir.Desc_ToxicAir_C
-      - path: mProductionTime
-        value: 6
-      - path: bUseHightBasesdProduction
-        value: false
-      - path: mMaxHit
-        value: 2
-      - path: mProductionPerHit
-        value: 6000
+      mRecipePrio: 100
+      mRangeToScan: 2500
+      bCheckNodes: true
+      mTraceChannel:
+        - ObjectTypeQuery1
+        - ObjectTypeQuery2
+        - ObjectTypeQuery9
+        - ObjectTypeQuery6
+      mItemClass: /KLib/Assets/Ressources/Raw/Gas/Desc_ToxicAir.Desc_ToxicAir_C
+      mProductionTime: 6
+      bUseHightBasesdProduction: false
+      mMaxHit: 2
+      mProductionPerHit: 6000
 ```
 
 ## `UKAPICleanerItemDescription`: Filtrator (Cleaner) recipes
@@ -75,26 +66,21 @@ assets:
   - id: CleanerItem_WasteWater
     class: /Script/KAPI.KAPICleanerItemDescription
     properties:
-      - path: bSkipUnlockCheck
-        value: false
-      - path: mProductionTime
-        value: 6
-      - path: mInFluid
-        value:
-          ItemClass: /KLib/Assets/Ressources/Raw/Fluids/Desc_Wastewater.Desc_Wastewater_C
-          Amount: 6000
-      - path: mOutFluid
-        value:
-          ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
-          Amount: 4000
-      - path: mBypassProducts
-        value:
-          - mProduceItem: /KLib/Assets/Parts/Production/Crushed/Desc_CrushedZinc.Desc_CrushedZinc_C
-            mProductionTime: 12
-            mProduceAmount: 6
-          - mProduceItem: /KLib/Assets/Parts/Production/Crushed/Desc_CrushedCaterium.Desc_CrushedCaterium_C
-            mProductionTime: 12
-            mProduceAmount: 6
+      bSkipUnlockCheck: false
+      mProductionTime: 6
+      mInFluid:
+        ItemClass: /KLib/Assets/Ressources/Raw/Fluids/Desc_Wastewater.Desc_Wastewater_C
+        Amount: 6000
+      mOutFluid:
+        ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
+        Amount: 4000
+      mBypassProducts:
+        - mProduceItem: /KLib/Assets/Parts/Production/Crushed/Desc_CrushedZinc.Desc_CrushedZinc_C
+          mProductionTime: 12
+          mProduceAmount: 6
+        - mProduceItem: /KLib/Assets/Parts/Production/Crushed/Desc_CrushedCaterium.Desc_CrushedCaterium_C
+          mProductionTime: 12
+          mProduceAmount: 6
 ```
 
 ## UKAPIModularMinerDescription: modular miner ore entries
@@ -113,24 +99,16 @@ assets:
   - id: MM_Cryolite
     class: /Script/KAPI.KAPIModularMinerDescription
     properties:
-      - path: mRarityText
-        value: 'Common'
-      - path: mFoundText
-        value: 'Can be found in every biome.'
-      - path: mNodeScreenshot
-        value: /SatisfactoryPlus/AssetDatas/Miner/UI/TXUI_Wiki_ResourceNode_Cryolite.TXUI_Wiki_ResourceNode_Cryolite
-      - path: mIsFallbackDescriptor
-        value: false
-      - path: mNeededModules
-        value:
-          - /KAPI/Attachments/ModularMiner/Attachment_MM_MiningHead.Attachment_MM_MiningHead_C
-      - path: mPreventModules
-        value:
-          - /KLib/Assets/Buildings/ModularExtractor/Modules/Smelter/Build_SmelterModule.Build_SmelterModule_C
-      - path: mResourceClass
-        value: /Game/FactoryGame/Resource/RawResources/RawQuartz/Desc_RawQuartz.Desc_RawQuartz_C
-      - path: mDrillTier
-        value: 1
+      mRarityText: 'Common'
+      mFoundText: 'Can be found in every biome.'
+      mNodeScreenshot: /SatisfactoryPlus/AssetDatas/Miner/UI/TXUI_Wiki_ResourceNode_Cryolite.TXUI_Wiki_ResourceNode_Cryolite
+      mIsFallbackDescriptor: false
+      mNeededModules:
+        - /KAPI/Attachments/ModularMiner/Attachment_MM_MiningHead.Attachment_MM_MiningHead_C
+      mPreventModules:
+        - /KLib/Assets/Buildings/ModularExtractor/Modules/Smelter/Build_SmelterModule.Build_SmelterModule_C
+      mResourceClass: /Game/FactoryGame/Resource/RawResources/RawQuartz/Desc_RawQuartz.Desc_RawQuartz_C
+      mDrillTier: 1
 ```
 
 `mFluidInfo` and `mModuleInformation` are optional `TMap` fields (keyed by an item class and a waste-producer module
@@ -156,63 +134,42 @@ assets:
   - id: RedSlugBreeder
     class: /Script/KAPI.KAPISugHatchingData
     properties:
-      - path: mSlug
-        value: /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Red.SlugDesc_Red_C
-      - path: mEgg
-        value: /KLib/Assets/Buildings/SlugHatching/Desc/Eggs/EggDesc_Red.EggDesc_Red_C
-      - path: mEggColor
-        value:
-          R: 1
-          G: 1
-          B: 1
-          A: 1
-      - path: mSlugTier
-        value: -1
-      - path: mHatchDuration
-        value: 10
-      - path: mPowerConsume
-        value: 0.1
-      - path: mIncubatorTier
-        value: 1
-      - path: bRequireFluid
-        value: false
-      - path: mPossibleSlugs
-        value:
-          - mSlug: /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Red.SlugDesc_Red_C
-            mProductionCount: 1
-            mProbability: 100
-            mFixedChanceMultiplier: 0.1
-            bShouldUseFixedChance: true
-          - mSlug: /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Orange.SlugDesc_Orange_C
-            mProductionCount: 1
-            mProbability: 0.38
-            mFixedChanceMultiplier: 1
-            bShouldUseFixedChance: true
-      - path: mProductionCountEggs
-        value: 1
-      - path: mBreedingTime
-        value: 40
-      - path: mDieTime
-        value: 100
-      - path: mRequiredFood
-        value: /KLib/Assets/Parts/Production/Food/Desc_SnailFood_Tier_20.Desc_SnailFood_Tier_20_C
-      - path: mFoodConsumePerCycle
-        value: 2
-      - path: mFoodDuration
-        value: 20
-      - path: mComfortableWith
-        value:
-          - /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Orange.SlugDesc_Orange_C
-      - path: mMinHumidity
-        value: 0.8
-      - path: mMaxHumidity
-        value: 0.85
-      - path: mMinHeat
-        value: 80
-      - path: mMaxHeat
-        value: 100
-      - path: mDayTime
-        value: Any # EKAPISlugTime enum name (Any/Day/Night), not a raw number; Any is also the default
+      mSlug: /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Red.SlugDesc_Red_C
+      mEgg: /KLib/Assets/Buildings/SlugHatching/Desc/Eggs/EggDesc_Red.EggDesc_Red_C
+      mEggColor:
+        R: 1
+        G: 1
+        B: 1
+        A: 1
+      mSlugTier: -1
+      mHatchDuration: 10
+      mPowerConsume: 0.1
+      mIncubatorTier: 1
+      bRequireFluid: false
+      mPossibleSlugs:
+        - mSlug: /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Red.SlugDesc_Red_C
+          mProductionCount: 1
+          mProbability: 100
+          mFixedChanceMultiplier: 0.1
+          bShouldUseFixedChance: true
+        - mSlug: /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Orange.SlugDesc_Orange_C
+          mProductionCount: 1
+          mProbability: 0.38
+          mFixedChanceMultiplier: 1
+          bShouldUseFixedChance: true
+      mProductionCountEggs: 1
+      mBreedingTime: 40
+      mDieTime: 100
+      mRequiredFood: /KLib/Assets/Parts/Production/Food/Desc_SnailFood_Tier_20.Desc_SnailFood_Tier_20_C
+      mFoodConsumePerCycle: 2
+      mFoodDuration: 20
+      mComfortableWith:
+        - /KLib/Assets/Buildings/SlugHatching/Desc/Slugs/SlugDesc_Orange.SlugDesc_Orange_C
+      mMinHumidity: 0.8
+      mMaxHumidity: 0.85
+      mMinHeat: 80
+      mMaxHeat: 100
+      mDayTime: Any # EKAPISlugTime enum name (Any/Day/Night), not a raw number; Any is also the default
 ```
 
 ## UKAPIExtractorAllowList: Registering new Extractors and Resources
@@ -239,15 +196,12 @@ assets:
   - id: MyModExtractorAllowList
     class: /Script/KAPI.KAPIExtractorAllowList
     properties:
-      - path: mAllowedExtractors
-        value:
-          - /Game/YourMod/Buildable/Build_YourExtractor.Build_YourExtractor_C
-      - path: mAllowedResources
-        value:
-          - /Game/YourMod/Resource/Desc_YourResource.Desc_YourResource_C
-      # mDisallowExtractors and mDisallowResources omitted no exclusions.
-      - path: mPriority
-        value: 0
+      mAllowedExtractors:
+        - /Game/YourMod/Buildable/Build_YourExtractor.Build_YourExtractor_C
+      mAllowedResources:
+        - /Game/YourMod/Resource/Desc_YourResource.Desc_YourResource_C
+    # mDisallowExtractors and mDisallowResources omitted no exclusions.
+      mPriority: 0
 ```
 
 `mPriority` defaults to `0`; raise it only if another mod's allow/disallow list needs to be
@@ -292,56 +246,43 @@ assets:
   - id: DeliveryTask_Root
     class: /Script/KAPI.KAPIDeliveryTask
     properties:
-      - path: mCoordinate
-        value:
-          X: 0
-          Y: 0
-      - path: mName
-        value: "Root Task"
+      mCoordinate:
+        X: 0
+        Y: 0
+      mName: "Root Task"
 
   - id: DeliveryTask_Child_Above
     class: /Script/KAPI.KAPIDeliveryTask
     properties:
-      - path: mCoordinate
-        value:
-          X: 0
-          Y: 1
-      - path: mName
-        value: "Single-Parent Child"
-      - path: mParentTask
-        value: Above
-      - path: bRequireAllParents
-        value: true
+      mCoordinate:
+        X: 0
+        Y: 1
+      mName: "Single-Parent Child"
+      mParentTask: Above
+      bRequireAllParents: true
 
   - id: DeliveryTask_Child_Right
     class: /Script/KAPI.KAPIDeliveryTask
     properties:
-      - path: mCoordinate
-        value:
-          X: 1
-          Y: 0
-      - path: mName
-        value: "Sibling Child"
-      - path: mParentTask
-        value: Left # points back at (0, 0): the root
-      - path: bRequireAllParents
-        value: true
+      mCoordinate:
+        X: 1
+        Y: 0
+      mName: "Sibling Child"
+      mParentTask: Left # points back at (0, 0): the root
+      bRequireAllParents: true
 
   - id: DeliveryTask_Child_AboveAndLeft
     class: /Script/KAPI.KAPIDeliveryTask
     properties:
-      - path: mCoordinate
-        value:
-          X: 1
-          Y: 1
-      - path: mName
-        value: "Two-Parent Child"
-      - path: mParentTask # multiple flags set in parallel
-        value:
-          - Above # points to (1, 0)
-          - Left # points to (0, 1); both nodes must exist in the tree
-      - path: bRequireAllParents
-        value: true # AND: both parents must be completed
+      mCoordinate:
+        X: 1
+        Y: 1
+      mName: "Two-Parent Child"
+    # multiple flags set in parallel
+      mParentTask:
+        - Above # points to (1, 0)
+        - Left # points to (0, 1); both nodes must exist in the tree
+      bRequireAllParents: true # AND: both parents must be completed
 ```
 
 A one-time task (`bIsEndless: false`, the default) can also force-unlock a schematic and grant
@@ -351,27 +292,21 @@ rewards on completion, via `mSchematics`/`mRewards`/`mCosts`:
 - id: DeliveryTask_UnlockSuperIngot
   class: /Script/KAPI.KAPIDeliveryTask
   properties:
-    - path: mCoordinate
-      value:
-        X: 1
-        Y: 2
-    - path: mName
-      value: "Unlock: Pure Super Ingot"
-    - path: mParentTask
-      value: Above
-    - path: bRequireAllParents
-      value: true
-    - path: mSchematics # force-unlocked on completion
-      value:
-        - /Game/YourMod/Schematics/Schematic_PureSuperIngot.Schematic_PureSuperIngot_C
-    - path: mRewards
-      value:
-        - ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
-          Amount: 500
-    - path: mCosts
-      value:
-        - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C
-          Amount: 100
+    mCoordinate:
+      X: 1
+      Y: 2
+    mName: "Unlock: Pure Super Ingot"
+    mParentTask: Above
+    bRequireAllParents: true
+  # force-unlocked on completion
+    mSchematics:
+      - /Game/YourMod/Schematics/Schematic_PureSuperIngot.Schematic_PureSuperIngot_C
+    mRewards:
+      - ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+        Amount: 500
+    mCosts:
+      - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C
+        Amount: 100
 ```
 
 The full property set (including the Endless-only fields `mPoolElements`/`mTaskRewards`/`mMaxTasks`/

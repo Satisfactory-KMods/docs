@@ -18,7 +18,7 @@ Buildable CDOs expose factory tuning: `mPowerConsumption`, `mPowerConsumptionExp
 
 > ℹ️ **Verify property names against your game version.** The buildable examples on this page use
 > real FactoryGame properties, but game updates occasionally rename or move them. If a `target:`
-> path or `path:` doesn't resolve, nothing breaks. The load report tells you exactly which patch
+> path or property key doesn't resolve, nothing breaks. The load report tells you exactly which patch
 > failed (`/kdf report`, see [Getting Started → Troubleshooting](/kdataforge/getting-started)). Confirm the
 > effect in-game after every patch.
 
@@ -35,18 +35,18 @@ type: cdo
 patches:
   - target: /Game/FactoryGame/Buildable/Factory/SmelterMk1/Build_SmelterMk1.Build_SmelterMk1_C
     properties:
-      - path: mPowerConsumption
-        op: multiply
+      mPowerConsumption:
+        $op: multiply
         value: 0.75
-      - path: mManufacturingSpeed
-        op: multiply
+      mManufacturingSpeed:
+        $op: multiply
         value: 1.25
   # Double the extraction yield of every resource node/deposit via the native base class:
   - target: /Script/FactoryGame.FGResourceNode
     applyToSubclasses: true # FGResourceDeposit derives from FGResourceNode too
     properties:
-      - path: mExtractMultiplier
-        op: multiply
+      mExtractMultiplier:
+        $op: multiply
         value: 2
 ```
 
@@ -61,8 +61,8 @@ patches:
   - target: /Script/FactoryGame.FGBuildableGeneratorFuel
     applyToSubclasses: true # coal, fuel, biomass, modded fuel generators
     properties:
-      - path: mPowerProduction
-        op: multiply
+      mPowerProduction:
+        $op: multiply
         value: 2 # double output; fuel burn rate scales with it
 ```
 
@@ -79,8 +79,8 @@ type: cdo
 patches:
   - target: /Game/FactoryGame/Buildable/Factory/MinerMk1/Build_MinerMk1.Build_MinerMk1_C
     properties:
-      - path: mExtractCycleTime
-        op: multiply
+      mExtractCycleTime:
+        $op: multiply
         value: 0.5
 ```
 
@@ -95,15 +95,15 @@ patches:
   - target: /Script/FactoryGame.FGBuildablePipeline
     applyToSubclasses: true # Mk.1 + Mk.2 + modded pipes
     properties:
-      - path: mFlowLimit
-        op: multiply
+      mFlowLimit:
+        $op: multiply
         value: 2
 ```
 
 ## Power storage capacity
 
 Power Storage buildables cap how many megawatt-hours they can bank before topping out.
-`mPowerStoreCapacity` is that ceiling. This patch omits `op:` entirely, so it defaults to a plain
+`mPowerStoreCapacity` is that ceiling. This patch omits `$op:` entirely, so it defaults to a plain
 `set` overwrite rather than a relative scale:
 
 ```yaml
@@ -111,8 +111,7 @@ type: cdo
 patches:
   - target: /Game/FactoryGame/Buildable/Factory/PowerStorage/Build_PowerStorageMk1.Build_PowerStorageMk1_C
     properties:
-      - path: mPowerStoreCapacity
-        value: 200 # MWh (vanilla: 100)
+      mPowerStoreCapacity: 200 # MWh (vanilla: 100)
 ```
 
 ## Drone station logistics
@@ -125,13 +124,12 @@ type: cdo
 patches:
   - target: /Game/FactoryGame/Buildable/Factory/DroneStation/Build_DroneStation.Build_DroneStation_C
     properties:
-      - path: mTransferSpeed
-        op: multiply
+      mTransferSpeed:
+        $op: multiply
         value: 2 # faster cargo load/unload
-      - path: mStackTransferSize
-        value: 4 # items moved per transfer tick
-      - path: mTripPowerPerMeterCost
-        op: multiply
+      mStackTransferSize: 4 # items moved per transfer tick
+      mTripPowerPerMeterCost:
+        $op: multiply
         value: 0.5 # cheaper long-haul routes
 ```
 
@@ -148,10 +146,8 @@ patches:
     applyToSpawnedActors: true # re-applied to every instance the moment it spawns
     applyToSubclasses: false # exact class only
     properties:
-      - path: mInventorySizeX
-        value: 12
-      - path: mInventorySizeY
-        value: 8
+      mInventorySizeX: 12
+      mInventorySizeY: 8
 ```
 
 All targeting modifiers are documented in [Targeting](/kdataforge/features/targeting).

@@ -193,7 +193,11 @@ own `Plugins:` dependency list. SML refuses to load your mod if a _real_ depende
 ```yaml
 conditions:
   hasClass: /Script/FactoryGame.FGBuildableFrackingActivator     # scalar one class
+```
 
+For several classes, use a sequence; every class must exist:
+
+```yaml
 conditions:
   hasClass:                                                       # sequence ALL must exist
     - /Script/RefinedPower.RPWindTurbine
@@ -232,9 +236,8 @@ conditions:
 schematics:
   - id: Schematic_KAPIBonusResearch
     properties:
-      - path: mDisplayName
-        value: KAPI Integration Research
-    # ... unlocks a recipe that only makes sense once KAPI's data assets exist
+      mDisplayName: KAPI Integration Research
+  # ... unlocks a recipe that only makes sense once KAPI's data assets exist
 ```
 
 This schematic only applies when **both** KAPI is loaded **and** the game build is recent enough.
@@ -256,8 +259,7 @@ items:
   - id: SuperIngot
     parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
     properties:
-      - path: mDisplayName
-        value: Super Ingot
+      mDisplayName: Super Ingot
 ```
 
 Every player gets the item, the recipe, and the schematic that unlocks it. See
@@ -275,12 +277,10 @@ assets:
   - id: CleanerItem_SuperIngot
     class: /Script/KAPI.KAPICleanerItemDescription
     properties:
-      - path: mProductionTime
-        value: 6.0
-      - path: mInFluid
-        value:
-          ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
-          Amount: 500
+      mProductionTime: 6.0
+      mInFluid:
+        ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
+        Amount: 500
 ```
 
 This is the standard shape for KAPI-integrated content. See
@@ -298,8 +298,8 @@ patches:
   - target: /Script/RefinedPower.RPWindTurbine
     applyToSubclasses: true
     properties:
-      - path: mMaxTurbinePowerProduction
-        op: multiply
+      mMaxTurbinePowerProduction:
+        $op: multiply
         value: 1.25
 ```
 

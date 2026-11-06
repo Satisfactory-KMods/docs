@@ -73,15 +73,12 @@ items:
   - id: MySuperIngot
     parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
     properties:
-      - path: mDisplayName
-        value:
-          key: MySuperIngot_Name
-          ns: MyPack
-          source: Super Ingot
-      - path: mDescription
-        value: A far superior ingot.
-      - path: mStackSize
-        value: SS_HUGE # EStackSize enum, not a plain count
+      mDisplayName:
+        key: MySuperIngot_Name
+        ns: MyPack
+        source: Super Ingot
+      mDescription: A far superior ingot.
+      mStackSize: SS_HUGE # EStackSize enum, not a plain count
 ```
 
 This generates `/KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot`. The path is deterministic and
@@ -99,21 +96,16 @@ type: recipe
 recipes:
   - id: Recipe_MySuperIngot
     properties:
-      - path: mDisplayName
-        value: Super Ingot
-      - path: mIngredients
-        value:
-          - ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
-            Amount: 2
-      - path: mProduct
-        value:
-          - ItemClass: /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot
-            Amount: 1
-      - path: mManufactoringDuration
-        value: 4.0
-      - path: mProducedIn
-        value:
-          - /Game/FactoryGame/Buildable/Factory/SmelterMk1/Build_SmelterMk1.Build_SmelterMk1_C
+      mDisplayName: Super Ingot
+      mIngredients:
+        - ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+          Amount: 2
+      mProduct:
+        - ItemClass: /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot
+          Amount: 1
+      mManufactoringDuration: 4.0
+      mProducedIn:
+        - /Game/FactoryGame/Buildable/Factory/SmelterMk1/Build_SmelterMk1.Build_SmelterMk1_C
 ```
 
 No `include:` is needed here. `Items` always finishes before `Recipes` starts, so the product
@@ -131,22 +123,17 @@ type: schematic
 schematics:
   - id: Schematic_MySuperIngot
     properties:
-      - path: mDisplayName
-        value: Super Ingot Smelting
-      - path: mTechTier
-        value: 2
-      - path: mTimeToComplete
-        value: 60
-      - path: mCost
-        value:
-          - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C
-            Amount: 50
+      mDisplayName: Super Ingot Smelting
+      mTechTier: 2
+      mTimeToComplete: 60
+      mCost:
+        - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C
+          Amount: 50
     unlocks:
       - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
         properties:
-          - path: mRecipes
-            value:
-              - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot
+          mRecipes:
+            - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot
 ```
 
 `register: true`, which is the default, registers this schematic. From there, SML's
@@ -207,12 +194,10 @@ assets:
   - id: CleanerItem_MyFluid
     class: /Script/KAPI.KAPICleanerItemDescription # any UPrimaryDataAsset subclass
     properties:
-      - path: mProductionTime
-        value: 4.0
-      - path: mInFluid
-        value:
-          ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
-          Amount: 1000
+      mProductionTime: 4.0
+      mInFluid:
+        ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
+        Amount: 1000
 ```
 
 This creates a real PrimaryDataAsset instance and announces it to the asset registry. KDataForge
@@ -235,8 +220,8 @@ conditions:
 patches:
   - allAssetsOfClass: /Script/RefinedRDApi.RRDABoilerDataAsset
     properties:
-      - path: mDuration
-        op: multiply
+      mDuration:
+        $op: multiply
         value: 0.5 # every RefinedPower/FicsitFarming boiler produces twice as fast
 ```
 

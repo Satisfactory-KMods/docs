@@ -28,7 +28,7 @@ category, cache and recipe-mover helpers also keep their native implementation.
 Create an asset of the original concrete helper class. Copy its settings, priority and complete
 `mRequirements` class list. For `KBFLCDOOverwrite`, also copy `mNativeClass`, targeting flags,
 property descriptors and the effective values inside `mPropertyContainer`. The container uses
-the existing instanced-object `{class, properties}` form. KDataForge duplicates its class defaults,
+the existing instanced-object form with `class` and nested `properties`. KDataForge duplicates its class defaults,
 including inherited subobjects; abstract classes are supported for this helper container.
 For example, this standalone helper
 sets an iron descriptor's energy value:
@@ -39,25 +39,17 @@ assets:
   - id: IronEnergyHelper
     class: /Script/KBFL.KBFLCDOOverwrite
     properties:
-      - path: mCallPrio
-        value: 100
-      - path: mTargetClass
-        value: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
-      - path: mNativeClass
-        value: /Script/FactoryGame.FGResourceDescriptor
-      - path: mRequirements
-        value: [] # Migration: retain the original requirement classes here.
-      - path: mManuelPropertiesOverwrite
-        value:
-          - mPropertyName: mEnergyValue
-            mPropertyType: Float
-            mNumericBehavior: Replace
-      - path: mPropertyContainer
-        value:
-          class: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
-          properties:
-            - path: mEnergyValue
-              value: 10
+      mCallPrio: 100
+      mTargetClass: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
+      mNativeClass: /Script/FactoryGame.FGResourceDescriptor
+      mManuelPropertiesOverwrite:
+        - mPropertyName: mEnergyValue
+          mPropertyType: Float
+          mNumericBehavior: Replace
+      mPropertyContainer:
+        class: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
+        properties:
+          mEnergyValue: 10
 ```
 
 These assets are configured during the initial Assets stage and published to the asset registry
@@ -110,14 +102,13 @@ patches:
   # Disable one specific KAPI data asset by object path:
   - target: /KLib/Assets/MinerDescriptions/DA_MinerDesc_Iron.DA_MinerDesc_Iron
     properties:
-      - path: mIsDisabled
-        value: true
-  # Bump priority on every KAPI asset tagged as event-only:
+      mIsDisabled: true
+# Bump priority on every KAPI asset tagged as event-only:
   - matchTag: KMods.EventOnly
     ofClass: /Script/KAPI.KAPIDataAssetBase
     properties:
-      - path: mPriority
-        op: add
+      mPriority:
+        $op: add
         value: 100
 ```
 
@@ -137,8 +128,8 @@ conditions:
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPIModularMinerDescription
     properties:
-      - path: mNormalFluidCountPerSecond
-        op: multiply
+      mNormalFluidCountPerSecond:
+        $op: multiply
         value: 1.5
 ```
 
@@ -162,11 +153,12 @@ conditions:
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPICleanerItemDescription
     properties:
-      - path: mProductionTime
-        op: multiply
+      mProductionTime:
+        $op: multiply
         value: 0.75
-      - path: mInFluid.Amount # nested struct member on an asset instance
-        op: max
+      # nested struct member on an asset instance
+      mInFluid.Amount:
+        $op: max
         value: 1000
 ```
 
@@ -188,11 +180,11 @@ conditions:
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPIAirCollectorData
     properties:
-      - path: mProduceItemCountMax
-        op: add
+      mProduceItemCountMax:
+        $op: add
         value: 2
-      - path: mRangeToScan
-        op: clamp
+      mRangeToScan:
+        $op: clamp
         min: 1000
         max: 50000
 ```
@@ -215,8 +207,8 @@ conditions:
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPIManufacturerModifications
     properties:
-      - path: mSolidMultiplier
-        op: multiply
+      mSolidMultiplier:
+        $op: multiply
         value: 2
 ```
 
@@ -239,11 +231,11 @@ conditions:
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPISugHatchingData
     properties:
-      - path: mBreedingTime
-        op: multiply
+      mBreedingTime:
+        $op: multiply
         value: 0.5
-      - path: mChance
-        op: max
+      mChance:
+        $op: max
         value: 0.1
 ```
 
@@ -268,8 +260,8 @@ conditions:
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPIExtractorAllowList
     properties:
-      - path: mAllowedExtractors
-        op: append
+      mAllowedExtractors:
+        $op: append
         value:
           - /Game/FactoryGame/Buildable/Factory/MinerMk3/Build_MinerMk3.Build_MinerMk3_C
 ```
@@ -290,8 +282,7 @@ conditions:
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPTooltipWidgetInjector
     properties:
-      - path: mInjectAtIndex
-        value: 0
+      mInjectAtIndex: 0
 ```
 
 Other properties: `mClassFilter`.
@@ -324,8 +315,7 @@ patches:
   - matchTag: KMods.Cheat # hide all cheat-tagged KAPI content
     ofClass: /Script/KAPI.KAPIDataAssetBase
     properties:
-      - path: mIsDisabled
-        value: true
+      mIsDisabled: true
 ```
 
 See [Game Tags](/kdataforge/features/game-tags) for how `matchTag:` and tag-container ops work in general, and
@@ -351,12 +341,10 @@ assets:
   - id: CleanerItem_MyFluid
     class: /Script/KAPI.KAPICleanerItemDescription # any UDataAsset subclass
     properties:
-      - path: mProductionTime
-        value: 4.0
-      - path: mInFluid
-        value:
-          ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
-          Amount: 1000
+      mProductionTime: 4.0
+      mInFluid:
+        ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
+        Amount: 1000
 ```
 
 `dataasset` runs in the **Assets** stage, the second stage in the pipeline, right after `GameTags`
@@ -436,10 +424,8 @@ patches:
   - target: MySuperIngot # a generated item short id, same as /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot
     # …or any existing one: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
     properties:
-      - path: mSmallIcon
-        value: MyIcon # short id same as /KDataForge/GenAssets/MyPack.Gen_MyPack_MyIcon
-      - path: mPersistentBigIcon
-        value: MyIcon
+      mSmallIcon: MyIcon # short id same as /KDataForge/GenAssets/MyPack.Gen_MyPack_MyIcon
+      mPersistentBigIcon: MyIcon
 ```
 
 Both `target:` and the icon values above use the bare `id:` because everything referenced was
@@ -480,8 +466,8 @@ conditions:
 patches:
   - allAssetsOfClass: /Script/RefinedRDApi.RRDABoilerDataAsset
     properties:
-      - path: mDuration
-        op: multiply
+      mDuration:
+        $op: multiply
         value: 0.5 # every RefinedPower/FicsitFarming boiler produces twice as fast
 ```
 

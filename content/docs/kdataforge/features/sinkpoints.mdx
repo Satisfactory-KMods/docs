@@ -48,7 +48,9 @@ entries:
   - ofClass: /Script/FactoryGame.FGItemDescriptor
     where:
       path: mForm
-      in: [RF_LIQUID, RF_GAS] # every fluid and gas: not sinkable
+      in: # every fluid and gas: not sinkable
+        - RF_LIQUID
+        - RF_GAS
     points: 0
   - ofClass: /Script/FactoryGame.FGItemDescriptor
     matchName: Desc_Nuclear* # everything nuclear is worth a fixed 500

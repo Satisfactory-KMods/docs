@@ -22,12 +22,15 @@ patches:
     applyToSpawnedActors: true
     actorSelector:
       sphere:
-        center: [120000, -40000, 15000]
+        center:
+          - 120000
+          - -40000
+          - 15000
         radius: 25000
       currentRecipe: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
     properties:
-      - path: mPowerConsumption
-        op: multiply
+      mPowerConsumption:
+        $op: multiply
         value: 0.75
 ```
 
@@ -44,8 +47,8 @@ At least one selector field is required. Every supplied field must match.
 | Field | Accepted value | Match |
 | --- | --- | --- |
 | `tags` | Non-empty string or non-empty list of non-empty strings | Actor has every listed ordinary `AActor.Tags` tag. |
-| `sphere` | Map with finite `center: [x, y, z]` and finite positive `radius` | Actor origin lies inside or on the sphere. |
-| `box` | Map with finite `min: [x, y, z]` and `max: [x, y, z]` | Actor origin lies inside or on the axis-aligned box. Each minimum must be smaller than its maximum. |
+| `sphere` | Map with a three-number `center` sequence and a finite positive `radius` | Actor origin lies inside or on the sphere. |
+| `box` | Map with three-number `min` and `max` sequences | Actor origin lies inside or on the axis-aligned box. Each minimum must be smaller than its maximum. |
 | `currentRecipe` | Recipe class reference or non-empty list of recipe classes | Actor's current recipe equals any listed class. Subclasses do not match automatically. |
 
 `tags` uses ordinary actor tags, not gameplay tags. Tags must already exist on the instance; the
@@ -66,13 +69,20 @@ patches:
     applyToSubclasses: true
     applyToSpawnedActors: true
     actorSelector:
-      tags: [FactoryNorth, PowerBudget]
+      tags:
+        - FactoryNorth
+        - PowerBudget
       box:
-        min: [100000, -50000, 0]
-        max: [140000, -10000, 30000]
+        min:
+          - 100000
+          - -50000
+          - 0
+        max:
+          - 140000
+          - -10000
+          - 30000
     properties:
-      - path: mPowerConsumption
-        value: 2
+      mPowerConsumption: 2
 ```
 
 ## Required patch settings

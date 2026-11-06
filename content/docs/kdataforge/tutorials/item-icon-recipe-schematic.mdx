@@ -27,22 +27,16 @@ items:
   - id: SuperIngot
     parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
     properties:
-      - path: mDisplayName
-        value:
-          key: SuperIngot_Name
-          ns: KDFSample
-          source: Super Ingot
-      - path: mDescription
-        value: Forged from YAML. Stacks high, sinks well.
-      - path: mStackSize
-        value: SS_HUGE
-      - path: mResourceSinkPoints
-        value: 42
-      # Placeholder icon see Step 2, loaded by super-ingot-icon.asset.yml
-      - path: mSmallIcon
-        value: /KDataForge/GenAssets/KDFSample.Gen_KDFSample_SuperIngotIcon
-      - path: mPersistentBigIcon
-        value: /KDataForge/GenAssets/KDFSample.Gen_KDFSample_SuperIngotIcon
+      mDisplayName:
+        key: SuperIngot_Name
+        ns: KDFSample
+        source: Super Ingot
+      mDescription: Forged from YAML. Stacks high, sinks well.
+      mStackSize: SS_HUGE
+      mResourceSinkPoints: 42
+    # Placeholder icon see Step 2, loaded by super-ingot-icon.asset.yml
+      mSmallIcon: /KDataForge/GenAssets/KDFSample.Gen_KDFSample_SuperIngotIcon
+      mPersistentBigIcon: /KDataForge/GenAssets/KDFSample.Gen_KDFSample_SuperIngotIcon
 ```
 
 `mStackSize` is an `EStackSize` **enum** (`SS_ONE`/`SS_SMALL`/`SS_MEDIUM`/`SS_BIG`/`SS_HUGE`/
@@ -78,21 +72,16 @@ type: recipe
 recipes:
   - id: Recipe_SuperIngot
     properties:
-      - path: mDisplayName
-        value: 'Super Ingot'
-      - path: mIngredients
-        value:
-          - ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
-            Amount: 2
-      - path: mProduct
-        value:
-          - ItemClass: /KDataForge/Gen/KDFSample.Gen_KDFSample_SuperIngot
-            Amount: 1
-      - path: mManufactoringDuration
-        value: 4.0
-      - path: mProducedIn
-        value:
-          - /Game/FactoryGame/Buildable/Factory/SmelterMk1/Build_SmelterMk1.Build_SmelterMk1_C
+      mDisplayName: 'Super Ingot'
+      mIngredients:
+        - ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+          Amount: 2
+      mProduct:
+        - ItemClass: /KDataForge/Gen/KDFSample.Gen_KDFSample_SuperIngot
+          Amount: 1
+      mManufactoringDuration: 4.0
+      mProducedIn:
+        - /Game/FactoryGame/Buildable/Factory/SmelterMk1/Build_SmelterMk1.Build_SmelterMk1_C
 ```
 
 No `include:` needed for the item reference. `Items` always finishes before `Recipes` starts. This
@@ -106,26 +95,19 @@ type: schematic
 schematics:
   - id: Schematic_SuperIngot
     properties:
-      - path: mType
-        value: EST_Milestone
-      - path: mDisplayName
-        value: Super Ingot Production
-      - path: mDescription
-        value: Unlocks production of the Super Ingot.
-      - path: mTechTier
-        value: 1
-      - path: mTimeToComplete
-        value: 10
-      - path: mCost
-        value:
-          - ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
-            Amount: 20
+      mType: EST_Milestone
+      mDisplayName: Super Ingot Production
+      mDescription: Unlocks production of the Super Ingot.
+      mTechTier: 1
+      mTimeToComplete: 10
+      mCost:
+        - ItemClass: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
+          Amount: 20
     unlocks:
       - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
         properties:
-          - path: mRecipes
-            value:
-              - /KDataForge/Gen/KDFSample.Gen_KDFSample_Recipe_SuperIngot
+          mRecipes:
+            - /KDataForge/Gen/KDFSample.Gen_KDFSample_Recipe_SuperIngot
 ```
 
 - `mType: EST_Milestone` + `mTechTier: 1` is what makes this a **Tier 1 HUB milestone**: the

@@ -23,8 +23,7 @@ Booleans accept more than just `true`/`false`: `yes`/`no` and `on`/`off` (case-i
 bare digits `1`/`0` all parse too, so you can match whichever style reads best in context:
 
 ```yaml
-- path: mCanBeDiscarded
-  value: false # true/false, yes/no, on/off, 1/0
+mCanBeDiscarded: false # true/false, yes/no, on/off, 1/0
 ```
 
 ## int32 / uint8 / int64 (all integer widths)
@@ -32,10 +31,8 @@ bare digits `1`/`0` all parse too, so you can match whichever style reads best i
 Every plain integer property takes a decimal integer within its reflected type's range:
 
 ```yaml
-- path: mResourceSinkPoints
-  value: 500
-- path: mMenuPriority
-  value: 42
+mResourceSinkPoints: 500
+mMenuPriority: 42
 ```
 
 Signed integers accept an optional `+` or `-` sign. `int64` accepts
@@ -51,10 +48,8 @@ Floating-point properties take a decimal number. Setting `mManufactoringDuration
 halves the crafting time, since it's read in seconds:
 
 ```yaml
-- path: mManufactoringDuration
-  value: 2.5
-- path: mEnergyValue
-  value: 300.0
+mManufactoringDuration: 2.5
+mEnergyValue: 300.0
 ```
 
 ## enum (typed `enum class` and `TEnumAsByte`)
@@ -63,15 +58,22 @@ Unreal exposes two enum styles: the typed `enum class` and the older `TEnumAsByt
 property with an attached enum). Both are handled the same way. Write the value's name, optionally
 qualified with the enum's own name, or its numeric ordinal:
 
+These are alternative values for `mForm`, followed by a separate `mStackSize` example:
+
 ```yaml
-- path: mForm
-  value: RF_LIQUID # plain value name
-- path: mForm
-  value: EResourceForm::RF_GAS # qualified form
-- path: mForm
-  value: 2 # numeric value (the enum's underlying ordinal)
-- path: mStackSize
-  value: SS_HUGE # EStackSize always use the name, not a raw count
+mForm: RF_LIQUID # plain value name
+```
+
+```yaml
+mForm: EResourceForm::RF_GAS # qualified form
+```
+
+```yaml
+mForm: 2 # numeric value (the enum's underlying ordinal)
+```
+
+```yaml
+mStackSize: SS_HUGE # EStackSize always uses the name, not a raw count
 ```
 
 :::caution
@@ -96,27 +98,37 @@ carries Unreal's flags marker.
 Bitmask properties store several enum flags in one integer. Use a scalar for one flag and a YAML
 sequence for several flags:
 
+For one flag:
+
 ```yaml
-- path: mParentTask
-  value: Above
-- path: mParentTask
-  value:
-    - Above
-    - Left
+mParentTask: Above
 ```
 
-For `set`, KDataForge also accepts an inline sequence, a `|`-joined string, or a raw pre-computed
-integer mask. `append`/`prepend` and `remove` accept named flags only. Names remain readable:
+For several flags:
 
 ```yaml
-- path: mParentTask
-  value:
-    - Above
-    - Left
-- path: mParentTask
-  value: "Above|Left"
-- path: mParentTask
-  value: 3 # Above (1) | Left (2)
+mParentTask:
+  - Above
+  - Left
+```
+
+For `set`, KDataForge also accepts a sequence, a `|`-joined string, or a raw pre-computed
+integer mask. `append`/`prepend` and `remove` accept named flags only. Names remain readable:
+
+These are three equivalent ways to set the same flags:
+
+```yaml
+mParentTask:
+  - Above
+  - Left
+```
+
+```yaml
+mParentTask: "Above|Left"
+```
+
+```yaml
+mParentTask: 3 # Above (1) | Left (2)
 ```
 
 :::caution
@@ -162,8 +174,7 @@ conversion path; see [Enums](#enum-typed-enum-class-and-tenumasbyte). See
 Plain reflected strings take a quoted scalar as-is, no escaping beyond normal YAML quoting rules:
 
 ```yaml
-- path: mSomeString
-  value: 'Hello Ficsit'
+mSomeString: 'Hello Ficsit'
 ```
 
 ## FName
@@ -173,8 +184,7 @@ Plain reflected strings take a quoted scalar as-is, no escaping beyond normal YA
 quick-switch group below, rather than by string content:
 
 ```yaml
-- path: mQuickSwitchGroup
-  value: 'ingots'
+mQuickSwitchGroup: 'ingots'
 ```
 
 ## FText: plain (culture-invariant)
@@ -184,8 +194,7 @@ internal/debug strings, but not localizable. For anything player-facing, prefer 
 below or route it through [Localization](/kdataforge/features/localization):
 
 ```yaml
-- path: mDisplayName
-  value: 'Better Iron Ingot'
+mDisplayName: 'Better Iron Ingot'
 ```
 
 ## FText: localized (key/namespace/source)
@@ -196,11 +205,10 @@ only `source` is invalid; use a scalar for culture-invariant text. This uses the
 same runtime-safe construction path the localization system relies on:
 
 ```yaml
-- path: mDisplayName
-  value:
-    key: BetterIronIngot_Name
-    ns: MyPack
-    source: Better Iron Ingot
+mDisplayName:
+  key: BetterIronIngot_Name
+  ns: MyPack
+  source: Better Iron Ingot
 ```
 
 ## FText: StringTable references
@@ -209,10 +217,9 @@ Use `stringTable` and `key` to retain an existing Unreal StringTable entry, incl
 translations and table identity. Use the table's registered ID or its full asset object path:
 
 ```yaml
-- path: mDisplayName
-  value:
-    stringTable: /SatisfactoryPlus/ST_SatisfactoryPlus.ST_SatisfactoryPlus
-    key: CDOBuilding_MiniExtractior.PropertyContainer_0.mDisplayName
+mDisplayName:
+  stringTable: /SatisfactoryPlus/ST_SatisfactoryPlus.ST_SatisfactoryPlus
+  key: CDOBuilding_MiniExtractior.PropertyContainer_0.mDisplayName
 ```
 
 Both fields must be non-empty strings. Do not combine `stringTable` with `ns` or `source`.
@@ -229,12 +236,9 @@ Hard object references (`UObject*` properties) take a full asset or object path,
 loaded immediately. Use `none` (or an empty string) to null one out:
 
 ```yaml
-- path: mCategory
-  value: /Game/FactoryGame/Resource/ItemCategories/Cat_Ingots.Cat_Ingots_C
-- path: mSmallIcon
-  value: /Game/FactoryGame/Resource/Parts/IronIngot/UI/IconDesc_IronIngot_64.IconDesc_IronIngot_64
-- path: mConveyorMesh
-  value: none # null out a reference with none or ""
+mCategory: /Game/FactoryGame/Resource/ItemCategories/Cat_Ingots.Cat_Ingots_C
+mSmallIcon: /Game/FactoryGame/Resource/Parts/IronIngot/UI/IconDesc_IronIngot_64.IconDesc_IronIngot_64
+mConveyorMesh: none # null out a reference with none or ""
 ```
 
 ## Class reference (`TSubclassOf`)
@@ -250,14 +254,10 @@ Class references also take a path, but the codec tries several forms in order be
    [Targeting](/kdataforge/features/targeting) for the same shortcut applied to `target:`).
 
 ```yaml
-- path: mOverriddenCategory
-  value: /Game/FactoryGame/Resource/ItemCategories/Cat_Ingots.Cat_Ingots_C # BP class (`_C` auto-retried)
-- path: mClassToScanFor
-  value: /Script/FactoryGame.FGBuildableResourceExtractor # native class
-- path: mProducedIn
-  value: Recipe_MyGeneratedRecipe # generated-content id from this pack, if present
-- path: mFluidClass
-  value: Desc_Water # bare-name shortcut for Desc_Water.Desc_Water_C see Targeting
+mOverriddenCategory: /Game/FactoryGame/Resource/ItemCategories/Cat_Ingots.Cat_Ingots_C # BP class (`_C` auto-retried)
+mClassToScanFor: /Script/FactoryGame.FGBuildableResourceExtractor # native class
+mProducedIn: Recipe_MyGeneratedRecipe # generated-content id from this pack, if present
+mFluidClass: Desc_Water # bare-name shortcut for Desc_Water.Desc_Water_C see Targeting
 ```
 
 ### Category class references
@@ -267,43 +267,38 @@ also accept a display name. KDataForge searches loaded classes and the asset reg
 category compatible with the property's required base class, and creates one when needed:
 
 ```yaml
-- path: mCategory
-  value: Factory Parts
-- path: mSubCategories
-  value:
-    - Conveyors
-    - Pipes
+mCategory: Factory Parts
+mSubCategories:
+  - Conveyors
+  - Pipes
 ```
 
 To supply an icon, use a map with `name` and an optional `icon` texture object path:
 
 ```yaml
-- path: mCategory
-  value:
-    name: Factory Parts
-    icon: /MyMod/UI/T_Category.T_Category
+mCategory:
+  name: Factory Parts
+  icon: /MyMod/UI/T_Category.T_Category
 ```
 
 `name` also accepts the [localized FText form](#ftext-localized-keynamespacesource) and
 [StringTable references](#ftext-stringtable-references), for example:
 
 ```yaml
-- path: mCategory
-  value:
-    name:
-      ns: MyPack
-      key: FactoryPartsCategory
-      source: Factory Parts
+mCategory:
+  name:
+    ns: MyPack
+    key: FactoryPartsCategory
+    source: Factory Parts
 ```
 
 Without an icon, the FText map can also be used directly as the category value:
 
 ```yaml
-- path: mCategory
-  value:
-    ns: MyPack
-    key: FactoryPartsCategory
-    source: Factory Parts
+mCategory:
+  ns: MyPack
+  key: FactoryPartsCategory
+  source: Factory Parts
 ```
 
 An existing class reference still works. KDataForge resolves a scalar as a class reference first.
@@ -312,9 +307,8 @@ An unresolved path or name ending in `_C` is an error, as is an unresolved name 
 Use `name:` to force display-name interpretation when the name has one of these forms:
 
 ```yaml
-- path: mCategory
-  value:
-    name: Cat_Toys
+mCategory:
+  name: Cat_Toys
 ```
 
 The search matches the name and, when supplied, the icon. If several categories match,
@@ -329,9 +323,8 @@ The value is stored as a path string and never force-loads the target. The refer
 loads if and when the game actually needs it:
 
 ```yaml
-- path: mPersistentBigIcon
-  value: /Game/FactoryGame/Resource/Parts/IronIngot/UI/IconDesc_IronIngot_256.IconDesc_IronIngot_256
-  # stored as a path, not loaded until the game needs it
+mPersistentBigIcon: /Game/FactoryGame/Resource/Parts/IronIngot/UI/IconDesc_IronIngot_256.IconDesc_IronIngot_256
+# stored as a path, not loaded until the game needs it
 ```
 
 ## Struct: native text form
@@ -341,8 +334,7 @@ For structs with a native text representation, like `FLinearColor`, `FVector`, `
 editor's "Copy" action produces:
 
 ```yaml
-- path: mFluidColor
-  value: '(R=255,G=100,B=0,A=255)'
+mFluidColor: '(R=255,G=100,B=0,A=255)'
 ```
 
 ## Struct: map form (member names, Blueprint-authored names work too)
@@ -352,12 +344,11 @@ member lookup used elsewhere, so Blueprint-authored display names work, not just
 name. Each value is recursively converted through this same codec for that member's type:
 
 ```yaml
-- path: mFluidColor
-  value:
-    R: 255
-    G: 100
-    B: 0
-    A: 255
+mFluidColor:
+  R: 255
+  G: 100
+  B: 0
+  A: 255
 ```
 
 ## Struct: positional sequence form (members in declaration order)
@@ -366,12 +357,11 @@ A YAML sequence assigns struct members positionally, in C++ declaration order. T
 terse, well-known structs, like a color or vector, where the member order never changes:
 
 ```yaml
-- path: mScannerLightColor
-  value:
-    - 1.0
-    - 0.5
-    - 0.0
-    - 1.0
+mScannerLightColor:
+  - 1.0
+  - 0.5
+  - 0.0
+  - 1.0
 ```
 
 ## Nested structs (any depth)
@@ -381,11 +371,10 @@ arbitrary depth. Deeply nested data, like a struct inside a struct inside an arr
 writes exactly like the flat cases above, just indented:
 
 ```yaml
-- path: mCustomScannableDetails
-  value:
-    ScannableType: STY_Default
-    NewDetails:
-      Range: 500
+mCustomScannableDetails:
+  ScannableType: STY_Default
+  NewDetails:
+    Range: 500
 ```
 
 ## TArray
@@ -395,12 +384,11 @@ the given sequence element by element. The value you write always fully replaces
 there before, rather than merging into it:
 
 ```yaml
-- path: mIngredients
-  value: # `set` replaces the whole array
-    - ItemClass: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
-      Amount: 2
-    - ItemClass: /Game/FactoryGame/Resource/RawResources/Coal/Desc_Coal.Desc_Coal_C
-      Amount: 1
+mIngredients: # `set` replaces the whole array
+  - ItemClass: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
+    Amount: 2
+  - ItemClass: /Game/FactoryGame/Resource/RawResources/Coal/Desc_Coal.Desc_Coal_C
+    Amount: 1
 ```
 
 ### Instanced UObject arrays
@@ -411,32 +399,45 @@ subobject of the patched target. With the default `set` op, the array is replace
 merged:
 
 ```yaml
-- path: mSchematicDependencies
-  value:
+properties:
+  mSchematicDependencies:
     - class: /Game/FactoryGame/AvailabilityDependencies/BP_SchematicPurchasedDependency.BP_SchematicPurchasedDependency_C
       properties:
-        - path: mSchematics
-          value:
-            - /SatisfactoryPlus/Content/SchematicManager/Schematics/Milestones/T1/Schematic_SF+_T1_0.Schematic_SF+_T1_0_C
-        - path: mRequireAllSchematicsToBePurchased
-          value: true
+        mSchematics:
+          - /SatisfactoryPlus/Content/SchematicManager/Schematics/Milestones/T1/Schematic_SF+_T1_0.Schematic_SF+_T1_0_C
+        mRequireAllSchematicsToBePurchased: true
 ```
 
 The `class:` must be a concrete subclass accepted by the array. For example, `mUnlocks` accepts
 `FGUnlock` subclasses and `mSchematicDependencies` accepts `FGAvailabilityDependency` subclasses.
-Nested entries use the same property paths and operations as top-level patch entries.
+Nested `properties:` blocks accept both this mapping form and the ordered `path`/`value` list.
+Their values can contain nested struct mappings. To choose an operation other than `set`, put `$op`
+and its arguments on separate indented lines beneath the property key.
+
+For example, an instanced `FGUnlockGiveItem` stores item amounts as nested `FItemAmount` structs:
+
+```yaml
+unlocks:
+  - class: /Game/FactoryGame/Unlocks/BP_UnlockGiveItem.BP_UnlockGiveItem_C
+    properties:
+      mItemsToGive:
+        - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C
+          Amount: 4
+```
+
+`FGUnlockGiveItem` is an item-list container; it does not grant the items by itself.
 
 The same instanced-object entry shape also works with array `append`, `prepend`, and `insert` when
 you want to add entries without replacing the whole array:
 
 ```yaml
-- path: mUnlocks
-  op: append
-  value:
-    class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
-    properties:
-      - path: mRecipes
-        value:
+properties:
+  mUnlocks:
+    $op: append
+    value:
+      class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
+      properties:
+        mRecipes:
           - Recipe_MyGeneratedRecipe
 ```
 
@@ -447,8 +448,7 @@ into that element's own members. This lets you tweak a single ingredient's amoun
 re-listing every other ingredient:
 
 ```yaml
-- path: mIngredients[0].Amount
-  value: 3
+mIngredients[0].Amount: 3
 ```
 
 ## TSet
@@ -457,9 +457,9 @@ re-listing every other ingredient:
 make them duplicates, since a set has no concept of ordering or repeated elements:
 
 ```yaml
-- path: mSubCategories # sets take sequences; duplicates collapse
-  value:
-    - /Game/FactoryGame/Resource/ItemCategories/SC_Smelted.SC_Smelted_C
+# sets take sequences; duplicates collapse
+mSubCategories:
+  - /Game/FactoryGame/Resource/ItemCategories/SC_Smelted.SC_Smelted_C
 ```
 
 ## TMap
@@ -469,12 +469,11 @@ before insertion, not just kept as a raw string. A bracketed key path lets you u
 entry in place instead of replacing the whole map:
 
 ```yaml
-- path: mSomeMap
-  value:
-    Iron: 10 # keys converted through the map's key property type
-    Copper: 20
-- path: mSomeMap["Iron"] # single-entry access via key path
-  value: 15
+mSomeMap:
+  Iron: 10 # keys converted through the map's key property type
+  Copper: 20
+# single-entry access via key path
+mSomeMap["Iron"]: 15
 ```
 
 ## FGameplayTag
@@ -483,8 +482,7 @@ A single gameplay tag is a struct with a native text importer under the hood, so
 dotted scalar just like any other native-text struct:
 
 ```yaml
-- path: mStatisticGameplayTag
-  value: KMods.AlternateRecipe
+mStatisticGameplayTag: KMods.AlternateRecipe
 ```
 
 ## FGameplayTagContainer
@@ -496,10 +494,9 @@ for the `append`/`prepend`/`remove`/`clear` variants that mutate a container ins
 reference them:
 
 ```yaml
-- path: mGameplayTags
-  value: # `set` replaces all tags
-    - KMods.WikiExclude
-    - MyPack.Special
+mGameplayTags: # `set` replaces all tags
+  - KMods.WikiExclude
+  - MyPack.Special
 ```
 
 ## Anything else (fallback)
@@ -509,6 +506,5 @@ import, so it accepts whatever text form the editor's "Copy" action produces for
 This holds even for exotic or third-party struct types this page doesn't know about by name:
 
 ```yaml
-- path: mSomeExoticStruct
-  value: '(InnerValue=3,Flags=(bEnabled=True))'
+mSomeExoticStruct: '(InnerValue=3,Flags=(bEnabled=True))'
 ```

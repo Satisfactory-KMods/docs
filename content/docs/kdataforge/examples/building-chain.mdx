@@ -59,13 +59,11 @@ classes:
   - id: Build_MyMachine
     parent: /Game/FactoryGame/Buildable/Factory/SmelterMk1/Build_SmelterMk1.Build_SmelterMk1_C
     properties:
-      - path: mDisplayName
-        value:
-          key: Build_MyMachine_Name
-          ns: MyFactory
-          source: Compact Smelter
-      - path: mPowerConsumption
-        value: 12.0
+      mDisplayName:
+        key: Build_MyMachine_Name
+        ns: MyFactory
+        source: Compact Smelter
+      mPowerConsumption: 12.0
 ```
 
 This generates `/KDataForge/Gen/MyFactory.Gen_MyFactory_Build_MyMachine`, a real
@@ -81,13 +79,11 @@ type: building
 buildings:
   - id: Desc_MyMachine
     properties:
-      - path: mDisplayName
-        value:
-          key: Desc_MyMachine_Name
-          ns: MyFactory
-          source: Compact Smelter
-      - path: mBuildableClass
-        value: /KDataForge/Gen/MyFactory.Gen_MyFactory_Build_MyMachine
+      mDisplayName:
+        key: Desc_MyMachine_Name
+        ns: MyFactory
+        source: Compact Smelter
+      mBuildableClass: /KDataForge/Gen/MyFactory.Gen_MyFactory_Build_MyMachine
 ```
 
 See [Buildings](/kdataforge/features/buildings) for the descriptor-vs-buildable split in general.
@@ -104,21 +100,17 @@ type: recipe
 recipes:
   - id: Recipe_Build_MyMachine
     properties:
-      - path: mDisplayName
-        value: Compact Smelter
-      - path: mIngredients
-        value:
-          - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlateReinforced/Desc_IronPlateReinforced.Desc_IronPlateReinforced_C
-            Amount: 4
-          - ItemClass: /Game/FactoryGame/Resource/Parts/Rotor/Desc_Rotor.Desc_Rotor_C
-            Amount: 2
-      - path: mProduct
-        value:
-          - ItemClass: /KDataForge/Gen/MyFactory.Gen_MyFactory_Desc_MyMachine
-            Amount: 1
-      - path: mProducedIn
-        value:
-          - /Script/FactoryGame.FGBuildGun
+      mDisplayName: Compact Smelter
+      mIngredients:
+        - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlateReinforced/Desc_IronPlateReinforced.Desc_IronPlateReinforced_C
+          Amount: 4
+        - ItemClass: /Game/FactoryGame/Resource/Parts/Rotor/Desc_Rotor.Desc_Rotor_C
+          Amount: 2
+      mProduct:
+        - ItemClass: /KDataForge/Gen/MyFactory.Gen_MyFactory_Desc_MyMachine
+          Amount: 1
+      mProducedIn:
+        - /Script/FactoryGame.FGBuildGun
 ```
 
 ## Step 4: production recipes for the machine (`type: recipe`)
@@ -134,13 +126,11 @@ items:
   - id: Desc_CompactIngot
     parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
     properties:
-      - path: mDisplayName
-        value:
-          key: Desc_CompactIngot_Name
-          ns: MyFactory
-          source: Compact Ingot
-      - path: mStackSize
-        value: SS_HUGE
+      mDisplayName:
+        key: Desc_CompactIngot_Name
+        ns: MyFactory
+        source: Compact Ingot
+      mStackSize: SS_HUGE
 ```
 
 :::note[Stack-size caveat]
@@ -157,21 +147,16 @@ type: recipe
 recipes:
   - id: Recipe_CompactIngot
     properties:
-      - path: mDisplayName
-        value: Compact Ingot
-      - path: mIngredients
-        value:
-          - ItemClass: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
-            Amount: 2
-      - path: mProduct
-        value:
-          - ItemClass: /KDataForge/Gen/MyFactory.Gen_MyFactory_Desc_CompactIngot
-            Amount: 1
-      - path: mManufactoringDuration
-        value: 3.0
-      - path: mProducedIn
-        value:
-          - /KDataForge/Gen/MyFactory.Gen_MyFactory_Build_MyMachine # the step-1 buildable
+      mDisplayName: Compact Ingot
+      mIngredients:
+        - ItemClass: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
+          Amount: 2
+      mProduct:
+        - ItemClass: /KDataForge/Gen/MyFactory.Gen_MyFactory_Desc_CompactIngot
+          Amount: 1
+      mManufactoringDuration: 3.0
+      mProducedIn:
+        - /KDataForge/Gen/MyFactory.Gen_MyFactory_Build_MyMachine # the step-1 buildable
 ```
 
 ## Step 5: the schematic (`type: schematic`)
@@ -184,23 +169,18 @@ type: schematic
 schematics:
   - id: Schematic_MyMachine
     properties:
-      - path: mDisplayName
-        value: Compact Smelting
-      - path: mType
-        value: EST_Milestone
-      - path: mTechTier
-        value: 2
-      - path: mCost
-        value:
-          - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C
-            Amount: 100
+      mDisplayName: Compact Smelting
+      mType: EST_Milestone
+      mTechTier: 2
+      mCost:
+        - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C
+          Amount: 100
     unlocks:
       - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
         properties:
-          - path: mRecipes
-            value:
-              - /KDataForge/Gen/MyFactory.Gen_MyFactory_Recipe_Build_MyMachine
-              - /KDataForge/Gen/MyFactory.Gen_MyFactory_Recipe_CompactIngot
+          mRecipes:
+            - /KDataForge/Gen/MyFactory.Gen_MyFactory_Recipe_Build_MyMachine
+            - /KDataForge/Gen/MyFactory.Gen_MyFactory_Recipe_CompactIngot
 ```
 
 Registering the schematic auto-propagates: its recipes register, and the recipes' items register

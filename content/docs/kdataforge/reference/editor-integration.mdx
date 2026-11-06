@@ -87,8 +87,7 @@ patches:
   - target: /Game/FactoryGame/Some/Class.Some_C
     deferOneGameTick: true
     properties:
-      - path: SomeProperty
-        value: 123
+      SomeProperty: 123
 ```
 
 KDataForge waits for the matching world to enter `BeginPlay`, then applies the patch on the following game tick. The

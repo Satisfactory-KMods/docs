@@ -21,7 +21,7 @@ alongside it.
 A `type: cdo` document is just a `patches:` list. Each entry needs at least one target selector
 (`target:`, `allAssetsOfClass:`, or an `ofClass:` scope with filters such as `matchTag:`, `matchName:`, `producedIn:`,
 `where:`), optional modifiers, and a
-`properties:` list describing the actual edits. The example below halves `mManufactoringDuration`
+`properties:` mapping describing the actual edits. The example below halves `mManufactoringDuration`
 on the iron ingot recipe:
 
 ```yaml
@@ -39,12 +39,12 @@ patches:
 
     # ---- the ops ----
     properties:
-      - path: mManufactoringDuration
-        op: multiply
+      mManufactoringDuration:
+        $op: multiply
         value: 0.5
 ```
 
-Each entry needs at least one selector and a non-empty `properties:` list. The current implementation
+Each entry needs at least one selector and a non-empty `properties:` block. The current implementation
 accumulates matches when selectors are combined, but one selector per entry is easier to audit. One
 document can hold any number of patch entries.
 
@@ -59,9 +59,8 @@ type: cdo
 patches:
   - target: /Script/PeriodicMadness.PMCleanerSettings
     properties:
-      - path: mStaticMeshesCleanlist
-        value:
-          - /Game/FactoryGame/Resource/RawResources/Nodes/ResourceNode_OreIron_01.ResourceNode_OreIron_01
+      mStaticMeshesCleanlist:
+        - /Game/FactoryGame/Resource/RawResources/Nodes/ResourceNode_OreIron_01.ResourceNode_OreIron_01
 ```
 
 KDataForge keeps hard references added to permanent native defaults alive across
@@ -87,17 +86,13 @@ patches:
       - /RSS/Schematics/Flat/Sink_RSS_Flat_Belt.Sink_RSS_Flat_Belt_C
       - /RSS/Schematics/Flat/Sink_RSS_Flat_Ceiling.Sink_RSS_Flat_Ceiling_C
     properties:
-      - path: mSchematicDependencies
-        value:
-          - class: /Game/FactoryGame/AvailabilityDependencies/BP_SchematicPurchasedDependency.BP_SchematicPurchasedDependency_C
-            properties:
-              - path: mSchematics
-                value:
-                  - /SatisfactoryPlus/Content/SchematicManager/Schematics/Milestones/T1/Schematic_SF+_T1_0.Schematic_SF+_T1_0_C
-              - path: mRequireAllSchematicsToBePurchased
-                value: true
-      - path: mDependenciesBlocksSchematicAccess
-        value: true
+      mSchematicDependencies:
+        - class: /Game/FactoryGame/AvailabilityDependencies/BP_SchematicPurchasedDependency.BP_SchematicPurchasedDependency_C
+          properties:
+            mSchematics:
+              - /SatisfactoryPlus/Content/SchematicManager/Schematics/Milestones/T1/Schematic_SF+_T1_0.Schematic_SF+_T1_0_C
+            mRequireAllSchematicsToBePurchased: true
+      mDependenciesBlocksSchematicAccess: true
 ```
 
 `class:` must resolve to a concrete subclass compatible with the array element type. For example,

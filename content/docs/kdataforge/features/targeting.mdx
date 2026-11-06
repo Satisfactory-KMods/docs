@@ -16,7 +16,7 @@ Filtered scopes accept `classType: any` (default), `blueprint`, or `native`. Thi
 one class reference or a non-empty list. Exact references exclude those classes while their
 subclasses remain eligible. Full class-path patterns starting with `/` also accept `*` and `?`
 wildcards, matched case-insensitively against each candidate's own class path. For example,
-`excludeClasses: ['/KLib/*', '/SatisfactoryPlus/*']` leaves those namespaces untouched while
+An `excludeClasses` list containing `/KLib/*` and `/SatisfactoryPlus/*` leaves those namespaces untouched while
 selecting other mods' recipes. A subclass outside an excluded namespace remains eligible;
 patterns do not expand through ancestry. Both filters also run for classes loaded later.
 
@@ -32,8 +32,7 @@ patches:
       path: mForm
       equals: RF_LIQUID
     properties:
-      - path: mForm
-        value: RF_GAS
+      mForm: RF_GAS
 ```
 
 Combine with `ofClass`, or a recipe shortcut that supplies a scope. These scope filters do not
@@ -54,8 +53,8 @@ type: cdo
 patches:
   - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
     properties:
-      - path: mManufactoringDuration
-        op: multiply
+      mManufactoringDuration:
+        $op: multiply
         value: 0.5
 ```
 
@@ -70,8 +69,7 @@ patches:
   - target: Desc_Water # same class as
     #   /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
     properties:
-      - path: mResourceSinkPoints
-        value: 0
+      mResourceSinkPoints: 0
 ```
 
 If the short name matches **more than one** loaded class, KDataForge logs an `Error` to
@@ -90,8 +88,7 @@ debug: true
 patches:
   - target: MySuperIngot # same as /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot
     properties:
-      - path: mResourceSinkPoints
-        value: 50
+      mResourceSinkPoints: 50
 ```
 
 This is checked **before** the bare class-name shortcut above, and works the same way everywhere a
@@ -111,8 +108,7 @@ conditions:
 patches:
   - target: /KLib/Assets/MinerDescriptions/DA_MinerDesc_Iron.DA_MinerDesc_Iron
     properties:
-      - path: mIsDisabled
-        value: true
+      mIsDisabled: true
 ```
 
 ## `target:` a sequence of paths: patch several targets in one entry
@@ -129,8 +125,7 @@ patches:
       - MySuperIngot # generated-content id
       - /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C
     properties:
-      - path: mResourceSinkPoints
-        value: 50
+      mResourceSinkPoints: 50
 ```
 
 This is purely a convenience for "these unrelated targets happen to want the exact same
@@ -157,8 +152,8 @@ conditions:
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPICleanerItemDescription
     properties:
-      - path: mProductionTime
-        op: multiply
+      mProductionTime:
+        $op: multiply
         value: 0.75
 ```
 
@@ -204,8 +199,8 @@ patches:
     tagProperty: mGameplayTags # optional explicit tag container property
     matchAssets: true # also match data-asset instances (default true)
     properties:
-      - path: mManufactoringDuration
-        op: multiply
+      mManufactoringDuration:
+        $op: multiply
         value: 0.8
 ```
 
@@ -226,14 +221,14 @@ patches:
   - ofClass: /Script/FactoryGame.FGRecipe
     matchName: Recipe_Alternate_* # every vanilla alternate recipe, no tags needed
     properties:
-      - path: mManufactoringDuration
-        op: multiply
+      mManufactoringDuration:
+        $op: multiply
         value: 0.8
   - ofClass: /Script/FactoryGame.FGSchematic
     matchName: /Game/FactoryGame/Schematics/Progression/* # by folder: the milestones
     properties:
-      - path: mTimeToComplete
-        op: multiply
+      mTimeToComplete:
+        $op: multiply
         value: 0.5
 ```
 
@@ -253,31 +248,33 @@ patches:
   # every recipe crafted in a Constructor is 25% faster
   - producedIn: /Game/FactoryGame/Buildable/Factory/ConstructorMk1/Build_ConstructorMk1.Build_ConstructorMk1_C
     properties:
-      - path: mManufactoringDuration
-        op: multiply
+      mManufactoringDuration:
+        $op: multiply
         value: 0.75
 
   # every recipe crafted in ANY manufacturing building (Constructor, Assembler, Manufacturer,
   # Refinery, Blender, Particle Accelerator, modded machines deriving from the same base, …)
   - producedIn: /Script/FactoryGame.FGBuildableManufacturer
     properties:
-      - path: mVariablePowerConsumptionFactor
-        op: multiply
+      mVariablePowerConsumptionFactor:
+        $op: multiply
         value: 0.9
 
   # every recipe that consumes Plastic OR Rubber
-  - ingredient: [Desc_Plastic_C, Desc_Rubber_C]
+  - ingredient:
+      - Desc_Plastic_C
+      - Desc_Rubber_C
     properties:
-      - path: mManufactoringDuration
-        op: multiply
+      mManufactoringDuration:
+        $op: multiply
         value: 0.9
 
   # every recipe that produces a Screw, but only when it is crafted in an Assembler
   - product: Desc_IronScrew_C
     producedIn: Build_AssemblerMk1_C
     properties:
-      - path: mProduct[0].Amount
-        op: multiply
+      mProduct[0].Amount:
+        $op: multiply
         value: 2
 ```
 
@@ -321,13 +318,14 @@ patches:
   - ofClass: /Script/FactoryGame.FGItemDescriptor
     whereMode: OR
     where:
-      - { path: mForm, equals: RF_LIQUID }
-      - { path: mForm, equals: RF_GAS }
+      - path: mForm
+        equals: RF_LIQUID
+      - path: mForm
+        equals: RF_GAS
     properties:
-      - path: mResourceSinkPoints
-        value: 0
+      mResourceSinkPoints: 0
 
-  # long recipes (more than 8 seconds) that use Iron Ingot get a bit faster
+# long recipes (more than 8 seconds) that use Iron Ingot get a bit faster
   - ofClass: /Script/FactoryGame.FGRecipe
     where:
       - path: mManufactoringDuration
@@ -335,8 +333,8 @@ patches:
       - path: mIngredients[*].ItemClass # [*] = any element
         equals: Desc_IronIngot_C
     properties:
-      - path: mManufactoringDuration
-        op: multiply
+      mManufactoringDuration:
+        $op: multiply
         value: 0.8
 
   # every schematic up to tier 3 completes instantly
@@ -345,26 +343,28 @@ patches:
       path: mTechTier # a single clause can be written as one map
       lessOrEqual: 3
     properties:
-      - path: mTimeToComplete
-        value: 0
+      mTimeToComplete: 0
 
-  # liquids and gases never earn sink points (`in` = any of the listed values)
+# liquids and gases never earn sink points (`in` = any of the listed values)
   - ofClass: /Script/FactoryGame.FGItemDescriptor
     where:
       path: mForm
-      in: [RF_LIQUID, RF_GAS]
+      in:
+        - RF_LIQUID
+        - RF_GAS
     properties:
-      - path: mResourceSinkPoints
-        value: 0
+      mResourceSinkPoints: 0
 
-  # recipes crafted in a Constructor OR an Assembler (`in` on an array = contains any)
+# recipes crafted in a Constructor OR an Assembler (`in` on an array = contains any)
   - ofClass: /Script/FactoryGame.FGRecipe
     where:
       path: mProducedIn
-      in: [Build_ConstructorMk1_C, Build_AssemblerMk1_C]
+      in:
+        - Build_ConstructorMk1_C
+        - Build_AssemblerMk1_C
     properties:
-      - path: mManufactoringDuration
-        op: multiply
+      mManufactoringDuration:
+        $op: multiply
         value: 0.9
 
   # recipes nobody can craft anywhere (empty mProducedIn) get the Craft Bench
@@ -373,8 +373,8 @@ patches:
       path: mProducedIn
       isEmpty: true
     properties:
-      - path: mProducedIn
-        op: append
+      mProducedIn:
+        $op: append
         value: /Game/FactoryGame/Buildable/-Shared/WorkBench/BP_WorkBenchComponent.BP_WorkBenchComponent_C
 ```
 
@@ -421,7 +421,9 @@ entries:
   - ofClass: /Script/FactoryGame.FGItemDescriptor
     where:
       path: mForm
-      in: [RF_LIQUID, RF_GAS]
+      in:
+        - RF_LIQUID
+        - RF_GAS
     points: 0
 ```
 
@@ -440,8 +442,8 @@ patches:
   - target: /Script/FactoryGame.FGBuildableResourceExtractor
     applyToSubclasses: true # every miner, oil extractor, water pump, …
     properties:
-      - path: mExtractMultiplier
-        op: min
+      mExtractMultiplier:
+        $op: min
         value: 2
 ```
 
@@ -463,10 +465,8 @@ patches:
     applyToSpawnedActors: true # re-applied to every instance the moment it spawns
     applyToSubclasses: false # exact class only
     properties:
-      - path: mInventorySizeX
-        value: 12
-      - path: mInventorySizeY
-        value: 8
+      mInventorySizeX: 12
+      mInventorySizeY: 8
 ```
 
 These instance writes are unconditional. They do not compare a value against the vanilla snapshot

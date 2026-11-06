@@ -30,9 +30,8 @@ classes:
       # OPTIONAL: recipe | schematic | research queues SML content
       # registration for kinds that need it; omit for everything else
     properties:
-      - path: mDisplayName
-        value: My Equipment
-      # cdo-style op entries applied to the new class's CDO
+      mDisplayName: My Equipment
+    # cdo-style op entries applied to the new class's CDO
 ```
 
 Everything that holds for the preset generation types holds here too:
@@ -55,15 +54,12 @@ classes:
   - id: Desc_MyGadget
     parent: /Script/FactoryGame.FGEquipmentDescriptor
     properties:
-      - path: mDisplayName
-        value:
-          key: MyGadget_Name
-          ns: MyPack
-          source: Portable Gadget
-      - path: mStackSize
-        value: SS_ONE # equipment is conventionally non-stacking
-      - path: mEquipmentClass
-        value: /Game/FactoryGame/Equipment/JetPack/Equip_JetPack.Equip_JetPack_C
+      mDisplayName:
+        key: MyGadget_Name
+        ns: MyPack
+        source: Portable Gadget
+      mStackSize: SS_ONE # equipment is conventionally non-stacking
+      mEquipmentClass: /Game/FactoryGame/Equipment/JetPack/Equip_JetPack.Equip_JetPack_C
 ```
 
 The result is a real `UFGEquipmentDescriptor` subclass, usable in recipes, schematics, and sinkpoints like any other
@@ -82,13 +78,11 @@ classes:
   - id: Cat_MyPackParts
     parent: /Script/FactoryGame.FGItemCategory
     properties:
-      - path: mDisplayName
-        value:
-          key: Cat_MyPackParts_Name
-          ns: MyPack
-          source: MyPack Parts
-      - path: mMenuPriority
-        value: 999
+      mDisplayName:
+        key: Cat_MyPackParts_Name
+        ns: MyPack
+        source: MyPack Parts
+      mMenuPriority: 999
 ```
 
 Point generated items at it from the same pack. The `Items` stage guarantees the category class exists before any later
@@ -101,8 +95,7 @@ include:
 items:
   - id: MySuperGadgetPart
     properties:
-      - path: mCategory
-        value: /KDataForge/Gen/MyPack.Gen_MyPack_Cat_MyPackParts
+      mCategory: /KDataForge/Gen/MyPack.Gen_MyPack_Cat_MyPackParts
 ```
 
 ## Example 3: a modded parent class, gated behind `hasMod`
@@ -119,8 +112,7 @@ classes:
   - id: Desc_MyCustomCrop
     parent: /Game/FicsitFarming/Descriptors/Crops/Desc_Berry.Desc_Berry_C # Blueprint parent
     properties:
-      - path: mDisplayName
-        value: My Custom Crop
+      mDisplayName: My Custom Crop
 ```
 
 ## `registerAs:` (generating a registered kind through `class`)
@@ -136,8 +128,7 @@ classes:
     parent: /Game/SomeMod/Recipes/Recipe_SpecialBase.Recipe_SpecialBase_C
     registerAs: recipe # queued into UModContentRegistry before the freeze
     properties:
-      - path: mDisplayName
-        value: My Special Recipe
+      mDisplayName: My Special Recipe
 ```
 
 ## Troubleshooting

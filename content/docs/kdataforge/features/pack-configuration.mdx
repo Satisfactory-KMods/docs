@@ -263,8 +263,10 @@ fields:
     description: Choose which variant the pack uses.
     default: standard
     options:
-      - { value: standard, label: Standard }
-      - { value: extended, label: Extended }
+      - value: standard
+        label: Standard
+      - value: extended
+        label: Extended
 ```
 
 Multi-selects use `minSelected` and `maxSelected` instead of the list count keys.
@@ -281,9 +283,8 @@ expressions. Configuration definitions themselves cannot use those conditions.
 For example, a property operation can consume the slider above directly:
 
 ```yaml
-# Inside a patch's properties list:
-- path: mManufacturingDuration
-  value: cfg:balance.duration
+# Inside a patch's properties mapping:
+mManufactoringDuration: cfg:balance.duration
 ```
 
 This assigns the configured number to the recipe's duration property.

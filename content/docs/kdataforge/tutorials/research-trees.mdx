@@ -19,14 +19,10 @@ type: research
 research:
   - id: KDFSampleTree
     properties:
-      - path: mDisplayName
-        value: KDF Sample Research
-      - path: mPreUnlockDisplayName
-        value: '???'
-      - path: mPreUnlockDescription
-        value: Complete the HUB milestone that reveals this tree.
-      - path: mPostUnlockDescription
-        value: Research refined ingot processing.
+      mDisplayName: KDF Sample Research
+      mPreUnlockDisplayName: '???'
+      mPreUnlockDescription: Complete the HUB milestone that reveals this tree.
+      mPostUnlockDescription: Research refined ingot processing.
 ```
 
 This generates a real `UFGResearchTree` subclass. `register: true`, the default, queues it into
@@ -44,26 +40,19 @@ type: schematic
 schematics:
   - id: Schematic_PureSuperIngot
     properties:
-      - path: mType
-        value: EST_MAM
-      - path: mDisplayName
-        value: Refined Ingot Processing
-      - path: mDescription
-        value: Research a purer smelting process for the Super Ingot.
-      - path: mTechTier
-        value: 1
-      - path: mTimeToComplete
-        value: 30
-      - path: mCost
-        value:
-          - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlateReinforced/Desc_IronPlateReinforced.Desc_IronPlateReinforced_C
-            Amount: 10
+      mType: EST_MAM
+      mDisplayName: Refined Ingot Processing
+      mDescription: Research a purer smelting process for the Super Ingot.
+      mTechTier: 1
+      mTimeToComplete: 30
+      mCost:
+        - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlateReinforced/Desc_IronPlateReinforced.Desc_IronPlateReinforced_C
+          Amount: 10
     unlocks:
       - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
         properties:
-          - path: mRecipes
-            value:
-              - /KDataForge/Gen/KDFSample.Gen_KDFSample_Recipe_PureSuperIngot
+          mRecipes:
+            - /KDataForge/Gen/KDFSample.Gen_KDFSample_Recipe_PureSuperIngot
 ```
 
 Build the item and recipe behind this schematic with the pattern from
@@ -79,14 +68,10 @@ type: research
 research:
   - id: KDFSampleTree
     properties:
-      - path: mDisplayName
-        value: KDF Sample Research
-      - path: mPreUnlockDisplayName
-        value: '???'
-      - path: mPreUnlockDescription
-        value: Complete the HUB milestone that reveals this tree.
-      - path: mPostUnlockDescription
-        value: Research refined ingot processing.
+      mDisplayName: KDF Sample Research
+      mPreUnlockDisplayName: '???'
+      mPreUnlockDescription: Complete the HUB milestone that reveals this tree.
+      mPostUnlockDescription: Research refined ingot processing.
     addNodes:
       - schematic: Schematic_PureSuperIngot
         coordinate:
@@ -108,8 +93,7 @@ research:
   - id: KDFSampleTree
     autoPath: true
     properties:
-      - path: mDisplayName
-        value: KDF Sample Research
+      mDisplayName: KDF Sample Research
     addNodes:
       - schematic: Schematic_PureSuperIngot
         coordinate:
@@ -148,7 +132,7 @@ research:
 
 `nodesToUnhide:` and `unhiddenBy:` use the same literal-coordinate or block-map `schematic:` reference
 form as `parents:`. A custom `UFGResearchTreeNode` subclass can be selected with `class:`; use its
-`properties:` list for any additional reflected fields.
+`properties:` mapping for any additional reflected fields.
 
 For a custom route, keep `autoPath: false` and define `childrenAndRoads:` on the parent:
 
@@ -215,7 +199,7 @@ members whose internal storage names contain GUIDs.
 
 This is the same property-resolution mechanism used elsewhere in KDataForge. A custom
 `UFGResearchTreeNode` subclass can be selected with `class:` and can receive extra operations
-through the node's `properties:` list.
+through the node's `properties:` mapping.
 
 ## Troubleshooting
 

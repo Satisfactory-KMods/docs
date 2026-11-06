@@ -5,10 +5,30 @@ sidebar:
   order: 3
 ---
 
-Every entry in a `type: cdo` patch's `properties:` list names a target `path` and an operation
-(`op:`) that decides how the entry's `value` (or its other arguments) combines with whatever is
-currently stored at that path. If you leave `op:` out, it defaults to `set`, a plain overwrite.
-That is why most of the simple examples elsewhere in these docs never mention an op at all.
+Write `properties:` as a mapping from property paths to values. A plain value performs `set`,
+replacing the current value. Add `$op` inside a property's value to choose another operation and
+pass its arguments:
+
+```yaml
+properties:
+  mDisplayNameOverride: true
+  mManufactoringDuration:
+    $op: multiply
+    value: 0.5
+  mIngredients:
+    $op: append
+    value:
+      ItemClass: /Game/Example/Desc_Item.Desc_Item_C
+      Amount: 4
+```
+
+The mapping form also works in generated content and instanced-object `properties:` blocks. A
+nested struct mapping is a plain `set` value unless it contains `$op` directly. Use the ordered
+`path`/`value` list when one property needs several operations, because YAML mapping keys cannot
+repeat. Both forms use the same operations and argument names; see
+[YAML Schema](/kdataforge/reference/yaml-schema#property-paths).
+For a condition on one operation, use a conditional patch entry or the legacy list form;
+`conditions:` is not a field inside a mapped `$op` value.
 
 The 25 operations are grouped by the kind of
 property they act on: numeric math and clamping, container mutation for arrays, sets, maps, and
@@ -32,16 +52,18 @@ patches:
   - target: /Script/FactoryGame.FGResourceDescriptor
     applyToSubclasses: true
     properties:
-      - path: '@tagContainers'
-        op: append
-        value: [KMods.PlannerResource]
+      '@tagContainers':
+        $op: append
+        value:
+          - KMods.PlannerResource
 ```
 
 Register tags before using them, for example through a `type: gametag` document.
 Supported operations are `set` (also the default), `append`, `prepend`, `remove` and
 `clear`. Tag containers are sets: adding an existing tag does not create duplicates.
 Each selected field gets its own normal snapshot and patch record for rollback.
-Use consecutive `remove` and `append` entries to replace one set of tags with another.
+Use consecutive `remove` and `append` entries in the ordered list form to replace one set of tags
+with another.
 
 The selector does not recurse into nested structs, objects or arrays and cannot be
 combined with a suffix such as `.Child` or `[0]`. It is only an operation destination,
@@ -56,15 +78,16 @@ their order stay unchanged; repeated incoming values are added at most once. Thi
 MergeUnique-style update without deduplicating the destination array:
 
 ```yaml
-- path: mAllowedResourceForms
-  op: append_unique
-  value: [RF_GAS]
+mAllowedResourceForms:
+  $op: append_unique
+  value:
+    - RF_GAS
 ```
 
-For example, `[RF_LIQUID, RF_LIQUID]` becomes `[RF_LIQUID, RF_LIQUID, RF_GAS]`. Applying the same
+For example, an array with two `RF_LIQUID` entries gains one `RF_GAS` entry. Applying the same
 operation again leaves it unchanged. `value` accepts one element or a sequence; an empty sequence
 is a successful no-op. Equality uses the reflected element type, including enum, struct and object
-identity. Arrays only: use ordinary `append` for sets/maps. Inline `{class, properties}` subobject
+identity. Arrays only: use ordinary `append` for sets/maps. Subobject definitions with `class` and `properties`
 creation is rejected; reference an existing object or use `append` to create a new instance.
 Malformed operands fail without leaving a partial array edit.
 
@@ -75,8 +98,8 @@ Malformed operands fail without leaving a partial array edit.
 members omitted from that mapping keep their current values:
 
 ```yaml
-- path: mProduct
-  op: update_where
+mProduct:
+  $op: update_where
   where:
     path: ItemClass
     equals: /OldMod/Items/Desc_Old.Desc_Old_C
@@ -88,13 +111,16 @@ Use a sequence under `where` for several clauses. They use `AND` by default. Set
 `whereMode: OR` to update an element when any clause matches:
 
 ```yaml
-- path: mProduct
-  op: update_where
+mProduct:
+  $op: update_where
   whereMode: OR
   where:
-    - { path: ItemClass, equals: Desc_OldA_C }
-    - { path: ItemClass, equals: Desc_OldB_C }
-  value: { ItemClass: Desc_New_C }
+    - path: ItemClass
+      equals: Desc_OldA_C
+    - path: ItemClass
+      equals: Desc_OldB_C
+  value:
+    ItemClass: Desc_New_C
 ```
 
 `whereMode` accepts `AND` or `OR` case-insensitively and requires `where`. Clauses accept the same
@@ -115,16 +141,16 @@ same operation usable for recipe inputs/outputs and for nested schematic unlock 
 objects without knowing array indexes or concrete unlock subclasses:
 
 ```yaml
-- path: mUnlocks
-  op: replace_refs
+mUnlocks:
+  $op: replace_refs
   from: /OldMod/Recipes/Recipe_Old.Recipe_Old_C
   value: /NewMod/Recipes/Recipe_New.Recipe_New_C
 ```
 
-Use `path: mIngredients` or `path: mProduct` for recipes, `path: mUnlocks` for unlock payloads,
-`path: mSchematicDependencies` for schematic dependencies, or `path: mTaskDependencies` for KAPI
-delivery-task dependencies. `path` is also the traversal boundary: unrelated properties on the
-target are never searched.
+Use `mIngredients:` or `mProduct:` as the mapping key for recipes, `mUnlocks:` for unlock payloads,
+`mSchematicDependencies:` for schematic dependencies, or `mTaskDependencies:` for KAPI
+delivery-task dependencies. The selected property is also the traversal boundary: unrelated
+properties on the target are never searched.
 
 Both hard and soft object/class references are supported. Instanced objects are traversed, but KDF
 does not follow ordinary external object references into unrelated assets. `from` and `value` must
@@ -138,8 +164,7 @@ are validated before writing; a failure keeps original values.
 left implicit. On `mDisplayName` (an `FString`), setting a value replaces the string:
 
 ```yaml
-- path: mDisplayName
-  value: 'Reinforced Iron Ingot' # op: set is implied
+mDisplayName: 'Reinforced Iron Ingot' # set is implied
 ```
 
 ### Bitmask operations
@@ -151,13 +176,18 @@ metadata or an unresolved enum leaves ordinary integer conversion. See
 [Property Types](/kdataforge/features/property-types#bitmask-integer-properties-with-bitmaskenum-metadata)
 for named mask/index forms, width limits, and Shipping-build limitations.
 
+For one flag:
+
 ```yaml
-- path: mParentTask
-  value: Above
-- path: mParentTask
-  value:
-    - Above
-    - Left
+mParentTask: Above
+```
+
+For several flags:
+
+```yaml
+mParentTask:
+  - Above
+  - Left
 ```
 
 ## add / subtract: numeric
@@ -167,11 +197,11 @@ for named mask/index forms, width limits, and Shipping-build limitations.
 below), since there is no meaningful "current + 1" for an enum ordinal:
 
 ```yaml
-- path: mTechTier
-  op: add
+mTechTier:
+  $op: add
   value: 1
-- path: mTimeToComplete
-  op: subtract
+mTimeToComplete:
+  $op: subtract
   value: 30
 ```
 
@@ -182,11 +212,11 @@ fraction of itself halves the crafting time, while dividing `mEnergyValue` doubl
 fuel efficiency. Dividing by `0` is rejected outright, rather than producing infinity or NaN:
 
 ```yaml
-- path: mManufactoringDuration
-  op: multiply
+mManufactoringDuration:
+  $op: multiply
   value: 0.5
-- path: mEnergyValue
-  op: divide
+mEnergyValue:
+  $op: divide
   value: 2
 ```
 
@@ -197,14 +227,23 @@ fuel efficiency. Dividing by `0` is rejected outright, rather than producing inf
 the property past `value` in the opposite direction, which makes them useful for "never exceed" or
 "never fall below" balancing passes across many objects at once:
 
+To cap sink points at 100:
+
 ```yaml
-- path: mResourceSinkPoints
-  op: min
-  value: 100 # cap at 100
-- path: mResourceSinkPoints
-  op: max
-  value: 50 # raise to at least 50
+mResourceSinkPoints:
+  $op: min
+  value: 100
 ```
+
+To raise them to at least 50:
+
+```yaml
+mResourceSinkPoints:
+  $op: max
+  value: 50
+```
+
+To enforce both bounds in one mapping entry, use `clamp` with `min: 50` and `max: 100`.
 
 :::caution
 **Enum-backed properties don't count as numeric.** `mStackSize` on `FGItemDescriptor` is an
@@ -220,8 +259,8 @@ an enum value name works. See
 keys and pins the current value inside that range in one step:
 
 ```yaml
-- path: mMenuPriority
-  op: clamp
+mMenuPriority:
+  $op: clamp
   min: 0
   max: 999
 ```
@@ -236,42 +275,46 @@ strings, it concatenates text. For tag containers, it adds tags. For maps, `valu
 and KDataForge merges those key/value pairs into the existing map:
 
 ```yaml
-- path: mIngredients # array: adds element(s) at the end
-  op: append
+# array: adds element(s) at the end
+mIngredients:
+  $op: append
   value:
     ItemClass: /Game/FactoryGame/Resource/RawResources/Coal/Desc_Coal.Desc_Coal_C
     Amount: 1
-- path: mDisplayName # string: concatenates
-  op: append
+# string: concatenates
+mDisplayName:
+  $op: append
   value: ' (rebalanced)'
-- path: mGameplayTags # tag container: adds tags
-  op: append
+# tag container: adds tags
+mGameplayTags:
+  $op: append
   value:
     - MyPack.Rebalanced
-- path: mSomeMap # map: merges entries
-  op: append
+# map: merges entries
+mSomeMap:
+  $op: append
   value:
     Iron: 10
-- path: mParentTask # bitmask: OR-adds flags
-  op: append
+# bitmask: OR-adds flags
+mParentTask:
+  $op: append
   value:
     - Above
     - Left
 ```
 
 For bitmasks, `append` ORs named flags into current mask. It does not accept raw integer masks.
-For instanced `UObject` arrays, an appended value can be a `{ class, properties }` map; KDataForge
+For instanced `UObject` arrays, an appended value can be a map with `class` and nested `properties`; KDataForge
 constructs the new subobject before inserting it into the array:
 
 ```yaml
-- path: mUnlocks
-  op: append
+mUnlocks:
+  $op: append
   value:
     class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
     properties:
-      - path: mRecipes
-        value:
-          - Recipe_MyGeneratedRecipe
+      mRecipes:
+        - Recipe_MyGeneratedRecipe
 ```
 
 :::note
@@ -291,8 +334,8 @@ Bitmasks also treat it like `append` and OR-add named flags. Maps do not support
 only `append` merges into a map.
 
 ```yaml
-- path: mDisplayName
-  op: prepend
+mDisplayName:
+  $op: prepend
   value: '[MP] '
 ```
 
@@ -304,8 +347,8 @@ clamping to the array's bounds. Instanced `UObject` array entries may use the sa
 properties }` map accepted by `set`, `append`, and `prepend`:
 
 ```yaml
-- path: mIngredients
-  op: insert
+mIngredients:
+  $op: insert
   index: 1
   value:
     ItemClass: /Game/FactoryGame/Resource/RawResources/OreCopper/Desc_OreCopper.Desc_OreCopper_C
@@ -320,19 +363,22 @@ doing nothing. On maps, `value` is the _key_ to delete, and on tag containers, `
 (or list of tags) to remove. On bitmasks, it clears every named bit with AND-NOT:
 
 ```yaml
-- path: mIngredients # removes every element equal to the value
-  op: remove
+# removes every element equal to the value
+mIngredients:
+  $op: remove
   value:
     ItemClass: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
     Amount: 1
-- path: mSomeMap # map: value is the key
-  op: remove
+# map: value is the key
+mSomeMap:
+  $op: remove
   value: Iron
-- path: mGameplayTags
-  op: remove
+mGameplayTags:
+  $op: remove
   value: KMods.WikiExclude
-- path: mParentTask # bitmask: clears named bits
-  op: remove
+# bitmask: clears named bits
+mParentTask:
+  $op: remove
   value: Left
 ```
 
@@ -342,8 +388,8 @@ doing nothing. On maps, `value` is the _key_ to delete, and on tag containers, `
 right tool when you know the slot but not, or don't want to spell out, the exact contents:
 
 ```yaml
-- path: mProduct
-  op: remove_at
+mProduct:
+  $op: remove_at
   index: 1
 ```
 
@@ -354,10 +400,11 @@ lose every element. Strings are reset to empty, rather than to their class-defau
 metadata-recognized bitmask, `clear` writes `0`:
 
 ```yaml
-- path: mSubCategories
-  op: clear
-- path: mParentTask # bitmask: sets mask to 0
-  op: clear
+mSubCategories:
+  $op: clear
+# bitmask: sets mask to 0
+mParentTask:
+  $op: clear
 ```
 
 ## swap: array
@@ -367,8 +414,8 @@ anything else in the list. It is useful for reordering a couple of entries witho
 whole array:
 
 ```yaml
-- path: mIngredients
-  op: swap
+mIngredients:
+  $op: swap
   index: 0
   with: 1
 ```
@@ -379,8 +426,8 @@ whole array:
 the array's length unchanged:
 
 ```yaml
-- path: mProduct
-  op: replace
+mProduct:
+  $op: replace
   index: 0
   value:
     ItemClass: /Game/FactoryGame/Resource/Parts/SteelIngot/Desc_SteelIngot.Desc_SteelIngot_C
@@ -394,8 +441,8 @@ handy for cloning an existing ingredient or product entry as a starting point, b
 with a follow-up `replace`:
 
 ```yaml
-- path: mProduct
-  op: duplicate
+mProduct:
+  $op: duplicate
   index: 0
 ```
 
@@ -406,10 +453,11 @@ value. Anything else, such as structs or object references, sorts by its exporte
 `reverse` flips the current order of every element:
 
 ```yaml
-- path: mRelevantEvents # numeric/string inner types sort by value; others by text form
-  op: sort
-- path: mSubCategories
-  op: reverse
+# numeric/string inner types sort by value; others by text form
+mRelevantEvents:
+  $op: sort
+mSubCategories:
+  $op: reverse
 ```
 
 ## unique: array (removes later duplicates; sets: no-op)
@@ -419,8 +467,8 @@ the first occurrence of each value. Running it on a set is always a no-op, since
 guaranteed to contain no duplicates:
 
 ```yaml
-- path: mSubCategories
-  op: unique
+mSubCategories:
+  $op: unique
 ```
 
 ## copy: any property (from another path on the same object)
@@ -433,8 +481,8 @@ This means copying between compatible but different types, for example a plain s
 can still work, as long as the text parses back cleanly for the destination type:
 
 ```yaml
-- path: mAbbreviatedDisplayName
-  op: copy
+mAbbreviatedDisplayName:
+  $op: copy
   from: mDisplayName
 ```
 
@@ -445,7 +493,7 @@ to its default value. This makes it the right choice when a value should live at
 _instead of_ the old one, rather than in both places:
 
 ```yaml
-- path: mDescription
-  op: move
+mDescription:
+  $op: move
   from: mScannerDisplayText
 ```

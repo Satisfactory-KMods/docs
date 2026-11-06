@@ -77,15 +77,13 @@ contract and are omitted.
 unlocks:
   - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
     properties:
-      - path: mRecipes
-        value:
-          - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot
+      mRecipes:
+        - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot
   - class: /Game/FactoryGame/Unlocks/BP_UnlockSchematic.BP_UnlockSchematic_C # unlocks OTHER schematics directly —
     properties:
       # bypasses MAM/HUB purchase entirely
-      - path: mSchematics
-        value:
-          - /Game/FactoryGame/Schematics/Progression/Schematic_2-3.Schematic_2-3_C
+      mSchematics:
+        - /Game/FactoryGame/Schematics/Progression/Schematic_2-3.Schematic_2-3_C
 ```
 
 The current game build ships no Blueprint variant for FGUnlockVisualizationMode; use a mod-provided concrete subclass
@@ -103,12 +101,10 @@ for that abstract native type.
 unlocks:
   - class: /Game/FactoryGame/Unlocks/BP_UnlockInventorySlot.BP_UnlockInventorySlot_C
     properties:
-      - path: mNumInventorySlotsToUnlock
-        value: 3
+      mNumInventorySlotsToUnlock: 3
   - class: /Game/FactoryGame/Unlocks/BP_UnlockArmEquipmentSlot.BP_UnlockArmEquipmentSlot_C
     properties:
-      - path: mNumArmEquipmentSlotsToUnlock
-        value: 1
+      mNumArmEquipmentSlotsToUnlock: 1
 ```
 
 | Class                      | Key property                           | What it does                                                                                                                                                    |
@@ -126,16 +122,13 @@ Three separate classes, one per axis. Combine as many as you need on one schemat
 unlocks:
   - class: /Game/FactoryGame/Unlocks/BP_UnlockCentralStorageItemLimit.BP_UnlockCentralStorageItemLimit_C
     properties:
-      - path: mItemStackLimitIncrease
-        value: 5
+      mItemStackLimitIncrease: 5
   - class: /Game/FactoryGame/Unlocks/BP_UnlockCentralStorageUploadSpeed.BP_UnlockCentralStorageUploadSpeed_C
     properties:
-      - path: mUploadSpeedPercentageDecrease
-        value: 10 # % faster upload (decreases UFGCentralStorageSettings::mDefaultTimeToUpload)
+      mUploadSpeedPercentageDecrease: 10 # % faster upload (decreases UFGCentralStorageSettings::mDefaultTimeToUpload)
   - class: /Game/FactoryGame/Unlocks/BP_UnlockCentralStorageUploadSlots.BP_UnlockCentralStorageUploadSlots_C
     properties:
-      - path: mNumSlotsToUnlock
-        value: 1
+      mNumSlotsToUnlock: 1
 ```
 
 | Class                               | Key property                                        | What it does                                 |
@@ -150,10 +143,9 @@ unlocks:
 unlocks:
   - class: /Game/FactoryGame/Unlocks/BP_UnlockScannableResource.BP_UnlockScannableResource_C
     properties:
-      - path: mResourcePairsToAddToScanner
-        value:
-          - ResourceDescriptor: /Game/FactoryGame/Resource/RawResources/Bauxite/Desc_OreBauxite.Desc_OreBauxite_C
-            ResourceNodeType: Node # Node | FrackingSatellite | FrackingCore | Geyser | Deposit
+      mResourcePairsToAddToScanner:
+        - ResourceDescriptor: /Game/FactoryGame/Resource/RawResources/Bauxite/Desc_OreBauxite.Desc_OreBauxite_C
+          ResourceNodeType: Node # Node | FrackingSatellite | FrackingCore | Geyser | Deposit
   - class: /Game/FactoryGame/Unlocks/BP_UnlockScannableObject.BP_UnlockScannableObject_C
     # Add mScannableObjects entries for world-object scan targets such as crates or POIs.
 ```
@@ -172,9 +164,8 @@ unlocks:
     # Add mCustomizationUnlocks entries for outfits or skins.
   - class: /Game/FactoryGame/Unlocks/BP_UnlockEmote.BP_UnlockEmote_C
     properties:
-      - path: mEmotes
-        value:
-          - /Game/FactoryGame/Emotes/Wave/Emote_Wave.Emote_Wave_C
+      mEmotes:
+        - /Game/FactoryGame/Emotes/Wave/Emote_Wave.Emote_Wave_C
 ```
 
 | Class                       | Key property                                                               | What it does                                                        |
@@ -209,14 +200,11 @@ unlocks:
 unlocks:
   - class: /Game/FactoryGame/Unlocks/BP_UnlockSAMIntensity.BP_UnlockSAMIntensity_C
     properties:
-      - path: mSAMIntensity
-        value: 2
+      mSAMIntensity: 2
   - class: /Game/FactoryGame/Unlocks/BP_UnlockInfoOnly.BP_UnlockInfoOnly_C
     properties:
-      - path: mUnlockName
-        value: 'A cosmetic note'
-      - path: mUnlockDescription
-        value: 'Shown in the unlock UI grants nothing by itself.'
+      mUnlockName: 'A cosmetic note'
+      mUnlockDescription: 'Shown in the unlock UI grants nothing by itself.'
 ```
 
 | Class                  | Key property                                                                               | What it does                                                                               |

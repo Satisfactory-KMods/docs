@@ -25,7 +25,7 @@ the pieces fit together in one patch entry.
   property codec accepts, including bool, all numeric widths, enums, strings, `FText` (plain and
   localized), object/class/soft references, all three struct forms, arrays, sets, maps, and
   gameplay tags.
-- [Operations](/kdataforge/features/operations): what each of the 25 `op:` values
+- [Operations](/kdataforge/features/operations): what each of the 25 `$op:` values
   does and which property kinds accept it, covering numeric math and clamping, container
   mutation, string concatenation, array reordering, and cross-property copy/move.
 - [Targeting](/kdataforge/features/targeting): every way to select what a patch
@@ -35,7 +35,7 @@ the pieces fit together in one patch entry.
   for gating whether a document applies, `pack.yml` manifest fields, `redirects:` for safe id
   renames, and `include:` ordering between files in one pack.
 - [Patching (type: cdo)](/kdataforge/features/patching-cdo): how a `patches:` entry
-  ties target selectors, modifiers, and a `properties:` list together, plus the current snapshot
+  ties target selectors, modifiers, and a `properties:` mapping together, plus the current snapshot
   and restart boundaries.
 - [Templates & Typed References](/kdataforge/features/templates): typed configuration and
   game-setting reads, string interpolation, and apply-time reflected property/function reads.

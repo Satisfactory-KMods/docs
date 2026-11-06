@@ -35,22 +35,17 @@ type: schematic
 schematics:
   - id: Schematic_MySuperIngot
     properties:
-      - path: mDisplayName
-        value: Super Ingot Smelting
-      - path: mTechTier
-        value: 2
-      - path: mTimeToComplete
-        value: 60
-      - path: mCost
-        value:
-          - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C
-            Amount: 50
+      mDisplayName: Super Ingot Smelting
+      mTechTier: 2
+      mTimeToComplete: 60
+      mCost:
+        - ItemClass: /Game/FactoryGame/Resource/Parts/IronPlate/Desc_IronPlate.Desc_IronPlate_C
+          Amount: 50
     unlocks:
       - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
         properties:
-          - path: mRecipes
-            value:
-              - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot
+          mRecipes:
+            - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot
 ```
 
 `register: true` (the default) queues this into SML's `UModContentRegistry` per-world before the
@@ -71,13 +66,11 @@ unlock:
 unlocks:
   - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C # any concrete FGUnlock subclass
     properties:
-      - path: mRecipes
-        value:
-          - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot
+      mRecipes:
+        - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot
   - class: /Script/FactoryGame.FGUnlockInventorySlot
     properties:
-      - path: mNumInventorySlotsToUnlock
-        value: 1
+      mNumInventorySlotsToUnlock: 1
 ```
 
 `class:` here must resolve to an `FGUnlock` subclass, either native, Blueprint, or a class you
@@ -137,10 +130,9 @@ It does not create or place a Resource Node:
 unlocks:
   - class: /Game/FactoryGame/Unlocks/BP_UnlockScannableResource.BP_UnlockScannableResource_C
     properties:
-      - path: mResourcePairsToAddToScanner
-        value:
-          - ResourceDescriptor: MyCustomOre
-            ResourceNodeType: Node
+      mResourcePairsToAddToScanner:
+        - ResourceDescriptor: MyCustomOre
+          ResourceNodeType: Node
 ```
 
 `ResourceNodeType` accepts `Node`, `FrackingSatellite`, `FrackingCore`, `Geyser`, or `Deposit`.
@@ -158,16 +150,13 @@ type: schematic
 schematics:
   - id: Schematic_AdvancedSuperIngot
     properties:
-      - path: mDisplayName
-        value: Advanced Super Ingot
+      mDisplayName: Advanced Super Ingot
     dependencies:
       - class: /Script/FactoryGame.FGSchematicPurchasedDependency
         properties:
-          - path: mSchematics
-            value:
-              - /KDataForge/Gen/MyPack.Gen_MyPack_Schematic_MySuperIngot
-          - path: mRequireAllSchematicsToBePurchased
-            value: true
+          mSchematics:
+            - /KDataForge/Gen/MyPack.Gen_MyPack_Schematic_MySuperIngot
+          mRequireAllSchematicsToBePurchased: true
 ```
 
 That schematic won't be purchasable until `Schematic_MySuperIngot` is. Dependency entries use the
@@ -196,10 +185,9 @@ type: schematic
 schematics:
   - class: /Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C # register-only: editing a vanilla milestone
     properties:
-      - path: mCost
-        op: clear # no item cost
-      - path: mTimeToComplete
-        value: 1 # 1-second freighter turnaround
+      mCost:
+        $op: clear # no item cost
+      mTimeToComplete: 1 # 1-second freighter turnaround
 ```
 
 (This particular example edits an **existing** vanilla schematic. For a genuinely simpler one-off
@@ -230,8 +218,7 @@ remove:
 schematics:
   - id: Schematic_ReplacementMilestone
     properties:
-      - path: mDisplayName
-        value: Replacement Milestone
+      mDisplayName: Replacement Milestone
 ```
 
 A bare reference names the exact schematic class to remove; it does not remove subclasses. If a

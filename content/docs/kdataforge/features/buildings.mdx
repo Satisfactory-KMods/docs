@@ -45,10 +45,8 @@ buildings:
   - id: MyCrimsonStorage
     parent: /Game/FactoryGame/Buildable/Factory/StorageContainerMk1/Build_StorageContainerMk1.Build_StorageContainerMk1_C
     properties:
-      - path: mDisplayName
-        value: Crimson Storage Container
-      - path: mInventorySizeX
-        value: 12
+      mDisplayName: Crimson Storage Container
+      mInventorySizeX: 12
 ```
 
 This generates `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_MyCrimsonStorage`, a real, separate
@@ -77,7 +75,7 @@ production recipes → schematic → sinkpoints) is walked step by step in
   recipe registration question, not the `building` document itself. A building descriptor needs a
   `recipe` (see [Type: recipe](/kdataforge/features/recipes)) that produces it, and a schematic that unlocks
   that recipe before it becomes buildable in a fresh game.
-- **Stats didn't change**: same rule as everywhere else. An unsupported op or a bad `path:` is a
+- **Stats didn't change**: same rule as everywhere else. An unsupported op or a bad property key is a
   diagnostic, never a silent failure, and `/kdf report` tells you exactly which patch failed.
 - Want to bulk-tune a whole family of _existing_ buildings instead (all miners, all belts, all
   generators)? That's `applyToSubclasses:` on a plain `cdo` patch. See

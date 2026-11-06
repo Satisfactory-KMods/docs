@@ -35,8 +35,8 @@ type: cdo
 patches:
   - target: /Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C
     properties:
-      - path: mManufactoringDuration
-        op: divide
+      mManufactoringDuration:
+        $op: divide
         value: cfg:balance.ironSpeed
 ```
 
@@ -109,8 +109,7 @@ a number, boolean or sequence instead of converting it into surrounding text. Fo
 this copies the Iron Ingot recipe's crafting duration:
 
 ```yaml
-- path: mManufactoringDuration
-  value: '{recipe:/Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C:mManufactoringDuration}'
+mManufactoringDuration: '{recipe:/Game/FactoryGame/Recipes/Smelter/Recipe_IngotIron.Recipe_IngotIron_C:mManufactoringDuration}'
 ```
 
 Adding surrounding text makes the result text instead. Quotes around the YAML string do not
@@ -122,8 +121,7 @@ Write arguments in parentheses after the function name. For example, this operat
 calls a math-library function:
 
 ```yaml
-- path: mProduct[0].Amount
-  value: '{class:/Script/Engine.KismetMathLibrary:Round(2.6)}'
+mProduct[0].Amount: '{class:/Script/Engine.KismetMathLibrary:Round(2.6)}'
 ```
 
 Arguments can include numbers, booleans, quoted strings, nested tokens and supported struct

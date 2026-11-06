@@ -57,10 +57,9 @@ YAML encoding follows [base-game types](/kdataforge/reference/base-game-unlock-c
 unlocks:
   - class: /KLib/Unlocks/BP_GiveToPlayersUnlock.BP_GiveToPlayersUnlock_C
     properties:
-      - path: mAmounts
-        value:
-          - ItemClass: /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot
-            Amount: 10
+      mAmounts:
+        - ItemClass: /KDataForge/Gen/MyPack.Gen_MyPack_MySuperIngot
+          Amount: 10
 ```
 
 | Class                         | Fields and accepted types                                                                                                                                                                                                                                     | Purpose                                                                                                                       |
@@ -86,16 +85,12 @@ not use either in a new pack.
 unlocks:
   - class: /KPrivateCodeLib/Unlocks/BP_FaxitCapaUnlock.BP_FaxitCapaUnlock_C
     properties:
-      - path: mCapacityType
-        value: Drive
-      - path: mAmount
-        value: 1
+      mCapacityType: Drive
+      mAmount: 1
   - class: /KPrivateCodeLib/Unlocks/BP_FaxitSpeedUnlock.BP_FaxitSpeedUnlock_C
     properties:
-      - path: mAmount
-        value: 15000 # fluid units per minute, 1000 units = 1 m³
-      - path: bIsFluid
-        value: true
+      mAmount: 15000 # fluid units per minute, 1000 units = 1 m³
+      bIsFluid: true
 ```
 
 | Class                                 | Fields and accepted types                                         | Purpose                                                            |

@@ -43,11 +43,10 @@ type: item
 items:
   - id: SuperIngot
     properties:
-      - path: mDisplayName
-        value:
-          key: SuperIngot_Name
-          ns: KDFSample
-          source: Super Ingot
+      mDisplayName:
+        key: SuperIngot_Name
+        ns: KDFSample
+        source: Super Ingot
 ```
 
 `ns: KDFSample` + `key: SuperIngot_Name` is now the address every translation for this item's name
@@ -125,11 +124,10 @@ Worked example: a schematic whose author (you, an earlier pack version, or anoth
 
 ```yaml
 # somewhere upstream the schematic's own properties:
-- path: mDisplayName
-  value:
-    key: Schematic_SuperIngot_Name
-    ns: MyPack
-    source: 'Super Ingot Production'
+mDisplayName:
+  key: Schematic_SuperIngot_Name
+  ns: MyPack
+  source: 'Super Ingot Production'
 ```
 
 ```yaml

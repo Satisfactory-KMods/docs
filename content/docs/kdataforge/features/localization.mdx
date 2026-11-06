@@ -16,15 +16,16 @@ descriptions, or other keyed `FText` values included in its normal translation p
 ```yaml
 type: cdo
 conditions:
-  hasMod: [SatisfactoryPlus, KLib]
+  hasMod:
+    - SatisfactoryPlus
+    - KLib
 patches:
   - target: /KLib/Assets/Buildings/PressureRegulatorValve/Build_PressureRegulatorValve.Build_PressureRegulatorValve_C
     properties:
-      - path: mDisplayName
-        value:
-          key: 895CFBF74588721183546EBD628AA06D
-          ns: ST_Klib
-          source: Pressure Trigger Valve
+      mDisplayName:
+        key: 895CFBF74588721183546EBD628AA06D
+        ns: ST_Klib
+        source: Pressure Trigger Valve
 ```
 
 The gather integration preserves `ns`, `key`, and the decoded `source` string, including line breaks,
@@ -236,9 +237,15 @@ uses to load `.locres` files, so there is nothing KDataForge-specific for the ga
 
 ```yaml
 culture: de        # matches current language de, de-DE, de-AT, …
-culture: pt-BR      # matches only pt-BR (a more specific prefix than pt)
-# omit culture:     # entries apply for EVERY language
 ```
+
+For a regional variant:
+
+```yaml
+culture: pt-BR      # matches only pt-BR (a more specific prefix than pt)
+```
+
+Omit `culture:` to apply entries for every language.
 
 The match is **bidirectional prefix matching**: either the current language starts with `culture:`,
 or `culture:` starts with the current language. `culture: de` applies when the running game is set

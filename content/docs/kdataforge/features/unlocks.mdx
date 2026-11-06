@@ -38,8 +38,7 @@ unlocks:
   - id: MyStarterKitUnlock
     parent: /Game/FactoryGame/Unlocks/BP_UnlockInventorySlot.BP_UnlockInventorySlot_C # any concrete FGUnlock subclass
     properties:
-      - path: mNumInventorySlotsToUnlock
-        value: 3
+      mNumInventorySlotsToUnlock: 3
 ```
 
 This generates `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_MyStarterKitUnlock`, a class, not an
@@ -51,8 +50,7 @@ type: schematic
 schematics:
   - id: Schematic_UsesStarterKit
     properties:
-      - path: mDisplayName
-        value: Starter Kit Schematic
+      mDisplayName: Starter Kit Schematic
     unlocks:
       - class: /KDataForge/Gen/MyPack.Gen_MyPack_MyStarterKitUnlock
 ```

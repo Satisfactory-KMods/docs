@@ -32,6 +32,25 @@ Open a KDataForge project or any workspace containing `DataForge/pack.yml`. The 
 The language server and CLI linter share the same validation core. A successful schema check does not
 prove that runtime classes, assets or functions exist when reflection data is unavailable.
 
+For `properties:`, completion and hover understand both the ordered `path`/`value` list and the
+shorter mapping form. In a mapping, the property name is the key, a plain value performs `set`,
+and `$op` selects another operation. This also works in nested instanced-object `properties:`
+blocks:
+
+```yaml
+properties:
+  mDisplayNameOverride: false
+  mManufactoringDuration:
+    $op: multiply
+    value: 0.5
+```
+
+Start a mapping with the `kdf-properties-map` YAML snippet, insert one operation with
+`kdf-property-op`, or add a nested recipe unlock with `kdf-unlock-recipe-map`. With a matching
+reflection datapack, completion can suggest property names and value types. See
+[YAML Schema](/kdataforge/reference/yaml-schema#property-paths) for the exact syntax and
+the `$op` ambiguity rule.
+
 ## Import and bind game data
 
 1. Start a Satisfactory world with KDataForge and the mods your pack targets. After the world begins

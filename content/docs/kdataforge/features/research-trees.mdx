@@ -32,8 +32,7 @@ type: cdo
 patches:
   - target: /Game/FactoryGame/Schematics/Research/Mycelia_RS/ResearchTree_Mycelia.ResearchTree_Mycelia_C
     properties:
-      - path: mDisplayName
-        value: 'Mycelia (Rebalanced)'
+      mDisplayName: 'Mycelia (Rebalanced)'
 ```
 
 ## Generating a new research tree
@@ -49,10 +48,8 @@ type: research
 research:
   - id: MyContentLineTree
     properties:
-      - path: mDisplayName
-        value: My Content Line
-      - path: mMenuPriority
-        value: 50
+      mDisplayName: My Content Line
+      mMenuPriority: 50
 ```
 
 `register: true` (default) queues it into SML's `UModContentRegistry` per-world before the freeze,
@@ -72,14 +69,12 @@ research:
     unlockDependencies:
       - class: /Script/FactoryGame.FGSchematicPurchasedDependency
         properties:
-          - path: mSchematics
-            value:
-              - Schematic_MyPrerequisite
+          mSchematics:
+            - Schematic_MyPrerequisite
     visibilityDependencies:
       - class: /Game/FactoryGame/AvailabilityDependencies/BP_GamePhaseReachedDependency.BP_GamePhaseReachedDependency_C
         properties:
-          - path: mGamePhase
-            value: EGP_EarlyGame
+          mGamePhase: EGP_EarlyGame
 ```
 
 Native and Blueprint paths both work. Known native classes automatically remap to concrete
@@ -140,7 +135,7 @@ With `autoPath: true`, KDataForge turns every resolved `parents:` edge from `add
 matching straight road on the parent. For custom or bent roads, use `autoPath: false` with
 `childrenAndRoads:`; a parent can provide one block map with `key` and `points` fields or a sequence of them for
 multiple children. Set `class:` on a node only when a custom `UFGResearchTreeNode` subclass is
-required. Its ordinary `properties:` list remains available, but convenience fields that the
+required. Its ordinary `properties:` mapping remains available, but convenience fields that the
 subclass does not expose are
 reported and skipped rather than failing the whole document.
 

@@ -62,14 +62,14 @@ type: cdo
 patches:
   - target: /Game/FactoryGame/Recipes/Constructor/Recipe_IronPlate.Recipe_IronPlate_C
     properties:
-      - path: mGameplayTags
-        op: append
+      mGameplayTags:
+        $op: append
         value:
           - MyOverhaul.Rebalanced
   - target: /Game/FactoryGame/Recipes/Constructor/Recipe_IronRod.Recipe_IronRod_C
     properties:
-      - path: mGameplayTags
-        op: append
+      mGameplayTags:
+        $op: append
         value:
           - MyOverhaul.Rebalanced
 ```
@@ -80,14 +80,14 @@ type: cdo
 patches:
   - target: /Game/FactoryGame/Recipes/Constructor/Recipe_Wire.Recipe_Wire_C
     properties:
-      - path: mGameplayTags
-        op: append
+      mGameplayTags:
+        $op: append
         value:
           - MyOverhaul.Rebalanced
   - target: /Game/FactoryGame/Recipes/Constructor/Recipe_Screw.Recipe_Screw_C
     properties:
-      - path: mGameplayTags
-        op: append
+      mGameplayTags:
+        $op: append
         value:
           - MyOverhaul.Rebalanced
 ```
@@ -108,12 +108,10 @@ type: recipe
 recipes:
   - id: Recipe_MyThing
     properties:
-      - path: mDisplayName
-        value: My Thing
-      - path: mGameplayTags
-        value:
-          - MyOverhaul.Rebalanced
-      # … mIngredients, mProduct, mManufactoringDuration, mProducedIn …
+      mDisplayName: My Thing
+      mGameplayTags:
+        - MyOverhaul.Rebalanced
+    # … mIngredients, mProduct, mManufactoringDuration, mProducedIn …
 ```
 
 Only this version is guaranteed to work on the first load. See
@@ -134,8 +132,8 @@ patches:
     ofClass: /Script/FactoryGame.FGRecipe
     tagProperty: mGameplayTags
     properties:
-      - path: mManufactoringDuration
-        op: multiply
+      mManufactoringDuration:
+        $op: multiply
         value: 0.8 # 20% faster
 ```
 

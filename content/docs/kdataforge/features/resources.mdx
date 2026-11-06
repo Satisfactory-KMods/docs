@@ -44,16 +44,13 @@ resources:
   - id: MySuperCoolant
     parent: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
     properties:
-      - path: mDisplayName
-        value: Super Coolant
-      - path: mForm
-        value: RF_LIQUID
-      - path: mFluidColor
-        value:
-          R: 40
-          G: 200
-          B: 255
-          A: 255
+      mDisplayName: Super Coolant
+      mForm: RF_LIQUID
+      mFluidColor:
+        R: 40
+        G: 200
+        B: 255
+        A: 255
 ```
 
 Parenting from `Desc_Water` inherits its fluid-oriented defaults. The generated class has the
@@ -119,7 +116,8 @@ type: resourcenode
 remove:
   - ofClass: /Script/FactoryGame.FGResourceDescriptor
     matchName: Desc_OreUranium* # vanilla uranium plus any modded variant named like it
-    nodeTypes: [Node]
+    nodeTypes:
+      - Node
 ```
 
 Qualified node-type names such as `EResourceNodeType::Geyser` also work. An omitted or empty
@@ -185,10 +183,8 @@ patches:
     applyToSpawnedActors: true
     applyToSubclasses: false
     properties:
-      - path: mExtractMultiplier
-        value: 2
-      - path: mCanPlaceResourceExtractor
-        value: true
+      mExtractMultiplier: 2
+      mCanPlaceResourceExtractor: true
 ```
 
 The patch first writes the class default. At world begin play, it also writes the same properties
@@ -226,10 +222,9 @@ schematics:
     unlocks:
       - class: /Game/FactoryGame/Unlocks/BP_UnlockScannableResource.BP_UnlockScannableResource_C
         properties:
-          - path: mResourcePairsToAddToScanner
-            value:
-              - ResourceDescriptor: MyCustomOre
-                ResourceNodeType: Node
+          mResourcePairsToAddToScanner:
+            - ResourceDescriptor: MyCustomOre
+              ResourceNodeType: Node
 ```
 
 `ResourceNodeType` accepts `Node`, `FrackingSatellite`, `FrackingCore`, `Geyser`, or `Deposit`.

@@ -256,7 +256,7 @@ A record has:
 | `valueType` | `bool`, `int`, `float`, `string`, `color` or `other` |
 | `default` | The default value when it can be read |
 | `range`, `displayRange` | Slider or selection bounds; `displayRange` only when it differs |
-| `options` | `{value, label}` choices of an integer selector |
+| `options` | Choices with `value` and `label` for an integer selector |
 | `placements` | Options-menu locations. Each entry contains category, optional subcategory and row priority; categories include class, display name and menu priority. |
 | `sessionWide`, `dedicatedServerRelevant` | Whether the setting is stored per session and whether a dedicated server uses it |
 | `managerClass`, `mapWhitelist` | The manager that owns the setting and, for session settings, the maps it is limited to |
@@ -289,7 +289,7 @@ completions and reports operations on cold or `newActors` properties as `propert
 [Reload classification](/kdataforge/reference/reflection-export#reload-classification-and-cold-property-catalog).
 
 `catalog/cold_properties.json` is the catalog behind it: `version`, a `description`, and
-`entries` of `{class, property, reload, reason, verified}`. A class entry includes its subclasses
+`entries` containing `class`, `property`, `reload`, `reason`, and `verified`. A class entry includes its subclasses
 and the property name is case-insensitive. `verified: false` marks an entry that is a reasonable
 assumption not yet checked in game.
 

@@ -23,11 +23,9 @@ be instanced.
 dependencies:
   - class: /Script/FactoryGame.FGSchematicPurchasedDependency
     properties:
-      - path: mSchematics
-        value:
-          - /Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C
-      - path: mRequireAllSchematicsToBePurchased
-        value: true
+      mSchematics:
+        - /Game/FactoryGame/Schematics/Progression/Schematic_1-1.Schematic_1-1_C
+      mRequireAllSchematicsToBePurchased: true
 ```
 
 ## Complete class/path matrix
@@ -121,14 +119,12 @@ research:
     unlockDependencies:
       - class: /Script/FactoryGame.FGItemPickedUpDependency
         properties:
-          - path: mItems
-            value:
-              /Game/FactoryGame/Resource/RawResources/SAM/Desc_SAM.Desc_SAM_C: 1
+          mItems:
+            /Game/FactoryGame/Resource/RawResources/SAM/Desc_SAM.Desc_SAM_C: 1
     visibilityDependencies:
       - class: /Script/FactoryGame.FGGamePhaseReachedDependency
         properties:
-          - path: mGamePhase
-            value: EGP_EarlyGame
+          mGamePhase: EGP_EarlyGame
 ---
 type: dataasset
 conditions:
@@ -139,9 +135,8 @@ assets:
     dependencies:
       - class: /Script/FactoryGame.FGSchematicPurchasedDependency
         properties:
-          - path: mSchematics
-            value:
-              - Schematic_MyPrerequisite
+          mSchematics:
+            - Schematic_MyPrerequisite
 ```
 
 Related: [Schematics](/kdataforge/features/schematics),

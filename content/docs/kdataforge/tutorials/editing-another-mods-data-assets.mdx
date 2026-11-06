@@ -60,8 +60,8 @@ conditions:
 patches:
   - allAssetsOfClass: /Script/KAPI.KAPIModularMinerDescription
     properties:
-      - path: mNormalFluidCountPerSecond
-        op: multiply
+      mNormalFluidCountPerSecond:
+        $op: multiply
         value: 1.25
 ```
 
@@ -73,8 +73,8 @@ conditions:
 patches:
   - allAssetsOfClass: /Script/RefinedRDApi.RRDABoilerDataAsset
     properties:
-      - path: mDuration
-        op: multiply
+      mDuration:
+        $op: multiply
         value: 0.85
 ```
 

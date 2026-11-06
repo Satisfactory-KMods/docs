@@ -67,7 +67,7 @@ packs whose dependencies are ready, higher `priority` runs first and `ref` ascen
 `FCoreRedirects` so class paths in existing saves resolve to the renamed class. Renaming a _file_
 never needs a redirect. Only `id` renames do.
 
-`name` and `description` accept a plain string or localized `{ key, ns, source }` text. `icon`
+`name` and `description` accept a plain string or localized text with `key`, `ns`, and `source`. `icon`
 accepts a cooked `UTexture2D` object path beginning with `/`, or a pack-relative PNG, JPG, JPEG,
 TGA, or BMP file inside the pack directory. Relative icons are limited to 16 MiB and 4096 by 4096
 pixels. Dedicated servers skip icon loading.
@@ -141,10 +141,8 @@ items:
   - id: MySuperIngot
     parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C
     properties:
-      - path: mDisplayName
-        value: Super Ingot
-      - path: mResourceSinkPoints
-        value: 100
+      mDisplayName: Super Ingot
+      mResourceSinkPoints: 100
 ---
 type: sinkpoints
 track: Default
@@ -247,7 +245,8 @@ patches:
     tagProperty: mGameplayTags # optional explicit tag container property
     matchAssets: true # also match data-asset instances (default true)
     classType: blueprint # any (default), blueprint, native; real class flags, not class names
-    excludeClasses: [/Game/Example/Excluded.Excluded_C] # exact classes only; descendants remain eligible
+    excludeClasses: # exact classes only; descendants remain eligible
+      - /Game/Example/Excluded.Excluded_C
     matchName: Recipe_Alternate_* # wildcard on the class name (full path when it contains '/');
     #   scalar or sequence (any may match)
     producedIn: /Script/FactoryGame.FGBuildableManufacturer # recipes whose mProducedIn
@@ -268,8 +267,9 @@ patches:
 
     # ---- the ops ----
     properties:
-      - path: mManufactoringDuration # see Property Paths
-        op: multiply # see Operations (default: set)
+      # see Property Paths
+      mManufactoringDuration:
+        $op: multiply # see Operations (default: set)
         value: 0.5
 ```
 
@@ -286,8 +286,8 @@ An `actorSelector` requires explicit actor-class `target` values and
 | Field | Value |
 | --- | --- |
 | `tags` | Non-empty actor tag, or non-empty list; the actor needs every tag |
-| `sphere` | `{ center: [x, y, z], radius: positive-number }` |
-| `box` | `{ min: [x, y, z], max: [x, y, z] }`, with every minimum below its maximum |
+| `sphere` | Map with a three-number `center` sequence and a positive `radius` |
+| `box` | Map with three-number `min` and `max` sequences; every minimum must be below its maximum |
 | `currentRecipe` | Recipe class, or non-empty list; any exact class may match |
 
 Selectors are evaluated after actor begin play for existing actors, later spawns, and actors present
@@ -472,15 +472,55 @@ limits, grant failure behavior, once-per-save persistence, and reload timing.
 
 ## Property paths
 
-In a `properties:` operation, the quoted selector `path: '@tagContainers'` selects
+`properties:` accepts an ordered list of `path`/`value` operations or a shorter mapping. In the
+mapping, each key is a property path and its value performs `set` by default:
+
+```yaml
+properties:
+  mDisplayNameOverride: true
+  mDisplayName: Compressed Power Shard
+  mIngredients:
+    - ItemClass: /Game/Example/Desc_Item.Desc_Item_C
+      Amount: 4
+  mSomeStruct:
+    X: 1
+    Y: 2
+```
+
+For another operation, place `$op` directly inside that property's value. The remaining keys are
+the same arguments as in the list form (`value`, `index`, `where`, `from`, etc.):
+
+```yaml
+properties:
+  mManufactoringDuration:
+    $op: multiply
+    value: 0.5
+  mIngredients:
+    $op: append
+    value:
+      ItemClass: /Game/Example/Desc_Item.Desc_Item_C
+      Amount: 4
+```
+
+Only `$op` marks an operation. A struct containing ordinary fields named `op` or `value` remains a
+plain struct value. If a struct itself contains `$op`, wrap it as an indented mapping with `$op: set`
+and put the literal struct beneath `value:`.
+Property mappings also work inside instanced-object `properties:` blocks, including nested struct
+values. Mapping keys execute in source order; use the list form when the same path needs multiple
+operations, because a YAML mapping cannot repeat a key. The existing list form remains supported.
+An individual `$op` mapping cannot carry `conditions:`. To gate one property, put `conditions:`
+on its containing patch entry, or use a conditional operation in the list form.
+
+In a `properties:` mapping, the quoted key `'@tagContainers':` selects
 all top-level `FGameplayTagContainer` fields on each actual target, including inherited
 fields and fields declared by late-loaded subclasses. It supports `set` (default),
 `append`, `prepend`, `remove` and `clear`. No matching fields is a no-op. It does not
 select nested fields and is invalid in `where`, `from`, templates and single-property
 read/edit APIs. See [tag-container selection](/kdataforge/features/operations#select-every-gameplay-tag-container).
 
-`path:` addresses a single property, or a nested member reached through arrays, sets, maps, or
-object references. It uses a small path grammar shared by every operation below:
+A property mapping key (or `path:` in the ordered list form) addresses a single property or a
+nested member reached through arrays, sets, maps, or object references. It uses a small path
+grammar shared by every operation below:
 
 ```
 Segment(.Segment)*      Segment = Name([<int>] | ["key"] | [key])*
@@ -500,7 +540,8 @@ names never appear in YAML.
 
 ## Operations
 
-`op:` values and their argument keys. Full worked examples: [Operations](/kdataforge/features/operations).
+`$op:` values in mapping form (`op:` in list form) and their argument keys. Full worked examples:
+[Operations](/kdataforge/features/operations).
 
 | Op                                                    | Applies to                                                    | Arguments                                                           |
 | ------------------------------------------------------ | ---------------------------------------------------------------- | ---------------------------------------------------------------------- |
@@ -556,7 +597,7 @@ to accepted YAML form:
 | enum                               | value name (`RF_SOLID`, `EResourceForm::RF_SOLID`) or numeric value (must be a valid ordinal, rejected otherwise)                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | bitmask (`int32`/etc. with `meta=(Bitmask, BitmaskEnum=...)`) | one flag name (`Above`), a YAML sequence of names, an `"Above\|Left"` string, or, for `set` only, a nonnegative unsigned decimal mask bounded by the property width. Named forms require available property metadata and a loaded enum, supporting declared mask values and bit indices. Export emits a name sequence. `append`/`prepend` OR-add flags, `remove` clears bits, and `clear` writes zero. See rules below. |
 | `FString`, `FName`                 | string scalar                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| `FText`                            | string scalar, null (empty), localized `{key, ns, source}`, or StringTable reference `{stringTable, key}`; both table fields must be non-empty and must not mix with `ns` or `source`                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `FText`                            | string scalar, null (empty), localized mapping with `key`, `ns`, and `source`, or StringTable reference with `stringTable` and `key`; both table fields must be non-empty and must not mix with `ns` or `source`                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | object reference                   | full object path; a bare **generated-content id** (e.g. `SuperIngotIcon` for a `dataasset`/`asset` entry, see [Generated Content Short Ids](#generated-content-short-ids)); `""`/`none` → null                                                                                                                                                                                                                                                                                                                                                                                           |
 | class reference                    | class path (`/Script/Module.Class` or `/Game/....Asset_C`; `_C` auto-retried), or a bare **generated-content id** (e.g. `MySuperIngot` for an `item`/`resource`/`building`/`class`/... entry, see [Generated Content Short Ids](#generated-content-short-ids)), or, as a last resort, a **bare class name** (`Desc_Water`) resolved by name against every class currently loaded in memory; ambiguous bare-name forms log an error (`LogKDataForge`, listing every match) and use the first match (sorted by full class path), so prefer full paths in published packs when it matters |
 | `TSoftObjectPtr` / `TSoftClassPtr` | path string (not loaded)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -622,10 +663,8 @@ items: # plural key per type see table below
   - id: MySuperIngot # required stable id, the save-persistence contract
     parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C # optional
     properties: # identical op entries to cdo patches, applied to the new class's CDO
-      - path: mDisplayName
-        value: Super Ingot
-      - path: mStackSize
-        value: SS_HUGE # EStackSize enum, not a plain integer see Special-cased properties
+      mDisplayName: Super Ingot
+      mStackSize: SS_HUGE # EStackSize enum, not a plain integer see Special-cased properties
 ```
 
 | Type        | Plural key   | Default `parent`                                                   |
@@ -689,8 +728,7 @@ recipes:
   - id: Recipe_MySuperIngot
     register: true # default omit unless you want registration off
     properties:
-      - path: mManufactoringDuration
-        value: 4
+      mManufactoringDuration: 4
 ```
 
 ### Removing registered content (`recipe`, `schematic`, `research`)
@@ -860,14 +898,12 @@ research:
     unlockDependencies:
       - class: /Script/FactoryGame.FGSchematicPurchasedDependency
         properties:
-          - path: mSchematics
-            value:
-              - Schematic_MyPrerequisite
+          mSchematics:
+            - Schematic_MyPrerequisite
     visibilityDependencies:
       - class: /Script/FactoryGame.FGGamePhaseReachedDependency
         properties:
-          - path: mGamePhase
-            value: EGP_EarlyGame
+          mGamePhase: EGP_EarlyGame
 ```
 
 ### Instanced unlocks on schematics (`unlocks:`)
@@ -882,14 +918,12 @@ type: schematic
 schematics:
   - id: Schematic_MySuperIngot
     properties:
-      - path: mDisplayName
-        value: My Super Ingot
+      mDisplayName: My Super Ingot
     unlocks:
       - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
         properties:
-          - path: mRecipes
-            value:
-              - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot
+          mRecipes:
+            - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MySuperIngot
 ```
 
 Known native FactoryGame/KMods class paths automatically remap to their Blueprint implementation.
@@ -915,16 +949,13 @@ type: schematic
 schematics:
   - id: Schematic_AdvancedSuperIngot
     properties:
-      - path: mDisplayName
-        value: Advanced Super Ingot
+      mDisplayName: Advanced Super Ingot
     dependencies:
       - class: /Script/FactoryGame.FGSchematicPurchasedDependency
         properties:
-          - path: mSchematics
-            value:
-              - /KDataForge/Gen/MyPack.Gen_MyPack_Schematic_MySuperIngot
-          - path: mRequireAllSchematicsToBePurchased
-            value: true
+          mSchematics:
+            - /KDataForge/Gen/MyPack.Gen_MyPack_Schematic_MySuperIngot
+          mRequireAllSchematicsToBePurchased: true
 ```
 
 Pair it with `mDependenciesBlocksSchematicAccess`/`mHiddenUntilDependenciesMet` (ordinary
@@ -950,9 +981,8 @@ classes:
     registerAs: recipe # OPTIONAL: recipe | schematic | research queues SML content
     #                    registration for kinds that need it; omit for everything else
     properties:
-      - path: mDisplayName
-        value: My Equipment
-      # cdo-style op entries applied to the new class's CDO
+      mDisplayName: My Equipment
+    # cdo-style op entries applied to the new class's CDO
 ```
 
 - **Same save-stable identity as the preset kinds**: `/KDataForge/Gen/<PackRef>.Gen_<PackRef>_<Id>`.
@@ -1007,12 +1037,10 @@ assets:
   - id: CleanerItem_MyFluid
     class: /Script/KAPI.KAPICleanerItemDescription # any UDataAsset subclass
     properties:
-      - path: mProductionTime
-        value: 4.0
-      - path: mInFluid
-        value:
-          ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
-          Amount: 1000
+      mProductionTime: 4.0
+      mInFluid:
+        ItemClass: /Game/FactoryGame/Resource/RawResources/Water/Desc_Water.Desc_Water_C
+        Amount: 1000
 ```
 
 After the initial load, KDataForge automatically triggers consumer rescans
@@ -1043,7 +1071,7 @@ curveType: float # float | vector
 curves:
   - id: DamageFalloff # exactly one of id or target
     # target: /Game/Curves/Curve_Damage.Curve_Damage
-      defaultValue: 0 # vector defaults use X/Y/Z fields in a block mapping
+    defaultValue: 0 # vector defaults use X/Y/Z fields in a block mapping
     preInfinityExtrap: constant
     postInfinityExtrap: linear
     isEventCurve: false # float only
@@ -1081,7 +1109,9 @@ entries:
   - ofClass: /Script/FactoryGame.FGItemDescriptor # filter form instead of `item:` — every loaded
     where: #   item descriptor passing the filters gets these points
       path: mForm
-      in: [RF_LIQUID, RF_GAS]
+      in:
+        - RF_LIQUID
+        - RF_GAS
     points: 0
 ```
 
@@ -1103,7 +1133,10 @@ type: resourcenode
 add:
   - id: northern-iron
     resource: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
-    position: [10000, 20000, 1200]
+    position:
+      - 10000
+      - 20000
+      - 1200
     purity: Pure
     checkRange: 500
     reuseExisting: true
@@ -1112,7 +1145,10 @@ replace:
   - id: nearby-copper
     resource: /Game/FactoryGame/Resource/RawResources/OreCopper/Desc_OreCopper.Desc_OreCopper_C
     fromResource: /Game/FactoryGame/Resource/RawResources/OreIron/Desc_OreIron.Desc_OreIron_C
-    position: [30000, 20000, 1200]
+    position:
+      - 30000
+      - 20000
+      - 1200
     checkRange: 500
     allowToMove: false
 ```
@@ -1142,12 +1178,15 @@ type: resourcenode
 remove:
   - /Game/FactoryGame/Resource/RawResources/Uranium/Desc_OreUranium.Desc_OreUranium_C
   - resource: MyGeneratedResource
-    nodeTypes: [Node, FrackingCore]
+    nodeTypes:
+      - Node
+      - FrackingCore
     allowOccupied: false
     removeFromScanner: true
   - ofClass: /Script/FactoryGame.FGResourceDescriptor # filter form instead of `resource:`
     matchName: Desc_OreUranium* #   every loaded descriptor passing the filters
-    nodeTypes: [Node]
+    nodeTypes:
+      - Node
 ```
 
 - `resource:` must resolve to a `UFGResourceDescriptor` class. Generated-content short ids work.

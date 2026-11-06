@@ -35,15 +35,12 @@ items:
     parent: /Game/FactoryGame/Resource/Parts/IronIngot/Desc_IronIngot.Desc_IronIngot_C # optional
     properties:
       # ordinary cdo-style ops
-      - path: mDisplayName
-        value:
-          key: MySuperIngot_Name
-          ns: MyPack
-          source: Super Ingot
-      - path: mDescription
-        value: A far superior ingot.
-      - path: mStackSize
-        value: SS_HUGE # EStackSize enum see Balancing → Items for the full value list
+      mDisplayName:
+        key: MySuperIngot_Name
+        ns: MyPack
+        source: Super Ingot
+      mDescription: A far superior ingot.
+      mStackSize: SS_HUGE # EStackSize enum see Balancing → Items for the full value list
 ```
 
 - `id:` is **required** and forms the save-persistence contract, see below.
@@ -95,7 +92,7 @@ already finished by the time Recipes runs.
   type for it at all. Just reference the class path directly wherever you'd otherwise reference
   the generated one.
 - **Item generated fine, but a `properties:` entry silently didn't apply**: this is the same as
-  any `cdo` patch. Check `/kdf report` for a rejected op or a bad `path:`. Nothing about generation
+  any `cdo` patch. Check `/kdf report` for a rejected op or a bad property key. Nothing about generation
   changes how property ops are validated.
 - **Need this item in a recipe or schematic right away?** No `include:` is needed, ever, see "Why
   `Items` runs before..." above. If a reference still fails to resolve, double-check the id

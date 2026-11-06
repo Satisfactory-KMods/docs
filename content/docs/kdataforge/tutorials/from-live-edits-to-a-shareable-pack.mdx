@@ -64,10 +64,21 @@ type: cdo
 patches:
   - target: /KDataForge/Gen/KDFSample.Gen_KDFSample_Recipe_SuperIngot
     properties:
-      - path: mManufactoringDuration
-        op: set
-        value: 2.0
+      mManufactoringDuration: 2.0
 ```
+
+The editor writes operation arguments under `$op`:
+
+```yaml
+properties:
+  mManufactoringDuration:
+    $op: multiply
+    value: 2
+```
+
+If you change the same property more than once, the export writes successive patches so both
+operations keep their order. A literal value map containing `$op` is exported with `$op: set` and
+the literal map nested under `value:` to distinguish it from an operation.
 
 ## Create the destination pack
 
@@ -114,6 +125,12 @@ is preserved. The status line gives the exact path and reminds you to run `/kdf 
 The **Form** view exposes the parsed YAML tree. Select a node to replace it, add a child, remove it,
 or use contextual suggestions for fields, classes, properties, and known values. The form preserves
 handler-supported values that do not have a specialized control as raw YAML nodes.
+
+For a new empty `properties:` map, select that node and use **Choose field** or **+ Field / entry** to add
+a reflected property as a key. A struct value can be expanded as a nested map and filled with its
+reflected fields. To apply an operation, put `$op: multiply` and `value: 2` on separate lines beneath
+the numeric property key. Select `$op` to choose a supported operation from **Known value**.
+Existing `properties:` operation lists remain editable.
 
 Use **Raw YAML** for multi-document files, larger edits, or direct pasting. Switching back to Form
 parses the current text and synchronizes the tree. Save always parses again before writing.
@@ -162,6 +179,9 @@ parent's current reflected values to:
 ```text
 <ProjectDir>/DataForge/created/<Id>.<Kind>.yml
 ```
+
+The draft uses property names as mapping keys, including nested struct maps and instanced-object
+`properties:` maps. Review the values and references before adding the file to a pack.
 
 The editor creates the `created` directory when needed. This action writes a draft and does not
 apply the new content to the running session. Move the reviewed draft into a named pack and restart

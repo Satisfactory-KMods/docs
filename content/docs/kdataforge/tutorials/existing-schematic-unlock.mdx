@@ -21,14 +21,13 @@ type: cdo
 patches:
   - target: /Game/FactoryGame/Schematics/Progression/Schematic_1-2.Schematic_1-2_C
     properties:
-      - path: mUnlocks
-        op: append
+      mUnlocks:
+        $op: append
         value:
           class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
           properties:
-            - path: mRecipes
-              value:
-                - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MyNewRecipe
+            mRecipes:
+              - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MyNewRecipe
 ```
 
 Use a sequence under `value:` if you want to append several unlock objects in one operation.
@@ -44,9 +43,8 @@ schematics:
     unlocks:
       - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
         properties:
-          - path: mRecipes
-            value:
-              - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MyNewRecipe
+          mRecipes:
+            - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_MyNewRecipe
 ```
 
 - `class:` (instead of `id:`) tells KDataForge "don't generate a class, resolve this **existing**
@@ -76,9 +74,8 @@ schematics:
     unlocks:
       - class: /Game/FactoryGame/Unlocks/BP_UnlockRecipe.BP_UnlockRecipe_C
         properties:
-          - path: mRecipes
-            value:
-              - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_PureSuperIngot
+          mRecipes:
+            - /KDataForge/Gen/MyPack.Gen_MyPack_Recipe_PureSuperIngot
 ```
 
 ## Unlocking something other than a recipe
