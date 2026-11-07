@@ -1,6 +1,6 @@
 ---
 title: Version 1.7.2
-description: Change recipes, keep canvas connections visible, and simplify the grid when zoomed out.
+description: Change recipes, keep canvas connections visible, and reduce unnecessary zoom redraws.
 slug: production-modeler/changelog/1.7.2
 sidebar:
   label: '1.7.2'
@@ -16,6 +16,8 @@ sidebar:
 
 ## BUGFIXES
 
+- **Zoom rendering.** The zoom readout updates independently, avoiding
+  unnecessary redraws of other canvas controls.
 - **Grid at distant zoom.** The grid hides when its cells are too small to
   distinguish and returns when zooming in. Snapping is unchanged.
 - **Connections stay visible.** Canvas connections and their context menus render

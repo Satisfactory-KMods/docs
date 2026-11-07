@@ -5,12 +5,11 @@ sidebar:
   order: 3
 ---
 
-Use the panel beside the [canvas](/production-modeler/canvas/) to switch between four tabs:
+Use the panel beside the [canvas](/production-modeler/canvas/) to switch between three tabs:
 
 - **Summary:** factory totals and requirements.
-- **Inspector:** controls for selected nodes.
+- **Inspector:** causes, repair previews, optimization hints and node settings.
 - **Sub-models:** what this model offers to other models, and the models placed in it.
-- **Messages:** diagnostics and failed operations.
 
 - **Desktop:** select one node to open Inspector, reopening a closed panel.
 - **Mobile:** selection alone does not open the panel; use **Edit** or **Show summary**.
@@ -70,7 +69,7 @@ Scope applies to added sections, belts and pipes, and unlocks.
 - Production boost percentage.
 
 Production and net figures can show **N/A** for incomplete results or a partial connected scope.
-Try **Selected and connected** or **Everything**, then check Messages.
+Try **Selected and connected** or **Everything**, then check Inspector.
 N/A does not mean zero production.
 
 These sections appear automatically when data is available:
@@ -84,7 +83,52 @@ This also changes selection-based scopes.
 
 ## Inspector
 
-Select one node for detailed controls.
+Inspector combines **Causes**, **Optimizations** and **Settings**. Without a
+selection, Causes shows the whole model. Selecting a related node narrows the
+findings; **Show the whole model** restores the broader view. A finding identifies
+the input or constraint responsible for a blocked chain and the production
+targets it affects. **Copy report** copies the analysis as readable text.
+
+**Details** opens a modeless view. The canvas stays interactive. Clicking a node
+or port reference reveals it and docks the details beside the canvas without
+closing the diagnosis. Expand the view for more room. Catalog icons, port
+labels and tooltips identify what each reference points to. Proposed nodes are
+marked **New** and can be inspected, but appear on the canvas only after Apply.
+The detailed mathematical evidence stays under **Why this is proven**.
+
+**Find repairs** groups compatible existing sources separately from new supply.
+Each option identifies the output it uses and how many nodes and connections it
+adds. Compatibility alone does not establish capacity. **Preview repair** checks
+the full proposed model before showing its result. A unique small local change
+can instead offer **Check and apply if safe**. It applies immediately only when
+the checked baseline and proposed result meet that safety condition.
+
+The result shows the actual connection, source and destination. **Current model**
+and **With this repair** switch the connection view without editing anything.
+Required buildings, retained target settings, achieved rates and proposed
+surpluses are separate sections. A single new extractor node can represent
+several physical buildings. Hover a value for its more precise reading.
+
+An unsolved current group has no usable numerical baseline. Its current flows
+and building counts read **Unknown**, not zero. Surplus rows describe totals in
+the proposed model; they are not automatically new waste caused by the repair.
+Partial results identify the remaining problem. Incomplete or blocked checks
+cannot be applied as a completed repair. A model change invalidates checked
+results, and locking a cause removes its repair actions.
+
+**Apply change** creates one undo step for the entire repair. **Apply partial
+repair** explicitly applies a proposal that solves the affected group while
+other groups remain unresolved. For larger alternatives, **Start Auto-Chain at
+this input** opens the existing planner and returns its proposal for checking.
+Changing a production target stays a separate, explicit alternative with a
+preview. It changes the requirement instead of fixing its original supply.
+
+Open inputs that the model treats as external supply are valid. Their local
+extractor and chain actions are optional. **Optimizations** keeps surplus and
+local improvement hints separate from blocking causes. A required co-product
+is not automatically waste.
+
+Select one node and open **Settings** for detailed controls.
 **Custom title** changes its canvas name without changing its catalog entry.
 
 Recipes offer clock, Somersloops and capacity.
@@ -92,7 +136,7 @@ These settings share one card; the collapsible input and output ports sit outsid
 Other controls depend on the node, as covered in [Special buildings](/production-modeler/special-buildings/).
 
 A fixed recipe count sets the downstream plan in Basic and Full. If a connected
-input cannot supply that count, Messages reports the missing amount while the
+input cannot supply that count, Inspector reports the missing amount while the
 downstream values remain visible. The recipe input displays its required rate;
 the connection displays the available supply. Add that supply to make the plan
 achievable. Manual mode continues to require balanced exact values.
@@ -152,14 +196,12 @@ open the model it stands for, or refresh one or all of them. See
 
 ## Messages
 
-Messages remains the diagnostics panel, including solver issues, building-limit warnings and failed saves.
-
-- Counts appear on the tab, and on the closed panel's reopen button for errors and warnings.
-- Filter by **Errors**, **Warnings** or **Notes**.
-- Errors come first; repeated diagnostics are grouped with a count.
-- Click a message tied to a node or port to reveal its node, even inside another container.
-- **Copy messages** copies the filtered list as text.
-- Check filters before treating an empty list as a clean calculation.
+Calculation messages and failed operations are shown inside Inspector. Proven
+causes appear before their affected results, and remaining solver diagnostics
+stay available in Causes. Counts identify blocking findings; **Copy report**
+keeps the explanation and its references together. An empty selected scope is
+not proof that the whole model is solved, so check **Show the whole model** and
+the current calculation status.
 
 Selected-data, missing-data and read-only notices stay in the canvas column without pushing down the sidebar.
 A long-running calculation shows **Stop**, which cancels it without changing the model.
